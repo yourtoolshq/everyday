@@ -255,24 +255,57 @@ Tax Book is not intended to replace tax filing software.
 
 ---
 
-## Phase 6 — Filing and Assessment
+## Phase 6 — Filing History, Adjustments, and Assessment
 
 ### Goal
 
-Complete the lifecycle of a Tax Year and preserve a trustworthy historical record.
+Complete the lifecycle of a Tax Year while preserving what was filed originally,
+what changed later, and how CRA responded.
+
+A Tax Year remains one calendar year. Adjustments are not represented as
+separate years such as `2025.1` or `2025.2`. Instead, each Tax Year has a
+chronological Filing History.
+
+```text
+Tax Year
+├── Original Return
+│   └── Notice of Assessment
+└── Adjustment 1
+    └── Notice of Reassessment
+```
 
 ### Includes
 
-Tax Filing information such as:
+The original Tax Filing may contain:
 
 * filing date
 * submitted T1 return
 * expected Tax Result
-* actual refund or amount owing
-* refund or payment date
-* Notice of Assessment
-* CRA assessment result
+* the Tax Item values used for filing
 * notes
+
+An Assessment records CRA's response to a Filing:
+
+* Notice of Assessment or Notice of Reassessment
+* assessment date
+* assessed refund or amount owing
+* refund or payment date
+* relevant notes
+
+An Adjustment belongs to the same Tax Year and records:
+
+* why the return needs to change
+* affected Tax Items
+* supporting Records and Tax Documents
+* expected change to the refund or amount owing
+* status: Preparing, Submitted, or Reassessed
+* submission date and submitted adjustment document
+* the resulting Notice of Reassessment and actual result
+
+Tax-year information describes the facts and supporting material for that
+calendar year. Each Filing or Adjustment preserves what was submitted at that
+point in time so that later corrections do not silently rewrite the original
+filing history.
 
 ### Tax Year Lifecycle
 
@@ -290,16 +323,21 @@ A completed Tax Year becomes a reliable historical snapshot.
 
 Opening 2026 in a future year should make it clear:
 
-* what was reported
+* what was reported originally
 * what supported the claims
-* what was filed
-* what CRA assessed
-* what refund or payment occurred
+* what was changed through any adjustment
+* what CRA assessed or reassessed after each submission
+* what refund or payment resulted
+
+For an older return currently being corrected, the household can open the
+original Tax Year, organize the missing item and its supporting material, track
+the adjustment through submission, and retain the resulting reassessment in one
+place.
 
 ### Explicitly Deferred
 
-* amendments
-* reassessments
+* automatic comparison or reconciliation of complete tax returns
+* generalized audit or case-management workflows
 * CRA account synchronization
 * direct tax filing
 
