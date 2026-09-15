@@ -40,10 +40,23 @@ Insurance benefits sit alongside this workflow and help inform planning, but max
 
 See:
 
-- [`PRODUCT.md`](./PRODUCT.md) — the problem First Aid is trying to solve
-- [`DOMAIN.md`](./DOMAIN.md) — the V1 domain and relationships
-- [`ROADMAP.md`](./ROADMAP.md) — incremental phases focused on making the tool useful
+- [`PRODUCT.md`](./docs/PRODUCT.md) — the problem First Aid is trying to solve
+- [`DOMAIN.md`](./docs/DOMAIN.md) — the V1 domain and relationships
+- [`ROADMAP.md`](./docs/ROADMAP.md) — incremental phases focused on making the tool useful
 - [`AGENTS.md`](./AGENTS.md) — guidance for AI-assisted development
+- [`DEVELOPMENT.md`](./docs/DEVELOPMENT.md) — local setup and self-hosting
+
+## Run locally
+
+First Aid uses Node.js 22, pnpm 10, and a local SQLite database.
+
+```sh
+pnpm install
+pnpm dev
+```
+
+Open <http://localhost:3001>. See the development guide for verification and
+Docker instructions.
 
 ## Development philosophy
 
