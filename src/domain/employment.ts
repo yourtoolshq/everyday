@@ -9,8 +9,55 @@ export const payFrequencies = [
 ] as const;
 export const employmentStatuses = ["active", "ended"] as const;
 
+export const deductionFields = [
+  {
+    amountField: "incomeTaxCents",
+    enabledField: "incomeTaxEnabled",
+    label: "Income tax withheld",
+    defaultEnabled: true,
+  },
+  {
+    amountField: "cppCents",
+    enabledField: "cppEnabled",
+    label: "CPP",
+    defaultEnabled: true,
+  },
+  {
+    amountField: "cpp2Cents",
+    enabledField: "cpp2Enabled",
+    label: "CPP2",
+    defaultEnabled: true,
+  },
+  {
+    amountField: "eiCents",
+    enabledField: "eiEnabled",
+    label: "EI",
+    defaultEnabled: true,
+  },
+  {
+    amountField: "wiCents",
+    enabledField: "wiEnabled",
+    label: "WI",
+    defaultEnabled: false,
+  },
+  {
+    amountField: "ltdCents",
+    enabledField: "ltdEnabled",
+    label: "LTD",
+    defaultEnabled: false,
+  },
+  {
+    amountField: "otherDeductionsCents",
+    enabledField: "otherDeductionsEnabled",
+    label: "Other deductions",
+    defaultEnabled: true,
+  },
+] as const;
+
 export type PayFrequency = (typeof payFrequencies)[number];
 export type EmploymentStatus = (typeof employmentStatuses)[number];
+export type DeductionAmountField = (typeof deductionFields)[number]["amountField"];
+export type DeductionEnabledField = (typeof deductionFields)[number]["enabledField"];
 
 export const payFrequencyLabels: Record<PayFrequency, string> = {
   weekly: "Weekly",
@@ -43,6 +90,13 @@ export const employmentInput = z
     status: z.enum(employmentStatuses),
     endDate: isoDate.nullable(),
     typicalGrossOverrideCents: z.number().int().nonnegative().nullable(),
+    incomeTaxEnabled: z.boolean().default(true),
+    cppEnabled: z.boolean().default(true),
+    cpp2Enabled: z.boolean().default(true),
+    eiEnabled: z.boolean().default(true),
+    wiEnabled: z.boolean().default(false),
+    ltdEnabled: z.boolean().default(false),
+    otherDeductionsEnabled: z.boolean().default(true),
   })
   .superRefine((value, context) => {
     if (value.status === "ended" && value.endDate === null) {
@@ -66,22 +120,48 @@ export const employmentUpdateInput = z.intersection(
   z.object({ id: z.number().int().positive() }),
 );
 
-export const paychequeInput = z.object({
-  employmentId: z.number().int().positive(),
-  payDate: isoDate,
-  grossPayCents: z.number().int().nonnegative(),
-  incomeTaxCents: z.number().int().nonnegative(),
-  cppCents: z.number().int().nonnegative(),
-  cpp2Cents: z.number().int().nonnegative(),
-  eiCents: z.number().int().nonnegative(),
-  otherDeductionsCents: z.number().int().nonnegative(),
-  netPayCents: z.number().int().nonnegative(),
-});
+export const paychequeInput = z
+  .object({
+    employmentId: z.number().int().positive(),
+    payDate: isoDate,
+    grossPayCents: z.number().int().nonnegative(),
+    incomeTaxCents: z.number().int().nonnegative(),
+    cppCents: z.number().int().nonnegative(),
+    cpp2Cents: z.number().int().nonnegative(),
+    eiCents: z.number().int().nonnegative(),
+    wiCents: z.number().int().nonnegative().default(0),
+    ltdCents: z.number().int().nonnegative().default(0),
+    otherDeductionsCents: z.number().int().nonnegative(),
+  })
+  .superRefine((value, context) => {
+    if (calculateTotalDeductions(value) > value.grossPayCents) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["grossPayCents"],
+        message: "Total deductions cannot exceed gross pay.",
+      });
+    }
+  });
 
 export const paychequeUpdateInput = z.intersection(
   paychequeInput,
   z.object({ id: z.number().int().positive() }),
 );
+
+export function calculateTotalDeductions(
+  amounts: Record<DeductionAmountField, number>,
+) {
+  return deductionFields.reduce(
+    (total, field) => total + amounts[field.amountField],
+    0,
+  );
+}
+
+export function calculateNetPay(
+  amounts: Record<DeductionAmountField, number> & { grossPayCents: number },
+) {
+  return amounts.grossPayCents - calculateTotalDeductions(amounts);
+}
 
 const periodsPerYear: Partial<Record<PayFrequency, number>> = {
   weekly: 52,

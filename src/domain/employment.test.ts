@@ -1,9 +1,39 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  calculateNetPay,
   calculateEmploymentProjection,
   countRemainingPaycheques,
+  paychequeInput,
 } from "./employment";
+
+describe("paycheque amounts", () => {
+  const amounts = {
+    grossPayCents: 200_000,
+    incomeTaxCents: 35_000,
+    cppCents: 11_000,
+    cpp2Cents: 1_000,
+    eiCents: 3_200,
+    wiCents: 1_500,
+    ltdCents: 2_300,
+    otherDeductionsCents: 4_800,
+  };
+
+  it("calculates net pay from every supported deduction", () => {
+    expect(calculateNetPay(amounts)).toBe(141_200);
+  });
+
+  it("rejects deductions greater than gross pay", () => {
+    expect(
+      paychequeInput.safeParse({
+        ...amounts,
+        employmentId: 1,
+        payDate: "2026-06-19",
+        grossPayCents: 10_000,
+      }).success,
+    ).toBe(false);
+  });
+});
 
 describe("employment projection", () => {
   it("projects an active employment from its average and remaining pay periods", () => {

@@ -21,23 +21,18 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
+import {
+  calculateNetPay,
+  deductionFields,
+  type DeductionAmountField,
+} from "~/domain/employment";
 import { centsToDollars, dollarsToCents } from "~/domain/money";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Employment = RouterOutputs["employment"]["list"]["items"][number];
 type Paycheque = RouterOutputs["paycheque"]["list"]["items"][number];
 
-const amountFields = [
-  ["grossPayCents", "Gross pay"],
-  ["incomeTaxCents", "Income tax withheld"],
-  ["cppCents", "CPP"],
-  ["cpp2Cents", "CPP2"],
-  ["eiCents", "EI"],
-  ["otherDeductionsCents", "Other deductions"],
-  ["netPayCents", "Net pay"],
-] as const;
-
-type AmountField = (typeof amountFields)[number][0];
+type AmountField = "grossPayCents" | DeductionAmountField;
 
 export function PaychequeFormSheet({
   paycheque,
@@ -60,13 +55,32 @@ export function PaychequeFormSheet({
   );
   const [payDate, setPayDate] = useState(paycheque?.payDate ?? "");
   const [amounts, setAmounts] = useState<Record<AmountField, string>>(() =>
-    Object.fromEntries(
-      amountFields.map(([field]) => [
-        field,
-        centsToDollars(paycheque?.[field] ?? (field === "grossPayCents" || field === "netPayCents" ? null : 0)),
-      ]),
-    ) as Record<AmountField, string>,
+    ({
+      grossPayCents: centsToDollars(paycheque?.grossPayCents ?? null),
+      ...Object.fromEntries(
+        deductionFields.map((field) => [
+          field.amountField,
+          centsToDollars(paycheque?.[field.amountField] ?? 0),
+        ]),
+      ),
+    }) as Record<AmountField, string>,
   );
+
+  const selectedEmployment = employments.find(
+    (employment) => String(employment.id) === employmentId,
+  );
+  const visibleDeductionFields = deductionFields.filter(
+    (field) =>
+      selectedEmployment?.[field.enabledField] ||
+      (dollarsToCents(amounts[field.amountField]) ?? 0) > 0,
+  );
+  const parsedAmounts = Object.fromEntries(
+    (["grossPayCents", ...deductionFields.map((field) => field.amountField)] as const)
+      .map((field) => [field, dollarsToCents(amounts[field])]),
+  ) as Record<AmountField, number | null>;
+  const netPayCents = Object.values(parsedAmounts).some((value) => value === null)
+    ? null
+    : calculateNetPay(parsedAmounts as Record<AmountField, number>);
 
   const finish = async (message: string) => {
     await Promise.all([
@@ -89,18 +103,22 @@ export function PaychequeFormSheet({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const parsed = Object.fromEntries(
-      amountFields.map(([field]) => [field, dollarsToCents(amounts[field])]),
-    ) as Record<AmountField, number | null>;
-    const invalid = amountFields.find(([field]) => parsed[field] === null);
+    const invalid = ([
+      ["grossPayCents", "Gross pay"],
+      ...deductionFields.map((field) => [field.amountField, field.label] as const),
+    ] as const).find(([field]) => parsedAmounts[field] === null);
     if (invalid) {
       toast.error(`${invalid[1]} must be zero or a positive dollar value.`);
+      return;
+    }
+    if (netPayCents === null || netPayCents < 0) {
+      toast.error("Total deductions cannot exceed gross pay.");
       return;
     }
     const values = {
       employmentId: Number(employmentId),
       payDate,
-      ...(parsed as Record<AmountField, number>),
+      ...(parsedAmounts as Record<AmountField, number>),
     };
     if (paycheque) update.mutate({ id: paycheque.id, ...values });
     else create.mutate(values);
@@ -113,7 +131,9 @@ export function PaychequeFormSheet({
         <form className="flex min-h-full flex-col" onSubmit={submit}>
           <SheetHeader>
             <SheetTitle>{paycheque ? "Edit paycheque" : "Add paycheque"}</SheetTitle>
-            <SheetDescription>Enter the amounts shown on the pay statement.</SheetDescription>
+            <SheetDescription>
+              Enter the amounts shown on the pay statement. Net pay is calculated for comparison.
+            </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 px-4 py-6">
             <div className="space-y-2">
@@ -135,22 +155,54 @@ export function PaychequeFormSheet({
               <p className="text-xs text-muted-foreground">The pay date determines the tax year.</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              {amountFields.map(([field, label]) => (
-                <div key={field} className={`space-y-2 ${field === "grossPayCents" || field === "netPayCents" ? "sm:col-span-2" : ""}`}>
-                  <Label htmlFor={field}>{label}</Label>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="grossPayCents">Gross pay</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="grossPayCents"
+                    className="pl-7 tabular-nums"
+                    inputMode="decimal"
+                    value={amounts.grossPayCents}
+                    onChange={(event) => setAmounts((current) => ({ ...current, grossPayCents: event.target.value }))}
+                    required
+                  />
+                </div>
+              </div>
+              {visibleDeductionFields.map((field) => (
+                <div key={field.amountField} className="space-y-2">
+                  <Label htmlFor={field.amountField}>{field.label}</Label>
                   <div className="relative">
                     <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
                     <Input
-                      id={field}
+                      id={field.amountField}
                       className="pl-7 tabular-nums"
                       inputMode="decimal"
-                      value={amounts[field]}
-                      onChange={(event) => setAmounts((current) => ({ ...current, [field]: event.target.value }))}
+                      value={amounts[field.amountField]}
+                      onChange={(event) => setAmounts((current) => ({
+                        ...current,
+                        [field.amountField]: event.target.value,
+                      }))}
                       required
                     />
                   </div>
                 </div>
               ))}
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor="calculated-net-pay">Net pay (calculated)</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="calculated-net-pay"
+                    className="pl-7 tabular-nums"
+                    value={netPayCents === null || netPayCents < 0 ? "" : centsToDollars(netPayCents)}
+                    readOnly
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Compare this amount with the pay statement. A difference usually means a deduction is missing or incorrect.
+                </p>
+              </div>
             </div>
           </div>
           <SheetFooter>

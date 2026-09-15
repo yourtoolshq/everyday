@@ -138,6 +138,9 @@ test("sets up a household and tracks an item", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Paycheques", level: 2 })).toBeVisible();
   await page.getByRole("button", { name: "Add employment" }).click();
   await page.getByLabel("Employer label").fill("Employer A");
+  await page.getByLabel("CPP2", { exact: true }).uncheck();
+  await page.getByLabel("WI", { exact: true }).check();
+  await page.getByLabel("LTD", { exact: true }).check();
   await page.getByRole("button", { name: "Add employment" }).last().click();
   await expect(page.getByText("Employment added.")).toBeVisible();
 
@@ -146,13 +149,17 @@ test("sets up a household and tracks an item", async ({ page }) => {
   await page.getByLabel("Gross pay").fill("2000");
   await page.getByLabel("Income tax withheld").fill("350");
   await page.getByLabel("CPP", { exact: true }).fill("110");
-  await page.getByLabel("CPP2", { exact: true }).fill("10");
+  await expect(page.getByLabel("CPP2", { exact: true })).toHaveCount(0);
   await page.getByLabel("EI", { exact: true }).fill("32");
+  await page.getByLabel("WI", { exact: true }).fill("10");
+  await page.getByLabel("LTD", { exact: true }).fill("20");
   await page.getByLabel("Other deductions").fill("48");
-  await page.getByLabel("Net pay").fill("1450");
+  await expect(page.getByLabel("Net pay (calculated)")).toHaveValue("1430.00");
   await page.getByRole("button", { name: "Add paycheque" }).last().click();
   await expect(page.getByText("Paycheque added.")).toBeVisible();
   await expect(page.getByRole("cell", { name: "$2,000.00" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "$570.00" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "$1,430.00" })).toBeVisible();
   await page.getByLabel("Filter by person").click();
   await page.getByRole("option", { name: "Person B" }).click();
   await expect(page.getByText("No paycheques match these filters")).toBeVisible();

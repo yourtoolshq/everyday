@@ -218,6 +218,8 @@ describe("Tax Book API", () => {
       status: "active",
       endDate: null,
       typicalGrossOverrideCents: null,
+      wiEnabled: true,
+      ltdEnabled: true,
     });
     const previous = await caller.employment.create({
       personId: personB!.id,
@@ -236,8 +238,9 @@ describe("Tax Book API", () => {
       cppCents: 5_000,
       cpp2Cents: 0,
       eiCents: 2_000,
-      otherDeductionsCents: 3_000,
-      netPayCents: 70_000,
+      wiCents: 1_000,
+      ltdCents: 2_000,
+      otherDeductionsCents: 0,
     });
     const second = await caller.paycheque.create({
       employmentId: current!.id,
@@ -248,7 +251,6 @@ describe("Tax Book API", () => {
       cpp2Cents: 500,
       eiCents: 2_400,
       otherDeductionsCents: 3_000,
-      netPayCents: 84_100,
     });
     await caller.paycheque.create({
       employmentId: previous!.id,
@@ -259,7 +261,6 @@ describe("Tax Book API", () => {
       cpp2Cents: 0,
       eiCents: 1_800,
       otherDeductionsCents: 0,
-      netPayCents: 65_700,
     });
 
     let employmentList = await caller.employment.list();
@@ -272,6 +273,11 @@ describe("Tax Book API", () => {
       actualGrossCents: 90_000,
       projectedGrossCents: 90_000,
       remainingPaycheques: 0,
+    });
+    expect((await caller.paycheque.list()).items.find((item) => item.id === first!.id)).toMatchObject({
+      wiCents: 1_000,
+      ltdCents: 2_000,
+      netPayCents: 70_000,
     });
 
     let items = (await caller.taxItem.list()).items;
@@ -297,7 +303,6 @@ describe("Tax Book API", () => {
       cpp2Cents: 700,
       eiCents: 2_800,
       otherDeductionsCents: 3_000,
-      netPayCents: 98_500,
     });
     items = (await caller.taxItem.list()).items;
     expect(items.find((item) => item.id === currentItem.id)?.actualAmountCents).toBe(240_000);
@@ -336,7 +341,6 @@ describe("Tax Book API", () => {
         cpp2Cents: 0,
         eiCents: 0,
         otherDeductionsCents: 0,
-        netPayCents: 100_000,
       }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await caller.taxYear.create({ year: 2027 });

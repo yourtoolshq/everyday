@@ -3,6 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
+  calculateNetPay,
   paychequeInput,
   paychequeUpdateInput,
 } from "~/domain/employment";
@@ -55,6 +56,8 @@ export const paychequeRouter = createTRPCRouter({
         cppCents: paycheques.cppCents,
         cpp2Cents: paycheques.cpp2Cents,
         eiCents: paycheques.eiCents,
+        wiCents: paycheques.wiCents,
+        ltdCents: paycheques.ltdCents,
         otherDeductionsCents: paycheques.otherDeductionsCents,
         netPayCents: paycheques.netPayCents,
         personId: employments.personId,
@@ -78,7 +81,10 @@ export const paychequeRouter = createTRPCRouter({
       await requireEmployment(ctx.db, input.employmentId, year.id);
       validatePayDate(input.payDate, year.year);
       return ctx.db.transaction(async (tx) => {
-        const [paycheque] = await tx.insert(paycheques).values(input).returning();
+        const [paycheque] = await tx
+          .insert(paycheques)
+          .values({ ...input, netPayCents: calculateNetPay(input) })
+          .returning();
         await syncEmploymentTaxItem(tx, input.employmentId);
         return paycheque;
       });
@@ -107,7 +113,7 @@ export const paychequeRouter = createTRPCRouter({
         }
         const [paycheque] = await tx
           .update(paycheques)
-          .set(values)
+          .set({ ...values, netPayCents: calculateNetPay(values) })
           .where(eq(paycheques.id, id))
           .returning();
         await syncEmploymentTaxItem(tx, existing.employmentId);

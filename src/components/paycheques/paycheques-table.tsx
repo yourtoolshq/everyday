@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { calculateTotalDeductions } from "~/domain/employment";
 import { formatCad } from "~/domain/money";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -53,18 +54,14 @@ export function PaychequesTable({
   return (
     <Card className="overflow-hidden py-0">
       <CardContent className="p-0">
-        <Table className="min-w-[1180px]">
+        <Table className="min-w-[820px]">
           <TableHeader>
             <TableRow>
               <TableHead>Pay date</TableHead>
               <TableHead>Person</TableHead>
               <TableHead>Employer</TableHead>
               <TableHead className="text-right">Gross</TableHead>
-              <TableHead className="text-right">Income tax</TableHead>
-              <TableHead className="text-right">CPP</TableHead>
-              <TableHead className="text-right">CPP2</TableHead>
-              <TableHead className="text-right">EI</TableHead>
-              <TableHead className="text-right">Other</TableHead>
+              <TableHead className="text-right">Deductions</TableHead>
               <TableHead className="text-right">Net</TableHead>
               <TableHead><span className="sr-only">Actions</span></TableHead>
             </TableRow>
@@ -80,11 +77,7 @@ export function PaychequesTable({
                   <button className="hover:text-primary" onClick={() => onEditEmployment(item.employmentId)}>{item.employerName}</button>
                 </TableCell>
                 <TableCell className="text-right font-medium tabular-nums">{formatCad(item.grossPayCents)}</TableCell>
-                <TableCell className="text-right tabular-nums">{formatCad(item.incomeTaxCents)}</TableCell>
-                <TableCell className="text-right tabular-nums">{formatCad(item.cppCents)}</TableCell>
-                <TableCell className="text-right tabular-nums">{formatCad(item.cpp2Cents)}</TableCell>
-                <TableCell className="text-right tabular-nums">{formatCad(item.eiCents)}</TableCell>
-                <TableCell className="text-right tabular-nums">{formatCad(item.otherDeductionsCents)}</TableCell>
+                <TableCell className="text-right tabular-nums">{formatCad(calculateTotalDeductions(item))}</TableCell>
                 <TableCell className="text-right font-medium tabular-nums">{formatCad(item.netPayCents)}</TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -99,7 +92,7 @@ export function PaychequesTable({
               </TableRow>
             )) : (
               <TableRow>
-                <TableCell colSpan={11} className="h-64 text-center">
+                <TableCell colSpan={7} className="h-64 text-center">
                   <div className="flex flex-col items-center">
                     <p className="font-medium">{totalCount === 0 ? "No paycheques yet" : "No paycheques match these filters"}</p>
                     <p className="mt-1 text-sm text-muted-foreground">

@@ -35,6 +35,17 @@ export const employments = sqliteTable(
     status: text("status", { enum: employmentStatuses }).notNull(),
     endDate: text("end_date"),
     typicalGrossOverrideCents: integer("typical_gross_override_cents"),
+    incomeTaxEnabled: integer("income_tax_enabled", { mode: "boolean" })
+      .default(true)
+      .notNull(),
+    cppEnabled: integer("cpp_enabled", { mode: "boolean" }).default(true).notNull(),
+    cpp2Enabled: integer("cpp2_enabled", { mode: "boolean" }).default(true).notNull(),
+    eiEnabled: integer("ei_enabled", { mode: "boolean" }).default(true).notNull(),
+    wiEnabled: integer("wi_enabled", { mode: "boolean" }).default(false).notNull(),
+    ltdEnabled: integer("ltd_enabled", { mode: "boolean" }).default(false).notNull(),
+    otherDeductionsEnabled: integer("other_deductions_enabled", { mode: "boolean" })
+      .default(true)
+      .notNull(),
     ...timestamps,
   },
   (table) => [

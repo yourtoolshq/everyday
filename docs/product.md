@@ -89,9 +89,16 @@ Each paycheque may include values such as:
 * gross pay
 * income tax withheld
 * CPP
+* CPP2
 * EI
+* weekly indemnity (WI)
+* long-term disability (LTD)
 * other deductions
 * net pay
+
+Each Employment chooses which deduction fields appear during paycheque entry.
+Net pay is calculated from gross pay minus all recorded deductions so that it can
+be compared with the amount on the pay statement.
 
 This allows the app to calculate:
 

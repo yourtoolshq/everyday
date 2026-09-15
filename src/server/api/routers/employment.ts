@@ -58,6 +58,13 @@ export const employmentRouter = createTRPCRouter({
         status: employments.status,
         endDate: employments.endDate,
         typicalGrossOverrideCents: employments.typicalGrossOverrideCents,
+        incomeTaxEnabled: employments.incomeTaxEnabled,
+        cppEnabled: employments.cppEnabled,
+        cpp2Enabled: employments.cpp2Enabled,
+        eiEnabled: employments.eiEnabled,
+        wiEnabled: employments.wiEnabled,
+        ltdEnabled: employments.ltdEnabled,
+        otherDeductionsEnabled: employments.otherDeductionsEnabled,
         createdAt: employments.createdAt,
         updatedAt: employments.updatedAt,
       })

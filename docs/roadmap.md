@@ -70,8 +70,14 @@ Each Paycheque may include:
 * CPP
 * CPP2
 * EI
+* weekly indemnity (WI)
+* long-term disability (LTD)
 * other deductions
-* net pay
+* calculated net pay
+
+Each Employment selects the deduction fields used by its paycheques. The
+paycheque list summarizes gross pay, total deductions, and net pay; individual
+deductions remain available when entering or editing a paycheque.
 
 ### Calculated Values
 

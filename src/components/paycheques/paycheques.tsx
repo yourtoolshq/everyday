@@ -45,6 +45,8 @@ const totalFields = [
   "cppCents",
   "cpp2Cents",
   "eiCents",
+  "wiCents",
+  "ltdCents",
   "otherDeductionsCents",
   "netPayCents",
 ] as const;
@@ -152,9 +154,7 @@ export function Paycheques() {
   const year = paychequesQuery.data.year.year;
   const summary = [
     ["Gross received", totals.grossPayCents],
-    ["Income tax", totals.incomeTaxCents],
-    ["CPP / CPP2", totals.cppCents + totals.cpp2Cents],
-    ["EI", totals.eiCents],
+    ["Deductions", totals.incomeTaxCents + totals.cppCents + totals.cpp2Cents + totals.eiCents + totals.wiCents + totals.ltdCents + totals.otherDeductionsCents],
     ["Net pay", totals.netPayCents],
     ["Projected income", projection],
   ] as const;
@@ -196,7 +196,7 @@ export function Paycheques() {
         <span className="ml-auto text-xs text-muted-foreground">{filteredPaycheques.length} of {paycheques.length} shown</span>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {summary.map(([label, value]) => (
           <Card key={label} className={label === "Projected income" ? "bg-gradient-to-b from-primary/[0.06] to-card" : undefined}>
             <CardHeader className="pb-1">

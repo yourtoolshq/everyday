@@ -22,11 +22,13 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import {
+  deductionFields,
   employmentStatuses,
   employmentStatusLabels,
   payFrequencies,
   payFrequencyLabels,
   type EmploymentStatus,
+  type DeductionEnabledField,
   type PayFrequency,
 } from "~/domain/employment";
 import { centsToDollars, dollarsToCents } from "~/domain/money";
@@ -69,6 +71,16 @@ export function EmploymentFormSheet({
   const [typicalGross, setTypicalGross] = useState(
     centsToDollars(employment?.typicalGrossOverrideCents ?? null),
   );
+  const [enabledDeductions, setEnabledDeductions] = useState<
+    Record<DeductionEnabledField, boolean>
+  >(() =>
+    Object.fromEntries(
+      deductionFields.map((field) => [
+        field.enabledField,
+        employment?.[field.enabledField] ?? field.defaultEnabled,
+      ]),
+    ) as Record<DeductionEnabledField, boolean>,
+  );
 
   const finish = async (message: string) => {
     await Promise.all([
@@ -103,6 +115,7 @@ export function EmploymentFormSheet({
       status,
       endDate: status === "ended" ? endDate || null : null,
       typicalGrossOverrideCents,
+      ...enabledDeductions,
     };
     if (employment) update.mutate({ id: employment.id, ...values });
     else create.mutate(values);
@@ -181,6 +194,33 @@ export function EmploymentFormSheet({
                 Leave blank to project from the average gross pay for this employment.
               </p>
             </div>
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium">Paycheque deductions</legend>
+              <p className="text-xs text-muted-foreground">
+                Choose the deduction fields that appear when entering a paycheque.
+              </p>
+              <div className="grid gap-3 rounded-lg border p-4 sm:grid-cols-2">
+                {deductionFields.map((field) => (
+                  <label
+                    key={field.enabledField}
+                    className="flex cursor-pointer items-center gap-3 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      className="size-4 rounded border-input accent-primary"
+                      checked={enabledDeductions[field.enabledField]}
+                      onChange={(event) =>
+                        setEnabledDeductions((current) => ({
+                          ...current,
+                          [field.enabledField]: event.target.checked,
+                        }))
+                      }
+                    />
+                    {field.label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           </div>
           <SheetFooter>
             {employment ? (

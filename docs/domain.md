@@ -132,6 +132,10 @@ employers during the year, each employer is represented by a separate
 Employment. This keeps the paycheques, projections, and eventual T4 for each
 employer distinct.
 
+An Employment also identifies which supported deduction fields are relevant to
+its paycheques. Paycheque net pay is calculated from gross pay minus the recorded
+deductions rather than entered separately.
+
 Each Employment creates one calculated employment-income Tax Item. Its actual
 amount is the sum of recorded gross pay. Its expected amount is the current
 projection. These calculated amounts are managed through Paycheques rather than
