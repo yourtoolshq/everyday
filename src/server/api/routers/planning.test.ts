@@ -3,7 +3,14 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { createCaller } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
 import { databaseReady, db } from "~/server/db";
-import { careItems, carePlans, people } from "~/server/db/schema";
+import {
+  careItems,
+  careOrganizations,
+  carePlans,
+  people,
+  providers,
+  visits,
+} from "~/server/db/schema";
 
 async function caller() {
   return createCaller(await createTRPCContext({ headers: new Headers() }));
@@ -13,7 +20,7 @@ const itemFields = (personId: string) => ({
   personId,
   title: "Dental cleaning",
   category: "dental" as const,
-  status: "planned" as const,
+  targetVisitCount: 1,
   cadence: "yearly" as const,
   intervalCount: null,
   intervalUnit: null,
@@ -30,6 +37,9 @@ const itemFields = (personId: string) => ({
 describe("planning router", () => {
   beforeEach(async () => {
     await databaseReady;
+    await db.delete(visits);
+    await db.delete(providers);
+    await db.delete(careOrganizations);
     await db.delete(careItems);
     await db.delete(carePlans);
     await db.delete(people);
@@ -41,12 +51,14 @@ describe("planning router", () => {
     const plan = await api.planning.createPlan({ year: 2027 });
     const item = await api.planning.createItem({ planId: plan.id, ...itemFields(person.id) });
 
-    await api.planning.updateItemStatus({ id: item.id, status: "completed" });
+    await api.planning.setItemPursuit({ id: item.id, notPursuing: true });
     const overview = await api.planning.overview({ planId: plan.id });
 
     expect(overview.selectedPlan?.year).toBe(2027);
     expect(overview.people).toMatchObject([{ displayName: "Test Person", careItemCount: 1 }]);
-    expect(overview.items).toMatchObject([{ title: "Dental cleaning", status: "completed" }]);
+    expect(overview.items).toMatchObject([
+      { title: "Dental cleaning", progress: "not_pursuing", targetVisitCount: 1 },
+    ]);
 
     await api.planning.updateItem({
       id: item.id,

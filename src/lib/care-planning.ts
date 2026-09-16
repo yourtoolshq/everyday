@@ -11,15 +11,6 @@ export const careCategories = [
   "other",
 ] as const;
 
-export const careStatuses = [
-  "to_consider",
-  "planned",
-  "scheduled",
-  "completed",
-  "skipped",
-  "not_due",
-] as const;
-
 export const careCadences = [
   "one_time",
   "yearly",
@@ -52,15 +43,6 @@ export const careCategoryLabels = {
   specialist_care: "Specialist care",
   other: "Other",
 } satisfies Record<(typeof careCategories)[number], string>;
-
-export const careStatusLabels = {
-  to_consider: "To consider",
-  planned: "Planned",
-  scheduled: "Scheduled",
-  completed: "Completed",
-  skipped: "Skipped",
-  not_due: "Not due",
-} satisfies Record<(typeof careStatuses)[number], string>;
 
 export const careCadenceLabels = {
   one_time: "One-time",
@@ -129,7 +111,7 @@ export const careItemFieldsSchema = z
     personId: z.string().uuid(),
     title: z.string().trim().min(1).max(160),
     category: z.enum(careCategories),
-    status: z.enum(careStatuses),
+    targetVisitCount: z.number().int().positive().max(99),
     cadence: z.enum(careCadences),
     intervalCount: z.number().int().positive().max(999).nullable(),
     intervalUnit: z.enum(intervalUnits).nullable(),
@@ -177,7 +159,6 @@ export const careItemFieldsSchema = z
   });
 
 export type CareCategory = (typeof careCategories)[number];
-export type CareStatus = (typeof careStatuses)[number];
 export type CareCadence = (typeof careCadences)[number];
 export type CareSource = (typeof careSources)[number];
 export type TimingKind = (typeof timingKinds)[number];

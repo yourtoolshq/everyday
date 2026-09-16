@@ -5,10 +5,10 @@ import type {
   CareCadence,
   CareCategory,
   CareSource,
-  CareStatus,
   TimingKind,
 } from "~/lib/care-planning";
 import type { dateMeanings, intervalUnits, seasons } from "~/lib/care-planning";
+import type { VisitStatus } from "~/lib/visits";
 
 const id = () =>
   text("id")
@@ -53,7 +53,8 @@ export const careItems = sqliteTable("care_items", {
     .references(() => people.id, { onDelete: "restrict" }),
   title: text("title").notNull(),
   category: text("category").$type<CareCategory>().notNull(),
-  status: text("status").$type<CareStatus>().notNull(),
+  targetVisitCount: integer("target_visit_count").notNull().default(1),
+  notPursuingAt: text("not_pursuing_at"),
   cadence: text("cadence").$type<CareCadence>().notNull(),
   intervalCount: integer("interval_count"),
   intervalUnit: text("interval_unit").$type<(typeof intervalUnits)[number]>(),
@@ -64,6 +65,53 @@ export const careItems = sqliteTable("care_items", {
   targetSeason: text("target_season").$type<(typeof seasons)[number]>(),
   source: text("source").$type<CareSource>().notNull(),
   sourceDetail: text("source_detail"),
+  notes: text("notes"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const careOrganizations = sqliteTable("care_organizations", {
+  id: id(),
+  name: text("name").notNull(),
+  phoneNumbers: text("phone_numbers", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default([]),
+  websiteUrl: text("website_url"),
+  bookingUrl: text("booking_url"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const providers = sqliteTable("providers", {
+  id: id(),
+  name: text("name").notNull(),
+  careOrganizationId: text("care_organization_id").references(
+    () => careOrganizations.id,
+    { onDelete: "restrict" },
+  ),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const visits = sqliteTable("visits", {
+  id: id(),
+  personId: text("person_id")
+    .notNull()
+    .references(() => people.id, { onDelete: "restrict" }),
+  careItemId: text("care_item_id").references(() => careItems.id, {
+    onDelete: "set null",
+  }),
+  providerId: text("provider_id").references(() => providers.id, {
+    onDelete: "restrict",
+  }),
+  careOrganizationId: text("care_organization_id").references(
+    () => careOrganizations.id,
+    { onDelete: "restrict" },
+  ),
+  title: text("title").notNull(),
+  startsAt: text("starts_at").notNull(),
+  status: text("status").$type<VisitStatus>().notNull(),
   notes: text("notes"),
   createdAt: createdAt(),
   updatedAt: updatedAt(),

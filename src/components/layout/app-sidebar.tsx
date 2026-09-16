@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Building2,
   CalendarRange,
   FileText,
   HeartPulse,
@@ -11,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import {
   Sidebar,
@@ -32,7 +34,6 @@ type FutureNavigationItem = {
 };
 
 const futureNavigation: FutureNavigationItem[] = [
-  { title: "Visits", icon: Stethoscope },
   { title: "Documents", icon: FileText },
   { title: "Benefits", icon: ShieldCheck },
   { title: "Claims", icon: ReceiptText },
@@ -40,6 +41,13 @@ const futureNavigation: FutureNavigationItem[] = [
 ];
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+  const navigation = [
+    { title: "Care Plan", href: "/", icon: CalendarRange },
+    { title: "Visits", href: "/visits", icon: Stethoscope },
+    { title: "Care Providers", href: "/care-providers", icon: Building2 },
+  ];
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="border-b p-3">
@@ -58,18 +66,20 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Healthcare year</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive
-                    tooltip="Care Plan"
+              {navigation.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === item.href}
+                    tooltip={item.title}
                   >
-                    <Link href="/">
-                    <CalendarRange aria-hidden="true" />
-                    <span>Care Plan</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+                    <Link href={item.href}>
+                      <item.icon aria-hidden="true" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
               {futureNavigation.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton

@@ -72,20 +72,32 @@ Connect the plan to what actually happens.
 
 ### Scope
 
+- target visit count for a care item
+- care-item progress inferred from linked visits:
+  - planned
+  - in progress
+  - completed
+  - not pursuing as a manual override
 - visits
 - scheduled date/time
-- completion status
-- link a visit to a care item
-- reusable providers
+- scheduled, completed, and cancelled visit states
+- optional link from a visit to a care item
+- standalone visits for unplanned or urgent care
+- reusable care organizations such as clinics, institutes, pharmacies, and labs
+- reusable providers, optionally associated with a care organization
 - basic visit notes
 - visit history for a person/provider
-- external calendar feed or another simple standards-based calendar integration
+- dedicated Care Plan, Visits, and Care Providers areas
 
 ### Example use
 
 A planned dental cleaning becomes a scheduled visit.
 
 After the visit, mark it complete and keep basic notes without losing its connection to the yearly plan.
+
+A massage-therapy goal can target several visits and show progress as those
+visits are scheduled and completed. An emergency visit can be recorded directly
+without creating a care item.
 
 ### Useful outcome
 
@@ -94,8 +106,9 @@ First Aid becomes both a planning tool and a lightweight history of care.
 ### Explicitly deferred
 
 - appointment booking with providers
+- external calendar feeds or synchronization
 - full calendar UI
-- automated reminders beyond what is necessary for the personal workflow
+- automated reminders
 - detailed clinical records
 
 ---

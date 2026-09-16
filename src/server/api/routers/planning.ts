@@ -1,16 +1,16 @@
 import { TRPCError } from "@trpc/server";
-import { asc, count, desc, eq } from "drizzle-orm";
+import { asc, count, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 import {
   careItemFieldsSchema,
   careItemSortKey,
-  careStatuses,
   personNameSchema,
   planYearSchema,
 } from "~/lib/care-planning";
+import { deriveCareProgress } from "~/lib/visits";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { careItems, carePlans, people } from "~/server/db/schema";
+import { careItems, carePlans, people, visits } from "~/server/db/schema";
 
 const idInput = z.object({ id: z.string().uuid() });
 const now = () => new Date().toISOString();
@@ -26,16 +26,23 @@ export const planningRouter = createTRPCRouter({
   overview: publicProcedure
     .input(z.object({ planId: z.string().uuid().optional() }).optional())
     .query(async ({ ctx, input }) => {
-      const [allPeople, plans, assignmentCounts] = await Promise.all([
+      const [allPeople, plans, assignmentCounts, personVisitCounts] = await Promise.all([
         ctx.db.select().from(people).orderBy(asc(people.createdAt)),
         ctx.db.select().from(carePlans).orderBy(desc(carePlans.year)),
         ctx.db
           .select({ personId: careItems.personId, total: count() })
           .from(careItems)
           .groupBy(careItems.personId),
+        ctx.db
+          .select({ personId: visits.personId, total: count() })
+          .from(visits)
+          .groupBy(visits.personId),
       ]);
       const totalsByPerson = new Map(
         assignmentCounts.map(({ personId, total }) => [personId, total]),
+      );
+      const visitsByPerson = new Map(
+        personVisitCounts.map(({ personId, total }) => [personId, total]),
       );
 
       const selectedPlan = input?.planId
@@ -56,14 +63,33 @@ export const planningRouter = createTRPCRouter({
         return timing || a.title.localeCompare(b.title);
       });
 
+      const linkedVisits = items.length
+        ? await ctx.db
+            .select()
+            .from(visits)
+            .where(inArray(visits.careItemId, items.map((item) => item.id)))
+        : [];
+
       return {
         people: allPeople.map((person) => ({
           ...person,
           careItemCount: totalsByPerson.get(person.id) ?? 0,
+          visitCount: visitsByPerson.get(person.id) ?? 0,
         })),
         plans,
         selectedPlan,
-        items,
+        items: items.map((item) => {
+          const itemVisits = linkedVisits.filter((visit) => visit.careItemId === item.id);
+          const progress = deriveCareProgress({
+            targetVisitCount: item.targetVisitCount,
+            notPursuingAt: item.notPursuingAt,
+            visits: itemVisits,
+          });
+          const nextScheduledVisit = itemVisits
+            .filter((visit) => visit.status === "scheduled")
+            .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0] ?? null;
+          return { ...item, ...progress, nextScheduledVisit };
+        }),
       };
     }),
 
@@ -87,15 +113,21 @@ export const planningRouter = createTRPCRouter({
     }),
 
   deletePerson: publicProcedure.input(idInput).mutation(async ({ ctx, input }) => {
-    const assignmentCounts = await ctx.db
-      .select({ total: count() })
-      .from(careItems)
-      .where(eq(careItems.personId, input.id));
-    const total = assignmentCounts[0]?.total ?? 0;
+    const [assignmentCounts, visitCounts] = await Promise.all([
+      ctx.db
+        .select({ total: count() })
+        .from(careItems)
+        .where(eq(careItems.personId, input.id)),
+      ctx.db
+        .select({ total: count() })
+        .from(visits)
+        .where(eq(visits.personId, input.id)),
+    ]);
+    const total = (assignmentCounts[0]?.total ?? 0) + (visitCounts[0]?.total ?? 0);
     if (total > 0) {
       throw new TRPCError({
         code: "CONFLICT",
-        message: "Reassign or remove this person’s care items before deleting them.",
+        message: "Reassign or remove this person’s care items and visits before deleting them.",
       });
     }
     const [person] = await ctx.db.delete(people).where(eq(people.id, input.id)).returning();
@@ -157,12 +189,15 @@ export const planningRouter = createTRPCRouter({
       return item;
     }),
 
-  updateItemStatus: publicProcedure
-    .input(z.object({ id: z.string().uuid(), status: z.enum(careStatuses) }))
+  setItemPursuit: publicProcedure
+    .input(z.object({ id: z.string().uuid(), notPursuing: z.boolean() }))
     .mutation(async ({ ctx, input }) => {
       const [item] = await ctx.db
         .update(careItems)
-        .set({ status: input.status, updatedAt: now() })
+        .set({
+          notPursuingAt: input.notPursuing ? now() : null,
+          updatedAt: now(),
+        })
         .where(eq(careItems.id, input.id))
         .returning();
       if (!item) throw new TRPCError({ code: "NOT_FOUND", message: "Care item not found" });

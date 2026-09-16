@@ -3,9 +3,12 @@
 import {
   CalendarDays,
   CalendarPlus,
+  Check,
   Clock3,
   Pencil,
   Plus,
+  RotateCcw,
+  Stethoscope,
   Trash2,
   Users,
 } from "lucide-react";
@@ -50,6 +53,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
+import { VisitDialog } from "~/components/visits/visit-dialog";
 import {
   careCadenceLabels,
   careCadences,
@@ -57,8 +61,6 @@ import {
   careCategoryLabels,
   careSourceLabels,
   careSources,
-  careStatusLabels,
-  careStatuses,
   dateMeaningLabels,
   dateMeanings,
   intervalUnitLabels,
@@ -71,9 +73,10 @@ import {
   type CareCadence,
   type CareCategory,
   type CareSource,
-  type CareStatus,
   type TimingKind,
 } from "~/lib/care-planning";
+import { formatDateTime } from "~/lib/date-time";
+import { careProgressLabels, type CareProgressState } from "~/lib/visits";
 import { cn } from "~/lib/utils";
 import { api, type RouterInputs, type RouterOutputs } from "~/trpc/react";
 
@@ -81,13 +84,11 @@ type Overview = RouterOutputs["planning"]["overview"];
 type CareItem = Overview["items"][number];
 type Person = Overview["people"][number];
 
-const statusStyles: Record<CareStatus, string> = {
-  to_consider: "border-amber-200 bg-amber-50 text-amber-800",
+const statusStyles: Record<CareProgressState, string> = {
   planned: "border-sky-200 bg-sky-50 text-sky-800",
-  scheduled: "border-violet-200 bg-violet-50 text-violet-800",
+  in_progress: "border-violet-200 bg-violet-50 text-violet-800",
   completed: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  skipped: "border-slate-200 bg-slate-50 text-slate-700",
-  not_due: "border-stone-200 bg-stone-50 text-stone-700",
+  not_pursuing: "border-stone-200 bg-stone-50 text-stone-700",
 };
 
 function getErrorMessage(error: unknown) {
@@ -409,7 +410,7 @@ function PersonSection({ person, items, people, planId }: { person: Person; item
 
 function CareItemCard({ item, people, planId }: { item: CareItem; people: Person[]; planId: string }) {
   const utils = api.useUtils();
-  const statusMutation = api.planning.updateItemStatus.useMutation();
+  const pursuitMutation = api.planning.setItemPursuit.useMutation();
   const deleteMutation = api.planning.deleteItem.useMutation();
   const [editOpen, setEditOpen] = useState(false);
   return (
@@ -419,18 +420,46 @@ function CareItemCard({ item, people, planId }: { item: CareItem; people: Person
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2"><h4 className="font-semibold leading-tight">{item.title}</h4><Badge variant="outline">{careCategoryLabels[item.category]}</Badge></div>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground"><span>{formatTiming(item)}</span><span>{formatCadence(item)}</span><span>{careSourceLabels[item.source]}</span></div>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <Badge variant="outline" className={cn(statusStyles[item.progress])}>{careProgressLabels[item.progress]}</Badge>
+              <span className="text-muted-foreground">{item.completedVisitCount} of {item.targetVisitCount} {item.targetVisitCount === 1 ? "visit" : "visits"} completed</span>
+              {item.scheduledVisitCount > 0 ? <span className="text-muted-foreground">· {item.scheduledVisitCount} scheduled</span> : null}
+            </div>
+            {item.nextScheduledVisit ? <p className="mt-2 text-sm"><span className="text-muted-foreground">Next visit:</span> {formatDateTime(item.nextScheduledVisit.startsAt)}</p> : null}
             {item.sourceDetail && <p className="mt-3 text-sm">{item.sourceDetail}</p>}
             {item.notes && <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{item.notes}</p>}
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Select value={item.status} disabled={statusMutation.isPending} onValueChange={async (status: CareStatus) => { await statusMutation.mutateAsync({ id: item.id, status }); await utils.planning.overview.invalidate(); }}>
-              <SelectTrigger aria-label={`Status for ${item.title}`} className={cn("h-8 w-36 border text-xs font-medium", statusStyles[item.status])}><SelectValue /></SelectTrigger>
-              <SelectContent>{careStatuses.map((status) => <SelectItem value={status} key={status}>{careStatusLabels[status]}</SelectItem>)}</SelectContent>
-            </Select>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <VisitDialog
+              defaultPersonId={item.personId}
+              defaultCareItemId={item.id}
+              defaultTitle={item.title}
+              trigger={<Button size="sm" variant="outline"><Stethoscope />Schedule</Button>}
+            />
+            <VisitDialog
+              defaultPersonId={item.personId}
+              defaultCareItemId={item.id}
+              defaultTitle={item.title}
+              defaultStatus="completed"
+              trigger={<Button size="sm" variant="ghost"><Check />Record</Button>}
+            />
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled={pursuitMutation.isPending}
+              aria-label={item.progress === "not_pursuing" ? `Resume ${item.title}` : `Stop pursuing ${item.title}`}
+              title={item.progress === "not_pursuing" ? "Resume goal" : "Not pursuing this year"}
+              onClick={async () => {
+                await pursuitMutation.mutateAsync({ id: item.id, notPursuing: item.progress !== "not_pursuing" });
+                await utils.planning.overview.invalidate();
+              }}
+            >
+              {item.progress === "not_pursuing" ? <RotateCcw /> : <Clock3 />}
+            </Button>
             <Button variant="ghost" size="icon-sm" aria-label={`Edit ${item.title}`} onClick={() => setEditOpen(true)}><Pencil /></Button>
             <AlertDialog>
               <AlertDialogTrigger asChild><Button variant="ghost" size="icon-sm" className="text-muted-foreground hover:text-destructive" aria-label={`Delete ${item.title}`}><Trash2 /></Button></AlertDialogTrigger>
-              <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete “{item.title}”?</AlertDialogTitle><AlertDialogDescription>This permanently removes the care item from the plan.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={async () => { await deleteMutation.mutateAsync({ id: item.id }); await utils.planning.overview.invalidate(); }}>Delete item</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+              <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete “{item.title}”?</AlertDialogTitle><AlertDialogDescription>This permanently removes the care item from the plan. Its visits remain in visit history.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={async () => { await deleteMutation.mutateAsync({ id: item.id }); await Promise.all([utils.planning.overview.invalidate(), utils.visits.overview.invalidate()]); }}>Delete item</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
             </AlertDialog>
           </div>
         </div>
@@ -450,7 +479,6 @@ function CareItemDialog({ planId, people, item, defaultPersonId, compact, open: 
   const [error, setError] = useState<string>();
   const [personId, setPersonId] = useState(item?.personId ?? defaultPersonId ?? people[0]!.id);
   const [category, setCategory] = useState<CareCategory>(item?.category ?? "primary_care");
-  const [status, setStatus] = useState<CareStatus>(item?.status ?? "to_consider");
   const [cadence, setCadence] = useState<CareCadence>(item?.cadence ?? "one_time");
   const [intervalUnit, setIntervalUnit] = useState<(typeof intervalUnits)[number]>(item?.intervalUnit ?? "months");
   const [timingKind, setTimingKind] = useState<TimingKind>(item?.timingKind ?? "none");
@@ -468,7 +496,7 @@ function CareItemDialog({ planId, people, item, defaultPersonId, compact, open: 
       personId,
       title: String(form.get("title") ?? ""),
       category,
-      status,
+      targetVisitCount: Number(form.get("targetVisitCount")),
       cadence,
       intervalCount: cadence === "recurring_interval" ? Number(form.get("intervalCount")) : null,
       intervalUnit: cadence === "recurring_interval" ? intervalUnit : null,
@@ -499,7 +527,7 @@ function CareItemDialog({ planId, people, item, defaultPersonId, compact, open: 
             <div className="space-y-2 sm:col-span-2"><Label htmlFor={`item-title-${item?.id ?? "new"}`}>What care should be considered?</Label><Input id={`item-title-${item?.id ?? "new"}`} name="title" defaultValue={item?.title} placeholder="e.g. Dental cleaning" maxLength={160} autoFocus required /></div>
             <FormSelect label="Household member" value={personId} onValueChange={setPersonId} options={people.map((person) => ({ value: person.id, label: person.displayName }))} />
             <FormSelect label="Category" value={category} onValueChange={(value) => setCategory(value as CareCategory)} options={careCategories.map((value) => ({ value, label: careCategoryLabels[value] }))} />
-            <FormSelect label="State" value={status} onValueChange={(value) => setStatus(value as CareStatus)} options={careStatuses.map((value) => ({ value, label: careStatusLabels[value] }))} />
+            <div className="space-y-2"><Label htmlFor={`target-visit-count-${item?.id ?? "new"}`}>Target visits</Label><Input id={`target-visit-count-${item?.id ?? "new"}`} name="targetVisitCount" type="number" min={1} max={99} defaultValue={item?.targetVisitCount ?? 1} required /></div>
             <FormSelect label="Cadence" value={cadence} onValueChange={(value) => setCadence(value as CareCadence)} options={careCadences.map((value) => ({ value, label: careCadenceLabels[value] }))} />
             {cadence === "recurring_interval" && <><div className="space-y-2"><Label htmlFor="interval-count">Repeat every</Label><Input id="interval-count" name="intervalCount" type="number" min={1} max={999} defaultValue={item?.intervalCount ?? 3} required /></div><FormSelect label="Interval unit" value={intervalUnit} onValueChange={(value) => setIntervalUnit(value as (typeof intervalUnits)[number])} options={intervalUnits.map((value) => ({ value, label: intervalUnitLabels[value] }))} /></>}
             <FormSelect label="Timing" value={timingKind} onValueChange={(value) => setTimingKind(value as TimingKind)} options={timingKinds.map((value) => ({ value, label: timingKindLabels[value] }))} />
@@ -541,7 +569,7 @@ function HouseholdDialog({ people }: { people: Person[] }) {
     <Dialog onOpenChange={() => setError(undefined)}>
       <DialogTrigger asChild><Button variant="outline"><Users />Household</Button></DialogTrigger>
       <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Household members</DialogTitle><DialogDescription>Care items in every year are assigned to one of these people.</DialogDescription></DialogHeader>
-        <div className="space-y-3">{people.map((person) => <PersonRow key={person.id} person={person} assignmentCount={person.careItemCount} onRename={async (displayName) => { setError(undefined); try { await updatePerson.mutateAsync({ id: person.id, displayName }); await utils.planning.overview.invalidate(); } catch (caught) { setError(getErrorMessage(caught)); } }} onDelete={async () => { setError(undefined); try { await deletePerson.mutateAsync({ id: person.id }); await utils.planning.overview.invalidate(); } catch (caught) { setError(getErrorMessage(caught)); } }} />)}</div>
+        <div className="space-y-3">{people.map((person) => <PersonRow key={person.id} person={person} assignmentCount={person.careItemCount} visitCount={person.visitCount} onRename={async (displayName) => { setError(undefined); try { await updatePerson.mutateAsync({ id: person.id, displayName }); await utils.planning.overview.invalidate(); } catch (caught) { setError(getErrorMessage(caught)); } }} onDelete={async () => { setError(undefined); try { await deletePerson.mutateAsync({ id: person.id }); await utils.planning.overview.invalidate(); } catch (caught) { setError(getErrorMessage(caught)); } }} />)}</div>
         <form onSubmit={add} className="flex gap-2"><div className="flex-1"><Label htmlFor="new-person-name" className="sr-only">Display name</Label><Input id="new-person-name" name="displayName" placeholder="Add a household member" maxLength={80} required /></div><Button type="submit" disabled={createPerson.isPending}><Plus />Add</Button></form>
         {error && <p className="text-sm text-destructive">{error}</p>}
       </DialogContent>
@@ -549,8 +577,8 @@ function HouseholdDialog({ people }: { people: Person[] }) {
   );
 }
 
-function PersonRow({ person, assignmentCount, onRename, onDelete }: { person: Person; assignmentCount: number; onRename: (name: string) => Promise<void>; onDelete: () => Promise<void> }) {
+function PersonRow({ person, assignmentCount, visitCount, onRename, onDelete }: { person: Person; assignmentCount: number; visitCount: number; onRename: (name: string) => Promise<void>; onDelete: () => Promise<void> }) {
   const [editing, setEditing] = useState(false);
   if (editing) return <form className="flex gap-2" onSubmit={async (event) => { event.preventDefault(); const form = new FormData(event.currentTarget); await onRename(String(form.get("displayName") ?? "")); setEditing(false); }}><Input name="displayName" defaultValue={person.displayName} maxLength={80} autoFocus required /><Button size="sm">Save</Button><Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button></form>;
-  return <div className="flex items-center gap-3 rounded-lg border p-3"><div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">{person.displayName.slice(0, 1).toUpperCase()}</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{person.displayName}</p><p className="text-xs text-muted-foreground">{assignmentCount} {assignmentCount === 1 ? "care item across all years" : "care items across all years"}</p></div><Button variant="ghost" size="icon-sm" aria-label={`Rename ${person.displayName}`} onClick={() => setEditing(true)}><Pencil /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon-sm" aria-label={`Delete ${person.displayName}`} disabled={assignmentCount > 0}><Trash2 /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete {person.displayName}?</AlertDialogTitle><AlertDialogDescription>This removes the household member. They can only be deleted when they have no care items in any year.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={onDelete}>Delete person</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>;
+  return <div className="flex items-center gap-3 rounded-lg border p-3"><div className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">{person.displayName.slice(0, 1).toUpperCase()}</div><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{person.displayName}</p><p className="text-xs text-muted-foreground">{assignmentCount} {assignmentCount === 1 ? "care item" : "care items"} · {visitCount} {visitCount === 1 ? "visit" : "visits"}</p></div><Button variant="ghost" size="icon-sm" aria-label={`Rename ${person.displayName}`} onClick={() => setEditing(true)}><Pencil /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon-sm" aria-label={`Delete ${person.displayName}`} disabled={assignmentCount > 0 || visitCount > 0}><Trash2 /></Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete {person.displayName}?</AlertDialogTitle><AlertDialogDescription>This removes the household member. They can only be deleted when they have no care items or visits.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction variant="destructive" onClick={onDelete}>Delete person</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div>;
 }

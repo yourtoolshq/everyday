@@ -6,13 +6,11 @@ import {
   careItemFieldsSchema,
   careItemSortKey,
   careSources,
-  careStatuses,
 } from "~/lib/care-planning";
 
 describe("care planning values", () => {
   it("keeps the Phase 1 option lists stable", () => {
     expect(careCategories).toHaveLength(8);
-    expect(careStatuses).toHaveLength(6);
     expect(careCadences).toHaveLength(5);
     expect(careSources).toHaveLength(6);
   });
@@ -22,7 +20,7 @@ describe("care planning values", () => {
       personId: crypto.randomUUID(),
       title: "Routine care",
       category: "primary_care" as const,
-      status: "planned" as const,
+      targetVisitCount: 1,
       cadence: "one_time" as const,
       intervalCount: null,
       intervalUnit: null,
@@ -69,4 +67,3 @@ describe("care planning values", () => {
     ]);
   });
 });
-

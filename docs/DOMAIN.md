@@ -24,6 +24,7 @@ flowchart TD
 
     Visit[Visit]
     Provider[Provider]
+    CareOrganization[Care Organization]
 
     Benefit[Benefit]
     Claim[Claim]
@@ -34,10 +35,12 @@ flowchart TD
     CarePlan -->|contains| CareItem
     CareItem -->|for| Person
 
-    CareItem -->|may become| Visit
+    CareItem -->|may have| Visit
 
     Visit -->|for| Person
     Visit -->|with| Provider
+    Visit -->|at| CareOrganization
+    Provider -->|may belong to| CareOrganization
 
     Visit -->|may use| Benefit
     Visit -->|may create| Claim
@@ -175,18 +178,25 @@ Seasonal
 As needed
 ```
 
-Possible states might be:
+Each Care Item has a target number of visits. The target defaults to one, but a
+goal such as massage therapy may target several visits during the year.
+
+Its state is mostly inferred from linked Visits:
 
 ```text
-To Consider
 Planned
-Scheduled
+In Progress
 Completed
-Skipped
-Not Due
+Not Pursuing
 ```
 
-The exact state model should remain simple until actual usage shows what is necessary.
+Planned means no scheduled or completed Visits count toward the goal yet. In
+Progress means activity has started but completed Visits have not reached the
+target. Completed means the target has been reached. Not Pursuing is a manual
+override for a goal the household no longer intends to finish during that plan
+year.
+
+Cancelled Visits stay in history but do not count toward progress.
 
 ## Example
 
@@ -196,10 +206,13 @@ Care Item
 Type: Massage Therapy
 Reason: Personal wellness + available insurance benefit
 Plan: Approximately every 3 months
+Target: 4 visits
 Year: 2027
 ```
 
-When an actual appointment is booked, the Care Item can be associated with a Visit.
+When an actual appointment is booked, the Care Item can be associated with a
+Visit. A Care Item does not select a provider or clinic; those belong to the
+actual Visit.
 
 ---
 
@@ -225,9 +238,10 @@ A Visit may contain:
 
 ```text
 Scheduled date/time
-Completion date
+Status: Scheduled, Completed, or Cancelled
 Provider
-Care Item
+Care organization
+Optional Care Item
 Notes
 Cost
 Benefit used
@@ -239,6 +253,10 @@ Follow-up
 A Visit should remain lightweight.
 
 Not every visit needs every field.
+
+A Visit can exist without a Care Item. This supports urgent or otherwise
+unplanned healthcare that is recorded afterward. It may also refer to a care
+organization without a named Provider, such as a lab or pharmacy.
 
 ## Example
 
@@ -256,37 +274,35 @@ Out of pocket: $10
 
 ---
 
-# Provider
+# Provider and Care Organization
 
-A Provider represents the person or organization delivering care.
+A Provider represents an individual delivering care. A Care Organization
+represents a clinic, institute, pharmacy, lab, or other organization where care
+is delivered.
 
 Examples:
 
 ```text
-Family doctor
-Dentist
-Massage therapist
-Physiotherapist
-Optometrist
-Pharmacy
-Medical clinic
-Lab
+Provider: Family doctor
+Provider: Dentist
+Provider: Massage therapist
+
+Care organization: Medical clinic
+Care organization: Pharmacy
+Care organization: Lab
 ```
 
-Useful information may include:
+A Care Organization may contain:
 
 ```text
 Name
-Provider type
-Clinic
-Phone
-Address
+Phone number(s)
 Website
 Booking URL
-Notes
 ```
 
-Providers are reusable.
+Providers are reusable and may be associated with a Care Organization. A Visit
+can record both so its history retains where the interaction happened.
 
 A provider should not be recreated for every visit.
 
@@ -455,7 +471,7 @@ flowchart LR
 
     Visit -->|creates| FollowUp
     FollowUp -->|adds to plan| CareItem
-    CareItem -->|eventually becomes| FutureVisit
+    CareItem -->|may have| FutureVisit
 ```
 
 This relationship is important because it creates continuity between historical care and future planning.
@@ -549,7 +565,7 @@ Lab result
 Referral
 Medical procedure
 Insurance policy adjudication
-Provider directory
+External provider directory
 Medical coding
 ```
 
@@ -583,6 +599,7 @@ flowchart LR
     subgraph Care
         Visit[Visit]
         Provider[Provider]
+        CareOrganization[Care Organization]
     end
 
     subgraph Benefits
@@ -599,6 +616,8 @@ flowchart LR
 
     CareItem --> Visit
     Visit --> Provider
+    Visit --> CareOrganization
+    Provider --> CareOrganization
 
     Visit --> Claim
     Claim --> Benefit
