@@ -720,17 +720,29 @@ describe("Tax Book API", () => {
       ownerKind: "household", personId: null, expectedAmountCents: 1_200_000,
       actualAmountCents: null, status: "in_progress", notes: null, taxTreatment: "manitoba_eligible_rent",
     });
+    await caller.taxItem.create({
+      name: "Eligible school tax", taxLineReference: "Form MB479", type: "eligible_expense",
+      ownerKind: "household", personId: null, expectedAmountCents: 200_000,
+      actualAmountCents: 200_000, status: "complete", notes: null, taxTreatment: "manitoba_eligible_school_tax",
+    });
+    await caller.taxItem.create({
+      name: "Homeowner advance", taxLineReference: "Form MB479", type: "credit_benefit",
+      ownerKind: "household", personId: null, expectedAmountCents: 10_000,
+      actualAmountCents: 10_000, status: "complete", notes: null, taxTreatment: "manitoba_homeowner_advance",
+    });
     await createRecord(database, { taxItemId: rent!.id, date: "2026-01-01", description: "January rent", amountCents: 100_000, personId: null, notes: null, confirmReplaceActual: false }, null);
     await createRecord(database, { taxItemId: rent!.id, date: "2026-02-01", description: "February rent", amountCents: 100_000, personId: null, notes: null, confirmReplaceActual: false }, null);
-    await caller.taxEstimate.updateSettings({
-      manitobaCreditsClaimantPersonId: personA!.id, housingMode: "renter",
-      homeOwnershipStartDate: null, eligibleSchoolTaxCents: null,
-      homeownerAdvanceReceivedCents: null,
-      study: [
-        { personId: personA!.id, fullTimeStudyMonths: 0, partTimeStudyMonths: 0 },
-        { personId: personB!.id, fullTimeStudyMonths: 0, partTimeStudyMonths: 0 },
-      ],
+    const inferredRentEstimate = await caller.taxEstimate.get();
+    expect(inferredRentEstimate.supported).toBe(true);
+    if (!inferredRentEstimate.supported) return;
+    expect(inferredRentEstimate.rentMonths).toEqual(["2026-01", "2026-02"]);
+    expect(inferredRentEstimate.projected.manitobaCredits.renterCreditCents).toBe(10_417);
+    expect(inferredRentEstimate.inputs.projected).toMatchObject({
+      eligibleSchoolTaxCents: 200_000,
+      homeownerAdvanceReceivedCents: 10_000,
+      homeOwnershipDays: 306,
     });
+    expect(inferredRentEstimate.projected.manitobaCredits.homeownerCreditCents).toBe(124_137);
     const estimate = await caller.taxEstimate.get();
     expect(estimate.supported).toBe(true);
     if (!estimate.supported) return;

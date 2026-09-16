@@ -1,11 +1,11 @@
 import { asc, eq, inArray } from "drizzle-orm";
 
 import { calculateEmploymentProjection } from "~/domain/employment";
-import { projectedManualAmount, type EstimateSettingsInput, type EstimateWarning, type ScenarioInput } from "~/domain/tax-estimate";
+import { projectedManualAmount, type EstimateWarning, type ScenarioInput } from "~/domain/tax-estimate";
 import { calculateHouseholdEstimate, type PersonEstimateInput } from "~/domain/tax-calculator";
 import { rules2026Manitoba } from "~/domain/tax-rules/2026-manitoba";
 import { type TaxTreatment } from "~/domain/tax-item";
-import { employments, paycheques, people, records, taxEstimatePersonInputs, taxEstimateSettings, taxItems } from "~/server/db/schema";
+import { employments, paycheques, people, records, taxItems } from "~/server/db/schema";
 import type { Database } from "./helpers";
 import { requireActiveYear, requireHousehold } from "./helpers";
 
@@ -17,7 +17,7 @@ function emptyPerson(id: number, name: string): PersonEstimateInput {
     rrspDeductionCents: 0, fhsaDeductionCents: 0, professionalDuesCents: 0,
     incomeTaxWithheldCents: 0, cppCents: 0, cpp2Cents: 0, eiCents: 0,
     currentTuitionCents: 0, federalTuitionCarryforwardCents: 0,
-    manitobaTuitionCarryforwardCents: 0, fullTimeStudyMonths: 0, partTimeStudyMonths: 0,
+    manitobaTuitionCarryforwardCents: 0,
   };
 }
 
@@ -54,23 +54,9 @@ export async function buildTaxEstimate(db: Database, scenario?: ScenarioInput, r
   if (year.year !== 2026) blockingReasons.push("Tax Estimate currently supports the 2026 tax year only.");
   if (householdPeople.length !== 2) blockingReasons.push("Tax Estimate currently supports a household with exactly two people.");
 
-  const [savedSettings] = await db.select().from(taxEstimateSettings).where(eq(taxEstimateSettings.taxYearId, year.id));
-  const studyRows = await db.select().from(taxEstimatePersonInputs).where(eq(taxEstimatePersonInputs.taxYearId, year.id));
   const defaultClaimant = householdPeople[0]?.id ?? 0;
-  const settings = {
-    manitobaCreditsClaimantPersonId: savedSettings?.manitobaCreditsClaimantPersonId ?? defaultClaimant,
-    housingMode: savedSettings?.housingMode ?? "none" as const,
-    homeOwnershipStartDate: savedSettings?.homeOwnershipStartDate ?? null,
-    eligibleSchoolTaxCents: savedSettings?.eligibleSchoolTaxCents ?? null,
-    homeownerAdvanceReceivedCents: savedSettings?.homeownerAdvanceReceivedCents ?? null,
-    study: householdPeople.map((person) => {
-      const row = studyRows.find((item) => item.personId === person.id);
-      return { personId: person.id, fullTimeStudyMonths: row?.fullTimeStudyMonths ?? 0, partTimeStudyMonths: row?.partTimeStudyMonths ?? 0 };
-    }),
-  };
 
-  if (blockingReasons.length) return { household, year, supported: false as const, blockingReasons, settings, warnings, rulePack: rules2026Manitoba };
-  if (!savedSettings) warnings.push({ code: "MISSING_ESTIMATE_SETTINGS", message: "Review the Manitoba claimant, housing, and tuition settings." });
+  if (blockingReasons.length) return { household, year, supported: false as const, blockingReasons, warnings, rulePack: rules2026Manitoba };
 
   const itemRows = await db.select().from(taxItems).where(eq(taxItems.taxYearId, year.id));
   const unmappedItems = itemRows.filter((item) => item.taxTreatment === null && item.type !== "other" && ((item.actualAmountCents ?? 0) > 0 || (item.expectedAmountCents ?? 0) > 0));
@@ -79,19 +65,14 @@ export async function buildTaxEstimate(db: Database, scenario?: ScenarioInput, r
     warnings.push({ code: "MISSING_ITEM_AMOUNT", message: `${item.name} has a Tax treatment but no usable amount.`, itemId: item.id });
   }
 
-  const studyByPerson = new Map(settings.study.map((item) => [item.personId, item]));
   const actualPeople = new Map(householdPeople.map((person) => [person.id, emptyPerson(person.id, person.name)]));
   const projectedPeople = new Map(householdPeople.map((person) => [person.id, emptyPerson(person.id, person.name)]));
-  for (const person of householdPeople) {
-    const study = studyByPerson.get(person.id)!;
-    Object.assign(actualPeople.get(person.id)!, study);
-    Object.assign(projectedPeople.get(person.id)!, study);
-  }
 
   let actualMedical = 0;
   let projectedMedical = 0;
-  let actualRent = 0;
-  let projectedRent = 0;
+  let actualRent = 0, projectedRent = 0;
+  let actualSchoolTax = 0, projectedSchoolTax = 0;
+  let actualHomeownerAdvance = 0, projectedHomeownerAdvance = 0;
   const manualSources: Array<{ id: number; name: string; treatment: TaxTreatment; personId: number | null; actualCents: number; projectedCents: number }> = [];
   for (const item of itemRows) {
     const treatment = item.taxTreatment;
@@ -101,6 +82,8 @@ export async function buildTaxEstimate(db: Database, scenario?: ScenarioInput, r
     manualSources.push({ id: item.id, name: item.name, treatment, personId: item.personId, actualCents: actual, projectedCents: projected });
     if (treatment === "medical_expense") { actualMedical += actual; projectedMedical += projected; continue; }
     if (treatment === "manitoba_eligible_rent") { actualRent += actual; projectedRent += projected; continue; }
+    if (treatment === "manitoba_eligible_school_tax") { actualSchoolTax += actual; projectedSchoolTax += projected; continue; }
+    if (treatment === "manitoba_homeowner_advance") { actualHomeownerAdvance += actual; projectedHomeownerAdvance += projected; continue; }
     if (!item.personId) continue;
     addPersonAmount(actualPeople.get(item.personId)!, treatment, actual);
     addPersonAmount(projectedPeople.get(item.personId)!, treatment, projected);
@@ -142,54 +125,27 @@ export async function buildTaxEstimate(db: Database, scenario?: ScenarioInput, r
   }
   if (rentItemIds.length && recordedRentMonths.size === 0) warnings.push({ code: "RENT_WITHOUT_IN_YEAR_RECORDS", message: "Eligible rent is recorded, but no 2026 Record establishes an eligible rental month." });
 
-  const owns = settings.housingMode === "homeowner" || settings.housingMode === "rent_then_own";
-  const startDate = settings.housingMode === "homeowner" ? "2026-01-01" : settings.homeOwnershipStartDate;
-  const eligibleRentMonths = new Set<string>();
-  if (settings.housingMode === "renter") {
-    for (const month of recordedRentMonths) eligibleRentMonths.add(month);
-  } else if (settings.housingMode === "rent_then_own" && startDate) {
-    const ownershipMonth = startDate.slice(0, 7);
-    let hasOverlap = false;
-    for (const month of recordedRentMonths) {
-      if (month < ownershipMonth) eligibleRentMonths.add(month);
-      else hasOverlap = true;
-    }
-    if (hasOverlap) warnings.push({ code: "HOUSING_PERIOD_OVERLAP", message: "One or more rental Records overlap the home-ownership period; those months are excluded until the transition is reviewed." });
-  }
-  let homeOwnershipDays = 0;
-  if (owns && startDate) {
-    const start = new Date(`${startDate}T00:00:00Z`);
-    homeOwnershipDays = Math.max(0, Math.round((Date.UTC(2026, 11, 31) - start.getTime()) / 86_400_000) + 1);
-  }
-  if (owns && settings.eligibleSchoolTaxCents === null) warnings.push({ code: "MISSING_HOMEOWNER_DATA", message: "Enter eligible school tax to calculate the homeowner credit." });
+  const eligibleRentMonths = recordedRentMonths;
+  const homeOwnershipDays = (schoolTaxCents: number) => {
+    if (schoolTaxCents === 0) return 0;
+    const lastRentMonth = [...recordedRentMonths].sort().at(-1);
+    if (!lastRentMonth) return 365;
+    const [yearPart, monthPart] = lastRentMonth.split("-").map(Number);
+    const start = new Date(Date.UTC(yearPart!, monthPart!, 1));
+    return Math.max(0, Math.round((Date.UTC(2026, 11, 31) - start.getTime()) / 86_400_000) + 1);
+  };
   warnings.push({ code: "PENSIONABLE_INSURABLE_ASSUMPTION", message: "Employment gross is assumed to be pensionable and insurable for this planning estimate." });
 
-  const rentEnabled = settings.housingMode === "renter" || settings.housingMode === "rent_then_own";
-  const actualCredits = { claimantPersonId: settings.manitobaCreditsClaimantPersonId, medicalExpensesCents: actualMedical, eligibleRentCents: rentEnabled ? actualRent : 0, eligibleRentMonths: eligibleRentMonths.size, eligibleSchoolTaxCents: settings.eligibleSchoolTaxCents ?? 0, homeownerAdvanceReceivedCents: settings.homeownerAdvanceReceivedCents ?? 0, homeOwnershipDays };
-  const projectedCredits = { ...actualCredits, medicalExpensesCents: projectedMedical, eligibleRentCents: projectedRent };
+  const actualCredits = { claimantPersonId: defaultClaimant, medicalExpensesCents: actualMedical, eligibleRentCents: actualRent, eligibleRentMonths: eligibleRentMonths.size, eligibleSchoolTaxCents: actualSchoolTax, homeownerAdvanceReceivedCents: actualHomeownerAdvance, homeOwnershipDays: homeOwnershipDays(actualSchoolTax) };
+  const projectedCredits = { claimantPersonId: defaultClaimant, medicalExpensesCents: projectedMedical, eligibleRentCents: projectedRent, eligibleRentMonths: eligibleRentMonths.size, eligibleSchoolTaxCents: projectedSchoolTax, homeownerAdvanceReceivedCents: projectedHomeownerAdvance, homeOwnershipDays: homeOwnershipDays(projectedSchoolTax) };
   const actual = calculateHouseholdEstimate([...actualPeople.values()], actualCredits);
   const projected = calculateHouseholdEstimate([...projectedPeople.values()], projectedCredits);
   return {
-    household, year, supported: true as const, blockingReasons, settings, warnings,
+    household, year, supported: true as const, blockingReasons, warnings,
     incomplete: warnings.some((warning) => warning.code !== "PENSIONABLE_INSURABLE_ASSUMPTION"),
     excludedItems: unmappedItems.map((item) => ({ id: item.id, name: item.name })),
     sources: { taxItems: manualSources, employments: employmentSources },
     inputs: { actual: actualCredits, projected: projectedCredits },
     actual, projected, rentMonths: [...eligibleRentMonths].sort(), rulePack: rules2026Manitoba,
   };
-}
-
-export async function saveTaxEstimateSettings(db: Database, input: EstimateSettingsInput) {
-  const household = await requireHousehold(db);
-  const year = await requireActiveYear(db, household.id);
-  const validPeople = await db.select({ id: people.id }).from(people).where(eq(people.householdId, household.id));
-  const validIds = new Set(validPeople.map((person) => person.id));
-  if (!validIds.has(input.manitobaCreditsClaimantPersonId) || input.study.length !== validIds.size || input.study.some((row) => !validIds.has(row.personId))) throw new Error("Choose valid household members for estimate settings.");
-  await db.transaction(async (tx) => {
-    const settingsValues = { taxYearId: year.id, manitobaCreditsClaimantPersonId: input.manitobaCreditsClaimantPersonId, housingMode: input.housingMode, homeOwnershipStartDate: input.homeOwnershipStartDate, eligibleSchoolTaxCents: input.eligibleSchoolTaxCents, homeownerAdvanceReceivedCents: input.homeownerAdvanceReceivedCents };
-    await tx.insert(taxEstimateSettings).values(settingsValues).onConflictDoUpdate({ target: taxEstimateSettings.taxYearId, set: settingsValues });
-    await tx.delete(taxEstimatePersonInputs).where(eq(taxEstimatePersonInputs.taxYearId, year.id));
-    if (input.study.length) await tx.insert(taxEstimatePersonInputs).values(input.study.map((row) => ({ taxYearId: year.id, ...row })));
-  });
-  return { success: true };
 }

@@ -25,8 +25,6 @@ export const rules2026Manitoba = {
     basicPersonalPhaseEndCents: 40_000_000,
     medicalThresholdCents: 172_800,
     creditRateBps: 1080,
-    fullTimeEducationMonthlyCents: 40_000,
-    partTimeEducationMonthlyCents: 12_000,
     personalCreditAdultCents: 19_500,
     renterMaximumCents: 62_500,
     homeownerMaximumCents: 160_000,

@@ -21,6 +21,8 @@ export const taxTreatments = [
   "manitoba_tuition_carryforward",
   "medical_expense",
   "manitoba_eligible_rent",
+  "manitoba_eligible_school_tax",
+  "manitoba_homeowner_advance",
 ] as const;
 
 export type ItemType = (typeof itemTypes)[number];
@@ -39,6 +41,8 @@ export const taxTreatmentLabels: Record<TaxTreatment, string> = {
   manitoba_tuition_carryforward: "Manitoba tuition carryforward",
   medical_expense: "Medical expenses",
   manitoba_eligible_rent: "Manitoba eligible rent",
+  manitoba_eligible_school_tax: "Manitoba eligible school tax",
+  manitoba_homeowner_advance: "Manitoba homeowner advance received",
 };
 
 export const taxTreatmentDescriptions: Record<TaxTreatment, string> = {
@@ -52,6 +56,8 @@ export const taxTreatmentDescriptions: Record<TaxTreatment, string> = {
   manitoba_tuition_carryforward: "Unused Manitoba tuition and education balance.",
   medical_expense: "Eligible household medical expenses after reimbursements.",
   manitoba_eligible_rent: "Rent paid; Records determine eligible rental months.",
+  manitoba_eligible_school_tax: "Eligible school tax paid for a Manitoba principal residence.",
+  manitoba_homeowner_advance: "Advance payment already received for the Manitoba homeowner credit.",
 };
 
 export const taxTreatmentLineSuggestions: Partial<Record<TaxTreatment, string>> = {
@@ -65,6 +71,8 @@ export const taxTreatmentLineSuggestions: Partial<Record<TaxTreatment, string>> 
   manitoba_tuition_carryforward: "Schedule MB(S11)",
   medical_expense: "33099 / 58689",
   manitoba_eligible_rent: "Form MB479",
+  manitoba_eligible_school_tax: "Form MB479",
+  manitoba_homeowner_advance: "Form MB479",
 };
 
 type TreatmentRule = { type: ItemType; ownerKind: (typeof ownerKinds)[number] };
@@ -79,6 +87,8 @@ export const taxTreatmentRules: Record<TaxTreatment, TreatmentRule> = {
   manitoba_tuition_carryforward: { type: "credit_benefit", ownerKind: "person" },
   medical_expense: { type: "eligible_expense", ownerKind: "household" },
   manitoba_eligible_rent: { type: "eligible_expense", ownerKind: "household" },
+  manitoba_eligible_school_tax: { type: "eligible_expense", ownerKind: "household" },
+  manitoba_homeowner_advance: { type: "credit_benefit", ownerKind: "household" },
 };
 
 export function isTaxTreatmentCompatible(

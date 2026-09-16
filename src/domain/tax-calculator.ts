@@ -15,8 +15,6 @@ export type PersonEstimateInput = {
   currentTuitionCents: number;
   federalTuitionCarryforwardCents: number;
   manitobaTuitionCarryforwardCents: number;
-  fullTimeStudyMonths: number;
-  partTimeStudyMonths: number;
 };
 
 export type HouseholdCreditsInput = {
@@ -97,10 +95,9 @@ function calculatePerson(input: PersonEstimateInput, medicalCents: number) {
   const federalTaxCents = Math.max(0, federalBeforeTuition - federalTuition.credit);
 
   const mbTaxBeforeCredits = progressiveTax(taxableIncomeCents, rules.manitoba.brackets);
-  const mbEducation = input.fullTimeStudyMonths * rules.manitoba.fullTimeEducationMonthlyCents + input.partTimeStudyMonths * rules.manitoba.partTimeEducationMonthlyCents;
   const mbBaseCredits = mulRate(mbBasic + payroll.baseCpp + payroll.allowedEi + mbMedicalEligible, rules.manitoba.creditRateBps);
   const mbBeforeTuition = Math.max(0, mbTaxBeforeCredits - mbBaseCredits);
-  const mbTuitionAvailable = input.manitobaTuitionCarryforwardCents + input.currentTuitionCents + mbEducation;
+  const mbTuitionAvailable = input.manitobaTuitionCarryforwardCents + input.currentTuitionCents;
   const mbTuition = applyTuition(mbTuitionAvailable, mbBeforeTuition, rules.manitoba.creditRateBps);
   const manitobaTaxCents = Math.max(0, mbBeforeTuition - mbTuition.credit);
 
@@ -109,7 +106,18 @@ function calculatePerson(input: PersonEstimateInput, medicalCents: number) {
     personName: input.name,
     inputs: { ...input, medicalExpensesCents: medicalCents },
     totalIncomeCents,
+    incomeBreakdown: {
+      employmentIncomeCents: input.employmentIncomeCents,
+      interestIncomeCents: input.interestIncomeCents,
+    },
     totalDeductionsCents,
+    deductionBreakdown: {
+      rrspDeductionCents: input.rrspDeductionCents,
+      fhsaDeductionCents: input.fhsaDeductionCents,
+      professionalDuesCents: input.professionalDuesCents,
+      enhancedCppCents: payroll.enhancedCpp,
+      cpp2Cents: payroll.allowedCpp2,
+    },
     netIncomeCents,
     taxableIncomeCents,
     federalTaxBeforeCreditsCents: federalTaxBeforeCredits,

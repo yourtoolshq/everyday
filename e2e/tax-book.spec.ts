@@ -187,14 +187,19 @@ test("sets up a household and tracks an item", async ({ page }) => {
   await page.getByRole("link", { name: "Tax Estimate", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Tax Estimate", exact: true })).toBeVisible();
   await expect(page.getByText("Projected household result")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Projected" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Recorded" }).click();
+  await expect(page.getByText("Recorded household result")).toBeVisible();
+  await expect(page.getByText("RRSP/FHSA sandbox")).toHaveCount(0);
+  await page.getByRole("button", { name: "Projected" }).click();
+  await expect(page.getByText("Projected household result")).toBeVisible();
+  await expect(page.getByLabel("Housing", { exact: true })).toHaveCount(0);
   await expect(page.getByText("2026 Manitoba planning estimate—not filing software.")).toBeVisible();
   await page.getByLabel("Person A RRSP contribution").fill("1000");
   await page.getByLabel("Person A RRSP deduction").fill("1000");
   await page.getByRole("button", { name: "Calculate scenario" }).click();
   await expect(page.getByText("Household tax savings")).toBeVisible();
-  await page.getByLabel("Person A full-time months").fill("1");
-  await page.getByRole("button", { name: "Save estimate settings" }).click();
-  await expect(page.getByText("Estimate settings updated.")).toBeVisible();
+  await expect(page.getByText("Estimate settings", { exact: true })).toHaveCount(0);
 
   await page.getByRole("link", { name: "Paycheques", exact: true }).click();
   await page.getByLabel("Filter by employer").click();

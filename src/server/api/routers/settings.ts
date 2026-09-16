@@ -2,7 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { and, count, eq, max } from "drizzle-orm";
 import { z } from "zod";
 
-import { households, people, records, taxEstimatePersonInputs, taxEstimateSettings, taxItems } from "~/server/db/schema";
+import { households, people, records, taxItems } from "~/server/db/schema";
 import { getSettings, requireHousehold } from "../helpers";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
@@ -38,13 +38,11 @@ export const settingsRouter = createTRPCRouter({
     if ((householdSize?.value ?? 0) <= 1) {
       throw new TRPCError({ code: "CONFLICT", message: "A household must have at least one person." });
     }
-    const [[itemReferences], [recordReferences], [estimateReferences], [claimantReferences]] = await Promise.all([
+    const [[itemReferences], [recordReferences]] = await Promise.all([
       ctx.db.select({ value: count() }).from(taxItems).where(eq(taxItems.personId, input.id)),
       ctx.db.select({ value: count() }).from(records).where(eq(records.personId, input.id)),
-      ctx.db.select({ value: count() }).from(taxEstimatePersonInputs).where(eq(taxEstimatePersonInputs.personId, input.id)),
-      ctx.db.select({ value: count() }).from(taxEstimateSettings).where(eq(taxEstimateSettings.manitobaCreditsClaimantPersonId, input.id)),
     ]);
-    if ((itemReferences?.value ?? 0) > 0 || (recordReferences?.value ?? 0) > 0 || (estimateReferences?.value ?? 0) > 0 || (claimantReferences?.value ?? 0) > 0) {
+    if ((itemReferences?.value ?? 0) > 0 || (recordReferences?.value ?? 0) > 0) {
       throw new TRPCError({ code: "CONFLICT", message: "This person is referenced by tax information and cannot be removed." });
     }
     const result = await ctx.db.delete(people)

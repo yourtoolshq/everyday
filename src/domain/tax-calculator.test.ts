@@ -10,7 +10,7 @@ function person(id: number, income: number): PersonEstimateInput {
     rrspDeductionCents: 0, fhsaDeductionCents: 0, professionalDuesCents: 0,
     incomeTaxWithheldCents: 0, cppCents: 0, cpp2Cents: 0, eiCents: 0,
     currentTuitionCents: 0, federalTuitionCarryforwardCents: 0,
-    manitobaTuitionCarryforwardCents: 0, fullTimeStudyMonths: 0, partTimeStudyMonths: 0,
+    manitobaTuitionCarryforwardCents: 0,
   };
 }
 
@@ -33,7 +33,6 @@ describe("2026 Manitoba tax calculator", () => {
     lowIncome.currentTuitionCents = 500_000;
     lowIncome.federalTuitionCarryforwardCents = 200_000;
     lowIncome.manitobaTuitionCarryforwardCents = 300_000;
-    lowIncome.fullTimeStudyMonths = 4;
     const result = calculateHouseholdEstimate([lowIncome, person(2, 8_000_000)], {
       claimantPersonId: 1, medicalExpensesCents: 400_000, eligibleRentCents: 600_000,
       eligibleRentMonths: 6, eligibleSchoolTaxCents: 0, homeownerAdvanceReceivedCents: 0,
@@ -42,7 +41,7 @@ describe("2026 Manitoba tax calculator", () => {
     expect(result.medicalClaimantPersonId).toBe(1);
     expect(result.manitobaCredits.renterCreditCents).toBe(31_250);
     expect(result.people[0]!.federalTuition.remainingCents).toBeGreaterThanOrEqual(0);
-    expect(result.people[0]!.manitobaTuition.availableCents).toBe(960_000);
+    expect(result.people[0]!.manitobaTuition.availableCents).toBe(800_000);
   });
 
   it("includes payroll overpayments in the result", () => {
