@@ -201,6 +201,34 @@ test("sets up a household and tracks an item", async ({ page }) => {
   await expect(page.getByText("Household tax savings")).toBeVisible();
   await expect(page.getByText("Estimate settings", { exact: true })).toHaveCount(0);
 
+  await page.getByRole("link", { name: "Self-employment", exact: true }).click();
+  await page.getByRole("button", { name: "Add business" }).first().click();
+  await page.getByLabel("Business name").fill("Web services");
+  await page.getByRole("button", { name: "Save business" }).click();
+  await expect(page.getByText("Self-employment business created.")).toBeVisible();
+  await page.getByRole("link", { name: "Manage Records" }).click();
+  await page.getByRole("button", { name: "Revenue" }).click();
+  await page.getByLabel("Date").fill("2026-07-01");
+  await page.getByLabel("Description").fill("Website payment");
+  await page.getByLabel("Revenue amount").fill("100");
+  await page.getByRole("button", { name: "Save Record" }).click();
+  await expect(page.getByText("Record added.")).toBeVisible();
+  await page.getByRole("button", { name: "Expense" }).click();
+  await page.getByLabel("T2125 category").click();
+  await page.getByRole("option", { name: /8810 · Office expenses/ }).click();
+  await page.getByLabel("Date").fill("2026-07-02");
+  await page.getByLabel("Description").fill("Software services");
+  await page.getByLabel("Deductible amount").fill("300");
+  await page.getByRole("button", { name: "Save Record" }).click();
+  await expect(page.getByText("Record added.")).toBeVisible();
+  await expect(page.getByText("-$200.00")).toBeVisible();
+  await page.getByRole("link", { name: "Tax Items", exact: true }).click();
+  await expect(page.getByRole("link", { name: "Net business income (loss) — Web services", exact: true })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "-$200.00" })).toBeVisible();
+  await page.getByRole("link", { name: "Tax Estimate", exact: true }).click();
+  await expect(page.getByText("Net self-employment income (loss)").first()).toBeVisible();
+  await expect(page.getByText("Self-employment CPP payable").first()).toBeVisible();
+
   await page.getByRole("link", { name: "Paycheques", exact: true }).click();
   await page.getByLabel("Filter by employer").click();
   await page.getByRole("option", { name: "Person A — Employer A" }).click();

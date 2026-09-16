@@ -38,6 +38,9 @@ export const rules2026Manitoba = {
     secondAdditionalRateBps: 400,
     maximumCppCents: 423_045,
     maximumCpp2Cents: 41_600,
+    selfEmployedBaseRateBps: 990,
+    selfEmployedFirstAdditionalRateBps: 200,
+    selfEmployedSecondAdditionalRateBps: 800,
   },
   ei: { maximumInsurableCents: 6_890_000, rateBps: 163, maximumPremiumCents: 112_307 },
 } as const;

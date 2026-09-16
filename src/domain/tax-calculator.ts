@@ -5,6 +5,7 @@ export type PersonEstimateInput = {
   name: string;
   employmentIncomeCents: number;
   interestIncomeCents: number;
+  selfEmploymentIncomeCents: number;
   rrspDeductionCents: number;
   fhsaDeductionCents: number;
   professionalDuesCents: number;
@@ -68,6 +69,28 @@ function payrollAmounts(input: PersonEstimateInput) {
   };
 }
 
+function selfEmploymentCpp(input: PersonEstimateInput, payroll: ReturnType<typeof payrollAmounts>) {
+  const earnings = Math.max(0, input.selfEmploymentIncomeCents);
+  const employmentFirst = Math.max(0, Math.min(input.employmentIncomeCents, rules.cpp.ympeCents) - rules.cpp.basicExemptionCents);
+  const combinedFirst = Math.max(0, Math.min(input.employmentIncomeCents + earnings, rules.cpp.ympeCents) - rules.cpp.basicExemptionCents);
+  const firstRangeEarnings = Math.max(0, combinedFirst - employmentFirst);
+  const secondMaximum = rules.cpp.yampeCents - rules.cpp.ympeCents;
+  const employmentSecond = Math.max(0, Math.min(input.employmentIncomeCents - rules.cpp.ympeCents, secondMaximum));
+  const combinedSecond = Math.max(0, Math.min(input.employmentIncomeCents + earnings - rules.cpp.ympeCents, secondMaximum));
+  const secondRangeEarnings = Math.max(0, combinedSecond - employmentSecond);
+  const base = mulRate(firstRangeEarnings, rules.cpp.selfEmployedBaseRateBps);
+  const firstAdditional = mulRate(firstRangeEarnings, rules.cpp.selfEmployedFirstAdditionalRateBps);
+  const secondAdditional = mulRate(secondRangeEarnings, rules.cpp.selfEmployedSecondAdditionalRateBps);
+  const required = base + firstAdditional + secondAdditional;
+  const employmentOverpayment = payroll.cppOverpaymentCents + payroll.cpp2OverpaymentCents;
+  return {
+    payableCents: Math.max(0, required - employmentOverpayment * 2),
+    remainingEmploymentOverpaymentCents: Math.max(0, employmentOverpayment - Math.round(required / 2)),
+    creditableBaseCents: Math.round(base / 2),
+    deductibleCents: Math.round(base / 2) + firstAdditional + secondAdditional,
+  };
+}
+
 function applyTuition(available: number, taxBeforeTuition: number, rateBps: number) {
   const amountNeeded = rateBps === 0 ? 0 : Math.ceil(taxBeforeTuition * 10_000 / rateBps);
   const used = Math.min(available, Math.max(0, amountNeeded));
@@ -76,8 +99,9 @@ function applyTuition(available: number, taxBeforeTuition: number, rateBps: numb
 
 function calculatePerson(input: PersonEstimateInput, medicalCents: number) {
   const payroll = payrollAmounts(input);
-  const totalIncomeCents = input.employmentIncomeCents + input.interestIncomeCents;
-  const totalDeductionsCents = input.rrspDeductionCents + input.fhsaDeductionCents + input.professionalDuesCents + payroll.enhancedCpp + payroll.allowedCpp2;
+  const selfCpp = selfEmploymentCpp(input, payroll);
+  const totalIncomeCents = input.employmentIncomeCents + input.interestIncomeCents + input.selfEmploymentIncomeCents;
+  const totalDeductionsCents = input.rrspDeductionCents + input.fhsaDeductionCents + input.professionalDuesCents + payroll.enhancedCpp + payroll.allowedCpp2 + selfCpp.deductibleCents;
   const netIncomeCents = Math.max(0, totalIncomeCents - totalDeductionsCents);
   const taxableIncomeCents = netIncomeCents;
 
@@ -88,14 +112,14 @@ function calculatePerson(input: PersonEstimateInput, medicalCents: number) {
   const mbMedicalEligible = Math.max(0, medicalCents - Math.min(rules.manitoba.medicalThresholdCents, mulRate(netIncomeCents, 300)));
 
   const federalTaxBeforeCredits = progressiveTax(taxableIncomeCents, rules.federal.brackets);
-  const federalBaseCredits = mulRate(federalBasic + employmentAmount + payroll.baseCpp + payroll.allowedEi + federalMedicalEligible, rules.federal.creditRateBps);
+  const federalBaseCredits = mulRate(federalBasic + employmentAmount + payroll.baseCpp + selfCpp.creditableBaseCents + payroll.allowedEi + federalMedicalEligible, rules.federal.creditRateBps);
   const federalBeforeTuition = Math.max(0, federalTaxBeforeCredits - federalBaseCredits);
   const federalTuitionAvailable = input.federalTuitionCarryforwardCents + input.currentTuitionCents;
   const federalTuition = applyTuition(federalTuitionAvailable, federalBeforeTuition, rules.federal.creditRateBps);
   const federalTaxCents = Math.max(0, federalBeforeTuition - federalTuition.credit);
 
   const mbTaxBeforeCredits = progressiveTax(taxableIncomeCents, rules.manitoba.brackets);
-  const mbBaseCredits = mulRate(mbBasic + payroll.baseCpp + payroll.allowedEi + mbMedicalEligible, rules.manitoba.creditRateBps);
+  const mbBaseCredits = mulRate(mbBasic + payroll.baseCpp + selfCpp.creditableBaseCents + payroll.allowedEi + mbMedicalEligible, rules.manitoba.creditRateBps);
   const mbBeforeTuition = Math.max(0, mbTaxBeforeCredits - mbBaseCredits);
   const mbTuitionAvailable = input.manitobaTuitionCarryforwardCents + input.currentTuitionCents;
   const mbTuition = applyTuition(mbTuitionAvailable, mbBeforeTuition, rules.manitoba.creditRateBps);
@@ -109,6 +133,7 @@ function calculatePerson(input: PersonEstimateInput, medicalCents: number) {
     incomeBreakdown: {
       employmentIncomeCents: input.employmentIncomeCents,
       interestIncomeCents: input.interestIncomeCents,
+      selfEmploymentIncomeCents: input.selfEmploymentIncomeCents,
     },
     totalDeductionsCents,
     deductionBreakdown: {
@@ -117,6 +142,7 @@ function calculatePerson(input: PersonEstimateInput, medicalCents: number) {
       professionalDuesCents: input.professionalDuesCents,
       enhancedCppCents: payroll.enhancedCpp,
       cpp2Cents: payroll.allowedCpp2,
+      selfEmploymentCppCents: selfCpp.deductibleCents,
     },
     netIncomeCents,
     taxableIncomeCents,
@@ -125,20 +151,22 @@ function calculatePerson(input: PersonEstimateInput, medicalCents: number) {
     manitobaTaxBeforeCreditsCents: mbTaxBeforeCredits,
     manitobaTaxCents,
     totalTaxCents: federalTaxCents + manitobaTaxCents,
+    selfEmploymentCppPayableCents: selfCpp.payableCents,
     incomeTaxWithheldCents: input.incomeTaxWithheldCents,
-    cppOverpaymentCents: payroll.cppOverpaymentCents + payroll.cpp2OverpaymentCents,
+    cppOverpaymentCents: selfCpp.remainingEmploymentOverpaymentCents,
     eiOverpaymentCents: payroll.eiOverpaymentCents,
     federalTuition: { availableCents: federalTuitionAvailable, usedCents: federalTuition.used, remainingCents: federalTuition.remaining },
     manitobaTuition: { availableCents: mbTuitionAvailable, usedCents: mbTuition.used, remainingCents: mbTuition.remaining },
     refundableCreditsCents: 0,
-    resultCents: input.incomeTaxWithheldCents + payroll.cppOverpaymentCents + payroll.cpp2OverpaymentCents + payroll.eiOverpaymentCents - federalTaxCents - manitobaTaxCents,
+    resultCents: input.incomeTaxWithheldCents + selfCpp.remainingEmploymentOverpaymentCents + payroll.eiOverpaymentCents - federalTaxCents - manitobaTaxCents - selfCpp.payableCents,
   };
 }
 
 function householdCredits(people: PersonEstimateInput[], credits: HouseholdCreditsInput) {
   const familyNet = people.reduce((sum, person) => {
     const payroll = payrollAmounts(person);
-    return sum + Math.max(0, person.employmentIncomeCents + person.interestIncomeCents - person.rrspDeductionCents - person.fhsaDeductionCents - person.professionalDuesCents - payroll.enhancedCpp - payroll.allowedCpp2);
+    const selfCpp = selfEmploymentCpp(person, payroll);
+    return sum + Math.max(0, person.employmentIncomeCents + person.interestIncomeCents + person.selfEmploymentIncomeCents - person.rrspDeductionCents - person.fhsaDeductionCents - person.professionalDuesCents - payroll.enhancedCpp - payroll.allowedCpp2 - selfCpp.deductibleCents);
   }, 0);
   const personal = Math.max(0, rules.manitoba.personalCreditAdultCents * 2 - mulRate(familyNet, 100));
   const renter = Math.min(credits.eligibleRentCents, Math.round(rules.manitoba.renterMaximumCents * credits.eligibleRentMonths / 12));

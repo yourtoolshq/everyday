@@ -121,10 +121,10 @@ export async function createRecord(
 ) {
   return db.transaction(async (tx) => {
     const { household, item } = await requireActiveTaxItem(tx, input.taxItemId);
-    if (item.valueSource === "paycheques") {
+    if (item.valueSource === "paycheques" || item.valueSource === "self_employment") {
       throw new TRPCError({
         code: "CONFLICT",
-        message: "Paycheque-calculated Tax Items cannot have Records.",
+        message: "Calculated Tax Items cannot have supporting Records here.",
       });
     }
     if (

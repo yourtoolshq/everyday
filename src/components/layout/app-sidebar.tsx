@@ -8,6 +8,7 @@ import {
   IconReceiptDollar,
   IconCalculator,
   IconSettings,
+  IconBriefcase,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -31,6 +32,7 @@ const navigation = [
   { title: "Overview", href: "/", icon: IconLayoutDashboard },
   { title: "Tax Items", href: "/items", icon: IconListDetails },
   { title: "Paycheques", href: "/paycheques", icon: IconReceiptDollar },
+  { title: "Self-employment", href: "/self-employment", icon: IconBriefcase },
   { title: "Tax Estimate", href: "/estimate", icon: IconCalculator },
   { title: "Tax Documents", href: "/documents", icon: IconFileDescription },
   { title: "Settings", href: "/settings", icon: IconSettings },

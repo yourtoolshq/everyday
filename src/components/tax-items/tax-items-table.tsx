@@ -7,6 +7,7 @@ import {
   IconPlus,
   IconReceiptDollar,
   IconTrash,
+  IconBriefcase,
 } from "@tabler/icons-react";
 import {
   createColumnHelper,
@@ -86,6 +87,8 @@ export function TaxItemsTable({
             <Link className="block truncate font-medium hover:text-primary hover:underline" href={`/items/${info.row.original.id}`}>{info.getValue()}</Link>
             {info.row.original.valueSource === "paycheques" ? (
               <p className="mt-0.5 truncate text-xs text-muted-foreground">Calculated from paycheques</p>
+            ) : info.row.original.valueSource === "self_employment" ? (
+              <p className="mt-0.5 truncate text-xs text-muted-foreground">Calculated from self-employment Records</p>
             ) : info.row.original.notes ? (
               <p className="mt-0.5 truncate text-xs text-muted-foreground">{info.row.original.notes}</p>
             ) : null}
@@ -148,6 +151,8 @@ export function TaxItemsTable({
           <Button variant="ghost" size="icon" asChild aria-label={`Manage ${info.row.original.name} paycheques`}>
             <Link href="/paycheques"><IconReceiptDollar /></Link>
           </Button>
+        ) : info.row.original.valueSource === "self_employment" ? (
+          <Button variant="ghost" size="icon" asChild aria-label={`Manage ${info.row.original.name}`}><Link href={`/self-employment/${info.row.original.businessActivityId}`}><IconBriefcase /></Link></Button>
         ) : (
           <DropdownMenu>
             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label={`Actions for ${info.row.original.name}`}><IconDots /></Button></DropdownMenuTrigger>

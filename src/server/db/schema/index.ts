@@ -1,4 +1,5 @@
 export { households } from "./households";
+export { businessActivities, businessRecordAttachments, businessRecords } from "./business-activities";
 export { employments } from "./employments";
 export { people } from "./people";
 export { paycheques } from "./paycheques";

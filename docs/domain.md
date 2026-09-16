@@ -20,6 +20,7 @@ The goal is to keep the model understandable in normal personal-tax language and
 | **Tax Document**  | An official tax document such as a T4, T5, RRSP receipt, or FHSA slip |
 | **Tax Estimate**  | The current estimated refund or amount owing                          |
 | **Tax Treatment** | An explicit rule describing how a Tax Item feeds the Tax Estimate     |
+| **Business Activity** | One person's distinct sole-proprietor activity for a Tax Year     |
 | **Tax Filing**    | The record of the tax return being submitted                          |
 | **Tax Result**    | The refund received or amount owing                                   |
 | **Assessment**    | CRA's assessment of the filed return                                  |
@@ -302,6 +303,17 @@ Claimed by: Person B
 ```
 
 These distinctions should only be introduced where they are actually needed.
+
+## Self-Employment Activities
+
+A Business Activity belongs to one Person and one Tax Year. Each distinct
+activity keeps its revenue and eligible-expense Records separate so its gross
+revenue, total expenses, and net income or loss can be reviewed together.
+
+The activity owns one managed, signed Tax Item representing its net business
+income or loss. The underlying Records always contain positive amounts and are
+classified as revenue or expense; expense Records also identify a supported
+T2125 category. The managed Tax Item cannot be edited independently.
 
 ## Tax Year Lifecycle
 

@@ -13,7 +13,7 @@ type ScenarioPerson = ScenarioInput["people"][number];
 
 function emptyPerson(id: number, name: string): PersonEstimateInput {
   return {
-    id, name, employmentIncomeCents: 0, interestIncomeCents: 0,
+    id, name, employmentIncomeCents: 0, interestIncomeCents: 0, selfEmploymentIncomeCents: 0,
     rrspDeductionCents: 0, fhsaDeductionCents: 0, professionalDuesCents: 0,
     incomeTaxWithheldCents: 0, cppCents: 0, cpp2Cents: 0, eiCents: 0,
     currentTuitionCents: 0, federalTuitionCarryforwardCents: 0,
@@ -23,6 +23,7 @@ function emptyPerson(id: number, name: string): PersonEstimateInput {
 
 const treatmentField: Partial<Record<TaxTreatment, keyof PersonEstimateInput>> = {
   interest_income: "interestIncomeCents",
+  self_employment_income: "selfEmploymentIncomeCents",
   rrsp_deduction: "rrspDeductionCents",
   fhsa_deduction: "fhsaDeductionCents",
   professional_dues: "professionalDuesCents",
@@ -135,6 +136,7 @@ export async function buildTaxEstimate(db: Database, scenario?: ScenarioInput, r
     return Math.max(0, Math.round((Date.UTC(2026, 11, 31) - start.getTime()) / 86_400_000) + 1);
   };
   warnings.push({ code: "PENSIONABLE_INSURABLE_ASSUMPTION", message: "Employment gross is assumed to be pensionable and insurable for this planning estimate." });
+  if (itemRows.some((item) => item.taxTreatment === "self_employment_income")) warnings.push({ code: "SELF_EMPLOYMENT_ASSUMPTIONS", message: "Self-employment Records are assumed deductible and net positive income is estimated using the 2026 Schedule 8 structure for 12 CPP-eligible months. Quebec, age-based CPP elections, and restricted losses are not supported." });
 
   const actualCredits = { claimantPersonId: defaultClaimant, medicalExpensesCents: actualMedical, eligibleRentCents: actualRent, eligibleRentMonths: eligibleRentMonths.size, eligibleSchoolTaxCents: actualSchoolTax, homeownerAdvanceReceivedCents: actualHomeownerAdvance, homeOwnershipDays: homeOwnershipDays(actualSchoolTax) };
   const projectedCredits = { claimantPersonId: defaultClaimant, medicalExpensesCents: projectedMedical, eligibleRentCents: projectedRent, eligibleRentMonths: eligibleRentMonths.size, eligibleSchoolTaxCents: projectedSchoolTax, homeownerAdvanceReceivedCents: projectedHomeownerAdvance, homeOwnershipDays: homeOwnershipDays(projectedSchoolTax) };

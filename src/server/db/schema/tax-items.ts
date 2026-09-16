@@ -55,7 +55,7 @@ export const taxItems = sqliteTable(
     ),
     check(
       "tax_item_actual_non_negative",
-      sql`${table.actualAmountCents} is null or ${table.actualAmountCents} >= 0`,
+      sql`${table.actualAmountCents} is null or ${table.actualAmountCents} >= 0 or ${table.valueSource} = 'self_employment'`,
     ),
   ],
 );

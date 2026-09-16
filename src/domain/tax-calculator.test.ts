@@ -6,7 +6,7 @@ import { rules2026Manitoba } from "./tax-rules/2026-manitoba";
 
 function person(id: number, income: number): PersonEstimateInput {
   return {
-    id, name: `Person ${id}`, employmentIncomeCents: income, interestIncomeCents: 0,
+    id, name: `Person ${id}`, employmentIncomeCents: income, interestIncomeCents: 0, selfEmploymentIncomeCents: 0,
     rrspDeductionCents: 0, fhsaDeductionCents: 0, professionalDuesCents: 0,
     incomeTaxWithheldCents: 0, cppCents: 0, cpp2Cents: 0, eiCents: 0,
     currentTuitionCents: 0, federalTuitionCarryforwardCents: 0,
@@ -56,5 +56,23 @@ describe("2026 Manitoba tax calculator", () => {
     });
     expect(result.people[0]!.cppOverpaymentCents).toBe(95_355);
     expect(result.people[0]!.eiOverpaymentCents).toBe(37_693);
+  });
+
+  it("applies losses without CPP and charges CPP only in remaining employment room", () => {
+    const loss = person(1, 5_000_000);
+    loss.selfEmploymentIncomeCents = -500_000;
+    const lossResult = calculateHouseholdEstimate([loss, person(2, 0)], { claimantPersonId: 1, medicalExpensesCents: 0, eligibleRentCents: 0, eligibleRentMonths: 0, eligibleSchoolTaxCents: 0, homeownerAdvanceReceivedCents: 0, homeOwnershipDays: 0 });
+    expect(lossResult.people[0]!.totalIncomeCents).toBe(4_500_000);
+    expect(lossResult.people[0]!.selfEmploymentCppPayableCents).toBe(0);
+
+    const partialRoom = person(1, 7_000_000);
+    partialRoom.selfEmploymentIncomeCents = 1_000_000;
+    const partialResult = calculateHouseholdEstimate([partialRoom, person(2, 0)], { claimantPersonId: 1, medicalExpensesCents: 0, eligibleRentCents: 0, eligibleRentMonths: 0, eligibleSchoolTaxCents: 0, homeownerAdvanceReceivedCents: 0, homeOwnershipDays: 0 });
+    expect(partialResult.people[0]!.selfEmploymentCppPayableCents).toBe(97_940);
+
+    const noRoom = person(1, 8_500_000);
+    noRoom.selfEmploymentIncomeCents = 1_000_000;
+    const noRoomResult = calculateHouseholdEstimate([noRoom, person(2, 0)], { claimantPersonId: 1, medicalExpensesCents: 0, eligibleRentCents: 0, eligibleRentMonths: 0, eligibleSchoolTaxCents: 0, homeownerAdvanceReceivedCents: 0, homeOwnershipDays: 0 });
+    expect(noRoomResult.people[0]!.selfEmploymentCppPayableCents).toBe(0);
   });
 });

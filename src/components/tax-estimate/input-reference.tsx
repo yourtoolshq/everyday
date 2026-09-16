@@ -20,6 +20,10 @@ export function InputReference({
       value: person.inputs.interestIncomeCents,
     },
     {
+      label: `${person.personName} — recorded net self-employment income (loss)`,
+      value: person.inputs.selfEmploymentIncomeCents,
+    },
+    {
       label: `${person.personName} — RRSP/FHSA/professional deductions`,
       value: person.inputs.rrspDeductionCents
         + person.inputs.fhsaDeductionCents

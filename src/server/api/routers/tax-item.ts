@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { buildOverview } from "~/domain/overview";
 import { taxItemInput, taxItemUpdateInput } from "~/domain/tax-item";
-import { people, records, taxDocuments, taxItems } from "~/server/db/schema";
+import { businessActivities, people, records, taxDocuments, taxItems } from "~/server/db/schema";
 import type { Database } from "../helpers";
 import { requireActiveYear, requireHousehold } from "../helpers";
 import { createTRPCRouter, publicProcedure } from "../trpc";
@@ -51,9 +51,11 @@ async function listActiveItems(db: Database) {
       notes: taxItems.notes,
       createdAt: taxItems.createdAt,
       updatedAt: taxItems.updatedAt,
+      businessActivityId: businessActivities.id,
     })
     .from(taxItems)
     .leftJoin(people, eq(taxItems.personId, people.id))
+    .leftJoin(businessActivities, eq(taxItems.id, businessActivities.taxItemId))
     .where(eq(taxItems.taxYearId, year.id))
     .orderBy(desc(taxItems.updatedAt), desc(taxItems.id));
   return { household, year, items };
@@ -111,10 +113,10 @@ export const taxItemRouter = createTRPCRouter({
             operators.eq(table.taxYearId, year.id),
           ),
       });
-      if (existing?.valueSource === "paycheques") {
+      if (existing?.valueSource === "paycheques" || existing?.valueSource === "self_employment") {
         throw new TRPCError({
           code: "CONFLICT",
-          message: "Manage this calculated item from Paycheques.",
+          message: "Manage this calculated item from its dedicated workspace.",
         });
       }
       const item = await ctx.db.transaction(async (tx) => {
@@ -155,10 +157,10 @@ export const taxItemRouter = createTRPCRouter({
         .select({ valueSource: taxItems.valueSource })
         .from(taxItems)
         .where(and(eq(taxItems.id, input.id), eq(taxItems.taxYearId, year.id)));
-      if (item?.valueSource === "paycheques") {
+      if (item?.valueSource === "paycheques" || item?.valueSource === "self_employment") {
         throw new TRPCError({
           code: "CONFLICT",
-          message: "Delete the employment from Paycheques instead.",
+          message: "Delete this calculated item from its dedicated workspace.",
         });
       }
       const [deleted] = await ctx.db

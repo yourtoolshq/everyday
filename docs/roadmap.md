@@ -290,10 +290,15 @@ estimate is in use.
 
 ### Includes
 
-* person-owned business revenue
-* eligible business expenses
-* net business income
-* related income-tax and CPP estimate
+The implemented workflow provides a dedicated Self-employment workspace for
+multiple person-owned sole-proprietor activities. Each activity records revenue
+and ordinary eligible expenses with optional attachments, groups expenses by a
+supported T2125 line, calculates net income or loss, and creates one managed Tax
+Item for line 13500.
+
+Recorded net results feed the 2026 Manitoba estimate. Losses reduce other
+income; positive aggregate self-employment income adds the related income-tax
+and CPP estimate while respecting employment earnings already using CPP room.
 
 ### Explicitly Deferred
 

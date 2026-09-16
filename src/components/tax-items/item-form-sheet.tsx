@@ -122,7 +122,7 @@ export function ItemFormSheet({
 
   const pending = create.isPending || update.isPending;
   const ownerKind = owner.startsWith("person:") ? "person" : "household";
-  const availableTreatments = taxTreatments.filter((value) => value !== "employment_income" && taxTreatmentRules[value].type === type && taxTreatmentRules[value].ownerKind === ownerKind);
+  const availableTreatments = taxTreatments.filter((value) => value !== "employment_income" && value !== "self_employment_income" && taxTreatmentRules[value].type === type && taxTreatmentRules[value].ownerKind === ownerKind);
 
   function changeTreatment(value: string) {
     const treatment = value === "none" ? null : value as TaxTreatment;

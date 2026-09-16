@@ -28,6 +28,7 @@ export function PersonEstimateCard({ person, modeLabel }: { person: PersonResult
             label="Interest income"
             value={person.incomeBreakdown.interestIncomeCents}
           />
+          <StatementLine label="Net self-employment income (loss)" value={person.incomeBreakdown.selfEmploymentIncomeCents} />
           <StatementLine label="Total income" value={person.totalIncomeCents} total />
         </StatementSection>
         <StatementSection title="Deductions">
@@ -36,6 +37,7 @@ export function PersonEstimateCard({ person, modeLabel }: { person: PersonResult
           <StatementLine label="Professional dues" value={person.deductionBreakdown.professionalDuesCents} />
           <StatementLine label="Enhanced CPP deduction" value={person.deductionBreakdown.enhancedCppCents} />
           <StatementLine label="CPP2 deduction" value={person.deductionBreakdown.cpp2Cents} />
+          <StatementLine label="Self-employment CPP deduction" value={person.deductionBreakdown.selfEmploymentCppCents} />
           <StatementLine label="Total deductions" value={person.totalDeductionsCents} total />
           <StatementLine label="Taxable income" value={person.taxableIncomeCents} emphasis />
         </StatementSection>
@@ -46,7 +48,8 @@ export function PersonEstimateCard({ person, modeLabel }: { person: PersonResult
           <StatementLine label="Manitoba tax before credits" value={person.manitobaTaxBeforeCreditsCents} />
           <StatementLine label="Manitoba non-refundable credits" value={manitobaCredits === 0 ? 0 : -manitobaCredits} />
           <StatementLine label="Manitoba tax" value={person.manitobaTaxCents} total />
-          <StatementLine label="Total estimated tax" value={person.totalTaxCents} emphasis />
+          <StatementLine label="Self-employment CPP payable" value={person.selfEmploymentCppPayableCents} />
+          <StatementLine label="Total estimated tax and CPP" value={person.totalTaxCents + person.selfEmploymentCppPayableCents} emphasis />
         </StatementSection>
         <StatementSection title="Payments and refundable credits">
           <StatementLine label="Income tax withheld" value={person.incomeTaxWithheldCents} />

@@ -13,6 +13,7 @@ import {
   getActiveAttachment,
   updateRecord,
 } from "~/server/api/record-values";
+import { createBusinessRecord, deleteBusinessRecord, getBusinessRecordAttachment, updateBusinessRecord } from "~/server/api/business-values";
 import {
   createTaxDocument,
   getActiveTaxDocumentAttachment,
@@ -755,5 +756,32 @@ describe("Tax Book API", () => {
     ] });
     expect("comparison" in scenario).toBe(true);
     expect((await caller.taxItem.get({ id: interest!.id })).item.expectedAmountCents).toBe(50_000);
+  });
+
+  it("tracks separate self-employment activities, losses, and managed Tax Items", async () => {
+    await caller.setup.initialize({ householdName: "Example household", people: ["Person A", "Person B"], year: 2026 });
+    const [personA, personB] = (await caller.settings.get()).people;
+    const web = await caller.business.create({ name: "Web services", personId: personA!.id });
+    const media = await caller.business.create({ name: "Media activity", personId: personB!.id });
+    await createBusinessRecord(database, { businessActivityId: web.id, kind: "revenue", expenseCategory: null, date: "2026-02-10", description: "Project payment", amountCents: 50_000, notes: null }, null);
+    const expense = await createBusinessRecord(database, { businessActivityId: web.id, kind: "expense", expenseCategory: "office_expenses", date: "2026-02-11", description: "Software", amountCents: 80_000, notes: null }, { fileName: "fictional-expense.pdf", mimeType: "application/pdf", sizeBytes: 7, data: Buffer.from("example") });
+    await createBusinessRecord(database, { businessActivityId: media.id, kind: "revenue", expenseCategory: null, date: "2026-03-01", description: "Platform income", amountCents: 25_000, notes: null }, null);
+    expect((await caller.business.list()).items.map((item) => item.totals.net)).toEqual([-30_000, 25_000]);
+    const webItem = (await caller.taxItem.list()).items.find((item) => item.businessActivityId === web.id)!;
+    expect(webItem).toMatchObject({ actualAmountCents: -30_000, valueSource: "self_employment", taxTreatment: "self_employment_income" });
+    expect((await getBusinessRecordAttachment(database, expense.id)).data.toString()).toBe("example");
+    await expect(caller.taxItem.update({ id: webItem.id, name: "Changed", taxLineReference: null, type: "income", ownerKind: "person", personId: personA!.id, expectedAmountCents: null, actualAmountCents: 0, status: "complete", notes: null, taxTreatment: null })).rejects.toMatchObject({ code: "CONFLICT" });
+    const estimate = await caller.taxEstimate.get();
+    expect(estimate.supported).toBe(true);
+    if (estimate.supported) {
+      expect(estimate.actual.people.find((person) => person.personId === personA!.id)?.inputs.selfEmploymentIncomeCents).toBe(-30_000);
+      expect(estimate.actual.people.find((person) => person.personId === personA!.id)?.selfEmploymentCppPayableCents).toBe(0);
+    }
+    await updateBusinessRecord(database, expense.id, { kind: "expense", expenseCategory: "supplies", date: "2026-02-11", description: "Software and supplies", amountCents: 40_000, notes: null }, { type: "keep" });
+    expect((await caller.business.list()).items[0]!.totals.net).toBe(10_000);
+    await deleteBusinessRecord(database, expense.id);
+    expect((await caller.business.list()).items[0]!.totals.net).toBe(50_000);
+    await caller.taxYear.create({ year: 2027 });
+    expect((await caller.business.list()).items).toHaveLength(0);
   });
 });

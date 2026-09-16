@@ -9,9 +9,10 @@ export const itemTypes = [
 ] as const;
 export const itemStatuses = ["planned", "in_progress", "complete"] as const;
 export const ownerKinds = ["household", "person"] as const;
-export const valueSources = ["manual", "paycheques", "records"] as const;
+export const valueSources = ["manual", "paycheques", "records", "self_employment"] as const;
 export const taxTreatments = [
   "employment_income",
+  "self_employment_income",
   "interest_income",
   "rrsp_deduction",
   "fhsa_deduction",
@@ -32,6 +33,7 @@ export type TaxTreatment = (typeof taxTreatments)[number];
 
 export const taxTreatmentLabels: Record<TaxTreatment, string> = {
   employment_income: "Employment income",
+  self_employment_income: "Self-employment income / loss",
   interest_income: "Interest income",
   rrsp_deduction: "RRSP deduction",
   fhsa_deduction: "FHSA deduction",
@@ -47,6 +49,7 @@ export const taxTreatmentLabels: Record<TaxTreatment, string> = {
 
 export const taxTreatmentDescriptions: Record<TaxTreatment, string> = {
   employment_income: "Gross employment income calculated from paycheques.",
+  self_employment_income: "Net business income or loss calculated from Self-employment Records.",
   interest_income: "Interest this person expects to report.",
   rrsp_deduction: "The RRSP deduction claimed for this tax year.",
   fhsa_deduction: "The FHSA deduction claimed for this tax year.",
@@ -62,6 +65,7 @@ export const taxTreatmentDescriptions: Record<TaxTreatment, string> = {
 
 export const taxTreatmentLineSuggestions: Partial<Record<TaxTreatment, string>> = {
   employment_income: "10100",
+  self_employment_income: "T2125 9946 → 13500",
   interest_income: "12100",
   rrsp_deduction: "20800",
   fhsa_deduction: "20805",
@@ -78,6 +82,7 @@ export const taxTreatmentLineSuggestions: Partial<Record<TaxTreatment, string>> 
 type TreatmentRule = { type: ItemType; ownerKind: (typeof ownerKinds)[number] };
 export const taxTreatmentRules: Record<TaxTreatment, TreatmentRule> = {
   employment_income: { type: "income", ownerKind: "person" },
+  self_employment_income: { type: "income", ownerKind: "person" },
   interest_income: { type: "income", ownerKind: "person" },
   rrsp_deduction: { type: "deduction_contribution", ownerKind: "person" },
   fhsa_deduction: { type: "deduction_contribution", ownerKind: "person" },
@@ -154,11 +159,11 @@ export const taxItemInput = z
         message: "Choose a tax treatment that matches this item's Type and Owner.",
       });
     }
-    if (value.taxTreatment === "employment_income") {
+    if (value.taxTreatment === "employment_income" || value.taxTreatment === "self_employment_income") {
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["taxTreatment"],
-        message: "Employment income treatment is managed from Paycheques.",
+        message: "This calculated treatment is managed from its dedicated workspace.",
       });
     }
   });

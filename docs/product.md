@@ -197,6 +197,19 @@ contributions and deductions without changing tracked data.
 
 Tax Book is not intended to replace tax filing software.
 
+## Self-Employment
+
+Each person may track multiple sole-proprietor business activities separately.
+An activity records gross revenue and ordinary eligible expenses, grouped by
+supported T2125 expense lines, and calculates a signed net business income or
+loss. Revenue and expense Records may retain one supporting PDF or image.
+
+The net result is exposed as a managed Tax Item and included in the 2026
+planning estimate. A loss reduces other income, while positive aggregate net
+self-employment income contributes to the income-tax and CPP estimate. Tax Book
+does not decide whether income or an expense is eligible and does not prepare a
+T2125.
+
 ## Filing and Assessment
 
 After a tax return is filed, the app should preserve information about the filing itself.

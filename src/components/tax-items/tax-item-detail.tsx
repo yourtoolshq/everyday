@@ -59,7 +59,8 @@ export function TaxItemDetail({ id }: { id: number }) {
   const item = itemQuery.data.item;
   const recordItems = recordsQuery.data.items;
   const documentItems = documentsQuery.data.items;
-  const canAdd = item.valueSource !== "paycheques";
+  const canAdd = item.valueSource !== "paycheques" && item.valueSource !== "self_employment";
+  const managedBusiness = item.valueSource === "self_employment";
 
   function addRecord() {
     setEditingRecord(null);
@@ -141,14 +142,12 @@ export function TaxItemDetail({ id }: { id: number }) {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setItemFormOpen(true)}><IconEdit /> Edit Tax Item</Button>
-            <Button variant="outline" onClick={addDocument}><IconFileDescription /> Add Tax Document</Button>
-            <Button onClick={addRecord} disabled={!canAdd}><IconPlus /> Add Record</Button>
+            {managedBusiness ? <Button asChild><Link href={`/self-employment/${item.businessActivityId}`}>Manage self-employment Records</Link></Button> : <><Button variant="outline" onClick={() => setItemFormOpen(true)}><IconEdit /> Edit Tax Item</Button><Button variant="outline" onClick={addDocument}><IconFileDescription /> Add Tax Document</Button><Button onClick={addRecord} disabled={!canAdd}><IconPlus /> Add Record</Button></>}
           </div>
         </div>
       </div>
 
-      {!canAdd ? <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">This Tax Item is calculated from Paycheques, so supporting Records cannot be added here.</div> : null}
+      {!canAdd ? <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">This Tax Item is calculated from {managedBusiness ? "Self-employment Records" : "Paycheques"}. Manage it from its dedicated workspace.</div> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card><CardHeader className="pb-1"><CardDescription>Expected amount</CardDescription><CardTitle className="text-xl tabular-nums">{formatCad(item.expectedAmountCents)}</CardTitle></CardHeader></Card>
@@ -159,17 +158,19 @@ export function TaxItemDetail({ id }: { id: number }) {
 
       {item.notes ? <Card><CardHeader><CardDescription>Tax Item notes</CardDescription></CardHeader><CardContent className="whitespace-pre-wrap text-sm">{item.notes}</CardContent></Card> : null}
 
-      <div className="flex items-end justify-between gap-4">
+      {!managedBusiness ? <><div className="flex items-end justify-between gap-4">
         <div><h3 className="text-lg font-semibold">Tax Documents</h3><p className="text-sm text-muted-foreground">Official slips expected for this Tax Item.</p></div>
         {documentItems.length > 0 ? <Button variant="outline" onClick={addDocument}><IconFileDescription /> Add Tax Document</Button> : null}
       </div>
       <TaxDocumentsTable items={documentItems} onAdd={addDocument} onEdit={editDocument} onDelete={setDeletingDocument} />
 
+      </> : null}
+
       <div className="flex items-end justify-between gap-4">
         <div><h3 className="text-lg font-semibold">Records</h3><p className="text-sm text-muted-foreground">Amounts are listed newest first and counted toward the actual total.</p></div>
         {recordItems.length > 0 && canAdd ? <Button variant="outline" onClick={addRecord}><IconPlus /> Add Record</Button> : null}
       </div>
-      <RecordsTable items={recordItems} canAdd={canAdd} onAdd={addRecord} onEdit={editRecord} onDelete={setDeletingRecord} />
+      {!managedBusiness ? <RecordsTable items={recordItems} canAdd={canAdd} onAdd={addRecord} onEdit={editRecord} onDelete={setDeletingRecord} /> : null}
 
       {recordFormOpen ? <RecordFormSheet key={editingRecord?.id ?? "new"} item={item} record={editingRecord} people={settingsQuery.data.people} open={recordFormOpen} onOpenChange={setRecordFormOpen} /> : null}
       {documentFormOpen ? <TaxDocumentFormSheet key={editingDocument?.id ?? "new"} item={item} document={editingDocument} people={settingsQuery.data.people} open={documentFormOpen} onOpenChange={setDocumentFormOpen} /> : null}
