@@ -436,6 +436,26 @@ Insurance statement
 
 The same document system can support additional document types later without requiring separate domains for each one.
 
+For V1, each Document belongs to one Visit and contains:
+
+```text
+Document type
+Human-friendly title
+Original filename
+Detected file type and size
+Opaque managed-storage key
+```
+
+The supported labels are intake form, receipt, prescription, referral,
+requisition, report, result, claim record, explanation of benefits, and other.
+The file itself is a managed copy stored privately by First Aid; the original
+filename is descriptive metadata and is never used as a storage path.
+
+Documents remain discoverable from their Visit and from a household-wide
+overview, but they do not become an independent folder or tagging system.
+Deleting a Visit also deletes its Documents and managed files. Claim-related
+files may belong to a Visit until the Claim domain is implemented.
+
 ---
 
 # Follow-up

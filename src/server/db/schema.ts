@@ -9,6 +9,7 @@ import type {
 } from "~/lib/care-planning";
 import type { dateMeanings, intervalUnits, seasons } from "~/lib/care-planning";
 import type { VisitStatus } from "~/lib/visits";
+import type { DocumentType } from "~/lib/documents";
 
 const id = () =>
   text("id")
@@ -113,6 +114,21 @@ export const visits = sqliteTable("visits", {
   startsAt: text("starts_at").notNull(),
   status: text("status").$type<VisitStatus>().notNull(),
   notes: text("notes"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const documents = sqliteTable("documents", {
+  id: id(),
+  visitId: text("visit_id")
+    .notNull()
+    .references(() => visits.id, { onDelete: "cascade" }),
+  type: text("type").$type<DocumentType>().notNull(),
+  title: text("title").notNull(),
+  originalFilename: text("original_filename").notNull(),
+  storageKey: text("storage_key").notNull().unique(),
+  mimeType: text("mime_type").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

@@ -25,6 +25,7 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     env: {
       DATABASE_URL: "file:./.data/e2e.db",
+      DOCUMENTS_DIR: "./.data/e2e-documents",
     },
     timeout: 120_000,
   },

@@ -141,6 +141,60 @@ test("manages household members safely", async ({ page }) => {
   await expect(dialog.getByText("Household Member", { exact: true })).toHaveCount(0);
 });
 
+test("attaches, finds, edits, opens, and cascade-deletes visit documents", async ({ page, request }, testInfo) => {
+  const suffix = testInfo.project.name === "mobile-chromium" ? "Mobile" : "Desktop";
+  const documentTitle = `Visit receipt ${suffix}`;
+  const updatedTitle = `Paid receipt ${suffix}`;
+
+  await page.goto("/visits");
+  await page.getByRole("link", { name: "View details" }).last().click();
+  await page.getByRole("button", { name: "Add document" }).click();
+  let dialog = page.getByRole("dialog");
+  await dialog.getByLabel("File").setInputFiles({
+    name: `receipt-${suffix.toLowerCase()}.pdf`,
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4\n% First Aid test file\n"),
+  });
+  await dialog.getByLabel("Title").fill(documentTitle);
+  await dialog.getByLabel("Document type").click();
+  await page.getByRole("option", { name: "Receipt", exact: true }).click();
+  await dialog.getByRole("button", { name: "Add document" }).click();
+  await expect(page.getByRole("heading", { name: documentTitle })).toBeVisible();
+
+  const openLink = page.getByRole("link", { name: "Open" });
+  const fileResponse = await request.get((await openLink.getAttribute("href"))!);
+  expect(fileResponse.ok()).toBe(true);
+  expect(fileResponse.headers()["content-type"]).toBe("application/pdf");
+  expect(fileResponse.headers()["cache-control"]).toBe("private, no-store");
+  expect(fileResponse.headers()["x-content-type-options"]).toBe("nosniff");
+
+  await page.getByLabel(`Edit ${documentTitle}`).click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Title").fill(updatedTitle);
+  await dialog.getByLabel("Document type").click();
+  await page.getByRole("option", { name: "Claim record" }).click();
+  await dialog.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.getByRole("heading", { name: updatedTitle })).toBeVisible();
+
+  await page.goto("/documents");
+  await page.getByLabel("Search").fill(updatedTitle);
+  await expect(page.getByRole("heading", { name: updatedTitle })).toBeVisible();
+  await page.getByLabel("Document type").click();
+  await page.getByRole("option", { name: "Claim record" }).click();
+  await expect(page.getByRole("heading", { name: updatedTitle })).toBeVisible();
+  await page.getByRole("link", { name: "View visit" }).click();
+
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  const alert = page.getByRole("alertdialog");
+  await expect(alert.getByText(/1 attached document/)).toBeVisible();
+  await alert.getByRole("button", { name: "Delete visit and documents" }).click();
+  await expect(page).toHaveURL(/\/visits$/);
+
+  await page.goto("/documents");
+  await page.getByLabel("Search").fill(updatedTitle);
+  await expect(page.getByRole("heading", { name: updatedTitle })).toHaveCount(0);
+});
+
 test("renders the responsive private application shell", async ({ page }, testInfo) => {
   await page.goto("/");
   const privacy = page.getByText("Private · Stored locally");
@@ -155,7 +209,7 @@ test("renders the responsive private application shell", async ({ page }, testIn
   await expect(page.getByRole("link", { name: "Care Plan" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Visits" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Care Providers" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Documents" })).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Documents" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Benefits" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Claims" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Settings" })).toBeDisabled();

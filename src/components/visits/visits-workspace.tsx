@@ -1,6 +1,7 @@
 "use client";
 
-import { CalendarCheck2, Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { CalendarCheck2, Check, FileText, Pencil, Plus, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import {
@@ -195,7 +196,9 @@ function VisitCard({ visit, overview }: { visit: Visit; overview: Overview }) {
       <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-start md:p-5">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="font-semibold">{visit.title}</h4>
+            <h4 className="font-semibold">
+              <Link href={`/visits/${visit.id}`} className="hover:underline">{visit.title}</Link>
+            </h4>
             <Badge variant="outline" className={cn(statusStyles[visit.status])}>
               {visitStatusLabels[visit.status]}
             </Badge>
@@ -208,8 +211,17 @@ function VisitCard({ visit, overview }: { visit: Visit; overview: Overview }) {
             {careItem ? <span>Goal: {careItem.title}</span> : null}
           </div>
           {visit.notes ? <p className="mt-3 whitespace-pre-wrap text-sm">{visit.notes}</p> : null}
+          {visit.documentCount > 0 ? (
+            <p className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+              <FileText className="size-4" />
+              {visit.documentCount} {visit.documentCount === 1 ? "document" : "documents"}
+            </p>
+          ) : null}
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link href={`/visits/${visit.id}`}>View details</Link>
+          </Button>
           {visit.status === "scheduled" ? (
             <>
               <Button size="sm" variant="outline" onClick={() => changeStatus("completed")}>
@@ -233,7 +245,11 @@ function VisitCard({ visit, overview }: { visit: Visit; overview: Overview }) {
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete “{visit.title}”?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This permanently removes the visit and may change care-goal progress.
+                  This permanently removes the visit
+                  {visit.documentCount > 0
+                    ? ` and its ${visit.documentCount} attached ${visit.documentCount === 1 ? "document" : "documents"}`
+                    : ""}
+                  , and may change care-goal progress.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -249,7 +265,7 @@ function VisitCard({ visit, overview }: { visit: Visit; overview: Overview }) {
                     ]);
                   }}
                 >
-                  Delete visit
+                  Delete visit{visit.documentCount > 0 ? " and documents" : ""}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

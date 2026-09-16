@@ -15,6 +15,13 @@
       "when": 1789561700354,
       "tag": "0001_thick_george_stacy",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789591804453,
+      "tag": "0002_lucky_the_enforcers",
+      "breakpoints": true
     }
   ]
 }

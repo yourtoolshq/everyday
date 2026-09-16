@@ -7,6 +7,7 @@ export default defineConfig({
     exclude: ["e2e/**", "node_modules/**"],
     env: {
       DATABASE_URL: "file::memory:",
+      DOCUMENTS_DIR: "./.data/test-documents",
     },
     coverage: {
       provider: "v8",
@@ -20,4 +21,3 @@ export default defineConfig({
     },
   },
 });
-
