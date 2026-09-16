@@ -31,8 +31,8 @@ flowchart TD
     Document[Document]
     FollowUp[Follow-up]
 
-    Person -->|has| CarePlan
     CarePlan -->|contains| CareItem
+    CareItem -->|for| Person
 
     CareItem -->|may become| Visit
 
@@ -83,7 +83,6 @@ Examples:
 
 A Person owns:
 
-* care plans
 * care items
 * visits
 * benefit eligibility/usage
@@ -94,7 +93,8 @@ The Person domain should contain only basic information needed by First Aid. It 
 
 # Care Plan
 
-A Care Plan represents the healthcare plan for a period of time, usually a calendar year.
+A Care Plan represents the household's healthcare plan for a period of time,
+usually a calendar year. V1 has at most one household plan for each year.
 
 Example:
 
@@ -122,7 +122,8 @@ December
 Review anything useful that is still outstanding.
 ```
 
-A Care Plan contains Care Items.
+A Care Plan contains Care Items. Each Care Item is assigned to one household
+member, allowing the shared yearly view to be grouped by person.
 
 ---
 
@@ -593,8 +594,8 @@ flowchart LR
         Document[Document]
     end
 
-    Person --> CarePlan
     CarePlan --> CareItem
+    CareItem --> Person
 
     CareItem --> Visit
     Visit --> Provider

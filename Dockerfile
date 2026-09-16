@@ -24,6 +24,7 @@ RUN apk add --no-cache su-exec && addgroup --system --gid 1001 nodejs && adduser
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/scripts ./scripts
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
 # libSQL selects a native package at runtime; standalone tracing does not
 # include every platform-specific optional dependency.
 COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules

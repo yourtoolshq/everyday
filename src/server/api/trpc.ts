@@ -2,13 +2,16 @@ import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { checkDatabaseConnection, db } from "~/server/db";
+import { checkDatabaseConnection, databaseReady, db } from "~/server/db";
 
-export const createTRPCContext = async (opts: { headers: Headers }) => ({
-  db,
-  checkDatabaseConnection,
-  ...opts,
-});
+export const createTRPCContext = async (opts: { headers: Headers }) => {
+  await databaseReady;
+  return {
+    db,
+    checkDatabaseConnection,
+    ...opts,
+  };
+};
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
@@ -27,4 +30,3 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
 export const createCallerFactory = t.createCallerFactory;
 export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
-

@@ -4,7 +4,6 @@ import {
   CalendarRange,
   FileText,
   HeartPulse,
-  LayoutDashboard,
   ReceiptText,
   Settings,
   ShieldCheck,
@@ -33,7 +32,6 @@ type FutureNavigationItem = {
 };
 
 const futureNavigation: FutureNavigationItem[] = [
-  { title: "Care Plan", icon: CalendarRange },
   { title: "Visits", icon: Stethoscope },
   { title: "Documents", icon: FileText },
   { title: "Benefits", icon: ShieldCheck },
@@ -64,11 +62,11 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuButton
                   asChild
                   isActive
-                  tooltip="Overview"
-                >
-                  <Link href="/">
-                    <LayoutDashboard aria-hidden="true" />
-                    <span>Overview</span>
+                    tooltip="Care Plan"
+                  >
+                    <Link href="/">
+                    <CalendarRange aria-hidden="true" />
+                    <span>Care Plan</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -93,4 +91,3 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     </Sidebar>
   );
 }
-

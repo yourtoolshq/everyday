@@ -11,7 +11,7 @@ export function SiteHeader() {
       <div className="flex w-full items-center gap-2 px-4 md:px-6">
         <SidebarTrigger className="-ml-2" />
         <Separator orientation="vertical" className="mx-1 h-4" />
-        <h1 className="text-sm font-medium">Overview</h1>
+        <h1 className="text-sm font-medium">Care Plan</h1>
         <span className="ml-auto hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
           <LockKeyhole aria-hidden="true" className="size-3.5" />
           Private · Stored locally
@@ -20,4 +20,3 @@ export function SiteHeader() {
     </header>
   );
 }
-
