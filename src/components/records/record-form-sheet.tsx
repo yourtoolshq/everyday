@@ -107,6 +107,7 @@ export function RecordFormSheet({
         utils.taxItem.get.invalidate({ id: item.id }),
         utils.taxItem.list.invalidate(),
         utils.taxItem.overview.invalidate(),
+        utils.taxEstimate.get.invalidate(),
       ]);
       toast.success(record ? "Record updated." : "Record added.");
       onOpenChange(false);

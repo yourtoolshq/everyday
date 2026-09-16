@@ -219,19 +219,17 @@ Provide a useful planning estimate of the household's tax result.
 
 ### Includes
 
-Start only with tax rules relevant to the household.
+Implement a versioned 2026 Manitoba planning estimate for the current
+two-adult household. Employment projections, withholding, CPP/CPP2, and EI come
+from Paycheques. Explicit Tax Treatments connect manual items for interest,
+RRSP/FHSA deductions, professional dues, tuition balances, medical expenses,
+and eligible rent.
 
-Potential inputs include:
-
-* employment income
-* self-employment income
-* tax withheld
-* CPP
-* EI
-* RRSP deductions
-* FHSA deductions
-* selected credits
-* selected expenses
+The estimate compares recorded and projected inputs, calculates each person's
+return separately, optimizes the household medical-expense claimant, handles
+Manitoba personal and rent/homeowner credits, and detects CPP/EI overpayments
+across employers. A temporary RRSP/FHSA sandbox shows tax savings and after-tax
+cost without changing tracked data.
 
 ### Outputs
 
@@ -252,6 +250,24 @@ This is a planning estimate.
 
 Tax Book is not intended to replace tax filing software.
 
+### Follow-up After Real-World Use
+
+Revisit how Manitoba-specific estimate settings are represented after the
+current estimate has been used with real Tax Items, Records, Employments, and
+Paycheques. In particular:
+
+* stress-test whether the current Tax Treatment and projection rules make Tax
+  Items the right source for most estimate inputs
+* identify which Manitoba inputs are tracked financial amounts and which are
+  genuinely calculation choices or non-financial facts
+* reconsider whether the remaining Manitoba-specific settings belong in a
+  clearer tax-facts or estimate-input module
+* avoid extracting a generic settings or tax-rule abstraction until the real
+  workflow shows that it is needed
+
+The goal of this review is to remove duplicate entry and unclear ownership of
+inputs, not to broaden the estimate into a generic tax product.
+
 ### Explicitly Deferred
 
 * complete Canadian tax-rule coverage
@@ -259,9 +275,36 @@ Tax Book is not intended to replace tax filing software.
 * generic tax-rule engine
 * tax-filing submission
 
+* contribution-room enforcement
+* other provinces or tax years
+* dividends, capital gains, dependants, age/disability amounts, and Canada Workers Benefit
+
 ---
 
-## Phase 6 — Filing History, Adjustments, and Assessment
+## Phase 6 — Self-Employment
+
+### Goal
+
+Add the smallest useful workflow for a small side hustle after the employment
+estimate is in use.
+
+### Includes
+
+* person-owned business revenue
+* eligible business expenses
+* net business income
+* related income-tax and CPP estimate
+
+### Explicitly Deferred
+
+* bookkeeping and bank feeds
+* detailed T2125 preparation
+* inventory, payroll, and sales-tax workflows
+* generalized accounting
+
+---
+
+## Phase 7 — Filing History, Adjustments, and Assessment
 
 ### Goal
 
@@ -346,6 +389,46 @@ place.
 * generalized audit or case-management workflows
 * CRA account synchronization
 * direct tax filing
+
+---
+
+## Phase 8 — In-App Documentation, Tax Rule Guide, and Annual Review
+
+### Goal
+
+Make the app's workflows and supported calculations easier to understand,
+audit, and update without duplicating guidance or making tax-rule changes
+automatic.
+
+### Includes
+
+* an in-app Docs section that can render the app's user-facing documentation
+* task-focused guides such as how to track rent, use Records, classify a Tax
+  Item, interpret recorded versus projected amounts, and read an estimate
+* one reusable documentation source that can later power the Docs section,
+  Help menu, and contextual help links or icons throughout the app
+* moving longer workflow explanations out of crowded forms and pages while
+  keeping short labels and essential warnings in context
+* plain-language explanations for each supported Tax Treatment
+* links to the official CRA and Manitoba sources used by each rule pack
+* visible rule version and review date
+* a manual, agent-assisted annual review process or Codex skill that proposes
+  code and test updates for a new tax year
+
+### Useful Outcome
+
+Someone can learn how Tax Book expects information to be tracked without
+leaving the app, and the same maintained guidance can be opened from relevant
+help links instead of being rewritten in several interfaces.
+
+### Important Constraint
+
+An agent may identify changes and prepare a review, but tax constants and
+formulas change only through reviewed source-code updates.
+
+The Docs section should distinguish user workflow guidance from developer and
+product-maintenance documentation. Not every internal repository document must
+be exposed in the app.
 
 ---
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { IconArrowRight, IconCircleCheck, IconClock, IconFileDescription, IconListCheck } from "@tabler/icons-react";
+import { IconArrowRight, IconCalculator, IconCircleCheck, IconClock, IconFileDescription, IconListCheck } from "@tabler/icons-react";
 import Link from "next/link";
 
 import { Badge } from "~/components/ui/badge";
@@ -31,9 +31,13 @@ const statusStyles: Record<ItemStatus, string> = {
 export function Overview() {
   const overview = api.taxItem.overview.useQuery();
   const documents = api.taxDocument.overview.useQuery();
+  const estimate = api.taxEstimate.get.useQuery(
+    overview.data ? { taxYearId: overview.data.year.id } : undefined,
+    { enabled: Boolean(overview.data) },
+  );
 
-  if (overview.isLoading || documents.isLoading) return <OverviewSkeleton />;
-  const error = overview.error ?? documents.error;
+  if (overview.isLoading || documents.isLoading || estimate.isLoading) return <OverviewSkeleton />;
+  const error = overview.error ?? documents.error ?? estimate.error;
   if (error) {
     return (
       <div className="p-6">
@@ -46,7 +50,7 @@ export function Overview() {
       </div>
     );
   }
-  if (!overview.data || !documents.data) return null;
+  if (!overview.data || !documents.data || !estimate.data) return null;
   const data = overview.data;
   const documentData = documents.data;
 
@@ -115,6 +119,13 @@ export function Overview() {
         </Card>
 
         <div className="space-y-6">
+          <Card className={estimate.data.supported && estimate.data.projected.householdResultCents >= 0 ? "border-emerald-200 bg-emerald-50/60" : undefined}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base"><IconCalculator className="size-5 text-primary" /> Tax estimate</CardTitle>
+              <CardDescription>{estimate.data.supported ? `${estimate.data.projected.householdResultCents >= 0 ? "Projected refund" : "Projected amount owing"}: ${formatCad(Math.abs(estimate.data.projected.householdResultCents))}${estimate.data.incomplete ? " · incomplete" : ""}` : estimate.data.blockingReasons[0]}</CardDescription>
+            </CardHeader>
+            <CardContent><Button asChild variant="outline" className="w-full"><Link href="/estimate" prefetch={false}>View Tax Estimate <IconArrowRight /></Link></Button></CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base"><IconListCheck className="size-5 text-primary" /> Tracking progress</CardTitle>

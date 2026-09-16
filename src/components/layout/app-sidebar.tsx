@@ -6,6 +6,7 @@ import {
   IconLayoutDashboard,
   IconListDetails,
   IconReceiptDollar,
+  IconCalculator,
   IconSettings,
 } from "@tabler/icons-react";
 import Link from "next/link";
@@ -30,6 +31,7 @@ const navigation = [
   { title: "Overview", href: "/", icon: IconLayoutDashboard },
   { title: "Tax Items", href: "/items", icon: IconListDetails },
   { title: "Paycheques", href: "/paycheques", icon: IconReceiptDollar },
+  { title: "Tax Estimate", href: "/estimate", icon: IconCalculator },
   { title: "Tax Documents", href: "/documents", icon: IconFileDescription },
   { title: "Settings", href: "/settings", icon: IconSettings },
 ];
@@ -61,7 +63,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                     isActive={pathname === item.href}
                     tooltip={item.title}
                   >
-                    <Link href={item.href}>
+                    <Link href={item.href} prefetch={item.href === "/estimate" ? false : undefined}>
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>

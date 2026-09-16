@@ -171,7 +171,7 @@ This helps determine whether a tax year is ready to file.
 
 ## Tax Estimate
 
-The app should eventually provide an estimated household tax result using the information currently available.
+The app provides a 2026 Manitoba planning estimate for the household using the information currently available.
 
 This may include:
 
@@ -183,6 +183,17 @@ This may include:
 * estimated refund or amount owing
 
 The estimate is intended for planning.
+
+Each supported Tax Item has an explicit Tax treatment. The treatment tells the
+estimate how to interpret the tracked amount; names and free-text tax-line
+references never control calculations. The tracked amount remains the filing
+input—for example, rent paid or eligible medical expenses—while the estimate
+shows the resulting credit separately.
+
+Recorded-to-date inputs are shown beside a best-known year-end projection. Tax
+is calculated for each person separately and then summarized as one household
+refund or amount owing. A temporary RRSP/FHSA sandbox can compare additional
+contributions and deductions without changing tracked data.
 
 Tax Book is not intended to replace tax filing software.
 

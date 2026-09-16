@@ -47,6 +47,7 @@ async function listActiveItems(db: Database) {
       actualAmountCents: taxItems.actualAmountCents,
       status: taxItems.status,
       valueSource: taxItems.valueSource,
+      taxTreatment: taxItems.taxTreatment,
       notes: taxItems.notes,
       createdAt: taxItems.createdAt,
       updatedAt: taxItems.updatedAt,
@@ -91,6 +92,7 @@ export const taxItemRouter = createTRPCRouter({
           ...input,
           taxLineReference: input.taxLineReference || null,
           notes: input.notes || null,
+          taxTreatment: input.taxTreatment,
         })
         .returning();
       return item;
@@ -126,6 +128,7 @@ export const taxItemRouter = createTRPCRouter({
                 : values.actualAmountCents,
             taxLineReference: values.taxLineReference || null,
             notes: values.notes || null,
+            taxTreatment: values.taxTreatment,
           })
           .where(and(eq(taxItems.id, id), eq(taxItems.taxYearId, year.id)))
           .returning();

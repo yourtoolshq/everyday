@@ -108,13 +108,21 @@ test("sets up a household and tracks an item", async ({ page }) => {
   await page.getByRole("button", { name: "Tax year" }).click();
   await page.getByRole("menuitem", { name: "New tax year" }).click();
   await page.getByLabel("Calendar year").fill("2027");
+  const createdYearReload = page.waitForEvent("load");
   await page.getByRole("button", { name: "Create year" }).click();
+  await createdYearReload;
   await expect(page.getByText("2027 tax year")).toBeVisible();
   await expect(page.getByText("0 total items for 2027")).toBeVisible();
   await expect(page.getByText("No tax documents tracked")).toBeVisible();
+  await page.getByRole("link", { name: "Tax Estimate", exact: true }).click();
+  await expect(page.getByText("Estimate unavailable", { exact: true })).toBeVisible();
+  await expect(page.getByText("Tax Estimate currently supports the 2026 tax year only.")).toBeVisible();
 
   await page.getByRole("button", { name: "Tax year" }).click();
+  const selectedYearReload = page.waitForEvent("load");
   await page.getByRole("menuitem", { name: "2026" }).click();
+  await selectedYearReload;
+  await page.getByRole("link", { name: "Overview", exact: true }).click();
   await expect(page.getByText("2026 tax year")).toBeVisible();
   await expect(page.getByText("$15,000.00")).toBeVisible();
   await expect(page.getByText("All tracked documents are ready")).toBeVisible();
@@ -175,6 +183,18 @@ test("sets up a household and tracks an item", async ({ page }) => {
   await page.getByRole("link", { name: "Tax Items" }).click();
   await expect(page.getByRole("link", { name: "Employment income — Employer A", exact: true })).toBeVisible();
   await expect(page.getByRole("cell", { name: "$2,100.00" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Tax Estimate", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Tax Estimate", exact: true })).toBeVisible();
+  await expect(page.getByText("Projected household result")).toBeVisible();
+  await expect(page.getByText("2026 Manitoba planning estimate—not filing software.")).toBeVisible();
+  await page.getByLabel("Person A RRSP contribution").fill("1000");
+  await page.getByLabel("Person A RRSP deduction").fill("1000");
+  await page.getByRole("button", { name: "Calculate scenario" }).click();
+  await expect(page.getByText("Household tax savings")).toBeVisible();
+  await page.getByLabel("Person A full-time months").fill("1");
+  await page.getByRole("button", { name: "Save estimate settings" }).click();
+  await expect(page.getByText("Estimate settings updated.")).toBeVisible();
 
   await page.getByRole("link", { name: "Paycheques", exact: true }).click();
   await page.getByLabel("Filter by employer").click();

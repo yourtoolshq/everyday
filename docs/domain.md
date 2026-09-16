@@ -19,6 +19,7 @@ The goal is to keep the model understandable in normal personal-tax language and
 | **Record**        | Supporting information or evidence the household must retain          |
 | **Tax Document**  | An official tax document such as a T4, T5, RRSP receipt, or FHSA slip |
 | **Tax Estimate**  | The current estimated refund or amount owing                          |
+| **Tax Treatment** | An explicit rule describing how a Tax Item feeds the Tax Estimate     |
 | **Tax Filing**    | The record of the tax return being submitted                          |
 | **Tax Result**    | The refund received or amount owing                                   |
 | **Assessment**    | CRA's assessment of the filed return                                  |
@@ -259,6 +260,26 @@ Tax credit
 The application should support these differences gradually.
 
 It does not need a generic tax rules engine in the early phases.
+
+### Tax Item vs Tax Treatment
+
+A Tax Item preserves the amount the household needs to track or enter when
+filing. Its optional Tax Treatment describes how that amount affects the
+estimate. For example, a rent item totals monthly rent Records; the Manitoba
+renter credit is calculated separately from that underlying total.
+
+Treatments are explicit. Item names, notes, attached Tax Documents, and
+free-text tax-line references never silently determine tax behaviour. Items
+without a treatment remain useful tracking items and are shown as excluded when
+they contain a non-zero amount.
+
+### Actual vs Projected Estimate
+
+Actual inputs are amounts recorded so far. Projected inputs combine employment
+projections with the best-known manual amount: completed items use actual,
+while open items use at least actual and the higher expected amount when one is
+available. Refund or amount owing is a year-end projection; actual inputs are
+shown for context rather than presented as an early-year refund calculation.
 
 ## Household Ownership
 

@@ -24,7 +24,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
 import { formatCad } from "~/domain/money";
-import { itemTypeLabels } from "~/domain/tax-item";
+import { itemTypeLabels, taxTreatmentLabels } from "~/domain/tax-item";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { ItemFormSheet } from "./item-form-sheet";
 import { ItemStatusBadge } from "./item-status-badge";
@@ -114,6 +114,7 @@ export function TaxItemDetail({ id }: { id: number }) {
         utils.taxItem.get.invalidate({ id }),
         utils.taxItem.list.invalidate(),
         utils.taxItem.overview.invalidate(),
+        utils.taxEstimate.get.invalidate(),
       ]);
       toast.success("Record deleted.");
     } catch (deleteError) {
@@ -136,6 +137,7 @@ export function TaxItemDetail({ id }: { id: number }) {
               <ItemStatusBadge status={item.status} />
               <span>{item.personName ?? "Household"}</span>
               {item.taxLineReference ? <span>· {item.taxLineReference}</span> : null}
+              {item.taxTreatment ? <Badge variant="outline">{taxTreatmentLabels[item.taxTreatment]}</Badge> : <Badge variant="outline">Tracking only</Badge>}
             </div>
           </div>
           <div className="flex gap-2">

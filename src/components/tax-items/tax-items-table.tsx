@@ -51,6 +51,7 @@ import {
   itemStatusLabels,
   itemTypes,
   itemTypeLabels,
+  taxTreatmentLabels,
 } from "~/domain/tax-item";
 import { type RouterOutputs } from "~/trpc/react";
 import { ItemStatusBadge } from "./item-status-badge";
@@ -88,6 +89,7 @@ export function TaxItemsTable({
             ) : info.row.original.notes ? (
               <p className="mt-0.5 truncate text-xs text-muted-foreground">{info.row.original.notes}</p>
             ) : null}
+            {info.row.original.taxTreatment ? <p className="mt-0.5 truncate text-xs text-primary">{taxTreatmentLabels[info.row.original.taxTreatment]}</p> : null}
           </div>
         ),
       }),

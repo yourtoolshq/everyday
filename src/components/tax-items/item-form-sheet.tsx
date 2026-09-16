@@ -28,8 +28,14 @@ import {
   itemStatusLabels,
   itemTypes,
   itemTypeLabels,
+  taxTreatments,
+  taxTreatmentDescriptions,
+  taxTreatmentLabels,
+  taxTreatmentLineSuggestions,
+  taxTreatmentRules,
   type ItemStatus,
   type ItemType,
+  type TaxTreatment,
 } from "~/domain/tax-item";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -66,12 +72,14 @@ export function ItemFormSheet({
   );
   const [status, setStatus] = useState<ItemStatus>(item?.status ?? "planned");
   const [notes, setNotes] = useState(item?.notes ?? "");
+  const [taxTreatment, setTaxTreatment] = useState<TaxTreatment | null>(item?.taxTreatment ?? null);
 
   const finish = async (message: string) => {
     await Promise.all([
       utils.taxItem.list.invalidate(),
       utils.taxItem.get.invalidate(),
       utils.taxItem.overview.invalidate(),
+      utils.taxEstimate.get.invalidate(),
     ]);
     toast.success(message);
     onOpenChange(false);
@@ -106,12 +114,21 @@ export function ItemFormSheet({
       actualAmountCents,
       status,
       notes: notes.trim() || null,
+      taxTreatment,
     };
     if (item) update.mutate({ id: item.id, ...values });
     else create.mutate(values);
   }
 
   const pending = create.isPending || update.isPending;
+  const ownerKind = owner.startsWith("person:") ? "person" : "household";
+  const availableTreatments = taxTreatments.filter((value) => value !== "employment_income" && taxTreatmentRules[value].type === type && taxTreatmentRules[value].ownerKind === ownerKind);
+
+  function changeTreatment(value: string) {
+    const treatment = value === "none" ? null : value as TaxTreatment;
+    setTaxTreatment(treatment);
+    if (treatment && taxLineReference.trim() === "") setTaxLineReference(taxTreatmentLineSuggestions[treatment] ?? "");
+  }
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
@@ -160,6 +177,18 @@ export function ItemFormSheet({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Tax treatment</Label>
+              <Select value={taxTreatment ?? "none"} onValueChange={changeTreatment}>
+                <SelectTrigger aria-label="Tax treatment"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Tracking only — not used in estimate</SelectItem>
+                  {availableTreatments.map((value) => <SelectItem key={value} value={value}>{taxTreatmentLabels[value]}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{taxTreatment ? taxTreatmentDescriptions[taxTreatment] : "This item remains visible in Tax Book but is excluded from the tax estimate."}</p>
+              {taxTreatment && !availableTreatments.includes(taxTreatment) ? <p className="text-xs text-destructive">The current Type or Owner is incompatible. Choose a new treatment or Tracking only.</p> : null}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">

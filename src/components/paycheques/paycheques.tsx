@@ -101,6 +101,7 @@ export function Paycheques() {
         utils.employment.list.invalidate(),
         utils.taxItem.list.invalidate(),
         utils.taxItem.overview.invalidate(),
+        utils.taxEstimate.get.invalidate(),
       ]);
       toast.success("Paycheque deleted.");
     },
@@ -115,6 +116,7 @@ export function Paycheques() {
         utils.paycheque.list.invalidate(),
         utils.taxItem.list.invalidate(),
         utils.taxItem.overview.invalidate(),
+        utils.taxEstimate.get.invalidate(),
       ]);
       toast.success("Employment and its paycheques deleted.");
     },

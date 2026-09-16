@@ -10,10 +10,86 @@ export const itemTypes = [
 export const itemStatuses = ["planned", "in_progress", "complete"] as const;
 export const ownerKinds = ["household", "person"] as const;
 export const valueSources = ["manual", "paycheques", "records"] as const;
+export const taxTreatments = [
+  "employment_income",
+  "interest_income",
+  "rrsp_deduction",
+  "fhsa_deduction",
+  "professional_dues",
+  "current_tuition",
+  "federal_tuition_carryforward",
+  "manitoba_tuition_carryforward",
+  "medical_expense",
+  "manitoba_eligible_rent",
+] as const;
 
 export type ItemType = (typeof itemTypes)[number];
 export type ItemStatus = (typeof itemStatuses)[number];
 export type ValueSource = (typeof valueSources)[number];
+export type TaxTreatment = (typeof taxTreatments)[number];
+
+export const taxTreatmentLabels: Record<TaxTreatment, string> = {
+  employment_income: "Employment income",
+  interest_income: "Interest income",
+  rrsp_deduction: "RRSP deduction",
+  fhsa_deduction: "FHSA deduction",
+  professional_dues: "Professional dues",
+  current_tuition: "Current-year tuition",
+  federal_tuition_carryforward: "Federal tuition carryforward",
+  manitoba_tuition_carryforward: "Manitoba tuition carryforward",
+  medical_expense: "Medical expenses",
+  manitoba_eligible_rent: "Manitoba eligible rent",
+};
+
+export const taxTreatmentDescriptions: Record<TaxTreatment, string> = {
+  employment_income: "Gross employment income calculated from paycheques.",
+  interest_income: "Interest this person expects to report.",
+  rrsp_deduction: "The RRSP deduction claimed for this tax year.",
+  fhsa_deduction: "The FHSA deduction claimed for this tax year.",
+  professional_dues: "Deductible dues confirmed by an official slip.",
+  current_tuition: "Eligible tuition fees from this year's T2202.",
+  federal_tuition_carryforward: "Unused federal tuition balance from the prior assessment.",
+  manitoba_tuition_carryforward: "Unused Manitoba tuition and education balance.",
+  medical_expense: "Eligible household medical expenses after reimbursements.",
+  manitoba_eligible_rent: "Rent paid; Records determine eligible rental months.",
+};
+
+export const taxTreatmentLineSuggestions: Partial<Record<TaxTreatment, string>> = {
+  employment_income: "10100",
+  interest_income: "12100",
+  rrsp_deduction: "20800",
+  fhsa_deduction: "20805",
+  professional_dues: "21200",
+  current_tuition: "32300 / Schedule MB(S11)",
+  federal_tuition_carryforward: "Schedule 11",
+  manitoba_tuition_carryforward: "Schedule MB(S11)",
+  medical_expense: "33099 / 58689",
+  manitoba_eligible_rent: "Form MB479",
+};
+
+type TreatmentRule = { type: ItemType; ownerKind: (typeof ownerKinds)[number] };
+export const taxTreatmentRules: Record<TaxTreatment, TreatmentRule> = {
+  employment_income: { type: "income", ownerKind: "person" },
+  interest_income: { type: "income", ownerKind: "person" },
+  rrsp_deduction: { type: "deduction_contribution", ownerKind: "person" },
+  fhsa_deduction: { type: "deduction_contribution", ownerKind: "person" },
+  professional_dues: { type: "deduction_contribution", ownerKind: "person" },
+  current_tuition: { type: "credit_benefit", ownerKind: "person" },
+  federal_tuition_carryforward: { type: "credit_benefit", ownerKind: "person" },
+  manitoba_tuition_carryforward: { type: "credit_benefit", ownerKind: "person" },
+  medical_expense: { type: "eligible_expense", ownerKind: "household" },
+  manitoba_eligible_rent: { type: "eligible_expense", ownerKind: "household" },
+};
+
+export function isTaxTreatmentCompatible(
+  treatment: TaxTreatment | null,
+  type: ItemType,
+  ownerKind: (typeof ownerKinds)[number],
+) {
+  if (treatment === null) return true;
+  const rule = taxTreatmentRules[treatment];
+  return rule.type === type && rule.ownerKind === ownerKind;
+}
 
 export const itemTypeLabels: Record<ItemType, string> = {
   income: "Income",
@@ -48,6 +124,7 @@ export const taxItemInput = z
     actualAmountCents: z.number().int().nonnegative().nullable(),
     status: z.enum(itemStatuses),
     notes: z.string().trim().max(4000).nullable(),
+    taxTreatment: z.enum(taxTreatments).nullable().default(null),
   })
   .superRefine((value, context) => {
     const valid =
@@ -58,6 +135,20 @@ export const taxItemInput = z
         code: z.ZodIssueCode.custom,
         path: ["personId"],
         message: "Choose a person for person-owned items.",
+      });
+    }
+    if (!isTaxTreatmentCompatible(value.taxTreatment, value.type, value.ownerKind)) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["taxTreatment"],
+        message: "Choose a tax treatment that matches this item's Type and Owner.",
+      });
+    }
+    if (value.taxTreatment === "employment_income") {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["taxTreatment"],
+        message: "Employment income treatment is managed from Paycheques.",
       });
     }
   });

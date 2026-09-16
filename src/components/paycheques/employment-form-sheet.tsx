@@ -88,6 +88,7 @@ export function EmploymentFormSheet({
       utils.paycheque.list.invalidate(),
       utils.taxItem.list.invalidate(),
       utils.taxItem.overview.invalidate(),
+      utils.taxEstimate.get.invalidate(),
     ]);
     toast.success(message);
     onOpenChange(false);

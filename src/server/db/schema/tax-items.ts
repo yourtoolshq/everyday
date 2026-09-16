@@ -12,6 +12,7 @@ import {
   itemTypes,
   ownerKinds,
   valueSources,
+  taxTreatments,
 } from "~/domain/tax-item";
 import { people } from "./people";
 import { timestamps } from "./shared";
@@ -37,6 +38,7 @@ export const taxItems = sqliteTable(
     valueSource: text("value_source", { enum: valueSources })
       .default("manual")
       .notNull(),
+    taxTreatment: text("tax_treatment", { enum: taxTreatments }),
     notes: text("notes"),
     ...timestamps,
   },

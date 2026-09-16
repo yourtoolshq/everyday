@@ -1,7 +1,6 @@
 "use client";
 
 import { IconCalendar, IconChevronDown, IconPlus } from "@tabler/icons-react";
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
@@ -30,22 +29,14 @@ import { api, type RouterOutputs } from "~/trpc/react";
 type TaxYear = RouterOutputs["taxYear"]["list"][number];
 
 export function YearSwitcher({ years }: { years: TaxYear[] }) {
-  const router = useRouter();
   const utils = api.useUtils();
   const [open, setOpen] = useState(false);
   const [year, setYear] = useState((new Date().getFullYear() + 1).toString());
   const active = years.find((item) => item.isActive);
   const setActive = api.taxYear.setActive.useMutation({
     onSuccess: async () => {
-      await Promise.all([
-        utils.settings.get.invalidate(),
-        utils.taxItem.list.invalidate(),
-        utils.taxItem.overview.invalidate(),
-        utils.taxDocument.list.invalidate(),
-        utils.taxDocument.overview.invalidate(),
-        utils.taxYear.list.invalidate(),
-      ]);
-      router.refresh();
+      await utils.invalidate();
+      window.location.reload();
     },
     onError: (error) => toast.error(error.message),
   });
@@ -53,15 +44,8 @@ export function YearSwitcher({ years }: { years: TaxYear[] }) {
     onSuccess: async () => {
       setOpen(false);
       toast.success("Tax year created.");
-      await Promise.all([
-        utils.settings.get.invalidate(),
-        utils.taxItem.list.invalidate(),
-        utils.taxItem.overview.invalidate(),
-        utils.taxDocument.list.invalidate(),
-        utils.taxDocument.overview.invalidate(),
-        utils.taxYear.list.invalidate(),
-      ]);
-      router.refresh();
+      await utils.invalidate();
+      window.location.reload();
     },
     onError: (error) => toast.error(error.message),
   });

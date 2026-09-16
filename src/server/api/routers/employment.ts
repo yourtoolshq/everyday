@@ -101,6 +101,7 @@ export const employmentRouter = createTRPCRouter({
             actualAmountCents: 0,
             status: "in_progress",
             valueSource: "paycheques",
+            taxTreatment: "employment_income",
             notes: null,
           })
           .returning();

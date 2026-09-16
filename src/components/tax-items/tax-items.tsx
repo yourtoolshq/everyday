@@ -37,6 +37,7 @@ export function TaxItems() {
         utils.taxItem.overview.invalidate(),
         utils.taxDocument.list.invalidate(),
         utils.taxDocument.overview.invalidate(),
+        utils.taxEstimate.get.invalidate(),
       ]);
       toast.success("Tax item deleted.");
     },

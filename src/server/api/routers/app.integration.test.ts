@@ -706,4 +706,42 @@ describe("Tax Book API", () => {
       notes: null,
     }, { type: "keep" })).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
+
+  it("builds a mapped 2026 estimate and keeps scenarios temporary", async () => {
+    await caller.setup.initialize({ householdName: "Example household", people: ["Person A", "Person B"], year: 2026 });
+    const [personA, personB] = (await caller.settings.get()).people;
+    const interest = await caller.taxItem.create({
+      name: "Interest from Financial Institution", taxLineReference: "12100", type: "income",
+      ownerKind: "person", personId: personA!.id, expectedAmountCents: 50_000,
+      actualAmountCents: 25_000, status: "in_progress", notes: null, taxTreatment: "interest_income",
+    });
+    const rent = await caller.taxItem.create({
+      name: "Eligible rent", taxLineReference: "Form MB479", type: "eligible_expense",
+      ownerKind: "household", personId: null, expectedAmountCents: 1_200_000,
+      actualAmountCents: null, status: "in_progress", notes: null, taxTreatment: "manitoba_eligible_rent",
+    });
+    await createRecord(database, { taxItemId: rent!.id, date: "2026-01-01", description: "January rent", amountCents: 100_000, personId: null, notes: null, confirmReplaceActual: false }, null);
+    await createRecord(database, { taxItemId: rent!.id, date: "2026-02-01", description: "February rent", amountCents: 100_000, personId: null, notes: null, confirmReplaceActual: false }, null);
+    await caller.taxEstimate.updateSettings({
+      manitobaCreditsClaimantPersonId: personA!.id, housingMode: "renter",
+      homeOwnershipStartDate: null, eligibleSchoolTaxCents: null,
+      homeownerAdvanceReceivedCents: null,
+      study: [
+        { personId: personA!.id, fullTimeStudyMonths: 0, partTimeStudyMonths: 0 },
+        { personId: personB!.id, fullTimeStudyMonths: 0, partTimeStudyMonths: 0 },
+      ],
+    });
+    const estimate = await caller.taxEstimate.get();
+    expect(estimate.supported).toBe(true);
+    if (!estimate.supported) return;
+    expect(estimate.rentMonths).toEqual(["2026-01", "2026-02"]);
+    expect(estimate.projected.manitobaCredits.renterCreditCents).toBe(10_417);
+    expect(estimate.projected.people.find((person) => person.personId === personA!.id)?.inputs.interestIncomeCents).toBe(50_000);
+    const scenario = await caller.taxEstimate.calculateScenario({ people: [
+      { personId: personA!.id, rrspContributionCents: 100_000, rrspDeductionCents: 100_000, fhsaContributionCents: 0, fhsaDeductionCents: 0 },
+      { personId: personB!.id, rrspContributionCents: 0, rrspDeductionCents: 0, fhsaContributionCents: 0, fhsaDeductionCents: 0 },
+    ] });
+    expect("comparison" in scenario).toBe(true);
+    expect((await caller.taxItem.get({ id: interest!.id })).item.expectedAmountCents).toBe(50_000);
+  });
 });

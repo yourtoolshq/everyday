@@ -43,6 +43,13 @@
       "when": 1789511119756,
       "tag": "0005_absurd_hedge_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789524995247,
+      "tag": "0006_faithful_shaman",
+      "breakpoints": true
     }
   ]
 }

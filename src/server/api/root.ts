@@ -6,6 +6,7 @@ import { setupRouter } from "~/server/api/routers/setup";
 import { taxItemRouter } from "~/server/api/routers/tax-item";
 import { taxDocumentRouter } from "~/server/api/routers/tax-document";
 import { taxYearRouter } from "~/server/api/routers/tax-year";
+import { taxEstimateRouter } from "~/server/api/routers/tax-estimate";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 export const appRouter = createTRPCRouter({
@@ -17,6 +18,7 @@ export const appRouter = createTRPCRouter({
   taxItem: taxItemRouter,
   taxDocument: taxDocumentRouter,
   taxYear: taxYearRouter,
+  taxEstimate: taxEstimateRouter,
 });
 
 export type AppRouter = typeof appRouter;
