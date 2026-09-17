@@ -59,6 +59,7 @@ I may also share parts of the process through blog posts, YouTube videos, or liv
 * [`PRODUCT.md`](./docs/product.md) — what the app is trying to solve
 * [`DOMAIN.md`](./docs/domain.md) — domain language and relationships
 * [`ROADMAP.md`](./docs/roadmap.md) — delivery phases
+* [`intentional-exclusions.md`](./docs/intentional-exclusions.md) — features deliberately not built
 * [`AGENTS.md`](./AGENTS.md) — guidance for AI agents working in this repository
 
 ## Contributing

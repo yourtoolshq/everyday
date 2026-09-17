@@ -258,6 +258,9 @@ Tax Book is not intended to become:
 
 The project should prioritize solving the household's actual tax workflow before adding generalization, automation, or features intended for broader audiences.
 
+Some exclusions are documented in more detail so future work does not reopen
+settled scope decisions. See [Intentional Exclusions](./intentional-exclusions.md).
+
 ## Product Principle
 
 The app should remain useful before it becomes sophisticated.

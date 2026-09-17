@@ -18,6 +18,17 @@ If the scope starts expanding, challenge it gently and bring the discussion back
 
 Do not assume that later phases, automation, abstractions, configurability, or generalized tax rules need to be designed early.
 
+## Scope and intentional exclusions
+
+Some features are deliberately out of scope. Before implementing new document
+tracking, account management, or tax-adjacent workflows, read
+[Intentional Exclusions](./docs/intentional-exclusions.md).
+
+If a request matches a documented exclusion, push back unless the user has
+identified a concrete exception case described there. These boundaries exist so
+the app stays focused on the T1 preparation workflow rather than becoming a
+general financial-document archive.
+
 ## Privacy
 
 This is a public/open-source repository.
@@ -40,8 +51,9 @@ Use generic examples such as `Person A`, `Person B`, `Employer`, or clearly fict
 
 Product context and domain decisions are documented here:
 
-* [Product Overview](./PRODUCT.md)
-* [Domain Model](./DOMAIN.md)
-* [Roadmap / Delivery Phases](./ROADMAP.md)
+* [Product Overview](./docs/product.md)
+* [Domain Model](./docs/domain.md)
+* [Roadmap / Delivery Phases](./docs/roadmap.md)
+* [Intentional Exclusions](./docs/intentional-exclusions.md)
 
 Treat those documents as the current source of product intent, but prefer a fresh conversation with the user when beginning a phase rather than inferring detailed requirements from the roadmap alone.
