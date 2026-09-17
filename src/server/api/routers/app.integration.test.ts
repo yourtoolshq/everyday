@@ -23,6 +23,12 @@ import {
   updateOriginalReturn,
 } from "~/server/api/filing-values";
 import {
+  createCraReferenceDocument,
+  deleteCraReferenceDocument,
+  getCraReferenceDocumentAttachment,
+  listCraReferenceDocuments,
+} from "~/server/api/cra-reference-values";
+import {
   createTaxDocument,
   getActiveTaxDocumentAttachment,
   updateTaxDocument,
@@ -1066,5 +1072,55 @@ describe("Tax Book API", () => {
     expect(
       (await listFilingTimeline(database, pastYear!.id)).filings,
     ).toHaveLength(1);
+  });
+
+  it("stores CRA reference documents with attachments for a tax year", async () => {
+    await caller.setup.initialize({
+      householdName: "Example household",
+      people: ["Person A", "Person B"],
+      year: 2026,
+    });
+    const settings = await caller.settings.get();
+    const year = settings.years.find((item) => item.isActive)!;
+    const [personA] = settings.people;
+
+    const document = await createCraReferenceDocument(
+      database,
+      {
+        taxYearId: year.id,
+        category: "gst_hst_return",
+        title: "Q1 GST/HST return",
+        personId: personA!.id,
+        documentDate: "2026-04-30",
+        reportingPeriodLabel: "Jan 1 – Mar 31, 2026",
+        notes: null,
+      },
+      {
+        fileName: "fictional-gst.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 8,
+        data: Buffer.from("example"),
+      },
+    );
+
+    const listed = await listCraReferenceDocuments(database, year.id);
+    expect(listed.items).toHaveLength(1);
+    expect(listed.items[0]).toMatchObject({
+      id: document.id,
+      category: "gst_hst_return",
+      title: "Q1 GST/HST return",
+      personName: "Person A",
+      reportingPeriodLabel: "Jan 1 – Mar 31, 2026",
+      attachmentFileName: "fictional-gst.pdf",
+    });
+    expect(
+      (await caller.craReference.list({ taxYearId: year.id })).items,
+    ).toHaveLength(1);
+
+    const attachment = await getCraReferenceDocumentAttachment(database, document.id);
+    expect(attachment.fileName).toBe("fictional-gst.pdf");
+
+    await deleteCraReferenceDocument(database, document.id);
+    expect((await listCraReferenceDocuments(database, year.id)).items).toHaveLength(0);
   });
 });

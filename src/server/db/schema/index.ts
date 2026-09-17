@@ -5,6 +5,10 @@ export { people } from "./people";
 export { paycheques } from "./paycheques";
 export { recordAttachments, records } from "./records";
 export { taxItems } from "./tax-items";
+export {
+  craReferenceDocumentAttachments,
+  craReferenceDocuments,
+} from "./cra-reference-documents";
 export { assessmentAttachments, assessments } from "./assessments";
 export { filingAffectedTaxItems } from "./filing-affected-tax-items";
 export { filingAttachments, filings } from "./filings";

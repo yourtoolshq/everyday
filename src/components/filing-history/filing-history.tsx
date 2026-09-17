@@ -53,6 +53,7 @@ import { skipToken } from "@tanstack/react-query";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { AdjustmentSheet } from "./adjustment-sheet";
 import { AssessmentSheet } from "./assessment-sheet";
+import { CraReferenceSection } from "./cra-reference-section";
 import { OriginalReturnSheet } from "./original-return-sheet";
 
 type Filing = RouterOutputs["filing"]["timeline"]["filings"][number];
@@ -441,9 +442,17 @@ export function TaxFiling() {
             onDelete={(filing) => setDeletingFiling(filing)}
           />
         ))}
+        <CraReferenceSection taxYearId={taxYearId} people={timeline.data.people} />
       </div>
 
       <OriginalReturnSheet
+        key={
+          editingReturn
+            ? `edit-${editingReturn.id}`
+            : addingReturnForPersonId !== undefined
+              ? `add-${addingReturnForPersonId}`
+              : "closed"
+        }
         taxYearId={taxYearId}
         people={timeline.data.people}
         filing={editingReturn}
@@ -459,6 +468,13 @@ export function TaxFiling() {
       />
 
       <AdjustmentSheet
+        key={
+          editingAdjustment
+            ? `edit-${editingAdjustment.id}`
+            : addingAdjustmentForPersonId !== undefined
+              ? `add-${addingAdjustmentForPersonId}`
+              : "closed"
+        }
         taxYearId={taxYearId}
         people={timeline.data.people}
         filing={editingAdjustment}
@@ -475,6 +491,7 @@ export function TaxFiling() {
 
       {assessmentFiling ? (
         <AssessmentSheet
+          key={`${assessmentFiling.id}-${assessmentFiling.assessmentId ?? "new"}`}
           filing={assessmentFiling}
           open={assessmentFiling !== null}
           onOpenChange={(open) => {

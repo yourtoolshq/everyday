@@ -5,6 +5,7 @@ import { recordRouter } from "~/server/api/routers/record";
 import { settingsRouter } from "~/server/api/routers/settings";
 import { setupRouter } from "~/server/api/routers/setup";
 import { taxItemRouter } from "~/server/api/routers/tax-item";
+import { craReferenceRouter } from "~/server/api/routers/cra-reference";
 import { filingRouter } from "~/server/api/routers/filing";
 import { taxDocumentRouter } from "~/server/api/routers/tax-document";
 import { taxYearRouter } from "~/server/api/routers/tax-year";
@@ -21,6 +22,7 @@ export const appRouter = createTRPCRouter({
   taxItem: taxItemRouter,
   taxDocument: taxDocumentRouter,
   filing: filingRouter,
+  craReference: craReferenceRouter,
   taxYear: taxYearRouter,
   taxEstimate: taxEstimateRouter,
 });
