@@ -4,7 +4,7 @@ import type { AttachmentAction, AttachmentInput } from "~/domain/record";
 import type { BusinessRecordInput, BusinessRecordUpdateInput } from "~/domain/self-employment";
 import { businessActivities, businessRecordAttachments, businessRecords, people, taxItems } from "~/server/db/schema";
 import type { Database } from "./helpers";
-import { requireActiveYear, requireHousehold } from "./helpers";
+import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "./helpers";
 
 type Tx = Parameters<Parameters<Database["transaction"]>[0]>[0];
 type QueryDb = Database | Tx;
@@ -12,6 +12,14 @@ type QueryDb = Database | Tx;
 export async function requireActiveBusiness(db: QueryDb, id: number) {
   const household = await requireHousehold(db as Database);
   const year = await requireActiveYear(db as Database, household.id);
+  const [activity] = await db.select().from(businessActivities).where(and(eq(businessActivities.id, id), eq(businessActivities.taxYearId, year.id)));
+  if (!activity) throw new TRPCError({ code: "NOT_FOUND", message: "Self-employment business not found." });
+  return { household, year, activity };
+}
+
+async function requireEditableActiveBusiness(db: QueryDb, id: number) {
+  const household = await requireHousehold(db as Database);
+  const year = await requireEditableActiveYear(db as Database, household.id);
   const [activity] = await db.select().from(businessActivities).where(and(eq(businessActivities.id, id), eq(businessActivities.taxYearId, year.id)));
   if (!activity) throw new TRPCError({ code: "NOT_FOUND", message: "Self-employment business not found." });
   return { household, year, activity };
@@ -51,7 +59,7 @@ function validateYear(date: string, year: number) {
 }
 export async function createBusinessRecord(db: Database, input: BusinessRecordInput, attachment: AttachmentInput | null) {
   return db.transaction(async (tx) => {
-    const { year } = await requireActiveBusiness(tx, input.businessActivityId); validateYear(input.date, year.year);
+    const { year } = await requireEditableActiveBusiness(tx, input.businessActivityId); validateYear(input.date, year.year);
     const [created] = await tx.insert(businessRecords).values(input).returning();
     if (attachment) await tx.insert(businessRecordAttachments).values({ businessRecordId: created!.id, ...attachment });
     await syncBusinessTaxItem(tx, input.businessActivityId); return created!;
@@ -62,9 +70,14 @@ async function requireActiveBusinessRecord(db: QueryDb, id: number) {
   const [row] = await db.select({ record: businessRecords, activity: businessActivities }).from(businessRecords).innerJoin(businessActivities, eq(businessRecords.businessActivityId, businessActivities.id)).where(and(eq(businessRecords.id, id), eq(businessActivities.taxYearId, year.id)));
   if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Self-employment Record not found." }); return { year, ...row };
 }
+async function requireEditableActiveBusinessRecord(db: QueryDb, id: number) {
+  const household = await requireHousehold(db as Database); const year = await requireEditableActiveYear(db as Database, household.id);
+  const [row] = await db.select({ record: businessRecords, activity: businessActivities }).from(businessRecords).innerJoin(businessActivities, eq(businessRecords.businessActivityId, businessActivities.id)).where(and(eq(businessRecords.id, id), eq(businessActivities.taxYearId, year.id)));
+  if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Self-employment Record not found." }); return { year, ...row };
+}
 export async function updateBusinessRecord(db: Database, id: number, input: BusinessRecordUpdateInput, attachmentAction: AttachmentAction) {
   return db.transaction(async (tx) => {
-    const { year, record } = await requireActiveBusinessRecord(tx, id); validateYear(input.date, year.year);
+    const { year, record } = await requireEditableActiveBusinessRecord(tx, id); validateYear(input.date, year.year);
     const [updated] = await tx.update(businessRecords).set(input).where(eq(businessRecords.id, id)).returning();
     if (attachmentAction.type !== "keep") await tx.delete(businessRecordAttachments).where(eq(businessRecordAttachments.businessRecordId, id));
     if (attachmentAction.type === "replace") await tx.insert(businessRecordAttachments).values({ businessRecordId: id, ...attachmentAction.attachment });
@@ -72,7 +85,7 @@ export async function updateBusinessRecord(db: Database, id: number, input: Busi
   });
 }
 export async function deleteBusinessRecord(db: Database, id: number) {
-  return db.transaction(async (tx) => { const { record } = await requireActiveBusinessRecord(tx, id); await tx.delete(businessRecords).where(eq(businessRecords.id, id)); await syncBusinessTaxItem(tx, record.businessActivityId); return { success: true }; });
+  return db.transaction(async (tx) => { const { record } = await requireEditableActiveBusinessRecord(tx, id); await tx.delete(businessRecords).where(eq(businessRecords.id, id)); await syncBusinessTaxItem(tx, record.businessActivityId); return { success: true }; });
 }
 export async function getBusinessRecordAttachment(db: Database, id: number) {
   await requireActiveBusinessRecord(db, id); const [attachment] = await db.select().from(businessRecordAttachments).where(eq(businessRecordAttachments.businessRecordId, id));

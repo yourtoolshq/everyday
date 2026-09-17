@@ -14,7 +14,7 @@ import {
   taxItems,
 } from "~/server/db/schema";
 import type { Database } from "./helpers";
-import { requireActiveYear, requireHousehold } from "./helpers";
+import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "./helpers";
 
 type RecordDatabase = Parameters<Parameters<Database["transaction"]>[0]>[0];
 type QueryDatabase = Database | RecordDatabase;
@@ -25,11 +25,32 @@ async function activeContext(db: QueryDatabase) {
   return { household, year };
 }
 
+async function editableContext(db: QueryDatabase) {
+  const household = await requireHousehold(db as Database);
+  const year = await requireEditableActiveYear(db as Database, household.id);
+  return { household, year };
+}
+
 export async function requireActiveTaxItem(
   db: QueryDatabase,
   taxItemId: number,
 ) {
   const { household, year } = await activeContext(db);
+  const [item] = await db
+    .select()
+    .from(taxItems)
+    .where(and(eq(taxItems.id, taxItemId), eq(taxItems.taxYearId, year.id)));
+  if (!item) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Tax item not found." });
+  }
+  return { household, year, item };
+}
+
+async function requireEditableActiveTaxItem(
+  db: QueryDatabase,
+  taxItemId: number,
+) {
+  const { household, year } = await editableContext(db);
   const [item] = await db
     .select()
     .from(taxItems)
@@ -120,7 +141,7 @@ export async function createRecord(
   attachment: AttachmentInput | null,
 ) {
   return db.transaction(async (tx) => {
-    const { household, item } = await requireActiveTaxItem(tx, input.taxItemId);
+    const { household, item } = await requireEditableActiveTaxItem(tx, input.taxItemId);
     if (item.valueSource === "paycheques" || item.valueSource === "self_employment") {
       throw new TRPCError({
         code: "CONFLICT",
@@ -173,6 +194,19 @@ async function requireActiveRecord(db: QueryDatabase, recordId: number) {
   return { household, year, ...row };
 }
 
+async function requireEditableActiveRecord(db: QueryDatabase, recordId: number) {
+  const { household, year } = await editableContext(db);
+  const [row] = await db
+    .select({ record: records, item: taxItems })
+    .from(records)
+    .innerJoin(taxItems, eq(records.taxItemId, taxItems.id))
+    .where(and(eq(records.id, recordId), eq(taxItems.taxYearId, year.id)));
+  if (!row) {
+    throw new TRPCError({ code: "NOT_FOUND", message: "Record not found." });
+  }
+  return { household, year, ...row };
+}
+
 export async function updateRecord(
   db: Database,
   recordId: number,
@@ -180,7 +214,7 @@ export async function updateRecord(
   attachmentAction: AttachmentAction,
 ) {
   return db.transaction(async (tx) => {
-    const { household, record, item } = await requireActiveRecord(tx, recordId);
+    const { household, record, item } = await requireEditableActiveRecord(tx, recordId);
     const personId = await normalizePerson(
       tx,
       household.id,
@@ -207,7 +241,7 @@ export async function updateRecord(
 
 export async function deleteRecord(db: Database, recordId: number) {
   return db.transaction(async (tx) => {
-    const { record } = await requireActiveRecord(tx, recordId);
+    const { record } = await requireEditableActiveRecord(tx, recordId);
     await tx.delete(records).where(eq(records.id, recordId));
     await syncRecordTotal(tx, record.taxItemId);
     return { success: true };

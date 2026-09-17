@@ -6,7 +6,7 @@ import { buildOverview } from "~/domain/overview";
 import { taxItemInput, taxItemUpdateInput } from "~/domain/tax-item";
 import { businessActivities, people, records, taxDocuments, taxItems } from "~/server/db/schema";
 import type { Database } from "../helpers";
-import { requireActiveYear, requireHousehold } from "../helpers";
+import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "../helpers";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 async function validatePerson(
@@ -85,7 +85,7 @@ export const taxItemRouter = createTRPCRouter({
     .input(taxItemInput)
     .mutation(async ({ ctx, input }) => {
       const household = await requireHousehold(ctx.db);
-      const year = await requireActiveYear(ctx.db, household.id);
+      const year = await requireEditableActiveYear(ctx.db, household.id);
       await validatePerson(ctx.db, household.id, input.personId);
       const [item] = await ctx.db
         .insert(taxItems)
@@ -103,7 +103,7 @@ export const taxItemRouter = createTRPCRouter({
     .input(taxItemUpdateInput)
     .mutation(async ({ ctx, input }) => {
       const household = await requireHousehold(ctx.db);
-      const year = await requireActiveYear(ctx.db, household.id);
+      const year = await requireEditableActiveYear(ctx.db, household.id);
       await validatePerson(ctx.db, household.id, input.personId);
       const { id, ...values } = input;
       const existing = await ctx.db.query.taxItems.findFirst({
@@ -152,7 +152,7 @@ export const taxItemRouter = createTRPCRouter({
     .input(z.object({ id: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       const household = await requireHousehold(ctx.db);
-      const year = await requireActiveYear(ctx.db, household.id);
+      const year = await requireEditableActiveYear(ctx.db, household.id);
       const [item] = await ctx.db
         .select({ valueSource: taxItems.valueSource })
         .from(taxItems)

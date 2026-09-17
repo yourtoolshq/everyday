@@ -9,7 +9,7 @@ import {
 } from "~/domain/employment";
 import { employments, paycheques, people } from "~/server/db/schema";
 import { syncEmploymentTaxItem } from "../employment-values";
-import { requireActiveYear, requireHousehold } from "../helpers";
+import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "../helpers";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 async function requireEmployment(
@@ -77,7 +77,7 @@ export const paychequeRouter = createTRPCRouter({
     .input(paychequeInput)
     .mutation(async ({ ctx, input }) => {
       const household = await requireHousehold(ctx.db);
-      const year = await requireActiveYear(ctx.db, household.id);
+      const year = await requireEditableActiveYear(ctx.db, household.id);
       await requireEmployment(ctx.db, input.employmentId, year.id);
       validatePayDate(input.payDate, year.year);
       return ctx.db.transaction(async (tx) => {
@@ -93,7 +93,7 @@ export const paychequeRouter = createTRPCRouter({
     .input(paychequeUpdateInput)
     .mutation(async ({ ctx, input }) => {
       const household = await requireHousehold(ctx.db);
-      const year = await requireActiveYear(ctx.db, household.id);
+      const year = await requireEditableActiveYear(ctx.db, household.id);
       await requireEmployment(ctx.db, input.employmentId, year.id);
       validatePayDate(input.payDate, year.year);
       const { id, ...values } = input;
@@ -127,7 +127,7 @@ export const paychequeRouter = createTRPCRouter({
     .input(z.object({ id: z.number().int().positive() }))
     .mutation(async ({ ctx, input }) => {
       const household = await requireHousehold(ctx.db);
-      const year = await requireActiveYear(ctx.db, household.id);
+      const year = await requireEditableActiveYear(ctx.db, household.id);
       return ctx.db.transaction(async (tx) => {
         const [existing] = await tx
           .select({ employmentId: paycheques.employmentId })

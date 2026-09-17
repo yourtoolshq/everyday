@@ -976,4 +976,95 @@ describe("Tax Book API", () => {
       affectedTaxItems: [{ id: taxItem!.id, name: "Medical expenses" }],
     });
   });
+
+  it("requires acknowledgement before applying lifecycle warnings", async () => {
+    await caller.setup.initialize({
+      householdName: "Example household",
+      people: ["Person A", "Person B"],
+      year: 2026,
+    });
+    const settings = await caller.settings.get();
+    const year = settings.years.find((item) => item.isActive)!;
+    const [personA] = settings.people;
+    await createOriginalReturn(
+      database,
+      year.id,
+      {
+        personId: personA!.id,
+        submissionDate: null,
+        expectedResultCents: null,
+        returnCopyStatus: "unavailable",
+        notes: null,
+      },
+      null,
+    );
+
+    const preview = await caller.taxYear.updateStatus({
+      id: year.id,
+      status: "filed",
+    });
+    expect(preview.requiresConfirmation).toBe(true);
+    expect(preview.warnings).toHaveLength(1);
+    expect(preview.year.status).toBe("tracking");
+
+    const applied = await caller.taxYear.updateStatus({
+      id: year.id,
+      status: "filed",
+      acknowledgeWarnings: true,
+    });
+    expect(applied.requiresConfirmation).toBe(false);
+    expect(applied.year.status).toBe("filed");
+  });
+
+  it("blocks tracked-data edits when the active year is archived", async () => {
+    await caller.setup.initialize({
+      householdName: "Example household",
+      people: ["Person A", "Person B"],
+      year: 2026,
+    });
+    const settings = await caller.settings.get();
+    const year = settings.years.find((item) => item.isActive)!;
+    const [personA] = settings.people;
+
+    await caller.taxYear.updateStatus({
+      id: year.id,
+      status: "archived",
+      acknowledgeWarnings: true,
+    });
+
+    await expect(
+      caller.taxItem.create({
+        name: "Example employment income",
+        taxLineReference: "10100",
+        type: "income",
+        ownerKind: "person",
+        personId: personA!.id,
+        expectedAmountCents: null,
+        actualAmountCents: null,
+        status: "in_progress",
+        notes: null,
+        taxTreatment: null,
+      }),
+    ).rejects.toMatchObject({
+      code: "PRECONDITION_FAILED",
+      message: expect.stringContaining("archived"),
+    });
+
+    const pastYear = await caller.taxYear.createPast({ year: 2023 });
+    await createOriginalReturn(
+      database,
+      pastYear!.id,
+      {
+        personId: personA!.id,
+        submissionDate: "2024-04-15",
+        expectedResultCents: null,
+        returnCopyStatus: "unavailable",
+        notes: null,
+      },
+      null,
+    );
+    expect(
+      (await listFilingTimeline(database, pastYear!.id)).filings,
+    ).toHaveLength(1);
+  });
 });

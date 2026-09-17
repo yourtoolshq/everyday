@@ -45,6 +45,7 @@ import {
   returnCopyStatusLabels,
   taxYearStatusLabels,
   type FilingKind,
+  type TaxYearLifecycleWarning,
   type TaxYearStatus,
 } from "~/domain/filing";
 import { formatSignedCad } from "~/domain/money";
@@ -284,18 +285,37 @@ export function TaxFiling() {
   );
   const utils = api.useUtils();
   const updateStatus = api.taxYear.updateStatus.useMutation({
-    onSuccess: async (result) => {
-      if (result.warnings.length > 0) {
-        toast.message("Tax year updated with warnings", {
-          description: result.warnings.map((warning) => warning.message).join(" "),
-        });
-      } else {
-        toast.success("Tax year status updated.");
-      }
-      await utils.invalidate();
-    },
     onError: (error) => toast.error(error.message),
   });
+  const [pendingStatus, setPendingStatus] = useState<TaxYearStatus | null>(null);
+  const [lifecycleWarnings, setLifecycleWarnings] = useState<TaxYearLifecycleWarning[]>([]);
+
+  async function applyStatusChange(
+    status: TaxYearStatus,
+    acknowledgeWarnings: boolean,
+  ) {
+    if (!activeYear) return;
+    const result = await updateStatus.mutateAsync({
+      id: activeYear.id,
+      status,
+      acknowledgeWarnings,
+    });
+    if (result.requiresConfirmation) {
+      setPendingStatus(status);
+      setLifecycleWarnings(result.warnings);
+      return;
+    }
+    setPendingStatus(null);
+    setLifecycleWarnings([]);
+    if (result.warnings.length > 0) {
+      toast.message("Tax year updated with warnings acknowledged", {
+        description: result.warnings.map((warning) => warning.message).join(" "),
+      });
+    } else {
+      toast.success("Tax year status updated.");
+    }
+    await utils.invalidate();
+  }
 
   const [addingReturnForPersonId, setAddingReturnForPersonId] = useState<
     number | undefined
@@ -387,12 +407,9 @@ export function TaxFiling() {
           <p className="text-xs text-muted-foreground">Lifecycle</p>
           <Select
             value={activeYear.status ?? "tracking"}
-            onValueChange={(value) =>
-              updateStatus.mutate({
-                id: activeYear.id,
-                status: value as TaxYearStatus,
-              })
-            }
+            onValueChange={(value) => {
+              void applyStatusChange(value as TaxYearStatus, false);
+            }}
           >
             <SelectTrigger className="w-44">
               <SelectValue />
@@ -466,6 +483,48 @@ export function TaxFiling() {
           onSaved={refresh}
         />
       ) : null}
+
+      <AlertDialog
+        open={pendingStatus !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setPendingStatus(null);
+            setLifecycleWarnings([]);
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Change lifecycle to {pendingStatus ? taxYearStatusLabels[pendingStatus] : ""}?
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>Tax Book found issues that may mean this year is not ready yet:</p>
+                <ul className="list-disc space-y-1 pl-5">
+                  {lifecycleWarnings.map((warning) => (
+                    <li key={warning.code}>{warning.message}</li>
+                  ))}
+                </ul>
+                <p>You can continue anyway if the history is intentionally incomplete.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateStatus.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={updateStatus.isPending || pendingStatus === null}
+              onClick={() => {
+                if (pendingStatus) {
+                  void applyStatusChange(pendingStatus, true);
+                }
+              }}
+            >
+              {updateStatus.isPending ? "Updating…" : "Continue anyway"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={deletingFiling !== null}

@@ -695,6 +695,7 @@ export async function updateTaxYearStatus(
   db: Database,
   taxYearId: number,
   status: TaxYearStatus,
+  acknowledgeWarnings = false,
 ) {
   const { year } = await requireTaxYear(db, taxYearId);
   const timeline = await listFilingTimeline(db, taxYearId);
@@ -706,10 +707,13 @@ export async function updateTaxYearStatus(
       hasAssessment: filing.assessmentId !== null,
     })),
   });
+  if (warnings.length > 0 && !acknowledgeWarnings) {
+    return { year, warnings, requiresConfirmation: true as const };
+  }
   const [updated] = await db
     .update(taxYears)
     .set({ status })
     .where(eq(taxYears.id, year.id))
     .returning();
-  return { year: updated!, warnings };
+  return { year: updated!, warnings, requiresConfirmation: false as const };
 }

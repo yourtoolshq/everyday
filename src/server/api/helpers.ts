@@ -23,6 +23,17 @@ export async function requireActiveYear(db: Database, householdId: number) {
   return year;
 }
 
+export async function requireEditableActiveYear(db: Database, householdId: number) {
+  const year = await requireActiveYear(db, householdId);
+  if (year.status === "archived") {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "This tax year is archived. Change its lifecycle status before editing tracked data.",
+    });
+  }
+  return year;
+}
+
 export async function getSettings(db: Database) {
   const household = await requireHousehold(db);
   const [householdPeople, years] = await Promise.all([

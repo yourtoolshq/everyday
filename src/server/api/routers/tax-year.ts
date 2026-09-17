@@ -49,8 +49,16 @@ export const taxYearRouter = createTRPCRouter({
     .input(z.object({
       id: z.number().int().positive(),
       status: z.enum(taxYearStatuses),
+      acknowledgeWarnings: z.boolean().optional(),
     }))
-    .mutation(async ({ ctx, input }) => updateTaxYearStatus(ctx.db, input.id, input.status)),
+    .mutation(async ({ ctx, input }) =>
+      updateTaxYearStatus(
+        ctx.db,
+        input.id,
+        input.status,
+        input.acknowledgeWarnings ?? false,
+      ),
+    ),
   setActive: publicProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
     const household = await requireHousehold(ctx.db);
     const target = await ctx.db.query.taxYears.findFirst({
