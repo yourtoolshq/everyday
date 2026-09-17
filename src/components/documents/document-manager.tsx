@@ -1,7 +1,7 @@
 "use client";
 
 import { Download, FileText, Pencil, Plus, Trash2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import {
   AlertDialog,
@@ -35,10 +35,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { claimStatusLabels } from "~/lib/benefits";
 import {
   documentTypeLabels,
   documentTypes,
   formatFileSize,
+  isClaimDocumentType,
   titleFromFilename,
   type DocumentType,
 } from "~/lib/documents";
@@ -46,18 +48,27 @@ import { api, type RouterOutputs } from "~/trpc/react";
 
 type VisitDetail = NonNullable<RouterOutputs["visits"]["detail"]>;
 type VisitDocument = VisitDetail["documents"][number];
+type VisitClaim = VisitDetail["claims"][number];
 
-export function DocumentManager({ visitId, documents }: { visitId: string; documents: VisitDocument[] }) {
+export function DocumentManager({
+  visitId,
+  documents,
+  claims,
+}: {
+  visitId: string;
+  documents: VisitDocument[];
+  claims: VisitClaim[];
+}) {
   return (
     <section aria-labelledby="visit-documents" className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 id="visit-documents" className="text-xl font-semibold">Documents</h2>
           <p className="text-sm text-muted-foreground">
-            Keep forms, receipts, results, and other records with this visit.
+            Keep forms, receipts, results, and claim paperwork with this visit.
           </p>
         </div>
-        <UploadDocumentDialog visitId={visitId} />
+        <UploadDocumentDialog visitId={visitId} claims={claims} />
       </div>
 
       {documents.length === 0 ? (
@@ -73,7 +84,12 @@ export function DocumentManager({ visitId, documents }: { visitId: string; docum
       ) : (
         <div className="grid gap-3">
           {documents.map((document) => (
-            <DocumentCard key={document.id} document={document} visitId={visitId} />
+            <DocumentCard
+              key={document.id}
+              document={document}
+              visitId={visitId}
+              claims={claims}
+            />
           ))}
         </div>
       )}
@@ -81,10 +97,25 @@ export function DocumentManager({ visitId, documents }: { visitId: string; docum
   );
 }
 
-function DocumentCard({ document, visitId }: { document: VisitDocument; visitId: string }) {
+function claimLabel(claims: VisitClaim[], claimId: string | null) {
+  if (!claimId) return null;
+  const claim = claims.find((candidate) => candidate.id === claimId);
+  return claim ? `${claim.benefitName} claim` : "Linked claim";
+}
+
+function DocumentCard({
+  document,
+  visitId,
+  claims,
+}: {
+  document: VisitDocument;
+  visitId: string;
+  claims: VisitClaim[];
+}) {
   const utils = api.useUtils();
   const deleteDocument = api.documents.delete.useMutation();
   const [editOpen, setEditOpen] = useState(false);
+  const linkedClaim = claimLabel(claims, document.claimId);
 
   async function refreshDocuments() {
     await Promise.all([
@@ -106,6 +137,9 @@ function DocumentCard({ document, visitId }: { document: VisitDocument; visitId:
           <p className="mt-1 truncate text-sm text-muted-foreground">
             {document.originalFilename} · {formatFileSize(document.sizeBytes)}
           </p>
+          {linkedClaim ? (
+            <p className="mt-1 text-sm text-muted-foreground">Linked to {linkedClaim}</p>
+          ) : null}
         </div>
         <div className="flex shrink-0 gap-2">
           <Button asChild size="sm" variant="outline">
@@ -148,6 +182,7 @@ function DocumentCard({ document, visitId }: { document: VisitDocument; visitId:
       <EditDocumentDialog
         document={document}
         visitId={visitId}
+        claims={claims}
         open={editOpen}
         onOpenChange={setEditOpen}
       />
@@ -155,18 +190,36 @@ function DocumentCard({ document, visitId }: { document: VisitDocument; visitId:
   );
 }
 
-function UploadDocumentDialog({ visitId }: { visitId: string }) {
+export function UploadDocumentDialog({
+  visitId,
+  claims,
+  defaultClaimId,
+  trigger,
+}: {
+  visitId: string;
+  claims: VisitClaim[];
+  defaultClaimId?: string;
+  trigger?: React.ReactNode;
+}) {
   const utils = api.useUtils();
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [type, setType] = useState<DocumentType>();
+  const [claimId, setClaimId] = useState(defaultClaimId ?? "none");
   const [file, setFile] = useState<File>();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
 
+  useEffect(() => {
+    if (!open) return;
+    setClaimId(defaultClaimId ?? "none");
+    if (defaultClaimId) setType("claim_record");
+  }, [defaultClaimId, open]);
+
   function reset() {
     setTitle("");
     setType(undefined);
+    setClaimId(defaultClaimId ?? "none");
     setFile(undefined);
     setError(undefined);
   }
@@ -183,6 +236,9 @@ function UploadDocumentDialog({ visitId }: { visitId: string }) {
     body.set("file", file);
     body.set("title", title);
     body.set("type", type);
+    if (isClaimDocumentType(type) && claimId !== "none") {
+      body.set("claimId", claimId);
+    }
 
     try {
       const response = await fetch(`/api/visits/${visitId}/documents`, { method: "POST", body });
@@ -213,13 +269,13 @@ function UploadDocumentDialog({ visitId }: { visitId: string }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button><Plus />Add document</Button>
+        {trigger ?? <Button><Plus />Add document</Button>}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add document</DialogTitle>
           <DialogDescription>
-            Upload one PDF or image up to 25 MB. First Aid keeps a private managed copy.
+            Upload one PDF or image up to 25 MB. Claim records and EOBs can be linked to a specific claim.
           </DialogDescription>
         </DialogHeader>
         <form className="space-y-5" onSubmit={submit}>
@@ -241,7 +297,16 @@ function UploadDocumentDialog({ visitId }: { visitId: string }) {
             <Label htmlFor="document-title">Title</Label>
             <Input id="document-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={160} required />
           </div>
-          <DocumentTypeSelect value={type} onValueChange={(value) => setType(value as DocumentType)} />
+          <DocumentTypeSelect
+            value={type}
+            onValueChange={(value) => {
+              setType(value as DocumentType);
+              if (!isClaimDocumentType(value as DocumentType)) setClaimId("none");
+            }}
+          />
+          {type && isClaimDocumentType(type) ? (
+            <ClaimSelect claims={claims} value={claimId} onValueChange={setClaimId} />
+          ) : null}
           {error ? <p className="text-sm text-destructive">{error}</p> : null}
           <DialogFooter>
             <Button type="submit" disabled={pending}>{pending ? "Uploading…" : "Add document"}</Button>
@@ -255,11 +320,13 @@ function UploadDocumentDialog({ visitId }: { visitId: string }) {
 function EditDocumentDialog({
   document,
   visitId,
+  claims,
   open,
   onOpenChange,
 }: {
   document: VisitDocument;
   visitId: string;
+  claims: VisitClaim[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -267,10 +334,24 @@ function EditDocumentDialog({
   const updateDocument = api.documents.update.useMutation();
   const [title, setTitle] = useState(document.title);
   const [type, setType] = useState<DocumentType>(document.type);
+  const [claimId, setClaimId] = useState(document.claimId ?? "none");
+
+  useEffect(() => {
+    if (open) {
+      setTitle(document.title);
+      setType(document.type);
+      setClaimId(document.claimId ?? "none");
+    }
+  }, [document, open]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await updateDocument.mutateAsync({ id: document.id, title, type });
+    await updateDocument.mutateAsync({
+      id: document.id,
+      title,
+      type,
+      claimId: isClaimDocumentType(type) && claimId !== "none" ? claimId : null,
+    });
     await Promise.all([
       utils.visits.detail.invalidate({ id: visitId }),
       utils.documents.overview.invalidate(),
@@ -290,7 +371,22 @@ function EditDocumentDialog({
             <Label htmlFor={`document-title-${document.id}`}>Title</Label>
             <Input id={`document-title-${document.id}`} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={160} required />
           </div>
-          <DocumentTypeSelect value={type} onValueChange={(value) => setType(value as DocumentType)} id={`document-type-${document.id}`} />
+          <DocumentTypeSelect
+            value={type}
+            onValueChange={(value) => {
+              setType(value as DocumentType);
+              if (!isClaimDocumentType(value as DocumentType)) setClaimId("none");
+            }}
+            id={`document-type-${document.id}`}
+          />
+          {isClaimDocumentType(type) ? (
+            <ClaimSelect
+              claims={claims}
+              value={claimId}
+              onValueChange={setClaimId}
+              id={`document-claim-${document.id}`}
+            />
+          ) : null}
           <DialogFooter>
             <Button type="submit" disabled={updateDocument.isPending}>
               {updateDocument.isPending ? "Saving…" : "Save changes"}
@@ -314,6 +410,39 @@ function DocumentTypeSelect({ value, onValueChange, id = "document-type" }: { va
           ))}
         </SelectContent>
       </Select>
+    </div>
+  );
+}
+
+function ClaimSelect({
+  claims,
+  value,
+  onValueChange,
+  id = "document-claim",
+}: {
+  claims: VisitClaim[];
+  value: string;
+  onValueChange: (value: string) => void;
+  id?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>Linked claim <span className="font-normal text-muted-foreground">(optional)</span></Label>
+      {claims.length === 0 ? (
+        <p className="text-sm text-muted-foreground">Add a claim first to link claim paperwork to it.</p>
+      ) : (
+        <Select value={value} onValueChange={onValueChange}>
+          <SelectTrigger id={id} className="w-full"><SelectValue placeholder="No linked claim" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No linked claim</SelectItem>
+            {claims.map((claim) => (
+              <SelectItem key={claim.id} value={claim.id}>
+                {claim.benefitName} · {claimStatusLabels[claim.status]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 }

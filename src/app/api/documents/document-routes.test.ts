@@ -38,6 +38,7 @@ async function createVisit() {
     title: "Example visit",
     startsAt: "2027-04-01T14:30:00.000Z",
     status: "completed",
+    costCents: null,
     notes: null,
   });
 }

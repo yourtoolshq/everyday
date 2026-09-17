@@ -8,9 +8,10 @@ import {
   personNameSchema,
   planYearSchema,
 } from "~/lib/care-planning";
+import { careItemFinancials } from "~/lib/benefits";
 import { deriveCareProgress } from "~/lib/visits";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { careItems, carePlans, people, visits } from "~/server/db/schema";
+import { careItems, carePlans, claims, people, visits } from "~/server/db/schema";
 
 const idInput = z.object({ id: z.string().uuid() });
 const now = () => new Date().toISOString();
@@ -70,6 +71,20 @@ export const planningRouter = createTRPCRouter({
             .where(inArray(visits.careItemId, items.map((item) => item.id)))
         : [];
 
+      const linkedVisitIds = linkedVisits.map((visit) => visit.id);
+      const linkedClaims = linkedVisitIds.length
+        ? await ctx.db
+            .select()
+            .from(claims)
+            .where(inArray(claims.visitId, linkedVisitIds))
+        : [];
+      const claimsByVisit = new Map<string, typeof linkedClaims>();
+      for (const claim of linkedClaims) {
+        const visitClaims = claimsByVisit.get(claim.visitId) ?? [];
+        visitClaims.push(claim);
+        claimsByVisit.set(claim.visitId, visitClaims);
+      }
+
       return {
         people: allPeople.map((person) => ({
           ...person,
@@ -88,7 +103,11 @@ export const planningRouter = createTRPCRouter({
           const nextScheduledVisit = itemVisits
             .filter((visit) => visit.status === "scheduled")
             .sort((a, b) => a.startsAt.localeCompare(b.startsAt))[0] ?? null;
-          return { ...item, ...progress, nextScheduledVisit };
+          const financialSummary = careItemFinancials(
+            itemVisits.map((visit) => ({ id: visit.id, costCents: visit.costCents })),
+            claimsByVisit,
+          );
+          return { ...item, ...progress, nextScheduledVisit, financialSummary };
         }),
       };
     }),

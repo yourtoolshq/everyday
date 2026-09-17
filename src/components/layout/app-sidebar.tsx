@@ -34,7 +34,6 @@ type FutureNavigationItem = {
 };
 
 const futureNavigation: FutureNavigationItem[] = [
-  { title: "Benefits", icon: ShieldCheck },
   { title: "Claims", icon: ReceiptText },
   { title: "Settings", icon: Settings },
 ];
@@ -46,6 +45,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     { title: "Visits", href: "/visits", icon: Stethoscope },
     { title: "Care Providers", href: "/care-providers", icon: Building2 },
     { title: "Documents", href: "/documents", icon: FileText },
+    { title: "Benefits", href: "/benefits", icon: ShieldCheck },
   ];
 
   return (

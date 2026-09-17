@@ -26,10 +26,30 @@ export const documentTypeLabels = {
   other: "Other",
 } satisfies Record<(typeof documentTypes)[number], string>;
 
+export const claimDocumentTypes = ["claim_record", "explanation_of_benefits"] as const;
+
+export type ClaimDocumentType = (typeof claimDocumentTypes)[number];
+
+export function isClaimDocumentType(type: DocumentType): boolean {
+  return claimDocumentTypes.includes(type as ClaimDocumentType);
+}
+
 export const documentMetadataSchema = z.object({
   title: z.string().trim().min(1).max(160),
   type: z.enum(documentTypes),
+  claimId: z.string().uuid().nullable().optional(),
 });
+
+export function validateDocumentClaimLink(
+  type: DocumentType,
+  claimId: string | null | undefined,
+): string | null {
+  if (!claimId) return null;
+  if (!isClaimDocumentType(type)) {
+    return "Only claim records and explanations of benefits can be linked to a claim.";
+  }
+  return null;
+}
 
 export const maxDocumentBytes = 25 * 1024 * 1024;
 

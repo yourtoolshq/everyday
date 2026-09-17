@@ -21,6 +21,7 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { DocumentManager } from "~/components/documents/document-manager";
 import { VisitDialog } from "~/components/visits/visit-dialog";
+import { VisitFinancials } from "~/components/visits/visit-financials";
 import { formatDateTime } from "~/lib/date-time";
 import { visitStatusLabels, type VisitStatus } from "~/lib/visits";
 import { cn } from "~/lib/utils";
@@ -98,7 +99,7 @@ export function VisitDetailWorkspace({ initialDetail }: { initialDetail: VisitDe
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive">
-                  <Trash2 />Delete
+                  <Trash2 />Delete visit
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -123,6 +124,7 @@ export function VisitDetailWorkspace({ initialDetail }: { initialDetail: VisitDe
                         utils.documents.overview.invalidate(),
                         utils.planning.overview.invalidate(),
                         utils.careProviders.overview.invalidate(),
+                        utils.benefits.overview.invalidate(),
                       ]);
                       router.push("/visits");
                     }}
@@ -151,7 +153,19 @@ export function VisitDetailWorkspace({ initialDetail }: { initialDetail: VisitDe
           </CardContent>
         </Card>
 
-        <DocumentManager visitId={data.visit.id} documents={data.documents} />
+        <VisitFinancials
+          visitId={data.visit.id}
+          costCents={data.visit.costCents}
+          financials={data.financials}
+          claims={data.claims}
+          documents={data.documents}
+        />
+
+        <DocumentManager
+          visitId={data.visit.id}
+          documents={data.documents}
+          claims={data.claims}
+        />
         <VisitDialog visit={data.visit} open={editOpen} onOpenChange={setEditOpen} hideTrigger />
       </div>
     </main>

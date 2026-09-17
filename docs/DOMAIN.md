@@ -321,9 +321,26 @@ Previous visits:
 
 ---
 
+# Insurance Plan
+
+An Insurance Plan groups benefits for one calendar year. A household may have
+more than one plan in the same year when coverage comes from different sources.
+
+Examples:
+
+```text
+Employer health plan — 2027
+Health spending account — 2027
+```
+
+An insurance plan contains Benefits. Its year defines the benefit period:
+January 1 through December 31.
+
+---
+
 # Benefit
 
-A Benefit represents healthcare coverage available through an insurance plan.
+A Benefit represents a dollar pool available through an insurance plan.
 
 Examples:
 
@@ -331,12 +348,13 @@ Examples:
 Massage Therapy
 $500 / year
 
-Physiotherapy
-$700 / year
+Physiotherapy — $700 / year (person-specific)
 
-Vision
-$300 / 2 years
+Health spending account — $1,000 / year (household shared)
 ```
+
+A benefit covers either one household member or the household as a shared pool.
+Benefit periods follow the calendar year of the insurance plan.
 
 For V1, First Aid does not need to reproduce the insurance company's claim rules.
 
@@ -365,23 +383,30 @@ Reset: January 1, 2028
 
 Benefits help inform the Care Plan but do not control it.
 
-A Care Item can exist without any insurance Benefit.
+A Care Item can exist without any insurance Benefit. Care items do not select or
+consume benefits directly. They may show financial summaries derived from their
+linked visits.
 
 ---
 
 # Claim
 
-A Claim represents insurance usage resulting from a Visit.
+A Claim records the final amount a benefit paid, or is expected to pay, for one
+visit. A visit may have multiple claims against different benefits.
 
 Example:
 
 ```text
 Visit cost: $110
 
-Submitted: $110
-Insurance paid: $100
+Massage benefit paid: $80
+HSA paid: $20
 Out of pocket: $10
 ```
+
+Only paid claims consume benefit usage and count toward reimbursement totals.
+Submitted claims appear as pending. Denied claims remain visible but do not
+reduce remaining coverage.
 
 A Claim connects the actual Visit with a Benefit.
 
@@ -453,8 +478,9 @@ filename is descriptive metadata and is never used as a storage path.
 
 Documents remain discoverable from their Visit and from a household-wide
 overview, but they do not become an independent folder or tagging system.
-Deleting a Visit also deletes its Documents and managed files. Claim-related
-files may belong to a Visit until the Claim domain is implemented.
+Deleting a Visit also deletes its Documents and managed files. Claim records
+and explanations of benefits may optionally be linked to a specific Claim on
+the same visit.
 
 ---
 

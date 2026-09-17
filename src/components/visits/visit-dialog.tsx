@@ -25,6 +25,7 @@ import {
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
 import { toDateTimeLocalValue } from "~/lib/date-time";
+import { formatCents, parseDollarsToCents } from "~/lib/money";
 import { visitStatusLabels, visitStatuses, type VisitStatus } from "~/lib/visits";
 import { api, type RouterInputs, type RouterOutputs } from "~/trpc/react";
 
@@ -100,6 +101,17 @@ export function VisitDialog({
     event.preventDefault();
     setError(undefined);
     const form = new FormData(event.currentTarget);
+    const costInput = String(form.get("cost") ?? "").trim();
+    let costCents: number | null = null;
+    if (costInput) {
+      const parsed = parseDollarsToCents(costInput);
+      if (parsed === null) {
+        setError("Enter a valid cost amount, such as 110 or 110.50.");
+        return;
+      }
+      costCents = parsed;
+    }
+
     const fields: RouterInputs["visits"]["create"] = {
       personId: effectivePersonId,
       careItemId: nullableId(careItemId),
@@ -108,6 +120,7 @@ export function VisitDialog({
       title: String(form.get("title") ?? ""),
       startsAt: new Date(String(form.get("startsAt") ?? "")).toISOString(),
       status,
+      costCents,
       notes: nullableText(form.get("notes")),
     };
 
@@ -249,6 +262,20 @@ export function VisitDialog({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2 sm:col-span-2">
+                <Label htmlFor={`visit-cost-${visit?.id ?? "new"}`}>
+                  Total cost <span className="font-normal text-muted-foreground">(optional)</span>
+                </Label>
+                <Input
+                  id={`visit-cost-${visit?.id ?? "new"}`}
+                  name="cost"
+                  inputMode="decimal"
+                  placeholder="e.g. 110.00"
+                  defaultValue={
+                    visit?.costCents != null ? formatCents(visit.costCents).replace("$", "") : ""
+                  }
+                />
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor={`visit-notes-${visit?.id ?? "new"}`}>Notes <span className="font-normal text-muted-foreground">(optional)</span></Label>

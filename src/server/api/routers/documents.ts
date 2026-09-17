@@ -4,7 +4,8 @@ import { z } from "zod";
 
 import { documentMetadataSchema } from "~/lib/documents";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { documents, people, visits } from "~/server/db/schema";
+import { benefits, claims, documents, people, visits } from "~/server/db/schema";
+import { resolveDocumentClaimId } from "~/server/documents/claim-link";
 import {
   discardStagedDocuments,
   restoreStagedDocuments,
@@ -17,6 +18,7 @@ const now = () => new Date().toISOString();
 const publicDocumentFields = {
   id: documents.id,
   visitId: documents.visitId,
+  claimId: documents.claimId,
   type: documents.type,
   title: documents.title,
   originalFilename: documents.originalFilename,
@@ -35,19 +37,35 @@ export const documentsRouter = createTRPCRouter({
         visitStartsAt: visits.startsAt,
         personId: people.id,
         personName: people.displayName,
+        claimBenefitName: benefits.name,
       })
       .from(documents)
       .innerJoin(visits, eq(documents.visitId, visits.id))
       .innerJoin(people, eq(visits.personId, people.id))
+      .leftJoin(claims, eq(documents.claimId, claims.id))
+      .leftJoin(benefits, eq(claims.benefitId, benefits.id))
       .orderBy(desc(visits.startsAt), desc(documents.createdAt));
   }),
 
   update: publicProcedure
     .input(idInput.and(documentMetadataSchema))
     .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db
+        .select({ visitId: documents.visitId })
+        .from(documents)
+        .where(eq(documents.id, input.id));
+      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Document not found" });
+
+      const claimId = await resolveDocumentClaimId(
+        ctx.db,
+        existing.visitId,
+        input.type,
+        input.claimId,
+      );
+
       const [document] = await ctx.db
         .update(documents)
-        .set({ title: input.title, type: input.type, updatedAt: now() })
+        .set({ title: input.title, type: input.type, claimId, updatedAt: now() })
         .where(eq(documents.id, input.id))
         .returning(publicDocumentFields);
       if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "Document not found" });

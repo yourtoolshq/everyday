@@ -112,7 +112,7 @@ test("manages providers and derives care progress from visits", async ({ page },
   await dialog.getByLabel("Appointment date and time").fill("2035-08-14T14:00");
   await dialog.getByRole("button", { name: "Record visit" }).click();
   await expect(page.getByText("2 of 2 visits completed")).toBeVisible();
-  await expect(page.getByText("Completed", { exact: true })).toBeVisible();
+  await expect(page.getByText("Completed", { exact: true }).first()).toBeVisible();
 
   await page.goto("/visits");
   await page.getByRole("button", { name: "Record past visit" }).click();
@@ -184,7 +184,7 @@ test("attaches, finds, edits, opens, and cascade-deletes visit documents", async
   await expect(page.getByRole("heading", { name: updatedTitle })).toBeVisible();
   await page.getByRole("link", { name: "View visit" }).click();
 
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.getByRole("button", { name: "Delete visit" }).click();
   const alert = page.getByRole("alertdialog");
   await expect(alert.getByText(/1 attached document/)).toBeVisible();
   await alert.getByRole("button", { name: "Delete visit and documents" }).click();
@@ -210,9 +210,119 @@ test("renders the responsive private application shell", async ({ page }, testIn
   await expect(page.getByRole("link", { name: "Visits" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Care Providers" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Documents" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Benefits" })).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Benefits" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Claims" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Settings" })).toBeDisabled();
+});
+
+test("tracks benefits, visit costs, and claims", async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
+  const suffix = testInfo.project.name === "mobile-chromium" ? "Mobile" : "Desktop";
+  const year = testInfo.project.name === "mobile-chromium" ? 2034 : 2033;
+  const personName = `Benefits ${suffix}`;
+  const careItemTitle = `Massage therapy ${suffix}`;
+  const visitTitle = `Massage session ${suffix}`;
+
+  await page.goto("/");
+  if (await page.getByRole("heading", { name: "Who are you planning care for?" }).isVisible()) {
+    await page.getByLabel("Display name").fill(personName);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await page.getByLabel("Plan year").fill(String(year));
+    await page.getByRole("button", { name: "Create care plan" }).click();
+  } else if (await page.getByRole("heading", { name: "Create your healthcare year" }).isVisible()) {
+    await page.getByLabel("Plan year").fill(String(year));
+    await page.getByRole("button", { name: "Create care plan" }).click();
+  } else {
+    await page.getByRole("button", { name: "New year" }).click();
+    await page.getByRole("dialog").getByLabel("Plan year").fill(String(year));
+    await page.getByRole("dialog").getByRole("button", { name: "Create plan" }).click();
+  }
+
+  await page.goto("/benefits");
+  await page.getByRole("button", { name: "Add plan" }).click();
+  let dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Plan name").fill("Employer plan");
+  await dialog.getByLabel("Year").fill(String(year));
+  await dialog.getByRole("button", { name: "Add plan" }).click();
+  await page.getByLabel("Benefit year").click();
+  await page.getByRole("option", { name: String(year) }).click();
+  await expect(page.getByRole("heading", { name: "Employer plan" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Add benefit" }).first().click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Benefit name").fill("Massage therapy");
+  await dialog.getByLabel("Annual limit").fill("500");
+  await dialog.getByLabel("Opening used").fill("50");
+  await dialog.getByRole("button", { name: "Add benefit" }).click();
+  await expect(page.getByText("$450.00 remaining")).toBeVisible();
+
+  const hsaName = `HSA ${suffix}`;
+  await page.getByRole("button", { name: "Add benefit" }).first().click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Benefit name").fill(hsaName);
+  await dialog.getByLabel("Coverage").click();
+  await page.getByRole("option", { name: "Shared by household" }).click();
+  await dialog.getByLabel("Annual limit").fill("1000");
+  await dialog.getByRole("button", { name: "Add benefit" }).click();
+  await expect(page.getByText(hsaName)).toBeVisible();
+
+  const clinicName = `Benefits Clinic ${year}`;
+  await page.goto("/care-providers");
+  await page.getByRole("button", { name: "Add organization" }).first().click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name").fill(clinicName);
+  await dialog.getByRole("button", { name: "Add organization" }).click();
+  await expect(page.getByText(clinicName, { exact: true }).first()).toBeVisible();
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add care item" }).first().click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("What care should be considered?").fill(careItemTitle);
+  await dialog.getByLabel("Category").click();
+  await page.getByRole("option", { name: "Therapy and wellness" }).click();
+  await dialog.getByRole("button", { name: "Add to plan" }).click();
+  await expect(page.getByRole("heading", { name: careItemTitle })).toBeVisible();
+
+  await page.goto("/visits");
+  await page.getByRole("button", { name: "Record past visit" }).click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Visit title or purpose").fill(visitTitle);
+  await dialog.getByLabel("Care goal").click();
+  await page.getByRole("option", { name: careItemTitle }).click();
+  await dialog.getByLabel("Care organization").click();
+  await page.getByRole("option", { name: clinicName }).click();
+  await dialog.getByLabel("Appointment date and time").fill(`${year}-06-01T12:00`);
+  await dialog.getByLabel("Total cost").fill("110");
+  await dialog.getByRole("button", { name: "Record visit" }).click();
+  await expect(page.getByRole("link", { name: visitTitle })).toBeVisible();
+
+  await page.getByRole("link", { name: visitTitle }).click();
+  await page.getByRole("button", { name: "Add claim" }).click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Benefit").click();
+  await page.getByRole("option", { name: /Massage therapy/ }).click();
+  await dialog.getByLabel("Amount").fill("80");
+  await dialog.getByRole("button", { name: "Add claim" }).click();
+  await expect(dialog).toBeHidden();
+
+  await page.getByRole("button", { name: "Add claim" }).click();
+  dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Benefit").click();
+  await page.getByRole("option", { name: new RegExp(hsaName) }).click();
+  await dialog.getByLabel("Amount").fill("20");
+  await dialog.getByRole("button", { name: "Add claim" }).click();
+  await expect(dialog).toBeHidden();
+
+  await expect(page.getByText("Paid by benefits").locator("..").getByText("$100.00")).toBeVisible();
+  await expect(page.getByText("Out of pocket").locator("..").getByText("$10.00")).toBeVisible();
+
+  await page.goto("/benefits");
+  await page.getByLabel("Benefit year").click();
+  await page.getByRole("option", { name: String(year) }).click();
+  await expect(page.getByText("$370.00 remaining")).toBeVisible();
+
+  await page.goto("/");
+  await expect(page.getByText("$110.00 cost · $100.00 reimbursed · $10.00 out of pocket").first()).toBeVisible();
 });
 
 test("exposes a database-backed health check", async ({ request }) => {

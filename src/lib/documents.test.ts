@@ -4,8 +4,10 @@ import {
   detectDocumentFile,
   documentMetadataSchema,
   formatFileSize,
+  isClaimDocumentType,
   maxDocumentBytes,
   titleFromFilename,
+  validateDocumentClaimLink,
 } from "~/lib/documents";
 
 describe("document files", () => {
@@ -28,6 +30,14 @@ describe("document files", () => {
     expect(documentMetadataSchema.safeParse({ title: "Receipt", type: "receipt" }).success).toBe(true);
     expect(documentMetadataSchema.safeParse({ title: "", type: "receipt" }).success).toBe(false);
     expect(documentMetadataSchema.safeParse({ title: "Receipt", type: "unknown" }).success).toBe(false);
+  });
+
+  it("identifies claim document types and validates claim links", () => {
+    expect(isClaimDocumentType("claim_record")).toBe(true);
+    expect(isClaimDocumentType("explanation_of_benefits")).toBe(true);
+    expect(isClaimDocumentType("receipt")).toBe(false);
+    expect(validateDocumentClaimLink("receipt", "claim-id")).toMatch(/claim records/);
+    expect(validateDocumentClaimLink("claim_record", null)).toBeNull();
   });
 
   it("provides upload and display helpers", () => {

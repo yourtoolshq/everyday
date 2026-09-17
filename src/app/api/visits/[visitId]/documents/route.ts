@@ -10,6 +10,7 @@ import {
 } from "~/lib/documents";
 import { databaseReady, db } from "~/server/db";
 import { documents, visits } from "~/server/db/schema";
+import { resolveDocumentClaimId } from "~/server/documents/claim-link";
 import { removeDocument, writeDocument } from "~/server/documents/storage";
 
 export const runtime = "nodejs";
@@ -36,9 +37,14 @@ export async function POST(
     return errorResponse("The upload could not be read.", 400);
   }
 
+  const claimIdValue = form.get("claimId");
   const metadata = documentMetadataSchema.safeParse({
     title: form.get("title"),
     type: form.get("type"),
+    claimId:
+      typeof claimIdValue === "string" && claimIdValue.trim() && claimIdValue !== "none"
+        ? claimIdValue
+        : null,
   });
   if (!metadata.success) return errorResponse("Choose a type and enter a title.", 400);
 
@@ -60,6 +66,21 @@ export async function POST(
     .where(eq(visits.id, parsedParams.data.visitId));
   if (!visit) return errorResponse("Visit not found.", 404);
 
+  let claimId: string | null;
+  try {
+    claimId = await resolveDocumentClaimId(
+      db,
+      visit.id,
+      metadata.data.type,
+      metadata.data.claimId,
+    );
+  } catch (error) {
+    return errorResponse(
+      error instanceof Error ? error.message : "The claim could not be linked.",
+      400,
+    );
+  }
+
   const id = crypto.randomUUID();
   const storageKey = `${crypto.randomUUID()}.${detected.extension}`;
   const originalFilename = safeOriginalFilename(file.name);
@@ -71,7 +92,9 @@ export async function POST(
       .values({
         id,
         visitId: visit.id,
-        ...metadata.data,
+        claimId,
+        title: metadata.data.title,
+        type: metadata.data.type,
         originalFilename,
         storageKey,
         mimeType: detected.mimeType,
@@ -80,6 +103,7 @@ export async function POST(
       .returning({
         id: documents.id,
         visitId: documents.visitId,
+        claimId: documents.claimId,
         type: documents.type,
         title: documents.title,
         originalFilename: documents.originalFilename,

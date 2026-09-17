@@ -154,24 +154,31 @@ First Aid becomes the place to look when I need the records from a previous heal
 
 ---
 
-## Phase 4 — Track insurance benefits
+## Phase 4 — Benefits, claims, and real cost (complete)
+
+Phases 4 and 5 were implemented together because benefits without claims would
+require maintaining usage separately from visits, while claims without benefits
+would not provide the remaining-coverage view needed during yearly planning.
 
 ### Goal
 
-Know what healthcare coverage is available before the year disappears.
+Know what healthcare coverage is available before the year disappears, and
+understand what completed visits actually cost and how they affected benefits.
 
 ### Scope
 
 - insurance plan
-- benefit categories
-- benefit period
-- limit
-- reset/renewal date
-- simple usage
-- remaining amount
-- link relevant care/visits to a benefit
+- benefit with annual dollar limit
+- person-specific or household-shared coverage
+- calendar-year benefit period
+- opening usage for spending outside First Aid
+- remaining amount and pending submitted claims
+- visit cost
+- claims with submitted, paid, or denied status
+- manual claim allocation across benefits
+- care-item financial summaries from linked visits
 
-The model should support common limits without attempting to reproduce every insurer rule.
+The model should support common dollar limits without attempting to reproduce every insurer rule.
 
 ### Example use
 
@@ -183,7 +190,8 @@ and use that information while reviewing the care plan.
 
 ### Useful outcome
 
-Insurance coverage becomes a visible planning input instead of something checked only after an expense occurs.
+Insurance coverage becomes a visible planning input, and remaining benefits
+reflect actual healthcare activity instead of manual mental arithmetic.
 
 ### Explicitly deferred
 
@@ -193,45 +201,10 @@ Insurance coverage becomes a visible planning input instead of something checked
 - automated claim submission
 - coordination of benefits
 - prediction of insurer adjudication
-
----
-
-## Phase 5 — Record claims and real cost
-
-### Goal
-
-Understand what a completed visit actually cost and how it affected available benefits.
-
-### Scope
-
-- visit cost
-- claim
-- amount submitted
-- amount reimbursed
-- out-of-pocket amount
-- claim status if useful
-- related claim/EOB documents
-- calculate benefit usage from recorded claims where possible
-
-### Example use
-
-Massage visit:
-
-- cost: $110
-- insurer paid: $100
-- out of pocket: $10
-- massage benefit automatically reflects the $100 usage
-
-### Useful outcome
-
-The remaining-benefit picture is based on actual healthcare activity instead of manual mental arithmetic.
-
-### Explicitly deferred
-
-- accounting system
-- tax deduction/credit calculations
-- reimbursement automation
-- insurer API integrations unless a real need appears
+- submitted-versus-approved amount tracking
+- visit-count and non-calendar benefit periods
+- household-wide claims history page
+- accounting, tax, and reimbursement automation
 
 ---
 

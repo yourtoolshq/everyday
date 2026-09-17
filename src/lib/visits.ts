@@ -33,6 +33,7 @@ export const visitFieldsSchema = z
     title: z.string().trim().min(1).max(160),
     startsAt: z.string().datetime({ offset: true }),
     status: z.enum(visitStatuses),
+    costCents: z.number().int().nonnegative().nullable(),
     notes: optionalText,
   })
   .superRefine((value, ctx) => {

@@ -1,3 +1,4 @@
+import { benefitsRouter } from "~/server/api/routers/benefits";
 import { careProvidersRouter } from "~/server/api/routers/care-providers";
 import { documentsRouter } from "~/server/api/routers/documents";
 import { planningRouter } from "~/server/api/routers/planning";
@@ -9,6 +10,7 @@ import {
 } from "~/server/api/trpc";
 
 export const appRouter = createTRPCRouter({
+  benefits: benefitsRouter,
   careProviders: careProvidersRouter,
   documents: documentsRouter,
   planning: planningRouter,

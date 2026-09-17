@@ -4,9 +4,12 @@ import { createCaller } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
 import { databaseReady, db } from "~/server/db";
 import {
+  benefits,
   careItems,
   careOrganizations,
   carePlans,
+  claims,
+  insurancePlans,
   people,
   providers,
   visits,
@@ -37,7 +40,10 @@ const itemFields = (personId: string) => ({
 describe("visits and care providers", () => {
   beforeEach(async () => {
     await databaseReady;
+    await db.delete(claims);
     await db.delete(visits);
+    await db.delete(benefits);
+    await db.delete(insurancePlans);
     await db.delete(providers);
     await db.delete(careOrganizations);
     await db.delete(careItems);
@@ -69,6 +75,7 @@ describe("visits and care providers", () => {
       title: "Massage therapy",
       startsAt: "2027-03-10T15:00:00.000Z",
       status: "scheduled",
+      costCents: null,
       notes: null,
     });
     expect(firstVisit.careOrganizationId).toBe(organization.id);
@@ -92,6 +99,7 @@ describe("visits and care providers", () => {
       title: "Massage therapy",
       startsAt: "2027-06-10T15:00:00.000Z",
       status: "completed",
+      costCents: null,
       notes: "Routine visit",
     });
     expect((await api.planning.overview({ planId: plan.id })).items[0]).toMatchObject({
@@ -117,6 +125,7 @@ describe("visits and care providers", () => {
       title: "Unplanned lab visit",
       startsAt: "2027-04-01T14:30:00.000Z",
       status: "completed",
+      costCents: null,
       notes: null,
     });
 
@@ -148,6 +157,87 @@ describe("visits and care providers", () => {
         title: "Invalid visit",
         startsAt: "2027-04-01T14:30:00.000Z",
         status: "scheduled",
+        costCents: null,
+        notes: null,
+      }),
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("tracks visit cost, claims, and financial totals", async () => {
+    const api = await caller();
+    const person = await api.planning.createPerson({ displayName: "Test Person" });
+    const plan = await api.benefits.createPlan({ name: "Plan", year: 2027, notes: null });
+    const personBenefit = await api.benefits.createBenefit({
+      insurancePlanId: plan.id,
+      name: "Massage",
+      coverageScope: "person",
+      personId: person.id,
+      annualLimitCents: 50000,
+      openingUsedCents: 0,
+      notes: null,
+    });
+    const sharedBenefit = await api.benefits.createBenefit({
+      insurancePlanId: plan.id,
+      name: "HSA",
+      coverageScope: "household",
+      personId: null,
+      annualLimitCents: 100000,
+      openingUsedCents: 0,
+      notes: null,
+    });
+    const organization = await api.careProviders.createOrganization({
+      name: "Clinic",
+      phoneNumbers: [],
+      websiteUrl: null,
+      bookingUrl: null,
+    });
+    const visit = await api.visits.create({
+      personId: person.id,
+      careItemId: null,
+      providerId: null,
+      careOrganizationId: organization.id,
+      title: "Massage",
+      startsAt: "2027-06-01T12:00:00.000Z",
+      status: "completed",
+      costCents: 11000,
+      notes: null,
+    });
+
+    await api.visits.createClaim({
+      visitId: visit.id,
+      benefitId: personBenefit.id,
+      status: "paid",
+      amountCents: 8000,
+      notes: null,
+    });
+    await api.visits.createClaim({
+      visitId: visit.id,
+      benefitId: sharedBenefit.id,
+      status: "paid",
+      amountCents: 2000,
+      notes: null,
+    });
+    await api.visits.createClaim({
+      visitId: visit.id,
+      benefitId: sharedBenefit.id,
+      status: "submitted",
+      amountCents: 1000,
+      notes: null,
+    });
+
+    const detail = await api.visits.detail({ id: visit.id });
+    expect(detail?.financials).toEqual({
+      reimbursedCents: 10000,
+      pendingCents: 1000,
+      outOfPocketCents: 1000,
+    });
+
+    await expect(
+      api.visits.createClaim({
+        visitId: visit.id,
+        benefitId: personBenefit.id,
+        status: "paid",
+        amountCents: 2000,
         notes: null,
       }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });

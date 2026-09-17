@@ -98,6 +98,11 @@ export function DocumentsWorkspace({ initialDocuments }: { initialDocuments: Doc
                     <p className="mt-1 truncate text-sm text-muted-foreground">
                       {document.originalFilename} · {formatFileSize(document.sizeBytes)}
                     </p>
+                    {document.claimBenefitName ? (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Linked to {document.claimBenefitName} claim
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <Button asChild size="sm" variant="outline">

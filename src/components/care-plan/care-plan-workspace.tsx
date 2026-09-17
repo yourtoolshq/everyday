@@ -76,6 +76,7 @@ import {
   type TimingKind,
 } from "~/lib/care-planning";
 import { formatDateTime } from "~/lib/date-time";
+import { formatCents } from "~/lib/money";
 import { careProgressLabels, type CareProgressState } from "~/lib/visits";
 import { cn } from "~/lib/utils";
 import { api, type RouterInputs, type RouterOutputs } from "~/trpc/react";
@@ -426,6 +427,12 @@ function CareItemCard({ item, people, planId }: { item: CareItem; people: Person
               {item.scheduledVisitCount > 0 ? <span className="text-muted-foreground">· {item.scheduledVisitCount} scheduled</span> : null}
             </div>
             {item.nextScheduledVisit ? <p className="mt-2 text-sm"><span className="text-muted-foreground">Next visit:</span> {formatDateTime(item.nextScheduledVisit.startsAt)}</p> : null}
+            {item.financialSummary ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {formatCents(item.financialSummary.totalCostCents)} cost · {formatCents(item.financialSummary.reimbursedCents)} reimbursed · {formatCents(item.financialSummary.outOfPocketCents)} out of pocket
+                {item.financialSummary.hasMissingCosts ? " · some linked visits have no recorded cost" : ""}
+              </p>
+            ) : null}
             {item.sourceDetail && <p className="mt-3 text-sm">{item.sourceDetail}</p>}
             {item.notes && <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{item.notes}</p>}
           </div>
