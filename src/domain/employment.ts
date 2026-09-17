@@ -47,6 +47,24 @@ export const deductionFields = [
     defaultEnabled: false,
   },
   {
+    amountField: "extendedHealthCents",
+    enabledField: "extendedHealthEnabled",
+    label: "Extended health",
+    defaultEnabled: false,
+  },
+  {
+    amountField: "travelMedicalCents",
+    enabledField: "travelMedicalEnabled",
+    label: "Travel medical insurance",
+    defaultEnabled: false,
+  },
+  {
+    amountField: "unionDuesCents",
+    enabledField: "unionDuesEnabled",
+    label: "Union dues",
+    defaultEnabled: false,
+  },
+  {
     amountField: "otherDeductionsCents",
     enabledField: "otherDeductionsEnabled",
     label: "Other deductions",
@@ -96,6 +114,11 @@ export const employmentInput = z
     eiEnabled: z.boolean().default(true),
     wiEnabled: z.boolean().default(false),
     ltdEnabled: z.boolean().default(false),
+    extendedHealthEnabled: z.boolean().default(false),
+    travelMedicalEnabled: z.boolean().default(false),
+    unionDuesEnabled: z.boolean().default(false),
+    phspReportedOnT4: z.boolean().default(false),
+    unionDuesReportedOnT4: z.boolean().default(false),
     otherDeductionsEnabled: z.boolean().default(true),
   })
   .superRefine((value, context) => {
@@ -131,6 +154,9 @@ export const paychequeInput = z
     eiCents: z.number().int().nonnegative(),
     wiCents: z.number().int().nonnegative().default(0),
     ltdCents: z.number().int().nonnegative().default(0),
+    extendedHealthCents: z.number().int().nonnegative().default(0),
+    travelMedicalCents: z.number().int().nonnegative().default(0),
+    unionDuesCents: z.number().int().nonnegative().default(0),
     otherDeductionsCents: z.number().int().nonnegative(),
   })
   .superRefine((value, context) => {

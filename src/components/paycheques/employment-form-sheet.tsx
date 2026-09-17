@@ -81,6 +81,12 @@ export function EmploymentFormSheet({
       ]),
     ) as Record<DeductionEnabledField, boolean>,
   );
+  const [phspReportedOnT4, setPhspReportedOnT4] = useState(
+    employment?.phspReportedOnT4 ?? false,
+  );
+  const [unionDuesReportedOnT4, setUnionDuesReportedOnT4] = useState(
+    employment?.unionDuesReportedOnT4 ?? false,
+  );
 
   const finish = async (message: string) => {
     await Promise.all([
@@ -116,6 +122,8 @@ export function EmploymentFormSheet({
       status,
       endDate: status === "ended" ? endDate || null : null,
       typicalGrossOverrideCents,
+      phspReportedOnT4,
+      unionDuesReportedOnT4,
       ...enabledDeductions,
     };
     if (employment) update.mutate({ id: employment.id, ...values });
@@ -220,6 +228,42 @@ export function EmploymentFormSheet({
                     {field.label}
                   </label>
                 ))}
+              </div>
+            </fieldset>
+            <fieldset className="space-y-3">
+              <legend className="text-sm font-medium">T4 reporting</legend>
+              <p className="text-xs text-muted-foreground">
+                When the employer reports these amounts on the T4, paycheque totals are linked to the matching Tax Items.
+              </p>
+              <div className="space-y-3 rounded-lg border p-4">
+                <label className="flex cursor-pointer items-start gap-3 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-4 rounded border-input accent-primary"
+                    checked={phspReportedOnT4}
+                    onChange={(event) => setPhspReportedOnT4(event.target.checked)}
+                  />
+                  <span>
+                    <span className="font-medium">Employer reports PHSP premiums on T4 (code 85)</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      Extended health and travel medical deductions feed the household medical-expense Tax Item.
+                    </span>
+                  </span>
+                </label>
+                <label className="flex cursor-pointer items-start gap-3 text-sm">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-4 rounded border-input accent-primary"
+                    checked={unionDuesReportedOnT4}
+                    onChange={(event) => setUnionDuesReportedOnT4(event.target.checked)}
+                  />
+                  <span>
+                    <span className="font-medium">Employer reports union dues on T4 (box 44)</span>
+                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                      Union dues feed a professional-dues Tax Item on line 21200.
+                    </span>
+                  </span>
+                </label>
               </div>
             </fieldset>
           </div>

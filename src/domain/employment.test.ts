@@ -16,6 +16,9 @@ describe("paycheque amounts", () => {
     eiCents: 3_200,
     wiCents: 1_500,
     ltdCents: 2_300,
+    extendedHealthCents: 0,
+    travelMedicalCents: 0,
+    unionDuesCents: 0,
     otherDeductionsCents: 4_800,
   };
 

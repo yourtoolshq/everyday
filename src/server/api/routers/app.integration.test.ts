@@ -331,6 +331,93 @@ describe("Tax Book API", () => {
     expect((await caller.taxItem.list()).items).toHaveLength(1);
   });
 
+  it("links PHSP and union-dues paycheque deductions to Tax Items when reported on T4", async () => {
+    await caller.setup.initialize({
+      householdName: "Example household",
+      people: ["Person A", "Person B"],
+      year: 2026,
+    });
+    const [personA] = (await caller.settings.get()).people;
+    const employment = await caller.employment.create({
+      personId: personA!.id,
+      employerName: "Employer A",
+      payFrequency: "biweekly",
+      status: "active",
+      endDate: null,
+      typicalGrossOverrideCents: null,
+      extendedHealthEnabled: true,
+      travelMedicalEnabled: true,
+      unionDuesEnabled: true,
+      phspReportedOnT4: true,
+      unionDuesReportedOnT4: true,
+    });
+
+    await caller.paycheque.create({
+      employmentId: employment!.id,
+      payDate: "2026-06-05",
+      grossPayCents: 100_000,
+      incomeTaxCents: 20_000,
+      cppCents: 5_000,
+      cpp2Cents: 0,
+      eiCents: 2_000,
+      extendedHealthCents: 1_200,
+      travelMedicalCents: 800,
+      unionDuesCents: 3_500,
+      otherDeductionsCents: 0,
+    });
+    await caller.paycheque.create({
+      employmentId: employment!.id,
+      payDate: "2026-06-19",
+      grossPayCents: 100_000,
+      incomeTaxCents: 20_000,
+      cppCents: 5_000,
+      cpp2Cents: 0,
+      eiCents: 2_000,
+      extendedHealthCents: 1_200,
+      travelMedicalCents: 800,
+      unionDuesCents: 3_500,
+      otherDeductionsCents: 0,
+    });
+
+    const items = (await caller.taxItem.list()).items;
+    expect(items.find((item) => item.name === "PHSP premiums — Employer A")).toMatchObject({
+      actualAmountCents: 4_000,
+      ownerKind: "household",
+      taxTreatment: "medical_expense",
+      valueSource: "paycheques",
+    });
+    expect(items.find((item) => item.name === "Union dues — Employer A")).toMatchObject({
+      actualAmountCents: 7_000,
+      ownerKind: "person",
+      personId: personA!.id,
+      taxTreatment: "professional_dues",
+      valueSource: "paycheques",
+    });
+
+    const estimate = await caller.taxEstimate.get();
+    expect(estimate.supported).toBe(true);
+    expect(estimate.inputs?.actual.medicalExpensesCents).toBe(4_000);
+    expect(estimate.actual?.people.find((person) => person.personId === personA!.id)?.deductionBreakdown.professionalDuesCents).toBe(7_000);
+
+    await caller.employment.update({
+      id: employment!.id,
+      personId: personA!.id,
+      employerName: "Employer A",
+      payFrequency: "biweekly",
+      status: "active",
+      endDate: null,
+      typicalGrossOverrideCents: null,
+      extendedHealthEnabled: true,
+      travelMedicalEnabled: true,
+      unionDuesEnabled: true,
+      phspReportedOnT4: false,
+      unionDuesReportedOnT4: true,
+    });
+    const afterPhspDisabled = (await caller.taxItem.list()).items;
+    expect(afterPhspDisabled.find((item) => item.name === "PHSP premiums — Employer A")).toBeUndefined();
+    expect(afterPhspDisabled.find((item) => item.name === "Union dues — Employer A")?.actualAmountCents).toBe(7_000);
+  });
+
   it("keeps employment and paycheque data inside the active tax year", async () => {
     await caller.setup.initialize({
       householdName: "Example household",

@@ -47,6 +47,9 @@ const totalFields = [
   "eiCents",
   "wiCents",
   "ltdCents",
+  "extendedHealthCents",
+  "travelMedicalCents",
+  "unionDuesCents",
   "otherDeductionsCents",
   "netPayCents",
 ] as const;
@@ -156,7 +159,7 @@ export function Paycheques() {
   const year = paychequesQuery.data.year.year;
   const summary = [
     ["Gross received", totals.grossPayCents],
-    ["Deductions", totals.incomeTaxCents + totals.cppCents + totals.cpp2Cents + totals.eiCents + totals.wiCents + totals.ltdCents + totals.otherDeductionsCents],
+    ["Deductions", totals.incomeTaxCents + totals.cppCents + totals.cpp2Cents + totals.eiCents + totals.wiCents + totals.ltdCents + totals.extendedHealthCents + totals.travelMedicalCents + totals.unionDuesCents + totals.otherDeductionsCents],
     ["Net pay", totals.netPayCents],
     ["Projected income", projection],
   ] as const;

@@ -19,6 +19,9 @@ export const paycheques = sqliteTable(
     eiCents: integer("ei_cents").notNull(),
     wiCents: integer("wi_cents").default(0).notNull(),
     ltdCents: integer("ltd_cents").default(0).notNull(),
+    extendedHealthCents: integer("extended_health_cents").default(0).notNull(),
+    travelMedicalCents: integer("travel_medical_cents").default(0).notNull(),
+    unionDuesCents: integer("union_dues_cents").default(0).notNull(),
     otherDeductionsCents: integer("other_deductions_cents").notNull(),
     netPayCents: integer("net_pay_cents").notNull(),
     ...timestamps,
@@ -28,7 +31,7 @@ export const paycheques = sqliteTable(
     index("paycheques_date_idx").on(table.payDate),
     check(
       "paycheque_amounts_non_negative",
-      sql`${table.grossPayCents} >= 0 and ${table.incomeTaxCents} >= 0 and ${table.cppCents} >= 0 and ${table.cpp2Cents} >= 0 and ${table.eiCents} >= 0 and ${table.wiCents} >= 0 and ${table.ltdCents} >= 0 and ${table.otherDeductionsCents} >= 0 and ${table.netPayCents} >= 0`,
+      sql`${table.grossPayCents} >= 0 and ${table.incomeTaxCents} >= 0 and ${table.cppCents} >= 0 and ${table.cpp2Cents} >= 0 and ${table.eiCents} >= 0 and ${table.wiCents} >= 0 and ${table.ltdCents} >= 0 and ${table.extendedHealthCents} >= 0 and ${table.travelMedicalCents} >= 0 and ${table.unionDuesCents} >= 0 and ${table.otherDeductionsCents} >= 0 and ${table.netPayCents} >= 0`,
     ),
   ],
 );

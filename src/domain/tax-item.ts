@@ -53,7 +53,7 @@ export const taxTreatmentDescriptions: Record<TaxTreatment, string> = {
   interest_income: "Interest this person expects to report.",
   rrsp_deduction: "The RRSP deduction claimed for this tax year.",
   fhsa_deduction: "The FHSA deduction claimed for this tax year.",
-  professional_dues: "Deductible dues confirmed by an official slip.",
+  professional_dues: "Deductible union or professional dues, often confirmed by T4 box 44.",
   current_tuition: "Eligible tuition fees from this year's T2202.",
   federal_tuition_carryforward: "Unused federal tuition balance from the prior assessment.",
   manitoba_tuition_carryforward: "Unused Manitoba tuition and education balance.",

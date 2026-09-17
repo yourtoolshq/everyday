@@ -11,7 +11,7 @@ import {
   people,
   taxItems,
 } from "~/server/db/schema";
-import { employmentProjection, syncEmploymentTaxItem } from "../employment-values";
+import { employmentProjection, reconcileEmploymentLinkedTaxItems, syncEmploymentTaxItem, deleteEmploymentTaxItems } from "../employment-values";
 import type { Database } from "../helpers";
 import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "../helpers";
 import { createTRPCRouter, publicProcedure } from "../trpc";
@@ -64,6 +64,13 @@ export const employmentRouter = createTRPCRouter({
         eiEnabled: employments.eiEnabled,
         wiEnabled: employments.wiEnabled,
         ltdEnabled: employments.ltdEnabled,
+        extendedHealthEnabled: employments.extendedHealthEnabled,
+        travelMedicalEnabled: employments.travelMedicalEnabled,
+        unionDuesEnabled: employments.unionDuesEnabled,
+        phspReportedOnT4: employments.phspReportedOnT4,
+        unionDuesReportedOnT4: employments.unionDuesReportedOnT4,
+        phspTaxItemId: employments.phspTaxItemId,
+        unionDuesTaxItemId: employments.unionDuesTaxItemId,
         otherDeductionsEnabled: employments.otherDeductionsEnabled,
         createdAt: employments.createdAt,
         updatedAt: employments.updatedAt,
@@ -113,7 +120,14 @@ export const employmentRouter = createTRPCRouter({
             ...input,
           })
           .returning();
-        return employment;
+        const linked = await reconcileEmploymentLinkedTaxItems(tx, employment!, {
+          employerName: input.employerName,
+          personId: input.personId,
+          phspReportedOnT4: input.phspReportedOnT4,
+          unionDuesReportedOnT4: input.unionDuesReportedOnT4,
+        });
+        await syncEmploymentTaxItem(tx, linked.id);
+        return linked;
       });
     }),
   update: publicProcedure
@@ -143,8 +157,14 @@ export const employmentRouter = createTRPCRouter({
             personId: input.personId,
           })
           .where(eq(taxItems.id, employment.taxItemId));
-        await syncEmploymentTaxItem(tx, employment.id);
-        return employment;
+        const linked = await reconcileEmploymentLinkedTaxItems(tx, employment, {
+          employerName: input.employerName,
+          personId: input.personId,
+          phspReportedOnT4: input.phspReportedOnT4,
+          unionDuesReportedOnT4: input.unionDuesReportedOnT4,
+        });
+        await syncEmploymentTaxItem(tx, linked.id);
+        return linked;
       });
     }),
   delete: publicProcedure
@@ -153,7 +173,11 @@ export const employmentRouter = createTRPCRouter({
       const household = await requireHousehold(ctx.db);
       const year = await requireEditableActiveYear(ctx.db, household.id);
       const [employment] = await ctx.db
-        .select({ taxItemId: employments.taxItemId })
+        .select({
+          taxItemId: employments.taxItemId,
+          phspTaxItemId: employments.phspTaxItemId,
+          unionDuesTaxItemId: employments.unionDuesTaxItemId,
+        })
         .from(employments)
         .where(
           and(
@@ -167,7 +191,10 @@ export const employmentRouter = createTRPCRouter({
           message: "Employment not found.",
         });
       }
-      await ctx.db.delete(taxItems).where(eq(taxItems.id, employment.taxItemId));
+      await ctx.db.transaction(async (tx) => {
+        await tx.delete(employments).where(eq(employments.id, input.id));
+        await deleteEmploymentTaxItems(tx, employment);
+      });
       return { success: true };
     }),
 });
