@@ -3,6 +3,8 @@ import { Buffer } from "node:buffer";
 import { z } from "zod";
 
 import {
+  adjustmentInput,
+  adjustmentUpdateInput,
   allowedFilingAttachmentTypes,
   assessmentInput,
   MAX_FILING_ATTACHMENT_BYTES,
@@ -89,6 +91,72 @@ function originalReturnUpdateFields(form: FormData) {
   };
 }
 
+function affectedTaxItemIds(form: FormData) {
+  return form
+    .getAll("affectedTaxItemIds")
+    .map((value) => Number(value))
+    .filter((value) => Number.isSafeInteger(value) && value > 0);
+}
+
+function attachmentActionFromForm(form: FormData) {
+  const action = textValue(form, "attachmentAction") || "keep";
+  if (action === "keep") {
+    return { type: "keep" } as FilingAttachmentAction;
+  }
+  if (action === "unavailable") {
+    return { type: "unavailable" } as FilingAttachmentAction;
+  }
+  if (action === "remove") {
+    return { type: "remove" } as FilingAttachmentAction;
+  }
+  if (action !== "replace") {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Invalid attachment action.",
+    });
+  }
+  return null;
+}
+
+function adjustmentCreateFields(form: FormData) {
+  return {
+    personId: positiveInteger(form, "personId"),
+    reason: textValue(form, "reason"),
+    submissionDate: nullableText(form, "submissionDate"),
+    expectedChangeCents: nullableSignedResultCents(form, "expectedChangeCents"),
+    returnCopyStatus: textValue(form, "returnCopyStatus"),
+    notes: nullableText(form, "notes"),
+    affectedTaxItemIds: affectedTaxItemIds(form),
+  };
+}
+
+function adjustmentUpdateFields(form: FormData) {
+  return {
+    reason: textValue(form, "reason"),
+    submissionDate: nullableText(form, "submissionDate"),
+    expectedChangeCents: nullableSignedResultCents(form, "expectedChangeCents"),
+    returnCopyStatus: textValue(form, "returnCopyStatus"),
+    notes: nullableText(form, "notes"),
+    affectedTaxItemIds: affectedTaxItemIds(form),
+  };
+}
+
+async function attachmentActionFromFormAsync(form: FormData) {
+  const parsed = attachmentActionFromForm(form);
+  if (parsed) return parsed;
+  const attachment = await attachmentFromForm(form);
+  if (!attachment) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Choose an attachment to upload.",
+    });
+  }
+  return {
+    type: "replace",
+    attachment,
+  } as FilingAttachmentAction;
+}
+
 export async function parseCreateOriginalReturnForm(form: FormData) {
   const input = originalReturnInput.parse(originalReturnCreateFields(form));
   return { input, attachment: await attachmentFromForm(form) };
@@ -99,44 +167,25 @@ export async function parseUpdateOriginalReturnForm(form: FormData) {
     ...originalReturnUpdateFields(form),
     status: textValue(form, "status"),
   });
-  const action = textValue(form, "attachmentAction") || "keep";
-  if (action === "keep") {
-    return {
-      input,
-      attachmentAction: { type: "keep" } as FilingAttachmentAction,
-    };
-  }
-  if (action === "unavailable") {
-    return {
-      input,
-      attachmentAction: { type: "unavailable" } as FilingAttachmentAction,
-    };
-  }
-  if (action === "remove") {
-    return {
-      input,
-      attachmentAction: { type: "remove" } as FilingAttachmentAction,
-    };
-  }
-  if (action !== "replace") {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Invalid attachment action.",
-    });
-  }
-  const attachment = await attachmentFromForm(form);
-  if (!attachment) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Choose an attachment to upload.",
-    });
-  }
   return {
     input,
-    attachmentAction: {
-      type: "replace",
-      attachment,
-    } as FilingAttachmentAction,
+    attachmentAction: await attachmentActionFromFormAsync(form),
+  };
+}
+
+export async function parseCreateAdjustmentForm(form: FormData) {
+  const input = adjustmentInput.parse(adjustmentCreateFields(form));
+  return { input, attachment: await attachmentFromForm(form) };
+}
+
+export async function parseUpdateAdjustmentForm(form: FormData) {
+  const input = adjustmentUpdateInput.parse({
+    ...adjustmentUpdateFields(form),
+    status: textValue(form, "status"),
+  });
+  return {
+    input,
+    attachmentAction: await attachmentActionFromFormAsync(form),
   };
 }
 
@@ -187,8 +236,11 @@ const statusByCode: Partial<Record<TRPCError["code"], number>> = {
 
 const filingFieldMessages: Partial<Record<string, string>> = {
   personId: "Choose a household member.",
+  reason: "Enter a reason for the adjustment.",
   expectedResultCents:
     "Enter a valid expected refund or amount owing, or choose Unknown.",
+  expectedChangeCents:
+    "Enter a valid expected change to the refund or amount owing, or choose Unknown.",
   assessedResultCents:
     "Enter a valid assessed refund or amount owing, or choose Unknown.",
   submissionDate: "Use a filing date in YYYY-MM-DD format.",

@@ -6,6 +6,7 @@ export { paycheques } from "./paycheques";
 export { recordAttachments, records } from "./records";
 export { taxItems } from "./tax-items";
 export { assessmentAttachments, assessments } from "./assessments";
+export { filingAffectedTaxItems } from "./filing-affected-tax-items";
 export { filingAttachments, filings } from "./filings";
 export { taxDocumentAttachments, taxDocuments } from "./tax-documents";
 export { taxYears } from "./tax-years";

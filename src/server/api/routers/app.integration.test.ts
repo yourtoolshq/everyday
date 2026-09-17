@@ -15,9 +15,11 @@ import {
 } from "~/server/api/record-values";
 import { createBusinessRecord, deleteBusinessRecord, getBusinessRecordAttachment, updateBusinessRecord } from "~/server/api/business-values";
 import {
+  createAdjustment,
   createAssessment,
   createOriginalReturn,
   listFilingTimeline,
+  updateAdjustment,
   updateOriginalReturn,
 } from "~/server/api/filing-values";
 import {
@@ -859,5 +861,119 @@ describe("Tax Book API", () => {
     expect(
       (await caller.filing.timeline({ taxYearId: pastYear.id })).filings,
     ).toHaveLength(1);
+  });
+
+  it("records adjustments and reassessments in chronological order", async () => {
+    await caller.setup.initialize({
+      householdName: "Example household",
+      people: ["Person A", "Person B"],
+      year: 2026,
+    });
+    const settings = await caller.settings.get();
+    const year = settings.years.find((item) => item.isActive)!;
+    const [personA] = settings.people;
+    const taxItem = await caller.taxItem.create({
+      name: "Medical expenses",
+      taxLineReference: null,
+      type: "eligible_expense",
+      ownerKind: "person",
+      personId: personA!.id,
+      expectedAmountCents: null,
+      actualAmountCents: 50_000,
+      status: "complete",
+      notes: null,
+      taxTreatment: null,
+    });
+
+    const originalReturn = await createOriginalReturn(
+      database,
+      year.id,
+      {
+        personId: personA!.id,
+        submissionDate: "2024-04-15",
+        expectedResultCents: 100_00,
+        returnCopyStatus: "unavailable",
+        notes: null,
+      },
+      null,
+    );
+    await updateOriginalReturn(
+      database,
+      originalReturn.id,
+      {
+        submissionDate: "2024-04-15",
+        expectedResultCents: 100_00,
+        returnCopyStatus: "unavailable",
+        notes: null,
+        status: "assessed",
+      },
+      { type: "keep" },
+    );
+    await createAssessment(
+      database,
+      originalReturn.id,
+      {
+        assessmentDate: "2024-05-01",
+        assessedResultCents: 100_00,
+        refundOrPaymentDate: null,
+        notes: null,
+      },
+      null,
+    );
+
+    const adjustment = await createAdjustment(
+      database,
+      year.id,
+      {
+        personId: personA!.id,
+        reason: "Missed medical expense",
+        submissionDate: "2025-02-01",
+        expectedChangeCents: 25_00,
+        returnCopyStatus: "unavailable",
+        notes: null,
+        affectedTaxItemIds: [taxItem!.id],
+      },
+      null,
+    );
+    await updateAdjustment(
+      database,
+      adjustment.id,
+      {
+        reason: "Missed medical expense",
+        submissionDate: "2025-02-01",
+        expectedChangeCents: 25_00,
+        returnCopyStatus: "unavailable",
+        notes: null,
+        affectedTaxItemIds: [taxItem!.id],
+        status: "submitted",
+      },
+      { type: "keep" },
+    );
+    await createAssessment(
+      database,
+      adjustment.id,
+      {
+        assessmentDate: "2025-03-01",
+        assessedResultCents: 125_00,
+        refundOrPaymentDate: null,
+        notes: null,
+      },
+      null,
+    );
+
+    const timeline = await listFilingTimeline(database, year.id);
+    expect(timeline.filings).toHaveLength(2);
+    expect(timeline.filings[0]).toMatchObject({
+      kind: "original_return",
+      status: "assessed",
+    });
+    expect(timeline.filings[1]).toMatchObject({
+      kind: "adjustment",
+      reason: "Missed medical expense",
+      status: "assessed",
+      assessedResultCents: 125_00,
+      assessmentKind: "notice_of_reassessment",
+      affectedTaxItems: [{ id: taxItem!.id, name: "Medical expenses" }],
+    });
   });
 });

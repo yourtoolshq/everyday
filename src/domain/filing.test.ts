@@ -5,6 +5,7 @@ import {
   buildTaxYearLifecycleWarnings,
   originalReturnInput,
   originalReturnUpdateInput,
+  adjustmentInput,
 } from "./filing";
 
 describe("filing domain", () => {
@@ -18,6 +19,20 @@ describe("filing domain", () => {
         notes: "Original copy no longer available.",
       }),
     ).toMatchObject({ returnCopyStatus: "unavailable" });
+  });
+
+  it("requires a reason for an adjustment", () => {
+    expect(() =>
+      adjustmentInput.parse({
+        personId: 1,
+        reason: "",
+        submissionDate: null,
+        expectedChangeCents: null,
+        returnCopyStatus: "unavailable",
+        notes: null,
+        affectedTaxItemIds: [],
+      }),
+    ).toThrow();
   });
 
   it("updates an original return without resubmitting personId", () => {

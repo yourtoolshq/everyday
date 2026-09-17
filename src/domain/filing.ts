@@ -109,6 +109,33 @@ export const originalReturnUpdateInput = z.object({
   status: z.enum(filingStatuses),
 });
 
+const adjustmentFields = {
+  reason: z.string().trim().min(1, "Enter a reason for the adjustment.").max(500),
+  submissionDate: isoDate.nullable(),
+  expectedChangeCents: signedResultCents,
+  returnCopyStatus: z.enum(returnCopyStatuses, {
+    errorMap: () => ({
+      message:
+        "Choose whether the submitted adjustment is attached or unavailable.",
+    }),
+  }),
+  notes: z.string().trim().max(4000).nullable(),
+  affectedTaxItemIds: z.array(z.number().int().positive()).max(20),
+};
+
+export const adjustmentInput = z.object({
+  personId: z
+    .number({ invalid_type_error: "Choose a household member." })
+    .int()
+    .positive({ message: "Choose a household member." }),
+  ...adjustmentFields,
+});
+
+export const adjustmentUpdateInput = z.object({
+  ...adjustmentFields,
+  status: z.enum(filingStatuses),
+});
+
 export const assessmentInput = z.object({
   assessmentDate: isoDate,
   assessedResultCents: signedResultCents,
@@ -120,6 +147,8 @@ export type OriginalReturnInput = z.infer<typeof originalReturnInput>;
 export type OriginalReturnUpdateInput = z.infer<
   typeof originalReturnUpdateInput
 >;
+export type AdjustmentInput = z.infer<typeof adjustmentInput>;
+export type AdjustmentUpdateInput = z.infer<typeof adjustmentUpdateInput>;
 export type AssessmentInput = z.infer<typeof assessmentInput>;
 
 export type FilingAttachmentInput = {
@@ -141,10 +170,13 @@ export function assessmentKindForFiling(kind: FilingKind): AssessmentKind {
     : "notice_of_reassessment";
 }
 
-export function assertSubmittableCopyStatus(status: ReturnCopyStatus) {
+export function assertSubmittableCopyStatus(
+  status: ReturnCopyStatus,
+  documentLabel = "return copy",
+) {
   if (status === "not_added_yet") {
     throw new Error(
-      "Attach the return copy or mark it unavailable before submitting.",
+      `Attach the ${documentLabel} or mark it unavailable before submitting.`,
     );
   }
 }
@@ -152,12 +184,15 @@ export function assertSubmittableCopyStatus(status: ReturnCopyStatus) {
 export function assertSubmittedCopyStatus(
   status: ReturnCopyStatus,
   hasAttachment: boolean,
+  documentLabel = "return",
 ) {
   if (status === "attached" && !hasAttachment) {
-    throw new Error("An attached return must include a file.");
+    throw new Error(`An attached ${documentLabel} must include a file.`);
   }
   if (status === "unavailable" && hasAttachment) {
-    throw new Error("Remove the attachment when the return copy is unavailable.");
+    throw new Error(
+      `Remove the attachment when the ${documentLabel} is unavailable.`,
+    );
   }
 }
 

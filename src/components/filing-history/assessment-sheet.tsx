@@ -136,9 +136,20 @@ export function AssessmentSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <form className="flex min-h-full flex-col" onSubmit={save}>
           <SheetHeader>
-            <SheetTitle>{editing ? "Edit assessment" : "Add assessment"}</SheetTitle>
+            <SheetTitle>
+              {editing
+                ? filing.kind === "adjustment"
+                  ? "Edit reassessment"
+                  : "Edit assessment"
+                : filing.kind === "adjustment"
+                  ? "Add reassessment"
+                  : "Add assessment"}
+            </SheetTitle>
             <SheetDescription>
-              {assessmentKindLabels.notice_of_assessment} for {filing.personName}.
+              {filing.kind === "adjustment"
+                ? assessmentKindLabels.notice_of_reassessment
+                : assessmentKindLabels.notice_of_assessment}{" "}
+              for {filing.personName}.
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 px-4 py-6">
@@ -188,7 +199,9 @@ export function AssessmentSheet({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="assessment-attachment">NOA attachment</Label>
+              <Label htmlFor="assessment-attachment">
+                {filing.kind === "adjustment" ? "NOR attachment" : "NOA attachment"}
+              </Label>
               <Input
                 id="assessment-attachment"
                 type="file"
