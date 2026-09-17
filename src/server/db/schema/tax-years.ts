@@ -3,9 +3,11 @@ import {
   check,
   integer,
   sqliteTable,
+  text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+import { taxYearStatuses } from "~/domain/filing";
 import { households } from "./households";
 import { timestamps } from "./shared";
 
@@ -19,6 +21,9 @@ export const taxYears = sqliteTable(
     year: integer("year").notNull(),
     isActive: integer("is_active", { mode: "boolean" })
       .default(false)
+      .notNull(),
+    status: text("status", { enum: taxYearStatuses })
+      .default("tracking")
       .notNull(),
     ...timestamps,
   },

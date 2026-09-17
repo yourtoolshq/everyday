@@ -15,6 +15,12 @@ import {
 } from "~/server/api/record-values";
 import { createBusinessRecord, deleteBusinessRecord, getBusinessRecordAttachment, updateBusinessRecord } from "~/server/api/business-values";
 import {
+  createAssessment,
+  createOriginalReturn,
+  listFilingTimeline,
+  updateOriginalReturn,
+} from "~/server/api/filing-values";
+import {
   createTaxDocument,
   getActiveTaxDocumentAttachment,
   updateTaxDocument,
@@ -783,5 +789,75 @@ describe("Tax Book API", () => {
     expect((await caller.business.list()).items[0]!.totals.net).toBe(50_000);
     await caller.taxYear.create({ year: 2027 });
     expect((await caller.business.list()).items).toHaveLength(0);
+  });
+
+  it("records historical filing history with unavailable T1 and NOA", async () => {
+    await caller.setup.initialize({
+      householdName: "Example household",
+      people: ["Person A", "Person B"],
+      year: 2026,
+    });
+    const activeYear = (await caller.settings.get()).years.find((year) => year.isActive)!;
+    const pastYear = await caller.taxYear.createPast({ year: 2023 });
+    if (!pastYear) throw new Error("Expected past tax year to be created.");
+    expect(pastYear.isActive).toBe(false);
+    expect((await caller.settings.get()).years.find((year) => year.isActive)?.id).toBe(
+      activeYear.id,
+    );
+
+    const [personA] = (await caller.settings.get()).people;
+    const filing = await createOriginalReturn(
+      database,
+      pastYear.id,
+      {
+        personId: personA!.id,
+        submissionDate: "2024-04-15",
+        expectedResultCents: null,
+        returnCopyStatus: "unavailable",
+        notes: "Original copy no longer available.",
+      },
+      null,
+    );
+    await updateOriginalReturn(
+      database,
+      filing.id,
+      {
+        submissionDate: "2024-04-15",
+        expectedResultCents: null,
+        returnCopyStatus: "unavailable",
+        notes: "Original copy no longer available.",
+        status: "submitted",
+      },
+      { type: "keep" },
+    );
+    await createAssessment(
+      database,
+      filing.id,
+      {
+        assessmentDate: "2024-05-01",
+        assessedResultCents: 125_000,
+        refundOrPaymentDate: "2024-05-15",
+        notes: null,
+      },
+      {
+        fileName: "fictional-noa.pdf",
+        mimeType: "application/pdf",
+        sizeBytes: 7,
+        data: Buffer.from("example"),
+      },
+    );
+
+    const timeline = await listFilingTimeline(database, pastYear.id);
+    expect(timeline.filings).toHaveLength(1);
+    expect(timeline.filings[0]).toMatchObject({
+      personId: personA!.id,
+      returnCopyStatus: "unavailable",
+      status: "assessed",
+      assessedResultCents: 125_000,
+      assessmentAttachmentFileName: "fictional-noa.pdf",
+    });
+    expect(
+      (await caller.filing.timeline({ taxYearId: pastYear.id })).filings,
+    ).toHaveLength(1);
   });
 });

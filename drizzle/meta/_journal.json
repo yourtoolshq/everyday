@@ -71,6 +71,13 @@
       "when": 1789591628592,
       "tag": "0009_quick_mathemanic",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1789610034578,
+      "tag": "0010_uneven_prowler",
+      "breakpoints": true
     }
   ]
 }

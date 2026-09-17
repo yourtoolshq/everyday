@@ -2,7 +2,9 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
+import { taxYearStatuses } from "~/domain/filing";
 import { taxYears } from "~/server/db/schema";
+import { updateTaxYearStatus } from "../filing-values";
 import { requireHousehold } from "../helpers";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
@@ -28,6 +30,27 @@ export const taxYearRouter = createTRPCRouter({
       return year;
     });
   }),
+  createPast: publicProcedure.input(z.object({ year: yearSchema })).mutation(async ({ ctx, input }) => {
+    const household = await requireHousehold(ctx.db);
+    const existing = await ctx.db.query.taxYears.findFirst({
+      where: (table, operators) => operators.and(
+        operators.eq(table.householdId, household.id),
+        operators.eq(table.year, input.year),
+      ),
+    });
+    if (existing) throw new TRPCError({ code: "CONFLICT", message: "That tax year already exists." });
+    const [year] = await ctx.db
+      .insert(taxYears)
+      .values({ householdId: household.id, year: input.year, isActive: false })
+      .returning();
+    return year;
+  }),
+  updateStatus: publicProcedure
+    .input(z.object({
+      id: z.number().int().positive(),
+      status: z.enum(taxYearStatuses),
+    }))
+    .mutation(async ({ ctx, input }) => updateTaxYearStatus(ctx.db, input.id, input.status)),
   setActive: publicProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
     const household = await requireHousehold(ctx.db);
     const target = await ctx.db.query.taxYears.findFirst({

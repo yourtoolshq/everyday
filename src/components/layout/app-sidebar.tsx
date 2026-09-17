@@ -3,6 +3,7 @@
 import {
   IconBook2,
   IconFileDescription,
+  IconFileCheck,
   IconLayoutDashboard,
   IconListDetails,
   IconReceiptDollar,
@@ -35,6 +36,7 @@ const navigation = [
   { title: "Self-employment", href: "/self-employment", icon: IconBriefcase },
   { title: "Tax Estimate", href: "/estimate", icon: IconCalculator },
   { title: "Tax Documents", href: "/documents", icon: IconFileDescription },
+  { title: "Tax Filing", href: "/filing", icon: IconFileCheck },
   { title: "Settings", href: "/settings", icon: IconSettings },
 ];
 
