@@ -92,6 +92,13 @@
       "when": 1789612000000,
       "tag": "0012_cra_reference_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1789613000000,
+      "tag": "0013_filing_item_values",
+      "breakpoints": true
     }
   ]
 }

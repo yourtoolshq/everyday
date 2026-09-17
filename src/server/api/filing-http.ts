@@ -8,6 +8,7 @@ import {
   allowedFilingAttachmentTypes,
   assessmentInput,
   MAX_FILING_ATTACHMENT_BYTES,
+  filingItemValuesInput,
   originalReturnInput,
   originalReturnUpdateInput,
   type FilingAttachmentAction,
@@ -98,6 +99,21 @@ function affectedTaxItemIds(form: FormData) {
     .filter((value) => Number.isSafeInteger(value) && value > 0);
 }
 
+function itemValuesFromForm(form: FormData) {
+  const raw = textValue(form, "itemValues").trim();
+  if (raw === "") return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Unable to read the filed tax item values.",
+    });
+  }
+  return filingItemValuesInput.parse(parsed);
+}
+
 function attachmentActionFromForm(form: FormData) {
   const action = textValue(form, "attachmentAction") || "keep";
   if (action === "keep") {
@@ -158,14 +174,20 @@ async function attachmentActionFromFormAsync(form: FormData) {
 }
 
 export async function parseCreateOriginalReturnForm(form: FormData) {
-  const input = originalReturnInput.parse(originalReturnCreateFields(form));
+  const itemValues = itemValuesFromForm(form);
+  const input = originalReturnInput.parse({
+    ...originalReturnCreateFields(form),
+    ...(itemValues !== undefined ? { itemValues } : {}),
+  });
   return { input, attachment: await attachmentFromForm(form) };
 }
 
 export async function parseUpdateOriginalReturnForm(form: FormData) {
+  const itemValues = itemValuesFromForm(form);
   const input = originalReturnUpdateInput.parse({
     ...originalReturnUpdateFields(form),
     status: textValue(form, "status"),
+    ...(itemValues !== undefined ? { itemValues } : {}),
   });
   return {
     input,

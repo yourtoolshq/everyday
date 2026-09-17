@@ -48,7 +48,7 @@ import {
   type TaxYearLifecycleWarning,
   type TaxYearStatus,
 } from "~/domain/filing";
-import { formatSignedCad } from "~/domain/money";
+import { formatCad, formatSignedCad } from "~/domain/money";
 import { skipToken } from "@tanstack/react-query";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { AdjustmentSheet } from "./adjustment-sheet";
@@ -133,6 +133,22 @@ function TimelineEntryCard({
             </p>
           </div>
         ) : null}
+        {!isAdjustment && filing.itemValues.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-muted-foreground">Filed tax item snapshot</p>
+            <div className="space-y-1 rounded-lg border bg-muted/20 p-3">
+              {filing.itemValues.map((item) => (
+                <div
+                  key={`${item.taxItemId ?? item.itemName}-${item.amountCents}`}
+                  className="flex flex-wrap items-baseline justify-between gap-2"
+                >
+                  <span className="font-medium">{item.itemName}</span>
+                  <span className="tabular-nums">{formatCad(item.amountCents)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {filing.notes ? (
           <p className="text-muted-foreground">{filing.notes}</p>
         ) : null}
@@ -179,9 +195,22 @@ function TimelineEntryCard({
               </p>
               <p className="text-muted-foreground">{filing.assessmentDate}</p>
             </div>
-            <p className="font-medium tabular-nums">
-              {formatSignedCad(filing.assessedResultCents)}
-            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {!isAdjustment && filing.expectedResultCents !== null ? (
+                <div>
+                  <p className="text-muted-foreground">Expected result</p>
+                  <p className="font-medium tabular-nums">
+                    {formatSignedCad(filing.expectedResultCents)}
+                  </p>
+                </div>
+              ) : null}
+              <div>
+                <p className="text-muted-foreground">Assessed result</p>
+                <p className="font-medium tabular-nums">
+                  {formatSignedCad(filing.assessedResultCents)}
+                </p>
+              </div>
+            </div>
             {filing.assessmentNotes ? (
               <p className="text-muted-foreground">{filing.assessmentNotes}</p>
             ) : null}

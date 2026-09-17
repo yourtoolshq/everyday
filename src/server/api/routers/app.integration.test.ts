@@ -1123,4 +1123,73 @@ describe("Tax Book API", () => {
     await deleteCraReferenceDocument(database, document.id);
     expect((await listCraReferenceDocuments(database, year.id)).items).toHaveLength(0);
   });
+
+  it("preserves filed tax item snapshots after tracked values change", async () => {
+    await caller.setup.initialize({
+      householdName: "Example household",
+      people: ["Person A", "Person B"],
+      year: 2026,
+    });
+    const settings = await caller.settings.get();
+    const year = settings.years.find((item) => item.isActive)!;
+    const [personA] = settings.people;
+    const taxItem = await caller.taxItem.create({
+      name: "Employment income",
+      taxLineReference: "10100",
+      type: "income",
+      ownerKind: "person",
+      personId: personA!.id,
+      expectedAmountCents: 50_000_00,
+      actualAmountCents: 48_000_00,
+      status: "complete",
+      notes: null,
+      taxTreatment: null,
+    });
+
+    const originalReturn = await createOriginalReturn(
+      database,
+      year.id,
+      {
+        personId: personA!.id,
+        submissionDate: "2026-04-15",
+        expectedResultCents: 1_000_00,
+        returnCopyStatus: "unavailable",
+        notes: null,
+        itemValues: [{
+          taxItemId: taxItem!.id,
+          itemName: "Employment income",
+          ownerLabel: "Person A",
+          taxLineReference: "10100",
+          amountCents: 47_500_00,
+          differenceNote: "Filed amount differed from tracked paycheques.",
+        }],
+      },
+      null,
+    );
+
+    await caller.taxItem.update({
+      id: taxItem!.id,
+      name: "Employment income",
+      taxLineReference: "10100",
+      type: "income",
+      ownerKind: "person",
+      personId: personA!.id,
+      expectedAmountCents: 50_000_00,
+      actualAmountCents: 49_000_00,
+      status: "complete",
+      notes: null,
+      taxTreatment: null,
+    });
+
+    const timeline = await listFilingTimeline(database, year.id);
+    expect(timeline.filings[0]).toMatchObject({
+      id: originalReturn.id,
+      itemValues: [{
+        taxItemId: taxItem!.id,
+        itemName: "Employment income",
+        amountCents: 47_500_00,
+        differenceNote: "Filed amount differed from tracked paycheques.",
+      }],
+    });
+  });
 });

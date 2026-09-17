@@ -11,6 +11,7 @@ import {
   type AssessmentInput,
   type FilingAttachmentAction,
   type FilingAttachmentInput,
+  type FilingItemValueInput,
   type FilingStatus,
   type OriginalReturnInput,
   type OriginalReturnUpdateInput,
@@ -22,6 +23,7 @@ import {
   assessments,
   filingAffectedTaxItems,
   filingAttachments,
+  filingItemValues,
   filings,
   people,
   taxItems,
@@ -184,6 +186,74 @@ async function syncAffectedTaxItems(
   );
 }
 
+async function replaceFilingItemValues(
+  db: QueryDatabase,
+  filingId: number,
+  values: FilingItemValueInput[] | undefined,
+) {
+  await db.delete(filingItemValues).where(eq(filingItemValues.filingId, filingId));
+  if (!values?.length) return;
+  await db.insert(filingItemValues).values(
+    values.map((value) => ({
+      filingId,
+      taxItemId: value.taxItemId,
+      itemName: value.itemName,
+      ownerLabel: value.ownerLabel,
+      taxLineReference: value.taxLineReference,
+      amountCents: value.amountCents,
+      differenceNote: value.differenceNote,
+    })),
+  );
+}
+
+function trackedAmountCents(item: {
+  actualAmountCents: number | null;
+  expectedAmountCents: number | null;
+}) {
+  return item.actualAmountCents ?? item.expectedAmountCents ?? 0;
+}
+
+export async function listSnapshotCandidates(
+  db: Database,
+  taxYearId: number,
+  personId: number,
+) {
+  const { household, year } = await requireTaxYear(db, taxYearId);
+  await requirePerson(db, household.id, personId);
+
+  const rows = await db
+    .select({
+      id: taxItems.id,
+      name: taxItems.name,
+      taxLineReference: taxItems.taxLineReference,
+      ownerKind: taxItems.ownerKind,
+      personId: taxItems.personId,
+      personName: people.name,
+      actualAmountCents: taxItems.actualAmountCents,
+      expectedAmountCents: taxItems.expectedAmountCents,
+    })
+    .from(taxItems)
+    .leftJoin(people, eq(taxItems.personId, people.id))
+    .where(eq(taxItems.taxYearId, year.id))
+    .orderBy(asc(taxItems.name), asc(taxItems.id));
+
+  const mapRow = (row: (typeof rows)[number]) => ({
+    taxItemId: row.id,
+    itemName: row.name,
+    ownerLabel:
+      row.ownerKind === "household" ? "Household" : (row.personName ?? "Person"),
+    taxLineReference: row.taxLineReference,
+    trackedAmountCents: trackedAmountCents(row),
+    amountCents: trackedAmountCents(row),
+    differenceNote: null as string | null,
+  });
+
+  return {
+    personItems: rows.filter((row) => row.personId === personId).map(mapRow),
+    householdItems: rows.filter((row) => row.ownerKind === "household").map(mapRow),
+  };
+}
+
 export async function listFilingTimeline(db: Database, taxYearId: number) {
   const { household, year } = await requireTaxYear(db, taxYearId);
   const householdPeople = await db
@@ -262,12 +332,45 @@ export async function listFilingTimeline(db: Database, taxYearId: number) {
     affectedByFiling.set(row.filingId, current);
   }
 
+  const itemValueRows =
+    rows.length === 0
+      ? []
+      : await db
+          .select({
+            filingId: filingItemValues.filingId,
+            taxItemId: filingItemValues.taxItemId,
+            itemName: filingItemValues.itemName,
+            ownerLabel: filingItemValues.ownerLabel,
+            taxLineReference: filingItemValues.taxLineReference,
+            amountCents: filingItemValues.amountCents,
+            differenceNote: filingItemValues.differenceNote,
+          })
+          .from(filingItemValues)
+          .where(
+            inArray(
+              filingItemValues.filingId,
+              rows.map((row) => row.id),
+            ),
+          )
+          .orderBy(asc(filingItemValues.id));
+
+  const itemValuesByFiling = new Map<
+    number,
+    Array<(typeof itemValueRows)[number]>
+  >();
+  for (const row of itemValueRows) {
+    const current = itemValuesByFiling.get(row.filingId) ?? [];
+    current.push(row);
+    itemValuesByFiling.set(row.filingId, current);
+  }
+
   return {
     year,
     people: householdPeople,
     filings: rows.map((row) => ({
       ...row,
       affectedTaxItems: affectedByFiling.get(row.id) ?? [],
+      itemValues: itemValuesByFiling.get(row.id) ?? [],
     })),
   };
 }
@@ -317,6 +420,7 @@ export async function createOriginalReturn(
     if (attachment) {
       await insertFilingAttachment(tx, created!.id, attachment);
     }
+    await replaceFilingItemValues(tx, created!.id, input.itemValues);
     return created!;
   });
 }
@@ -374,6 +478,7 @@ export async function updateOriginalReturn(
       })
       .where(eq(filings.id, filingId))
       .returning();
+    await replaceFilingItemValues(tx, filingId, input.itemValues);
     return updated!;
   });
 }

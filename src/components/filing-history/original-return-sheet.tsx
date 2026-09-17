@@ -28,14 +28,25 @@ import {
   MAX_FILING_ATTACHMENT_BYTES,
   returnCopyStatuses,
   returnCopyStatusLabels,
+  type FilingItemValueInput,
   type FilingStatus,
   type ReturnCopyStatus,
 } from "~/domain/filing";
-import { signedDollarsToCents } from "~/domain/money";
+import { formatCad, signedDollarsToCents } from "~/domain/money";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Person = RouterOutputs["settings"]["get"]["people"][number];
 type Filing = RouterOutputs["filing"]["timeline"]["filings"][number];
+
+type ItemValueRow = {
+  taxItemId: number | null;
+  itemName: string;
+  ownerLabel: string;
+  taxLineReference: string | null;
+  amount: string;
+  trackedAmountCents: number | null;
+  differenceNote: string;
+};
 
 function resultCents(direction: string, amount: string) {
   const cents = signedDollarsToCents(amount);
@@ -48,6 +59,39 @@ function resultFields(cents: number | null) {
   if (cents === null) return { direction: "none", amount: "" };
   if (cents < 0) return { direction: "owing", amount: (Math.abs(cents) / 100).toFixed(2) };
   return { direction: "refund", amount: (cents / 100).toFixed(2) };
+}
+
+function amountField(cents: number) {
+  return (cents / 100).toFixed(2);
+}
+
+function itemValuesToRows(filing: Filing | null): ItemValueRow[] {
+  return (filing?.itemValues ?? []).map((row) => ({
+    taxItemId: row.taxItemId,
+    itemName: row.itemName,
+    ownerLabel: row.ownerLabel,
+    taxLineReference: row.taxLineReference,
+    amount: amountField(row.amountCents),
+    trackedAmountCents: null,
+    differenceNote: row.differenceNote ?? "",
+  }));
+}
+
+function serializeItemValues(rows: ItemValueRow[]): FilingItemValueInput[] {
+  return rows.flatMap((row) => {
+    const amount = row.amount.trim();
+    if (!row.itemName.trim() || amount === "") return [];
+    const amountCents = signedDollarsToCents(amount);
+    if (amountCents === null) return [];
+    return [{
+      taxItemId: row.taxItemId,
+      itemName: row.itemName.trim(),
+      ownerLabel: row.ownerLabel.trim(),
+      taxLineReference: row.taxLineReference?.trim() || null,
+      amountCents,
+      differenceNote: row.differenceNote.trim() || null,
+    }];
+  });
 }
 
 export function OriginalReturnSheet({
@@ -79,9 +123,47 @@ export function OriginalReturnSheet({
   );
   const [status, setStatus] = useState<FilingStatus>(filing?.status ?? "preparing");
   const [notes, setNotes] = useState(filing?.notes ?? "");
+  const [itemValues, setItemValues] = useState<ItemValueRow[]>(() => itemValuesToRows(filing));
+  const [selectedHouseholdIds, setSelectedHouseholdIds] = useState<number[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [markUnavailable, setMarkUnavailable] = useState(false);
   const [pending, setPending] = useState(false);
+
+  const selectedPersonId = filing?.personId ?? Number(personId);
+  const candidates = api.filing.snapshotCandidates.useQuery(
+    { taxYearId, personId: selectedPersonId },
+    { enabled: open && Number.isFinite(selectedPersonId) && selectedPersonId > 0 },
+  );
+
+  function copyFromTaxItems() {
+    if (!candidates.data) return;
+    const household = candidates.data.householdItems.filter((item) =>
+      selectedHouseholdIds.includes(item.taxItemId),
+    );
+    const nextRows = [...candidates.data.personItems, ...household].map((item) => ({
+      taxItemId: item.taxItemId,
+      itemName: item.itemName,
+      ownerLabel: item.ownerLabel,
+      taxLineReference: item.taxLineReference,
+      amount: amountField(item.amountCents),
+      trackedAmountCents: item.trackedAmountCents,
+      differenceNote: "",
+    }));
+    setItemValues(nextRows);
+    toast.success(
+      nextRows.length > 0
+        ? `Copied ${nextRows.length} tax item${nextRows.length === 1 ? "" : "s"} into the filing snapshot.`
+        : "No tax items were available to copy.",
+    );
+  }
+
+  function updateItemValue(index: number, patch: Partial<ItemValueRow>) {
+    setItemValues((current) =>
+      current.map((row, rowIndex) =>
+        rowIndex === index ? { ...row, ...patch } : row,
+      ),
+    );
+  }
 
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,6 +197,16 @@ export function OriginalReturnSheet({
       return;
     }
 
+    const serialized = serializeItemValues(itemValues);
+    for (const row of itemValues) {
+      const amount = row.amount.trim();
+      if (amount === "" || row.itemName.trim() === "") continue;
+      if (signedDollarsToCents(amount) === null) {
+        toast.error(`Enter a valid filed amount for ${row.itemName || "a tax item"}.`);
+        return;
+      }
+    }
+
     const expectedResultCents =
       resultDirection === "none"
         ? null
@@ -132,6 +224,7 @@ export function OriginalReturnSheet({
     );
     form.set("returnCopyStatus", file ? "attached" : returnCopyStatus);
     form.set("notes", notes);
+    form.set("itemValues", JSON.stringify(serialized));
     if (filing) {
       form.set("status", status);
       form.set(
@@ -163,6 +256,10 @@ export function OriginalReturnSheet({
     }
   }
 
+  const hasCandidates =
+    (candidates.data?.personItems.length ?? 0) > 0 ||
+    (candidates.data?.householdItems.length ?? 0) > 0;
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
@@ -170,7 +267,7 @@ export function OriginalReturnSheet({
           <SheetHeader>
             <SheetTitle>{filing ? "Edit original return" : "Add original return"}</SheetTitle>
             <SheetDescription>
-              Record what was filed. The submitted T1 can be attached, marked unavailable, or added later.
+              Record what was filed. Copy tracked tax items into a snapshot you can adjust before submission.
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 px-4 py-6">
@@ -191,6 +288,96 @@ export function OriginalReturnSheet({
                 </Select>
               </div>
             ) : null}
+
+            {hasCandidates ? (
+              <div className="space-y-3 rounded-lg border p-4">
+                <div>
+                  <p className="font-medium">Filed tax item snapshot</p>
+                  <p className="text-sm text-muted-foreground">
+                    Copy tracked values into this return. Changes here do not update Tax Items.
+                  </p>
+                </div>
+                {(candidates.data?.householdItems.length ?? 0) > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Include household items</p>
+                    <div className="space-y-2">
+                      {candidates.data!.householdItems.map((item) => (
+                        <label
+                          key={item.taxItemId}
+                          className="flex items-start gap-3 text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedHouseholdIds.includes(item.taxItemId)}
+                            onChange={(event) => {
+                              setSelectedHouseholdIds((current) =>
+                                event.target.checked
+                                  ? [...current, item.taxItemId]
+                                  : current.filter((id) => id !== item.taxItemId),
+                              );
+                            }}
+                          />
+                          <span>
+                            {item.itemName}
+                            <span className="block text-muted-foreground">
+                              Tracked {formatCad(item.trackedAmountCents)}
+                            </span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                <Button type="button" variant="outline" onClick={copyFromTaxItems}>
+                  Copy from tax items
+                </Button>
+              </div>
+            ) : null}
+
+            {itemValues.length > 0 ? (
+              <div className="space-y-3">
+                <Label>Filed values</Label>
+                <div className="space-y-4">
+                  {itemValues.map((row, index) => (
+                    <div key={`${row.taxItemId ?? "manual"}-${index}`} className="space-y-2 rounded-lg border p-3">
+                      <div>
+                        <p className="font-medium">{row.itemName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {row.ownerLabel}
+                          {row.taxLineReference ? ` · ${row.taxLineReference}` : ""}
+                          {row.trackedAmountCents !== null
+                            ? ` · Tracked ${formatCad(row.trackedAmountCents)}`
+                            : null}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`filed-amount-${index}`}>Filed amount</Label>
+                        <Input
+                          id={`filed-amount-${index}`}
+                          inputMode="decimal"
+                          value={row.amount}
+                          onChange={(event) =>
+                            updateItemValue(index, { amount: event.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`filed-note-${index}`}>Difference note</Label>
+                        <Input
+                          id={`filed-note-${index}`}
+                          placeholder="Optional"
+                          value={row.differenceNote}
+                          onChange={(event) =>
+                            updateItemValue(index, { differenceNote: event.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <div className="space-y-2">
               <Label htmlFor="filing-date">Filing date</Label>
               <Input

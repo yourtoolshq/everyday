@@ -96,17 +96,32 @@ const originalReturnFields = {
   notes: z.string().trim().max(4000).nullable(),
 };
 
+export const filingItemValueInput = z.object({
+  taxItemId: z.number().int().positive().nullable(),
+  itemName: z.string().trim().min(1, "Enter an item name."),
+  ownerLabel: z.string().trim().min(1, "Enter an owner label."),
+  taxLineReference: z.string().trim().nullable(),
+  amountCents: z.number().int(),
+  differenceNote: z.string().trim().max(500).nullable(),
+});
+
+export const filingItemValuesInput = z.array(filingItemValueInput);
+
+export type FilingItemValueInput = z.infer<typeof filingItemValueInput>;
+
 export const originalReturnInput = z.object({
   personId: z
     .number({ invalid_type_error: "Choose a household member." })
     .int()
     .positive({ message: "Choose a household member." }),
   ...originalReturnFields,
+  itemValues: filingItemValuesInput.optional(),
 });
 
 export const originalReturnUpdateInput = z.object({
   ...originalReturnFields,
   status: z.enum(filingStatuses),
+  itemValues: filingItemValuesInput.optional(),
 });
 
 const adjustmentFields = {
