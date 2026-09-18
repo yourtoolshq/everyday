@@ -90,7 +90,7 @@ function PeriodCell({
   const canMarkNotApplicable = completeness === "missing" && Boolean(onMarkNotApplicable);
   const canUndoNotApplicable = completeness === "not_applicable" && Boolean(onUndoNotApplicable);
   const cellClassName = cn(
-    "flex aspect-[4/3] min-h-14 w-full flex-col items-center justify-center rounded-lg px-2 py-2 text-center transition-colors",
+    "flex aspect-[4/3] min-h-14 w-full flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
     styles.cell,
     (canUpload || completeness === "complete" || canUndoNotApplicable) &&
       "cursor-pointer hover:brightness-95",
@@ -111,7 +111,8 @@ function PeriodCell({
             className={cellClassName}
             onClick={() => onSelect?.(document)}
           >
-            <Check className="size-4" aria-hidden="true" />
+            <span className="text-sm font-medium leading-none">{period.shortLabel}</span>
+            <Check className="size-3.5 shrink-0" aria-hidden="true" />
           </button>
         ) : completeness === "not_applicable" ? (
           <button
@@ -120,7 +121,8 @@ function PeriodCell({
             className={cellClassName}
             onClick={onUndoNotApplicable}
           >
-            <Minus className="size-4" aria-hidden="true" />
+            <span className="text-sm font-medium leading-none">{period.shortLabel}</span>
+            <Minus className="size-3.5 shrink-0" aria-hidden="true" />
           </button>
         ) : (
           <div className={cn(cellClassName, "gap-1")}>
