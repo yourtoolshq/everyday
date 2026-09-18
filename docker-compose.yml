@@ -18,6 +18,9 @@ services:
       - traefik.enable=true
       - traefik.http.routers.passbook.rule=Host(`passbook.tools.local`)
       - traefik.http.routers.passbook.entrypoints=web
+      - traefik.http.routers.passbook-secure.rule=Host(`passbook.tools.local`)
+      - traefik.http.routers.passbook-secure.entrypoints=websecure
+      - traefik.http.routers.passbook-secure.tls=true
       - traefik.http.services.passbook.loadbalancer.server.port=3000
 
 networks:
