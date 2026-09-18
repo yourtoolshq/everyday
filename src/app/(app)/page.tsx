@@ -1,12 +1,16 @@
-import { Landmark, Users, Building2, Wallet } from "lucide-react";
+import { Building2, Users, Wallet } from "lucide-react";
 
+import { MissingStatementsPanel } from "~/components/overview/missing-statements-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { api } from "~/trpc/server";
 
 export const dynamic = "force-dynamic";
 
 export default async function OverviewPage() {
-  const summary = await api.overview.summary();
+  const [summary, statementStatus] = await Promise.all([
+    api.overview.summary(),
+    api.overview.statementStatus(),
+  ]);
 
   const stats = [
     { label: "Members", value: summary.memberCount, icon: Users },
@@ -22,7 +26,7 @@ export default async function OverviewPage() {
           {summary.householdName ?? "Your household"}
         </h2>
         <p className="max-w-2xl text-muted-foreground">
-          Track financial accounts, institutions, and the documents that belong to them.
+          See which statement periods are complete, waiting, or missing across your accounts.
         </p>
       </div>
 
@@ -42,20 +46,7 @@ export default async function OverviewPage() {
         ))}
       </div>
 
-      <Card className="border-dashed shadow-none">
-        <CardContent className="flex items-start gap-4 p-6">
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Landmark className="size-5" aria-hidden="true" />
-          </div>
-          <div className="space-y-1">
-            <p className="font-medium">Phase 1 — Account inventory</p>
-            <p className="text-sm text-muted-foreground">
-              Add institutions and accounts to build your household financial inventory.
-              Statement schedules and missing-record tracking come in later phases.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <MissingStatementsPanel status={statementStatus} />
     </main>
   );
 }

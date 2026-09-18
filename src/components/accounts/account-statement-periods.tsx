@@ -5,13 +5,16 @@ import { useMemo, useState } from "react";
 
 import {
   canDeriveStatementPeriods,
-  countExpectedPeriods,
   deriveExpectedPeriodsForYear,
-  periodStatusLabels,
   statementYearRange,
   type ExpectedPeriod,
-  type PeriodDisplayStatus,
 } from "~/lib/expected-periods";
+import {
+  completenessStatusLabels,
+  countCompletenessForYear,
+  deriveStatementCompleteness,
+  type StatementCompletenessStatus,
+} from "~/lib/statement-completeness";
 import { statementFrequencyLabels, type StatementFrequency } from "~/lib/statement-frequency";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -28,25 +31,29 @@ type Account = RouterOutputs["accounts"]["list"][number];
 
 type ViewMode = "grid" | "list";
 
-const periodStatusStyles: Record<
-  PeriodDisplayStatus,
+const completenessStatusStyles: Record<
+  StatementCompletenessStatus,
   { cell: string; dot: string }
 > = {
-  not_expected: {
-    cell: "border border-dashed border-border/80 bg-transparent text-muted-foreground/50",
-    dot: "bg-muted-foreground/30",
+  complete: {
+    cell: "border border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 text-emerald-900 dark:text-emerald-100",
+    dot: "bg-emerald-500",
+  },
+  missing: {
+    cell: "border border-red-500/30 bg-gradient-to-br from-red-500/15 to-red-500/5 text-red-900 dark:text-red-100",
+    dot: "bg-red-500",
+  },
+  waiting: {
+    cell: "border border-primary/25 bg-gradient-to-br from-primary/15 to-primary/5 text-primary",
+    dot: "bg-primary",
   },
   future: {
     cell: "border border-border/60 bg-muted/40 text-muted-foreground",
     dot: "bg-muted-foreground/40",
   },
-  current: {
-    cell: "border border-primary/25 bg-gradient-to-br from-primary/15 to-primary/5 text-primary",
-    dot: "bg-primary",
-  },
-  past_expected: {
-    cell: "border border-sky-500/20 bg-gradient-to-br from-sky-500/15 to-sky-500/5 text-sky-900 dark:text-sky-100",
-    dot: "bg-sky-500",
+  not_expected: {
+    cell: "border border-dashed border-border/80 bg-transparent text-muted-foreground/50",
+    dot: "bg-muted-foreground/30",
   },
 };
 
@@ -63,26 +70,21 @@ function PeriodCell({
   documentId?: string;
   onUpload?: () => void;
 }) {
-  const styles = periodStatusStyles[period.status];
-  const uploaded = Boolean(documentId);
+  const completeness = deriveStatementCompleteness(period, Boolean(documentId));
+  const styles = completenessStatusStyles[completeness];
   const canUpload =
-    period.status !== "not_expected" &&
-    period.status !== "future" &&
-    !uploaded &&
-    Boolean(onUpload);
+    (completeness === "missing" || completeness === "waiting") && Boolean(onUpload);
   const cellClassName = cn(
     "flex aspect-[4/3] min-h-14 w-full flex-col items-center justify-center rounded-lg px-2 py-2 text-center transition-colors",
     styles.cell,
-    uploaded &&
-      "border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 text-emerald-900 dark:text-emerald-100",
-    (canUpload || uploaded) && "cursor-pointer hover:brightness-95",
-    !canUpload && !uploaded && period.status !== "not_expected" && "cursor-default",
+    (canUpload || completeness === "complete") && "cursor-pointer hover:brightness-95",
+    !canUpload && completeness !== "complete" && completeness !== "not_expected" && "cursor-default",
   );
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {uploaded && documentId ? (
+        {completeness === "complete" && documentId ? (
           <a
             href={documentFileUrl(documentId)}
             target="_blank"
@@ -105,8 +107,8 @@ function PeriodCell({
       </TooltipTrigger>
       <TooltipContent side="top" className="text-left">
         <p className="font-medium">{period.label}</p>
-        <p>{uploaded ? "Statement uploaded" : periodStatusLabels[period.status]}</p>
-        {uploaded ? <p className="text-background/70">Click to open</p> : null}
+        <p>{completenessStatusLabels[completeness]}</p>
+        {completeness === "complete" ? <p className="text-background/70">Click to open</p> : null}
         {canUpload ? <p className="text-background/70">Click to upload</p> : null}
       </TooltipContent>
     </Tooltip>
@@ -114,9 +116,10 @@ function PeriodCell({
 }
 
 function PeriodLegend() {
-  const items: { status: PeriodDisplayStatus; label: string }[] = [
-    { status: "past_expected", label: "Expected" },
-    { status: "current", label: "Current" },
+  const items: { status: StatementCompletenessStatus; label: string }[] = [
+    { status: "complete", label: "Complete" },
+    { status: "missing", label: "Missing" },
+    { status: "waiting", label: "Waiting" },
     { status: "future", label: "Future" },
     { status: "not_expected", label: "Not expected" },
   ];
@@ -125,7 +128,7 @@ function PeriodLegend() {
     <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
       {items.map((item) => (
         <span key={item.status} className="inline-flex items-center gap-1.5">
-          <span className={cn("size-2 rounded-full", periodStatusStyles[item.status].dot)} />
+          <span className={cn("size-2 rounded-full", completenessStatusStyles[item.status].dot)} />
           {item.label}
         </span>
       ))}
@@ -176,11 +179,10 @@ export function AccountStatementPeriods({
     [frequency, lifecycle, year],
   );
 
-  const expectedCount = countExpectedPeriods(periods);
-  const uploadedCount = periods.filter(
-    (period) =>
-      period.status !== "not_expected" && Boolean(statementDocumentsByPeriod[period.key]),
-  ).length;
+  const { completeCount, missingCount, waitingCount, expectedCount } = countCompletenessForYear(
+    periods,
+    statementDocumentsByPeriod,
+  );
 
   if (frequency === "none") {
     return (
@@ -233,7 +235,9 @@ export function AccountStatementPeriods({
         <div className="flex items-center gap-2">
           <Badge variant="secondary">{statementFrequencyLabels[frequency]}</Badge>
           <span className="text-sm text-muted-foreground">
-            {uploadedCount}/{expectedCount} uploaded in {year}
+            {completeCount}/{expectedCount} complete in {year}
+            {missingCount > 0 ? ` · ${missingCount} missing` : ""}
+            {waitingCount > 0 ? ` · ${waitingCount} waiting` : ""}
           </span>
           <div className="flex rounded-lg border p-0.5">
             <Button
@@ -275,13 +279,11 @@ export function AccountStatementPeriods({
         ) : (
           <div className="divide-y rounded-lg border">
             {periods.map((period) => {
-              const styles = periodStatusStyles[period.status];
               const documentId = statementDocumentsByPeriod[period.key];
-              const uploaded = Boolean(documentId);
+              const completeness = deriveStatementCompleteness(period, Boolean(documentId));
+              const styles = completenessStatusStyles[completeness];
               const canUpload =
-                period.status !== "not_expected" &&
-                period.status !== "future" &&
-                !uploaded &&
+                (completeness === "missing" || completeness === "waiting") &&
                 Boolean(onUploadPeriod);
               return (
                 <div
@@ -289,15 +291,10 @@ export function AccountStatementPeriods({
                   className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
                 >
                   <div className="flex items-center gap-2">
-                    <span
-                      className={cn(
-                        "size-2 rounded-full",
-                        uploaded ? "bg-emerald-500" : styles.dot,
-                      )}
-                    />
+                    <span className={cn("size-2 rounded-full", styles.dot)} />
                     <span className="font-medium">{period.label}</span>
                   </div>
-                  {uploaded && documentId ? (
+                  {completeness === "complete" && documentId ? (
                     <Button size="sm" variant="ghost" asChild>
                       <a
                         href={documentFileUrl(documentId)}
@@ -318,7 +315,7 @@ export function AccountStatementPeriods({
                     </Button>
                   ) : (
                     <span className="text-muted-foreground">
-                      {periodStatusLabels[period.status]}
+                      {completenessStatusLabels[completeness]}
                     </span>
                   )}
                 </div>
@@ -330,7 +327,7 @@ export function AccountStatementPeriods({
 
       <PeriodLegend />
       <p className="text-xs text-muted-foreground">
-        Green checkmarks open the uploaded statement. Click an empty expected period to upload.
+        Red periods are missing. Blue is the current period still waiting for a statement.
       </p>
     </div>
   );

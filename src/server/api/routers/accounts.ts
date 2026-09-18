@@ -95,6 +95,51 @@ export const accountsRouter = createTRPCRouter({
     }));
   }),
 
+  get: publicProcedure.input(idInput).query(async ({ ctx, input }) => {
+    const [row] = await ctx.db
+      .select({
+        id: accounts.id,
+        displayName: accounts.displayName,
+        accountType: accounts.accountType,
+        identifierSuffix: accounts.identifierSuffix,
+        status: accounts.status,
+        openedDate: accounts.openedDate,
+        closedDate: accounts.closedDate,
+        notes: accounts.notes,
+        institutionId: institutions.id,
+        institutionName: institutions.name,
+        statementFrequency: statementExpectations.frequency,
+        createdAt: accounts.createdAt,
+        updatedAt: accounts.updatedAt,
+      })
+      .from(accounts)
+      .innerJoin(institutions, eq(accounts.institutionId, institutions.id))
+      .leftJoin(statementExpectations, eq(statementExpectations.accountId, accounts.id))
+      .where(eq(accounts.id, input.id));
+
+    if (!row) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Account not found." });
+    }
+
+    const ownership = await ctx.db
+      .select({
+        personId: people.id,
+        personName: people.displayName,
+      })
+      .from(accountOwnership)
+      .innerJoin(people, eq(accountOwnership.personId, people.id))
+      .where(eq(accountOwnership.accountId, input.id));
+
+    return {
+      ...row,
+      statementFrequency: row.statementFrequency ?? defaultStatementFrequency,
+      owners: ownership.map((owner) => ({
+        id: owner.personId,
+        displayName: owner.personName,
+      })),
+    };
+  }),
+
   create: publicProcedure.input(accountInput).mutation(async ({ ctx, input }) => {
     const [institution] = await ctx.db
       .select({ id: institutions.id })

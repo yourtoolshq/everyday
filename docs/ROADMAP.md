@@ -165,6 +165,78 @@ Automation should reduce repetitive work, not make the workflow harder to unders
 
 ---
 
+## Phase 7 — Account operational details
+
+### Goal
+
+Track the operational facts of an account, not just its documents.
+
+### Build
+
+Support structured account details that change over time, such as:
+
+- interest rate;
+- annual fee;
+- credit limit;
+- renewal date;
+- promotional rate expiry;
+- payment schedule;
+- insurance status on the account;
+- similar account-level terms.
+
+These are tracked data, not one-off files. Passbook should preserve history when details change.
+
+Only add fields that repeatedly help with a real workflow.
+
+### Outcome
+
+Passbook can answer:
+
+> What are the current terms of this account, and how have they changed?
+
+---
+
+## Phase 8 — Account events and reference materials
+
+### Goal
+
+Capture the correspondence and activity around an account, not just its periodic statements.
+
+### Build
+
+Support account-linked events and reference materials such as:
+
+- account opening correspondence;
+- emailed notices and confirmations;
+- uploaded `.eml` files with in-app rendering when opened;
+- notes and call notes;
+- call recordings or other attachments;
+- credit limit change requests;
+- insurance added, removed, or changed on the account;
+- other account-change activity.
+
+An event should group the context:
+
+```text
+Event
+→ date or time period
+→ short title
+→ notes
+→ attachments and reference files
+```
+
+Start with a small set of event types and file formats that appear often in real use.
+
+Prefer rendering common formats directly in the app, such as `.eml`, instead of forcing the user back to a folder of raw files.
+
+### Outcome
+
+Passbook can answer:
+
+> What happened with this account, and where is the supporting correspondence?
+
+---
+
 ## Later — Cross-app references
 
 Passbook may eventually connect with other Your Tools apps.
@@ -224,21 +296,6 @@ Potential future work may include:
 Do not add this just because other personal finance apps have it.
 
 First define the specific household problem it should solve.
-
----
-
-## Later — Account details
-
-Passbook may eventually track useful operational details such as:
-
-- interest rate;
-- annual fee;
-- credit limit;
-- renewal date;
-- promotional rate expiry;
-- payment schedule.
-
-Only add fields that repeatedly help with a real workflow.
 
 ---
 

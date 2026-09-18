@@ -43,7 +43,7 @@ export function AccountSettingsSheet({
 
   const updateSchedule = api.accounts.updateStatementSchedule.useMutation({
     onSuccess: async () => {
-      await utils.accounts.list.invalidate();
+      await utils.accounts.invalidate();
       toast.success("Statement schedule updated.");
       onOpenChange(false);
     },

@@ -16,7 +16,10 @@ const titles: Record<string, string> = {
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const title = titles[pathname] ?? "Passbook";
+  const title =
+    pathname.startsWith("/accounts/") && pathname !== "/accounts"
+      ? "Account"
+      : (titles[pathname] ?? "Passbook");
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center border-b bg-background/85 backdrop-blur-sm">

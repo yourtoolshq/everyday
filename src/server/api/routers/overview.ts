@@ -1,6 +1,11 @@
-import { count } from "drizzle-orm";
+import { and, asc, count, eq, isNotNull } from "drizzle-orm";
 
-import { accounts, institutions, people } from "~/server/db/schema";
+import { defaultStatementFrequency } from "~/lib/statement-frequency";
+import {
+  buildMissingStatements,
+  buildYearCompletenessSummary,
+} from "~/lib/statement-completeness";
+import { accounts, documents, institutions, people, statementExpectations } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const overviewRouter = createTRPCRouter({
@@ -17,6 +22,66 @@ export const overviewRouter = createTRPCRouter({
       memberCount: memberCount?.value ?? 0,
       institutionCount: institutionCount?.value ?? 0,
       accountCount: accountCount?.value ?? 0,
+    };
+  }),
+
+  statementStatus: publicProcedure.query(async ({ ctx }) => {
+    const accountRows = await ctx.db
+      .select({
+        id: accounts.id,
+        displayName: accounts.displayName,
+        institutionName: institutions.name,
+        openedDate: accounts.openedDate,
+        closedDate: accounts.closedDate,
+        status: accounts.status,
+        statementFrequency: statementExpectations.frequency,
+      })
+      .from(accounts)
+      .innerJoin(institutions, eq(accounts.institutionId, institutions.id))
+      .leftJoin(statementExpectations, eq(statementExpectations.accountId, accounts.id))
+      .orderBy(asc(institutions.name), asc(accounts.displayName));
+
+    const statementRows = await ctx.db
+      .select({
+        accountId: documents.accountId,
+        periodKey: documents.periodKey,
+        documentId: documents.id,
+      })
+      .from(documents)
+      .where(and(eq(documents.type, "statement"), isNotNull(documents.periodKey)));
+
+    const statementDocumentsByAccount: Record<string, Record<string, string>> = {};
+    for (const row of statementRows) {
+      if (!row.periodKey) continue;
+      const accountDocuments = statementDocumentsByAccount[row.accountId] ?? {};
+      accountDocuments[row.periodKey] = row.documentId;
+      statementDocumentsByAccount[row.accountId] = accountDocuments;
+    }
+
+    const accountsForCompleteness = accountRows.map((row) => ({
+      id: row.id,
+      displayName: row.displayName,
+      institutionName: row.institutionName,
+      openedDate: row.openedDate,
+      closedDate: row.closedDate,
+      status: row.status,
+      statementFrequency: row.statementFrequency ?? defaultStatementFrequency,
+    }));
+
+    const year = new Date().getFullYear();
+    const yearSummary = buildYearCompletenessSummary(
+      accountsForCompleteness,
+      statementDocumentsByAccount,
+      year,
+    );
+    const missingStatements = buildMissingStatements(
+      accountsForCompleteness,
+      statementDocumentsByAccount,
+    );
+
+    return {
+      yearSummary,
+      missingStatements,
     };
   }),
 });

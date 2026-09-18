@@ -109,7 +109,7 @@ export function AccountFormSheet({
   );
 
   const finish = async (message: string) => {
-    await utils.accounts.list.invalidate();
+    await utils.accounts.invalidate();
     toast.success(message);
     onOpenChange(false);
   };
