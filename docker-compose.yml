@@ -1,0 +1,29 @@
+services:
+  app:
+    build:
+      context: .
+    environment:
+      DATABASE_URL: file:/data/passbook.db
+      DOCUMENTS_DIR: /data/documents
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:${PASSBOOK_PORT:-3002}:3000"
+    restart: unless-stopped
+    volumes:
+      - passbook-data:/data
+    networks:
+      - default
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.passbook.rule=Host(`passbook.tools.local`)
+      - traefik.http.routers.passbook.entrypoints=web
+      - traefik.http.services.passbook.loadbalancer.server.port=3000
+
+networks:
+  web:
+    external: true
+
+volumes:
+  passbook-data:
+    name: passbook-data

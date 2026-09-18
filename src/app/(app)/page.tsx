@@ -1,0 +1,61 @@
+import { Landmark, Users, Building2, Wallet } from "lucide-react";
+
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { api } from "~/trpc/server";
+
+export const dynamic = "force-dynamic";
+
+export default async function OverviewPage() {
+  const summary = await api.overview.summary();
+
+  const stats = [
+    { label: "Members", value: summary.memberCount, icon: Users },
+    { label: "Institutions", value: summary.institutionCount, icon: Building2 },
+    { label: "Accounts", value: summary.accountCount, icon: Wallet },
+  ];
+
+  return (
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 p-4 md:p-6">
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-primary">Household overview</p>
+        <h2 className="text-3xl font-semibold tracking-tight">
+          {summary.householdName ?? "Your household"}
+        </h2>
+        <p className="max-w-2xl text-muted-foreground">
+          Track financial accounts, institutions, and the documents that belong to them.
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        {stats.map((stat) => (
+          <Card key={stat.label} className="shadow-none">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {stat.label}
+              </CardTitle>
+              <stat.icon className="size-4 text-primary" aria-hidden="true" />
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-semibold">{stat.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <Card className="border-dashed shadow-none">
+        <CardContent className="flex items-start gap-4 p-6">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Landmark className="size-5" aria-hidden="true" />
+          </div>
+          <div className="space-y-1">
+            <p className="font-medium">Phase 1 — Account inventory</p>
+            <p className="text-sm text-muted-foreground">
+              Add institutions and accounts to build your household financial inventory.
+              Statement schedules and missing-record tracking come in later phases.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </main>
+  );
+}
