@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import type { ParsedEml } from "~/lib/eml";
+import { listParsedEmlAddressFields, type ParsedEml } from "~/lib/eml";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -13,6 +13,48 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Skeleton } from "~/components/ui/skeleton";
+
+function formatEmailDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function EmailAddressFields({ email }: { email: ParsedEml }) {
+  const fields = listParsedEmlAddressFields(email);
+  if (fields.length === 0 && !email.date) return null;
+
+  return (
+    <div className="flex shrink-0 items-start justify-between gap-4 text-sm">
+      {fields.length > 0 ? (
+        <dl className="min-w-0 grid flex-1 gap-1 [grid-template-columns:auto_minmax(0,1fr)]">
+          {fields.map((field) => (
+            <div key={field.label} className="contents">
+              <dt className="pr-3 text-muted-foreground">{field.label}</dt>
+              <dd className="min-w-0 break-words">{field.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : (
+        <div className="flex-1" />
+      )}
+      {email.date ? (
+        <time
+          className="shrink-0 text-right text-muted-foreground"
+          dateTime={email.date}
+        >
+          {formatEmailDate(email.date)}
+        </time>
+      ) : null}
+    </div>
+  );
+}
 
 export function EmlPreviewDialog({
   documentId,
@@ -64,66 +106,43 @@ export function EmlPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(90vh,800px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="border-b px-4 py-4">
-          <DialogTitle>{parsed?.subject ?? title}</DialogTitle>
+      <DialogContent className="flex h-[min(90vh,800px)] max-h-[min(90vh,800px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 border-b px-4 py-3">
+          <DialogTitle className="leading-snug">{parsed?.subject ?? title}</DialogTitle>
           <DialogDescription>Email preview</DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-hidden p-4 pt-3">
           {loading ? (
             <div className="space-y-3">
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-32 w-full" />
+              <Skeleton className="min-h-0 flex-1" />
             </div>
           ) : error ? (
             <p className="text-sm text-destructive">{error}</p>
           ) : parsed ? (
             <>
-              <dl className="space-y-2 text-sm">
-                {parsed.from ? (
-                  <div>
-                    <dt className="font-medium text-muted-foreground">From</dt>
-                    <dd>{parsed.from}</dd>
-                  </div>
-                ) : null}
-                {parsed.to ? (
-                  <div>
-                    <dt className="font-medium text-muted-foreground">To</dt>
-                    <dd>{parsed.to}</dd>
-                  </div>
-                ) : null}
-                {parsed.date ? (
-                  <div>
-                    <dt className="font-medium text-muted-foreground">Date</dt>
-                    <dd>{parsed.date}</dd>
-                  </div>
-                ) : null}
-                {parsed.subject ? (
-                  <div>
-                    <dt className="font-medium text-muted-foreground">Subject</dt>
-                    <dd>{parsed.subject}</dd>
-                  </div>
-                ) : null}
-              </dl>
-              <div className="overflow-hidden rounded-lg border bg-white text-sm">
+              <EmailAddressFields email={parsed} />
+              <div className="min-h-0 flex-1 overflow-hidden rounded-lg border bg-white text-sm">
                 {parsed.bodyContentType === "html" ? (
                   <iframe
                     title="Email content"
                     sandbox=""
-                    className="h-[min(60vh,560px)] w-full border-0 bg-white"
+                    className="h-full w-full border-0 bg-white"
                     srcDoc={parsed.body}
                   />
                 ) : (
-                  <pre className="whitespace-pre-wrap p-4 font-sans">{parsed.body}</pre>
+                  <pre className="h-full overflow-y-auto whitespace-pre-wrap p-4 font-sans">
+                    {parsed.body}
+                  </pre>
                 )}
               </div>
             </>
           ) : null}
         </div>
 
-        <DialogFooter className="border-t">
+        <DialogFooter className="mx-0 mb-0 shrink-0 border-t">
           <Button type="button" variant="outline" asChild>
             <a href={`/api/documents/${documentId}/file`} target="_blank" rel="noreferrer">
               Open original
