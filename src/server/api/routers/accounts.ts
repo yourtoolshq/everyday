@@ -12,17 +12,34 @@ import {
 } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
-const accountInput = z.object({
-  institutionId: z.string().uuid(),
-  displayName: z.string().trim().min(1).max(160),
-  accountType: z.enum(accountTypes),
-  identifierSuffix: z.string().trim().max(20).nullable().optional(),
-  status: z.enum(accountStatuses).default("active"),
-  openedDate: z.string().trim().max(10).nullable().optional(),
-  closedDate: z.string().trim().max(10).nullable().optional(),
-  notes: z.string().trim().max(2000).nullable().optional(),
-  ownerIds: z.array(z.string().uuid()).min(1),
-});
+const accountInput = z
+  .object({
+    institutionId: z.string().uuid(),
+    displayName: z.string().trim().min(1).max(160),
+    accountType: z.enum(accountTypes),
+    identifierSuffix: z.string().trim().max(20).nullable().optional(),
+    status: z.enum(accountStatuses).default("active"),
+    openedDate: z.string().trim().max(10).nullable().optional(),
+    closedDate: z.string().trim().max(10).nullable().optional(),
+    notes: z.string().trim().max(2000).nullable().optional(),
+    ownerIds: z.array(z.string().uuid()).min(1),
+  })
+  .superRefine((data, ctx) => {
+    if (data.status === "closed" && !data.closedDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Closed accounts need a closed date.",
+        path: ["closedDate"],
+      });
+    }
+    if (data.status === "active" && data.closedDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Active accounts cannot have a closed date.",
+        path: ["closedDate"],
+      });
+    }
+  });
 
 const idInput = z.object({ id: z.string().uuid() });
 const now = () => new Date().toISOString();
