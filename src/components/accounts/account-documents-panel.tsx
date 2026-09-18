@@ -33,7 +33,7 @@ export function AccountDocumentsPanel({
   onUploadOpenChange,
 }: {
   accountId: string;
-  defaultUploadType?: "closure_document" | "void_cheque" | "debit_card_letter" | "other";
+  defaultUploadType?: "closure_document" | "void_cheque" | "card_letter" | "other";
   initialUploadOpen?: boolean;
   onUploadOpenChange?: (open: boolean) => void;
 }) {

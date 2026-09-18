@@ -68,10 +68,10 @@ describe("document files", () => {
 
     expect(
       defaultDocumentTitle({
-        type: "debit_card_letter",
+        type: "card_letter",
         accountDisplayName: "Chequing",
-        filename: "debit-card-letter.pdf",
+        filename: "card-letter.pdf",
       }),
-    ).toBe("debit-card-letter");
+    ).toBe("card-letter");
   });
 });

@@ -7,7 +7,7 @@ export const documentTypes = [
   "agreement",
   "opening_document",
   "closure_document",
-  "debit_card_letter",
+  "card_letter",
   "financial_correspondence",
   "other",
 ] as const;
@@ -25,7 +25,7 @@ export const documentTypeLabels = {
   agreement: "Agreement",
   opening_document: "Opening document",
   closure_document: "Closure document",
-  debit_card_letter: "Debit card letter",
+  card_letter: "Card letter",
   financial_correspondence: "Financial correspondence",
   other: "Other",
 } satisfies Record<DocumentType, string>;
