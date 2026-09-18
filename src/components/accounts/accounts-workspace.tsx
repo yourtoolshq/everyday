@@ -1,22 +1,42 @@
 "use client";
 
-import { Pencil, Plus } from "lucide-react";
+import { AlertTriangle, Pencil, Plus, Settings } from "lucide-react";
 import { useState } from "react";
 
 import { AccountFormSheet } from "~/components/accounts/account-form-sheet";
+import { AccountSettingsSheet } from "~/components/accounts/account-settings-sheet";
+import { AccountStatementPeriods } from "~/components/accounts/account-statement-periods";
 import { accountStatusLabels } from "~/lib/account-status";
 import { accountTypeLabels } from "~/lib/account-types";
+import { canDeriveStatementPeriods } from "~/lib/expected-periods";
 import { formatDateLabel } from "~/lib/format-date";
+import { statementFrequencyLabels } from "~/lib/statement-frequency";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Account = RouterOutputs["accounts"]["list"][number];
 
+function needsOpenedDateWarning(account: Account): boolean {
+  return (
+    account.statementFrequency !== "none" && !canDeriveStatementPeriods(
+      {
+        openedDate: account.openedDate,
+        closedDate: account.closedDate,
+        status: account.status,
+      },
+      account.statementFrequency,
+    )
+  );
+}
+
 export function AccountsWorkspace() {
   const accounts = api.accounts.list.useQuery();
   const [editing, setEditing] = useState<Account | null>(null);
+  const [settingsAccount, setSettingsAccount] = useState<Account | null>(null);
   const [formOpen, setFormOpen] = useState(false);
 
   function addAccount() {
@@ -76,43 +96,74 @@ export function AccountsWorkspace() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {items.map((account) => {
             const openedLabel = formatDateLabel(account.openedDate);
             const closedLabel = formatDateLabel(account.closedDate);
+            const showOpenedDateWarning = needsOpenedDateWarning(account);
 
             return (
               <Card key={account.id} className="shadow-none">
-                <CardContent className="flex items-start justify-between gap-4 p-4">
-                  <div className="space-y-1">
-                    <p className="font-medium">{account.displayName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {account.institutionName} · {accountTypeLabels[account.accountType]}
-                      {account.identifierSuffix ? ` · …${account.identifierSuffix}` : ""}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {accountStatusLabels[account.status]} ·{" "}
-                      {account.owners.map((owner) => owner.displayName).join(", ")}
-                    </p>
-                    {openedLabel || closedLabel ? (
+                <CardContent className="space-y-4 p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium">{account.displayName}</p>
+                        <Badge variant="secondary">
+                          {statementFrequencyLabels[account.statementFrequency]}
+                        </Badge>
+                        {showOpenedDateWarning ? (
+                          <Badge variant="outline" className="border-amber-500/40 text-amber-800">
+                            <AlertTriangle />
+                            Missing opened date
+                          </Badge>
+                        ) : null}
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        {openedLabel ? `Opened ${openedLabel}` : null}
-                        {openedLabel && closedLabel ? " · " : null}
-                        {closedLabel ? `Closed ${closedLabel}` : null}
+                        {account.institutionName} · {accountTypeLabels[account.accountType]}
+                        {account.identifierSuffix ? ` · …${account.identifierSuffix}` : ""}
                       </p>
-                    ) : null}
-                    {account.notes ? (
-                      <p className="text-sm text-muted-foreground">{account.notes}</p>
-                    ) : null}
+                      <p className="text-sm text-muted-foreground">
+                        {accountStatusLabels[account.status]} ·{" "}
+                        {account.owners.map((owner) => owner.displayName).join(", ")}
+                      </p>
+                      {openedLabel || closedLabel ? (
+                        <p className="text-sm text-muted-foreground">
+                          {openedLabel ? `Opened ${openedLabel}` : null}
+                          {openedLabel && closedLabel ? " · " : null}
+                          {closedLabel ? `Closed ${closedLabel}` : null}
+                        </p>
+                      ) : null}
+                      {account.notes ? (
+                        <p className="text-sm text-muted-foreground">{account.notes}</p>
+                      ) : null}
+                    </div>
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Settings for ${account.displayName}`}
+                        onClick={() => setSettingsAccount(account)}
+                      >
+                        <Settings />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label={`Edit ${account.displayName}`}
+                        onClick={() => editAccount(account)}
+                      >
+                        <Pencil />
+                      </Button>
+                    </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label={`Edit ${account.displayName}`}
-                    onClick={() => editAccount(account)}
-                  >
-                    <Pencil />
-                  </Button>
+
+                  {account.statementFrequency !== "none" ? (
+                    <>
+                      <Separator />
+                      <AccountStatementPeriods account={account} />
+                    </>
+                  ) : null}
                 </CardContent>
               </Card>
             );
@@ -126,6 +177,17 @@ export function AccountsWorkspace() {
           account={editing}
           open={formOpen}
           onOpenChange={setFormOpen}
+        />
+      ) : null}
+
+      {settingsAccount ? (
+        <AccountSettingsSheet
+          key={settingsAccount.id}
+          account={settingsAccount}
+          open={Boolean(settingsAccount)}
+          onOpenChange={(open) => {
+            if (!open) setSettingsAccount(null);
+          }}
         />
       ) : null}
     </div>

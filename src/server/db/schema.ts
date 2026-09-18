@@ -4,6 +4,7 @@ import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqli
 import type { AccountStatus } from "~/lib/account-status";
 import type { AccountType } from "~/lib/account-types";
 import type { DocumentType } from "~/lib/documents";
+import type { StatementFrequency } from "~/lib/statement-frequency";
 
 const id = () =>
   text("id")
@@ -69,6 +70,18 @@ export const accounts = sqliteTable(
     updatedAt: updatedAt(),
   },
   (table) => [index("accounts_institution_idx").on(table.institutionId)],
+);
+
+export const statementExpectations = sqliteTable(
+  "statement_expectations",
+  {
+    accountId: text("account_id")
+      .primaryKey()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    frequency: text("frequency").$type<StatementFrequency>().notNull().default("monthly"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
 );
 
 export const accountOwnership = sqliteTable(

@@ -5,10 +5,15 @@ import { z } from "zod";
 import { accountStatuses } from "~/lib/account-status";
 import { accountTypes } from "~/lib/account-types";
 import {
+  defaultStatementFrequency,
+  statementFrequencies,
+} from "~/lib/statement-frequency";
+import {
   accountOwnership,
   accounts,
   institutions,
   people,
+  statementExpectations,
 } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
@@ -58,11 +63,13 @@ export const accountsRouter = createTRPCRouter({
         notes: accounts.notes,
         institutionId: institutions.id,
         institutionName: institutions.name,
+        statementFrequency: statementExpectations.frequency,
         createdAt: accounts.createdAt,
         updatedAt: accounts.updatedAt,
       })
       .from(accounts)
       .innerJoin(institutions, eq(accounts.institutionId, institutions.id))
+      .leftJoin(statementExpectations, eq(statementExpectations.accountId, accounts.id))
       .orderBy(asc(institutions.name), asc(accounts.displayName));
 
     const ownership = await ctx.db
@@ -83,6 +90,7 @@ export const accountsRouter = createTRPCRouter({
 
     return rows.map((row) => ({
       ...row,
+      statementFrequency: row.statementFrequency ?? defaultStatementFrequency,
       owners: ownersByAccount.get(row.id) ?? [],
     }));
   }),
@@ -125,6 +133,11 @@ export const accountsRouter = createTRPCRouter({
           personId,
         })),
       );
+
+      await tx.insert(statementExpectations).values({
+        accountId: created.id,
+        frequency: defaultStatementFrequency,
+      });
 
       return created;
     });
@@ -174,6 +187,39 @@ export const accountsRouter = createTRPCRouter({
       });
 
       return account;
+    }),
+
+  updateStatementSchedule: publicProcedure
+    .input(
+      z.object({
+        accountId: z.string().uuid(),
+        frequency: z.enum(statementFrequencies),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [account] = await ctx.db
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(eq(accounts.id, input.accountId));
+      if (!account) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Account not found." });
+      }
+
+      await ctx.db
+        .insert(statementExpectations)
+        .values({
+          accountId: input.accountId,
+          frequency: input.frequency,
+        })
+        .onConflictDoUpdate({
+          target: statementExpectations.accountId,
+          set: {
+            frequency: input.frequency,
+            updatedAt: now(),
+          },
+        });
+
+      return { accountId: input.accountId, frequency: input.frequency };
     }),
 
   delete: publicProcedure.input(idInput).mutation(async ({ ctx, input }) => {
