@@ -15,6 +15,13 @@
       "when": 1789698264325,
       "tag": "0001_stormy_patch",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1789698756442,
+      "tag": "0002_overconfident_slayback",
+      "breakpoints": true
     }
   ]
 }

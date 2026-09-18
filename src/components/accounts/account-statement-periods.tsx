@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -50,25 +50,64 @@ const periodStatusStyles: Record<
   },
 };
 
-function PeriodCell({ period }: { period: ExpectedPeriod }) {
+function documentFileUrl(documentId: string) {
+  return `/api/documents/${documentId}/file`;
+}
+
+function PeriodCell({
+  period,
+  documentId,
+  onUpload,
+}: {
+  period: ExpectedPeriod;
+  documentId?: string;
+  onUpload?: () => void;
+}) {
   const styles = periodStatusStyles[period.status];
+  const uploaded = Boolean(documentId);
+  const canUpload =
+    period.status !== "not_expected" &&
+    period.status !== "future" &&
+    !uploaded &&
+    Boolean(onUpload);
+  const cellClassName = cn(
+    "flex aspect-[4/3] min-h-14 w-full flex-col items-center justify-center rounded-lg px-2 py-2 text-center transition-colors",
+    styles.cell,
+    uploaded &&
+      "border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 to-emerald-500/5 text-emerald-900 dark:text-emerald-100",
+    (canUpload || uploaded) && "cursor-pointer hover:brightness-95",
+    !canUpload && !uploaded && period.status !== "not_expected" && "cursor-default",
+  );
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div
-          className={cn(
-            "flex aspect-[4/3] min-h-14 flex-col items-center justify-center rounded-lg px-2 py-2 text-center transition-colors",
-            styles.cell,
-          )}
-        >
-          <span className="text-sm font-medium">{period.shortLabel}</span>
-        </div>
+        {uploaded && documentId ? (
+          <a
+            href={documentFileUrl(documentId)}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Open ${period.label} statement`}
+            className={cellClassName}
+          >
+            <Check className="size-4" aria-hidden="true" />
+          </a>
+        ) : (
+          <button
+            type="button"
+            disabled={!canUpload}
+            onClick={canUpload ? onUpload : undefined}
+            className={cellClassName}
+          >
+            <span className="text-sm font-medium">{period.shortLabel}</span>
+          </button>
+        )}
       </TooltipTrigger>
       <TooltipContent side="top" className="text-left">
         <p className="font-medium">{period.label}</p>
-        <p>{periodStatusLabels[period.status]}</p>
-        <p className="text-background/70">Upload tracking coming soon</p>
+        <p>{uploaded ? "Statement uploaded" : periodStatusLabels[period.status]}</p>
+        {uploaded ? <p className="text-background/70">Click to open</p> : null}
+        {canUpload ? <p className="text-background/70">Click to upload</p> : null}
       </TooltipContent>
     </Tooltip>
   );
@@ -107,7 +146,15 @@ function gridColumns(frequency: StatementFrequency): string {
   }
 }
 
-export function AccountStatementPeriods({ account }: { account: Account }) {
+export function AccountStatementPeriods({
+  account,
+  statementDocumentsByPeriod = {},
+  onUploadPeriod,
+}: {
+  account: Account;
+  statementDocumentsByPeriod?: Readonly<Record<string, string>>;
+  onUploadPeriod?: (periodKey: string) => void;
+}) {
   const frequency = account.statementFrequency;
   const lifecycle = useMemo(
     () => ({
@@ -130,6 +177,10 @@ export function AccountStatementPeriods({ account }: { account: Account }) {
   );
 
   const expectedCount = countExpectedPeriods(periods);
+  const uploadedCount = periods.filter(
+    (period) =>
+      period.status !== "not_expected" && Boolean(statementDocumentsByPeriod[period.key]),
+  ).length;
 
   if (frequency === "none") {
     return (
@@ -182,7 +233,7 @@ export function AccountStatementPeriods({ account }: { account: Account }) {
         <div className="flex items-center gap-2">
           <Badge variant="secondary">{statementFrequencyLabels[frequency]}</Badge>
           <span className="text-sm text-muted-foreground">
-            {expectedCount} expected in {year}
+            {uploadedCount}/{expectedCount} uploaded in {year}
           </span>
           <div className="flex rounded-lg border p-0.5">
             <Button
@@ -211,25 +262,65 @@ export function AccountStatementPeriods({ account }: { account: Account }) {
         {viewMode === "grid" ? (
           <div className={cn("grid gap-2", gridColumns(frequency))}>
             {periods.map((period) => (
-              <PeriodCell key={period.key} period={period} />
+              <PeriodCell
+                key={period.key}
+                period={period}
+                documentId={statementDocumentsByPeriod[period.key]}
+                onUpload={
+                  onUploadPeriod ? () => onUploadPeriod(period.key) : undefined
+                }
+              />
             ))}
           </div>
         ) : (
           <div className="divide-y rounded-lg border">
             {periods.map((period) => {
               const styles = periodStatusStyles[period.status];
+              const documentId = statementDocumentsByPeriod[period.key];
+              const uploaded = Boolean(documentId);
+              const canUpload =
+                period.status !== "not_expected" &&
+                period.status !== "future" &&
+                !uploaded &&
+                Boolean(onUploadPeriod);
               return (
                 <div
                   key={period.key}
                   className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
                 >
                   <div className="flex items-center gap-2">
-                    <span className={cn("size-2 rounded-full", styles.dot)} />
+                    <span
+                      className={cn(
+                        "size-2 rounded-full",
+                        uploaded ? "bg-emerald-500" : styles.dot,
+                      )}
+                    />
                     <span className="font-medium">{period.label}</span>
                   </div>
-                  <span className="text-muted-foreground">
-                    {periodStatusLabels[period.status]}
-                  </span>
+                  {uploaded && documentId ? (
+                    <Button size="sm" variant="ghost" asChild>
+                      <a
+                        href={documentFileUrl(documentId)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open
+                      </a>
+                    </Button>
+                  ) : canUpload ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onUploadPeriod?.(period.key)}
+                    >
+                      Upload
+                    </Button>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      {periodStatusLabels[period.status]}
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -239,8 +330,7 @@ export function AccountStatementPeriods({ account }: { account: Account }) {
 
       <PeriodLegend />
       <p className="text-xs text-muted-foreground">
-        Period colors reflect timing only. Upload tracking will show complete and missing
-        statements in a later phase.
+        Green checkmarks open the uploaded statement. Click an empty expected period to upload.
       </p>
     </div>
   );

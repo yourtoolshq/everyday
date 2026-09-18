@@ -1,10 +1,12 @@
 "use client";
 
-import { ExternalLink, Trash2 } from "lucide-react";
+import { ExternalLink, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
-import { documentTypeLabels } from "~/lib/documents";
-import { formatFileSize } from "~/lib/documents";
+import { StatementUploadSheet } from "~/components/documents/statement-upload-sheet";
+import { documentTypeLabels, formatFileSize } from "~/lib/documents";
+import { formatPeriodKey } from "~/lib/expected-periods";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
@@ -13,9 +15,13 @@ import { api } from "~/trpc/react";
 export function DocumentsWorkspace() {
   const utils = api.useUtils();
   const documents = api.documents.overview.useQuery();
+  const [uploadOpen, setUploadOpen] = useState(false);
   const deleteDocument = api.documents.delete.useMutation({
     onSuccess: async () => {
-      await utils.documents.overview.invalidate();
+      await Promise.all([
+        utils.documents.overview.invalidate(),
+        utils.documents.statementDocumentsByAccount.invalidate(),
+      ]);
       toast.success("Document removed.");
     },
     onError: (error) => toast.error(error.message),
@@ -23,6 +29,12 @@ export function DocumentsWorkspace() {
 
   return (
     <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button onClick={() => setUploadOpen(true)}>
+          <Plus /> Upload statement
+        </Button>
+      </div>
+
       {documents.data?.map((document) => (
         <Card key={document.id} className="shadow-none">
           <CardContent className="flex items-start justify-between gap-4 p-4">
@@ -33,6 +45,7 @@ export function DocumentsWorkspace() {
               </div>
               <p className="text-sm text-muted-foreground">
                 {document.institutionName} · {document.accountName}
+                {document.periodKey ? ` · ${formatPeriodKey(document.periodKey)}` : ""}
               </p>
               <p className="text-sm text-muted-foreground">
                 {document.originalFilename} · {formatFileSize(document.sizeBytes)}
@@ -63,8 +76,12 @@ export function DocumentsWorkspace() {
       ))}
       {documents.data?.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No documents yet. Upload documents from an account when that flow is wired in.
+          No documents yet. Upload a statement to link a file to an account and period.
         </p>
+      ) : null}
+
+      {uploadOpen ? (
+        <StatementUploadSheet open={uploadOpen} onOpenChange={setUploadOpen} />
       ) : null}
     </div>
   );

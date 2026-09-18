@@ -275,3 +275,67 @@ export const periodStatusLabels: Record<PeriodDisplayStatus, string> = {
 export function countExpectedPeriods(periods: ExpectedPeriod[]): number {
   return periods.filter((period) => period.status !== "not_expected").length;
 }
+
+function comparePeriodsDesc(a: ExpectedPeriod, b: ExpectedPeriod): number {
+  if (a.year !== b.year) return b.year - a.year;
+  const aOrdinal = a.month ?? (a.quarter ? a.quarter * 3 : 0);
+  const bOrdinal = b.month ?? (b.quarter ? b.quarter * 3 : 0);
+  return bOrdinal - aOrdinal;
+}
+
+export function deriveAllUploadablePeriods(
+  lifecycle: AccountLifecycle,
+  frequency: StatementFrequency,
+  asOfDate: Date = new Date(),
+): ExpectedPeriod[] {
+  const yearRange = statementYearRange(lifecycle, asOfDate);
+  if (!yearRange || !canDeriveStatementPeriods(lifecycle, frequency)) {
+    return [];
+  }
+
+  const periods: ExpectedPeriod[] = [];
+  for (let year = yearRange.minYear; year <= yearRange.maxYear; year += 1) {
+    periods.push(
+      ...deriveExpectedPeriodsForYear(lifecycle, frequency, year, asOfDate).filter(
+        (period) => period.status !== "not_expected" && period.status !== "future",
+      ),
+    );
+  }
+
+  return periods.sort(comparePeriodsDesc);
+}
+
+export function findUploadablePeriod(
+  lifecycle: AccountLifecycle,
+  frequency: StatementFrequency,
+  periodKey: string,
+  asOfDate: Date = new Date(),
+): ExpectedPeriod | null {
+  return (
+    deriveAllUploadablePeriods(lifecycle, frequency, asOfDate).find(
+      (period) => period.key === periodKey,
+    ) ?? null
+  );
+}
+
+export function formatPeriodKey(periodKey: string): string {
+  const monthMatch = /^(\d{4})-(\d{2})$/.exec(periodKey);
+  if (monthMatch) {
+    const month = Number(monthMatch[2]);
+    const name = MONTH_NAMES[month - 1];
+    return name ? `${name} ${monthMatch[1]}` : periodKey;
+  }
+
+  const quarterMatch = /^(\d{4})-Q(\d)$/.exec(periodKey);
+  if (quarterMatch) return `Q${quarterMatch[2]} ${quarterMatch[1]}`;
+
+  return periodKey;
+}
+
+export function suggestDefaultPeriodKey(
+  uploadablePeriods: ExpectedPeriod[],
+  uploadedPeriodKeys: ReadonlySet<string>,
+): string | null {
+  const nextMissing = uploadablePeriods.find((period) => !uploadedPeriodKeys.has(period.key));
+  return nextMissing?.key ?? uploadablePeriods[0]?.key ?? null;
+}

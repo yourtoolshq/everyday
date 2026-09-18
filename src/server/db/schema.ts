@@ -108,6 +108,7 @@ export const documents = sqliteTable(
       .notNull()
       .references(() => accounts.id, { onDelete: "cascade" }),
     type: text("type").$type<DocumentType>().notNull(),
+    periodKey: text("period_key"),
     title: text("title").notNull(),
     documentDate: text("document_date"),
     notes: text("notes"),
@@ -118,5 +119,8 @@ export const documents = sqliteTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (table) => [index("documents_account_idx").on(table.accountId)],
+  (table) => [
+    index("documents_account_idx").on(table.accountId),
+    uniqueIndex("documents_account_period_unique").on(table.accountId, table.periodKey),
+  ],
 );

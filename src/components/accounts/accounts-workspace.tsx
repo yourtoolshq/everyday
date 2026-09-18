@@ -1,11 +1,12 @@
 "use client";
 
-import { AlertTriangle, Pencil, Plus, Settings } from "lucide-react";
+import { AlertTriangle, Pencil, Plus, Settings, Upload } from "lucide-react";
 import { useState } from "react";
 
 import { AccountFormSheet } from "~/components/accounts/account-form-sheet";
 import { AccountSettingsSheet } from "~/components/accounts/account-settings-sheet";
 import { AccountStatementPeriods } from "~/components/accounts/account-statement-periods";
+import { StatementUploadSheet } from "~/components/documents/statement-upload-sheet";
 import { accountStatusLabels } from "~/lib/account-status";
 import { accountTypeLabels } from "~/lib/account-types";
 import { canDeriveStatementPeriods } from "~/lib/expected-periods";
@@ -33,11 +34,18 @@ function needsOpenedDateWarning(account: Account): boolean {
   );
 }
 
+type UploadTarget = {
+  accountId: string;
+  periodKey?: string;
+};
+
 export function AccountsWorkspace() {
   const accounts = api.accounts.list.useQuery();
+  const statementDocuments = api.documents.statementDocumentsByAccount.useQuery();
   const [editing, setEditing] = useState<Account | null>(null);
   const [settingsAccount, setSettingsAccount] = useState<Account | null>(null);
   const [formOpen, setFormOpen] = useState(false);
+  const [uploadTarget, setUploadTarget] = useState<UploadTarget | null>(null);
 
   function addAccount() {
     setEditing(null);
@@ -139,6 +147,16 @@ export function AccountsWorkspace() {
                       ) : null}
                     </div>
                     <div className="flex shrink-0 gap-1">
+                      {account.statementFrequency !== "none" ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`Upload statement for ${account.displayName}`}
+                          onClick={() => setUploadTarget({ accountId: account.id })}
+                        >
+                          <Upload />
+                        </Button>
+                      ) : null}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -161,7 +179,13 @@ export function AccountsWorkspace() {
                   {account.statementFrequency !== "none" ? (
                     <>
                       <Separator />
-                      <AccountStatementPeriods account={account} />
+                      <AccountStatementPeriods
+                        account={account}
+                        statementDocumentsByPeriod={statementDocuments.data?.[account.id] ?? {}}
+                        onUploadPeriod={(periodKey) =>
+                          setUploadTarget({ accountId: account.id, periodKey })
+                        }
+                      />
                     </>
                   ) : null}
                 </CardContent>
@@ -188,6 +212,18 @@ export function AccountsWorkspace() {
           onOpenChange={(open) => {
             if (!open) setSettingsAccount(null);
           }}
+        />
+      ) : null}
+
+      {uploadTarget ? (
+        <StatementUploadSheet
+          key={`${uploadTarget.accountId}-${uploadTarget.periodKey ?? "new"}`}
+          open={Boolean(uploadTarget)}
+          onOpenChange={(open) => {
+            if (!open) setUploadTarget(null);
+          }}
+          accountId={uploadTarget.accountId}
+          periodKey={uploadTarget.periodKey}
         />
       ) : null}
     </div>

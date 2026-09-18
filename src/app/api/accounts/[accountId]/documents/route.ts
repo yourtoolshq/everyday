@@ -1,6 +1,6 @@
 import { basename } from "node:path";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -9,9 +9,11 @@ import {
   maxDocumentBytes,
   titleFromFilename,
 } from "~/lib/documents";
+import { defaultStatementFrequency } from "~/lib/statement-frequency";
 import { databaseReady, db } from "~/server/db";
-import { accounts, documents } from "~/server/db/schema";
+import { accounts, documents, statementExpectations } from "~/server/db/schema";
 import { removeDocument, writeDocument } from "~/server/documents/storage";
+import { validateStatementPeriod } from "~/server/documents/statement-upload";
 
 export const runtime = "nodejs";
 
@@ -46,6 +48,10 @@ export async function POST(
   }
 
   const originalFilename = safeOriginalFilename(file.name);
+  const periodKeyValue = form.get("periodKey");
+  const periodKey =
+    typeof periodKeyValue === "string" && periodKeyValue.trim() ? periodKeyValue.trim() : null;
+
   const titleValue = form.get("title");
   const metadata = documentMetadataSchema.safeParse({
     title:
@@ -59,6 +65,13 @@ export async function POST(
   });
   if (!metadata.success) return errorResponse("Choose a type and enter a title.", 400);
 
+  if (metadata.data.type === "statement" && !periodKey) {
+    return errorResponse("Choose a statement period.", 400);
+  }
+  if (metadata.data.type !== "statement" && periodKey) {
+    return errorResponse("Only statements can be linked to a period.", 400);
+  }
+
   const bytes = new Uint8Array(await file.arrayBuffer());
   const detected = detectDocumentFile(bytes);
   if (!detected) {
@@ -66,10 +79,46 @@ export async function POST(
   }
 
   const [account] = await db
-    .select({ id: accounts.id })
+    .select({
+      id: accounts.id,
+      openedDate: accounts.openedDate,
+      closedDate: accounts.closedDate,
+      status: accounts.status,
+      statementFrequency: statementExpectations.frequency,
+    })
     .from(accounts)
+    .leftJoin(statementExpectations, eq(statementExpectations.accountId, accounts.id))
     .where(eq(accounts.id, parsedParams.data.accountId));
   if (!account) return errorResponse("Account not found.", 404);
+
+  let validatedPeriodKey: string | null = null;
+  if (metadata.data.type === "statement" && periodKey) {
+    const validation = validateStatementPeriod(
+      {
+        openedDate: account.openedDate,
+        closedDate: account.closedDate,
+        status: account.status,
+        statementFrequency: account.statementFrequency ?? defaultStatementFrequency,
+      },
+      periodKey,
+    );
+    if (!validation.ok) return errorResponse(validation.error, 400);
+    validatedPeriodKey = validation.period.key;
+
+    const [existing] = await db
+      .select({ id: documents.id })
+      .from(documents)
+      .where(
+        and(
+          eq(documents.accountId, account.id),
+          eq(documents.type, "statement"),
+          eq(documents.periodKey, validatedPeriodKey),
+        ),
+      );
+    if (existing) {
+      return errorResponse("This account already has a statement for that period.", 409);
+    }
+  }
 
   const id = crypto.randomUUID();
   const storageKey = `${crypto.randomUUID()}.${detected.extension}`;
@@ -83,6 +132,7 @@ export async function POST(
         accountId: account.id,
         title: metadata.data.title,
         type: metadata.data.type,
+        periodKey: validatedPeriodKey,
         documentDate: metadata.data.documentDate ?? null,
         notes: metadata.data.notes ?? null,
         originalFilename,
@@ -94,6 +144,7 @@ export async function POST(
         id: documents.id,
         accountId: documents.accountId,
         type: documents.type,
+        periodKey: documents.periodKey,
         title: documents.title,
         documentDate: documents.documentDate,
         notes: documents.notes,

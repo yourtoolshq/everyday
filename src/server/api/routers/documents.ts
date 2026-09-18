@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { z } from "zod";
 
 import { documentMetadataSchema } from "~/lib/documents";
@@ -19,6 +19,7 @@ const publicDocumentFields = {
   id: documents.id,
   accountId: documents.accountId,
   type: documents.type,
+  periodKey: documents.periodKey,
   title: documents.title,
   documentDate: documents.documentDate,
   notes: documents.notes,
@@ -48,6 +49,27 @@ export const documentsRouter = createTRPCRouter({
     }
 
     return baseQuery.orderBy(desc(documents.createdAt));
+  }),
+
+  statementDocumentsByAccount: publicProcedure.query(async ({ ctx }) => {
+    const rows = await ctx.db
+      .select({
+        accountId: documents.accountId,
+        periodKey: documents.periodKey,
+        documentId: documents.id,
+      })
+      .from(documents)
+      .where(and(eq(documents.type, "statement"), isNotNull(documents.periodKey)));
+
+    const byAccount: Record<string, Record<string, string>> = {};
+    for (const row of rows) {
+      if (!row.periodKey) continue;
+      const accountDocuments = byAccount[row.accountId] ?? {};
+      accountDocuments[row.periodKey] = row.documentId;
+      byAccount[row.accountId] = accountDocuments;
+    }
+
+    return byAccount;
   }),
 
   update: publicProcedure
