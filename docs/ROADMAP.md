@@ -147,21 +147,11 @@ Important account records can be found alongside the account they belong to.
 
 ---
 
-## Phase 6 — Better intake
+## Phase 6 — Better intake (cancelled)
 
-Only begin this phase after the basic upload workflow is being used regularly.
+Cancelled. Most items were already addressed during Phases 3–5 (duplicate detection, period suggestions, title-from-filename, consistent storage), and batch uploads are not needed for this workflow.
 
-Possible improvements:
-
-- batch uploads;
-- duplicate detection;
-- remembered recent selections;
-- metadata suggestions;
-- statement-period suggestions;
-- consistent internal filenames;
-- consistent storage paths.
-
-Automation should reduce repetitive work, not make the workflow harder to understand.
+Remaining polish such as remembered recent selections can be added ad hoc if real use surfaces friction.
 
 ---
 
@@ -169,24 +159,29 @@ Automation should reduce repetitive work, not make the workflow harder to unders
 
 ### Goal
 
-Track the operational facts of an account, not just its documents.
+Track the operational facts of an account — the household's relationship with the institution — not transactions or budgeting.
 
 ### Build
 
-Support structured account details that change over time, such as:
+Per account, the user chooses which detail types to track (at create or edit time). Initial detail types:
 
 - interest rate;
-- annual fee;
+- promotional interest rate (separate from the base rate; may include an expiry date);
 - credit limit;
+- annual fee;
 - renewal date;
-- promotional rate expiry;
-- payment schedule;
-- insurance status on the account;
-- similar account-level terms.
+- insurance (simple text).
 
-These are tracked data, not one-off files. Passbook should preserve history when details change.
+Each tracked detail has a timeline of entries:
 
-Only add fields that repeatedly help with a real workflow.
+- effective date (including backdated entries);
+- value;
+- optional notes;
+- optional link to an existing account document.
+
+Users can add, edit, and delete entries (needed for intentional backfill and corrections).
+
+Payment schedules and other transaction-level data are out of scope — that belongs in a budgeting app.
 
 ### Outcome
 
