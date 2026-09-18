@@ -96,10 +96,12 @@ export function AccountFormSheet({
   account,
   open,
   onOpenChange,
+  onAccountClosed,
 }: {
   account: Account | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onAccountClosed?: () => void;
 }) {
   const utils = api.useUtils();
   const institutions = api.institutions.list.useQuery();
@@ -108,10 +110,11 @@ export function AccountFormSheet({
     account ? accountToFormState(account) : emptyFormState(),
   );
 
-  const finish = async (message: string) => {
+  const finish = async (message: string, closedJustNow = false) => {
     await utils.accounts.invalidate();
     toast.success(message);
     onOpenChange(false);
+    if (closedJustNow) onAccountClosed?.();
   };
 
   const createAccount = api.accounts.create.useMutation({
@@ -119,7 +122,10 @@ export function AccountFormSheet({
     onError: (error) => toast.error(error.message),
   });
   const updateAccount = api.accounts.update.useMutation({
-    onSuccess: () => finish("Account updated."),
+    onSuccess: () => {
+      const closedJustNow = account?.status !== "closed" && form.status === "closed";
+      finish("Account updated.", closedJustNow);
+    },
     onError: (error) => toast.error(error.message),
   });
 

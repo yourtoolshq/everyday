@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AlertTriangle, ArrowLeft, Pencil, Settings, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { AccountDocumentsPanel, ClosureDocumentPrompt } from "~/components/accounts/account-documents-panel";
 import { AccountFormSheet } from "~/components/accounts/account-form-sheet";
 import { AccountSettingsSheet } from "~/components/accounts/account-settings-sheet";
 import { AccountStatementPeriods } from "~/components/accounts/account-statement-periods";
@@ -14,12 +15,15 @@ import { canDeriveStatementPeriods } from "~/lib/expected-periods";
 import { formatDateLabel } from "~/lib/format-date";
 import { buildMissingStatements } from "~/lib/statement-completeness";
 import { statementFrequencyLabels } from "~/lib/statement-frequency";
+import { cn } from "~/lib/utils";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
-import { api } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
+
+type AccountDocument = RouterOutputs["documents"]["overview"][number];
 
 type UploadTarget = {
   periodKey?: string;
@@ -27,17 +31,38 @@ type UploadTarget = {
 
 export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
   const account = api.accounts.get.useQuery({ id: accountId });
-  const statementDocuments = api.documents.statementDocumentsByAccount.useQuery();
+  const accountDocuments = api.documents.overview.useQuery({ accountId });
   const [formOpen, setFormOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uploadTarget, setUploadTarget] = useState<UploadTarget | null>(null);
+  const [closureUploadOpen, setClosureUploadOpen] = useState(false);
+
+  const statementDocumentsByPeriod = useMemo(() => {
+    const map: Record<string, AccountDocument> = {};
+    for (const document of accountDocuments.data ?? []) {
+      if (document.type === "statement" && document.periodKey) {
+        map[document.periodKey] = document;
+      }
+    }
+    return map;
+  }, [accountDocuments.data]);
+
+  const statementDocumentsForCompleteness = useMemo(() => {
+    const byPeriod: Record<string, string> = {};
+    for (const [periodKey, document] of Object.entries(statementDocumentsByPeriod)) {
+      byPeriod[periodKey] = document.id;
+    }
+    return { [accountId]: byPeriod };
+  }, [accountId, statementDocumentsByPeriod]);
 
   const missingStatements = useMemo(() => {
     if (!account.data) return [];
-    return buildMissingStatements([account.data], statementDocuments.data ?? {});
-  }, [account.data, statementDocuments.data]);
+    return buildMissingStatements([account.data], statementDocumentsForCompleteness);
+  }, [account.data, statementDocumentsForCompleteness]);
 
-  if (account.isLoading || statementDocuments.isLoading) {
+  const hasStatements = account.data?.statementFrequency !== "none";
+
+  if (account.isLoading || accountDocuments.isLoading) {
     return (
       <div className="space-y-5">
         <Skeleton className="h-8 w-48" />
@@ -134,7 +159,7 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
-          {account.data.statementFrequency !== "none" ? (
+          {hasStatements ? (
             <Button onClick={() => setUploadTarget({})}>
               <Upload />
               Upload statement
@@ -151,7 +176,14 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
         </div>
       </div>
 
-      {account.data.statementFrequency !== "none" ? (
+      {account.data.status === "closed" ? (
+        <ClosureDocumentPrompt
+          accountId={account.data.id}
+          onUpload={() => setClosureUploadOpen(true)}
+        />
+      ) : null}
+
+      {hasStatements ? (
         <Card className="shadow-none">
           <CardContent className="space-y-4 p-4">
             <div>
@@ -163,46 +195,58 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
             <Separator />
             <AccountStatementPeriods
               account={account.data}
-              statementDocumentsByPeriod={statementDocuments.data?.[account.data.id] ?? {}}
+              statementDocumentsByPeriod={statementDocumentsByPeriod}
               onUploadPeriod={(periodKey) => setUploadTarget({ periodKey })}
             />
           </CardContent>
         </Card>
       ) : null}
 
-      {account.data.statementFrequency !== "none" ? (
-        <Card className="shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Needs attention</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {missingStatements.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No missing statements for this account.
-              </p>
-            ) : (
-              <ul className="divide-y">
-                {missingStatements.map((item) => (
-                  <li
-                    key={item.periodKey}
-                    className="flex items-center justify-between gap-3 py-3 text-sm"
-                  >
-                    <span className="font-medium">{item.periodLabel}</span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setUploadTarget({ periodKey: item.periodKey })}
+      <div className={cn("grid gap-4", hasStatements && "lg:grid-cols-2")}>
+        <AccountDocumentsPanel
+          key={closureUploadOpen ? "closure-upload" : "documents"}
+          accountId={account.data.id}
+          defaultUploadType={closureUploadOpen ? "closure_document" : "other"}
+          initialUploadOpen={closureUploadOpen}
+          onUploadOpenChange={(open) => {
+            if (!open) setClosureUploadOpen(false);
+          }}
+        />
+
+        {hasStatements ? (
+          <Card className="shadow-none">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Needs attention</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {missingStatements.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No missing statements for this account.
+                </p>
+              ) : (
+                <ul className="divide-y">
+                  {missingStatements.map((item) => (
+                    <li
+                      key={item.periodKey}
+                      className="flex items-center justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0"
                     >
-                      Upload
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
+                      <span className="font-medium">{item.periodLabel}</span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setUploadTarget({ periodKey: item.periodKey })}
+                      >
+                        Upload
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        ) : null}
+      </div>
 
       {formOpen ? (
         <AccountFormSheet
@@ -210,6 +254,7 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
           account={account.data}
           open={formOpen}
           onOpenChange={setFormOpen}
+          onAccountClosed={() => setClosureUploadOpen(true)}
         />
       ) : null}
 

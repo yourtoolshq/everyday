@@ -12,6 +12,10 @@ export const documentTypes = [
 
 export type DocumentType = (typeof documentTypes)[number];
 
+export const accountDocumentTypes = documentTypes.filter((type) => type !== "statement");
+
+export type AccountDocumentType = (typeof accountDocumentTypes)[number];
+
 export const documentTypeLabels = {
   statement: "Statement",
   notice: "Notice",
@@ -27,6 +31,11 @@ export const documentMetadataSchema = z.object({
   type: z.enum(documentTypes),
   documentDate: z.string().trim().max(10).nullable().optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
+});
+
+export const statementMetadataSchema = documentMetadataSchema.extend({
+  type: z.literal("statement"),
+  periodKey: z.string().trim().min(1),
 });
 
 export const maxDocumentBytes = 25 * 1024 * 1024;

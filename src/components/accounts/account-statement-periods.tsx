@@ -3,6 +3,10 @@
 import { Check, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
+import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
+import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
+import { StatementDetailSheet } from "~/components/documents/statement-detail-sheet";
 import {
   canDeriveStatementPeriods,
   deriveExpectedPeriodsForYear,
@@ -28,6 +32,7 @@ import { cn } from "cn";
 import type { RouterOutputs } from "~/trpc/react";
 
 type Account = RouterOutputs["accounts"]["list"][number];
+type StatementDocument = RouterOutputs["documents"]["overview"][number];
 
 type ViewMode = "grid" | "list";
 
@@ -57,20 +62,18 @@ const completenessStatusStyles: Record<
   },
 };
 
-function documentFileUrl(documentId: string) {
-  return `/api/documents/${documentId}/file`;
-}
-
 function PeriodCell({
   period,
-  documentId,
+  document,
+  onSelect,
   onUpload,
 }: {
   period: ExpectedPeriod;
-  documentId?: string;
+  document?: StatementDocument;
+  onSelect?: (document: StatementDocument) => void;
   onUpload?: () => void;
 }) {
-  const completeness = deriveStatementCompleteness(period, Boolean(documentId));
+  const completeness = deriveStatementCompleteness(period, Boolean(document));
   const styles = completenessStatusStyles[completeness];
   const canUpload =
     (completeness === "missing" || completeness === "waiting") && Boolean(onUpload);
@@ -84,16 +87,15 @@ function PeriodCell({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {completeness === "complete" && documentId ? (
-          <a
-            href={documentFileUrl(documentId)}
-            target="_blank"
-            rel="noreferrer"
-            aria-label={`Open ${period.label} statement`}
+        {completeness === "complete" && document ? (
+          <button
+            type="button"
+            aria-label={`View ${period.label} statement`}
             className={cellClassName}
+            onClick={() => onSelect?.(document)}
           >
             <Check className="size-4" aria-hidden="true" />
-          </a>
+          </button>
         ) : (
           <button
             type="button"
@@ -108,7 +110,7 @@ function PeriodCell({
       <TooltipContent side="top" className="text-left">
         <p className="font-medium">{period.label}</p>
         <p>{completenessStatusLabels[completeness]}</p>
-        {completeness === "complete" ? <p className="text-background/70">Click to open</p> : null}
+        {completeness === "complete" ? <p className="text-background/70">Click for details</p> : null}
         {canUpload ? <p className="text-background/70">Click to upload</p> : null}
       </TooltipContent>
     </Tooltip>
@@ -155,9 +157,10 @@ export function AccountStatementPeriods({
   onUploadPeriod,
 }: {
   account: Account;
-  statementDocumentsByPeriod?: Readonly<Record<string, string>>;
+  statementDocumentsByPeriod?: Readonly<Record<string, StatementDocument>>;
   onUploadPeriod?: (periodKey: string) => void;
 }) {
+  const { requestDelete, dialog: deleteDialog } = useDeleteDocumentDialog();
   const frequency = account.statementFrequency;
   const lifecycle = useMemo(
     () => ({
@@ -173,15 +176,28 @@ export function AccountStatementPeriods({
   const defaultYear = yearRange?.maxYear ?? new Date().getFullYear();
   const [year, setYear] = useState(defaultYear);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [selectedStatement, setSelectedStatement] = useState<{
+    document: StatementDocument;
+    periodLabel: string;
+  } | null>(null);
+  const [editingStatement, setEditingStatement] = useState<StatementDocument | null>(null);
 
   const periods = useMemo(
     () => deriveExpectedPeriodsForYear(lifecycle, frequency, year),
     [frequency, lifecycle, year],
   );
 
+  const statementIdsByPeriod = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const [periodKey, document] of Object.entries(statementDocumentsByPeriod)) {
+      map[periodKey] = document.id;
+    }
+    return map;
+  }, [statementDocumentsByPeriod]);
+
   const { completeCount, missingCount, waitingCount, expectedCount } = countCompletenessForYear(
     periods,
-    statementDocumentsByPeriod,
+    statementIdsByPeriod,
   );
 
   if (frequency === "none") {
@@ -269,7 +285,10 @@ export function AccountStatementPeriods({
               <PeriodCell
                 key={period.key}
                 period={period}
-                documentId={statementDocumentsByPeriod[period.key]}
+                document={statementDocumentsByPeriod[period.key]}
+                onSelect={(document) =>
+                  setSelectedStatement({ document, periodLabel: period.label })
+                }
                 onUpload={
                   onUploadPeriod ? () => onUploadPeriod(period.key) : undefined
                 }
@@ -279,8 +298,8 @@ export function AccountStatementPeriods({
         ) : (
           <div className="divide-y rounded-lg border">
             {periods.map((period) => {
-              const documentId = statementDocumentsByPeriod[period.key];
-              const completeness = deriveStatementCompleteness(period, Boolean(documentId));
+              const document = statementDocumentsByPeriod[period.key];
+              const completeness = deriveStatementCompleteness(period, Boolean(document));
               const styles = completenessStatusStyles[completeness];
               const canUpload =
                 (completeness === "missing" || completeness === "waiting") &&
@@ -294,16 +313,13 @@ export function AccountStatementPeriods({
                     <span className={cn("size-2 rounded-full", styles.dot)} />
                     <span className="font-medium">{period.label}</span>
                   </div>
-                  {completeness === "complete" && documentId ? (
-                    <Button size="sm" variant="ghost" asChild>
-                      <a
-                        href={documentFileUrl(documentId)}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Open
-                      </a>
-                    </Button>
+                  {completeness === "complete" && document ? (
+                    <DocumentActionButtons
+                      documentId={document.id}
+                      title={document.title}
+                      onEdit={() => setEditingStatement(document)}
+                      onDelete={() => requestDelete({ id: document.id, title: document.title })}
+                    />
                   ) : canUpload ? (
                     <Button
                       type="button"
@@ -329,6 +345,34 @@ export function AccountStatementPeriods({
       <p className="text-xs text-muted-foreground">
         Red periods are missing. Blue is the current period still waiting for a statement.
       </p>
+
+      {selectedStatement ? (
+        <StatementDetailSheet
+          document={selectedStatement.document}
+          periodLabel={selectedStatement.periodLabel}
+          open={Boolean(selectedStatement)}
+          onOpenChange={(open) => {
+            if (!open) setSelectedStatement(null);
+          }}
+          onEdit={() => {
+            setEditingStatement(selectedStatement.document);
+            setSelectedStatement(null);
+          }}
+        />
+      ) : null}
+
+      {editingStatement ? (
+        <DocumentEditSheet
+          key={editingStatement.id}
+          document={editingStatement}
+          account={account}
+          open={Boolean(editingStatement)}
+          onOpenChange={(open) => {
+            if (!open) setEditingStatement(null);
+          }}
+        />
+      ) : null}
+      {deleteDialog}
     </div>
   );
 }
