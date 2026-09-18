@@ -5,6 +5,7 @@ import { AlertTriangle, ArrowLeft, Pencil, Settings, Upload } from "lucide-react
 import { useMemo, useState } from "react";
 
 import { AccountDocumentsPanel, ClosureDocumentPrompt } from "~/components/accounts/account-documents-panel";
+import { AccountTermsPanel } from "~/components/accounts/account-terms-panel";
 import { AccountFormSheet } from "~/components/accounts/account-form-sheet";
 import { AccountSettingsSheet } from "~/components/accounts/account-settings-sheet";
 import { AccountStatementPeriods } from "~/components/accounts/account-statement-periods";
@@ -201,6 +202,8 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
           </CardContent>
         </Card>
       ) : null}
+
+      <AccountTermsPanel accountId={account.data.id} />
 
       <div className={cn("grid gap-4", hasStatements && "lg:grid-cols-2")}>
         <AccountDocumentsPanel

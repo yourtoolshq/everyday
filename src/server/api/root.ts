@@ -1,3 +1,4 @@
+import { accountTermsRouter } from "~/server/api/routers/account-terms";
 import { accountsRouter } from "~/server/api/routers/accounts";
 import { documentsRouter } from "~/server/api/routers/documents";
 import { institutionsRouter } from "~/server/api/routers/institutions";
@@ -7,6 +8,7 @@ import { setupRouter } from "~/server/api/routers/setup";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 export const appRouter = createTRPCRouter({
+  accountTerms: accountTermsRouter,
   accounts: accountsRouter,
   documents: documentsRouter,
   institutions: institutionsRouter,

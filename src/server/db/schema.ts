@@ -66,10 +66,39 @@ export const accounts = sqliteTable(
     openedDate: text("opened_date"),
     closedDate: text("closed_date"),
     notes: text("notes"),
+    interestRate: text("interest_rate"),
+    promotionalInterestRate: text("promotional_interest_rate"),
+    promotionalInterestRateExpires: text("promotional_interest_rate_expires"),
+    creditLimit: text("credit_limit"),
+    annualFee: text("annual_fee"),
+    renewalDate: text("renewal_date"),
+    insurance: text("insurance"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
   (table) => [index("accounts_institution_idx").on(table.institutionId)],
+);
+
+export const accountTermsSnapshots = sqliteTable(
+  "account_terms_snapshots",
+  {
+    id: id(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    effectiveDate: text("effective_date").notNull(),
+    interestRate: text("interest_rate"),
+    promotionalInterestRate: text("promotional_interest_rate"),
+    promotionalInterestRateExpires: text("promotional_interest_rate_expires"),
+    creditLimit: text("credit_limit"),
+    annualFee: text("annual_fee"),
+    renewalDate: text("renewal_date"),
+    insurance: text("insurance"),
+    notes: text("notes"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("account_terms_snapshots_account_idx").on(table.accountId)],
 );
 
 export const statementExpectations = sqliteTable(

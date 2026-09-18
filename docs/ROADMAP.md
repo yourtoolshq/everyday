@@ -163,7 +163,7 @@ Track the operational facts of an account — the household's relationship with 
 
 ### Build
 
-Per account, the user chooses which detail types to track (at create or edit time). Initial detail types:
+Optional enrichment fields on the account:
 
 - interest rate;
 - promotional interest rate (separate from the base rate; may include an expiry date);
@@ -172,14 +172,7 @@ Per account, the user chooses which detail types to track (at create or edit tim
 - renewal date;
 - insurance (simple text).
 
-Each tracked detail has a timeline of entries:
-
-- effective date (including backdated entries);
-- value;
-- optional notes;
-- optional link to an existing account document.
-
-Users can add, edit, and delete entries (needed for intentional backfill and corrections).
+When terms change, save a snapshot with an effective date and optional notes. Users can also add, edit, and delete historical snapshots for backfill and corrections.
 
 Payment schedules and other transaction-level data are out of scope — that belongs in a budgeting app.
 
