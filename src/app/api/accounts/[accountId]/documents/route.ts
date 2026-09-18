@@ -6,8 +6,9 @@ import { z } from "zod";
 import {
   detectDocumentFile,
   documentMetadataSchema,
+  documentTypes,
   maxDocumentBytes,
-  titleFromFilename,
+  suggestDocumentTitle,
 } from "~/lib/documents";
 import { defaultStatementFrequency } from "~/lib/statement-frequency";
 import { databaseReady, db } from "~/server/db";
@@ -63,27 +64,25 @@ export async function POST(
 
   const titleValue = form.get("title");
   const typeValue = form.get("type");
-  const metadata = documentMetadataSchema.safeParse({
-    title:
-      typeof titleValue === "string" && titleValue.trim()
-        ? titleValue
-        : titleFromFilename(originalFilename),
-    type:
-      typeof typeValue === "string" && typeValue.trim()
-        ? typeValue
-        : eventId
-          ? "financial_correspondence"
-          : "other",
-    documentDate:
-      typeof form.get("documentDate") === "string" ? form.get("documentDate") : null,
-    notes: typeof form.get("notes") === "string" ? form.get("notes") : null,
-  });
-  if (!metadata.success) return errorResponse("Choose a type and enter a title.", 400);
+  const documentDateValue = form.get("documentDate");
+  const documentDate =
+    typeof documentDateValue === "string" && documentDateValue.trim()
+      ? documentDateValue.trim()
+      : null;
+  const parsedType = z.enum(documentTypes).safeParse(
+    typeof typeValue === "string" && typeValue.trim()
+      ? typeValue
+      : eventId
+        ? "financial_correspondence"
+        : "other",
+  );
+  if (!parsedType.success) return errorResponse("Choose a type and enter a title.", 400);
+  const type = parsedType.data;
 
-  if (metadata.data.type === "statement" && !periodKey) {
+  if (type === "statement" && !periodKey) {
     return errorResponse("Choose a statement period.", 400);
   }
-  if (metadata.data.type !== "statement" && periodKey) {
+  if (type !== "statement" && periodKey) {
     return errorResponse("Only statements can be linked to a period.", 400);
   }
 
@@ -99,6 +98,7 @@ export async function POST(
   const [account] = await db
     .select({
       id: accounts.id,
+      displayName: accounts.displayName,
       openedDate: accounts.openedDate,
       closedDate: accounts.closedDate,
       status: accounts.status,
@@ -108,6 +108,22 @@ export async function POST(
     .leftJoin(statementExpectations, eq(statementExpectations.accountId, accounts.id))
     .where(eq(accounts.id, parsedParams.data.accountId));
   if (!account) return errorResponse("Account not found.", 404);
+
+  const metadata = documentMetadataSchema.safeParse({
+    title:
+      typeof titleValue === "string" && titleValue.trim()
+        ? titleValue
+        : suggestDocumentTitle({
+            type,
+            accountDisplayName: account.displayName,
+            periodKey,
+            documentDate,
+          }),
+    type,
+    documentDate,
+    notes: typeof form.get("notes") === "string" ? form.get("notes") : null,
+  });
+  if (!metadata.success) return errorResponse("Choose a type and enter a title.", 400);
 
   let linkedEventId: string | null = null;
   let linkedTermsSnapshotId: string | null = termsSnapshotId;

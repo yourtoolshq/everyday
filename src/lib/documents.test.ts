@@ -5,6 +5,7 @@ import {
   documentMetadataSchema,
   formatFileSize,
   maxDocumentBytes,
+  suggestDocumentTitle,
   titleFromFilename,
 } from "~/lib/documents";
 
@@ -38,5 +39,30 @@ describe("document files", () => {
     expect(maxDocumentBytes).toBe(25 * 1024 * 1024);
     expect(titleFromFilename("statement.pdf")).toBe("statement");
     expect(formatFileSize(1536)).toBe("2 KB");
+  });
+
+  it("suggests document titles from structured fields", () => {
+    expect(
+      suggestDocumentTitle({
+        type: "statement",
+        accountDisplayName: "Momentum Visa",
+        periodKey: "2026-07",
+      }),
+    ).toBe("2026-07 Momentum Visa Statement");
+
+    expect(
+      suggestDocumentTitle({
+        type: "agreement",
+        accountDisplayName: "Chequing",
+        documentDate: "2024-06-15",
+      }),
+    ).toBe("2024-06 Chequing Agreement");
+
+    expect(
+      suggestDocumentTitle({
+        type: "notice",
+        accountDisplayName: "Chequing",
+      }),
+    ).toBe("Chequing Notice");
   });
 });

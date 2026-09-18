@@ -168,6 +168,35 @@ export function titleFromFilename(filename: string) {
   return (withoutExtension || filename.trim() || "Document").slice(0, 160);
 }
 
+function documentDateYearMonth(documentDate: string | null | undefined) {
+  const match = /^(\d{4}-\d{2})/.exec(documentDate?.trim() ?? "");
+  return match?.[1] ?? null;
+}
+
+function joinTitleParts(...parts: Array<string | null | undefined>) {
+  return parts
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part))
+    .join(" ")
+    .slice(0, 160);
+}
+
+export function suggestDocumentTitle(input: {
+  type: DocumentType;
+  accountDisplayName: string;
+  periodKey?: string | null;
+  documentDate?: string | null;
+}) {
+  const accountName = input.accountDisplayName.trim() || "Account";
+  const typeLabel = documentTypeLabels[input.type];
+
+  if (input.type === "statement") {
+    return joinTitleParts(input.periodKey, accountName, typeLabel);
+  }
+
+  return joinTitleParts(documentDateYearMonth(input.documentDate), accountName, typeLabel);
+}
+
 export function formatFileSize(size: number) {
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;

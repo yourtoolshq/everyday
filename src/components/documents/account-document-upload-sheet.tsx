@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import {
   accountDocumentTypes,
   documentTypeLabels,
-  titleFromFilename,
+  suggestDocumentTitle,
   type AccountDocumentType,
 } from "~/lib/documents";
 import { uploadAccountDocument } from "~/lib/upload-account-document";
@@ -45,9 +45,11 @@ export function AccountDocumentUploadSheet({
   defaultType = "other",
 }: AccountDocumentUploadSheetProps) {
   const utils = api.useUtils();
+  const account = api.accounts.get.useQuery({ id: accountId });
   const [type, setType] = useState<AccountDocumentType>(defaultType);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
+  const [titleTouched, setTitleTouched] = useState(false);
   const [documentDate, setDocumentDate] = useState("");
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -57,14 +59,21 @@ export function AccountDocumentUploadSheet({
     setType(defaultType);
     setFile(null);
     setTitle("");
+    setTitleTouched(false);
     setDocumentDate("");
     setNotes("");
   }, [defaultType, open]);
 
   useEffect(() => {
-    if (!file) return;
-    setTitle(titleFromFilename(file.name));
-  }, [file]);
+    if (!open || titleTouched || !account.data) return;
+    setTitle(
+      suggestDocumentTitle({
+        type,
+        accountDisplayName: account.data.displayName,
+        documentDate,
+      }),
+    );
+  }, [account.data, documentDate, open, titleTouched, type]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -140,7 +149,10 @@ export function AccountDocumentUploadSheet({
               <Input
                 id="account-document-title"
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                onChange={(event) => {
+                  setTitleTouched(true);
+                  setTitle(event.target.value);
+                }}
                 required
               />
             </div>

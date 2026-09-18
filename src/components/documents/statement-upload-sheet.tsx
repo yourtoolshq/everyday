@@ -8,7 +8,7 @@ import {
   deriveAllUploadablePeriods,
   suggestDefaultPeriodKey,
 } from "~/lib/expected-periods";
-import { titleFromFilename } from "~/lib/documents";
+import { suggestDocumentTitle } from "~/lib/documents";
 import { uploadStatement } from "~/lib/upload-statement";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -75,6 +75,7 @@ export function StatementUploadSheet({
   const [periodKey, setPeriodKey] = useState(initialPeriodKey ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
+  const [titleTouched, setTitleTouched] = useState(false);
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
 
@@ -111,6 +112,7 @@ export function StatementUploadSheet({
     setPeriodKey(initialPeriodKey ?? "");
     setFile(null);
     setTitle("");
+    setTitleTouched(false);
     setNotes("");
   }, [initialAccountId, initialPeriodKey, open]);
 
@@ -138,9 +140,15 @@ export function StatementUploadSheet({
   ]);
 
   useEffect(() => {
-    if (!file) return;
-    setTitle(titleFromFilename(file.name));
-  }, [file]);
+    if (!open || titleTouched || !selectedAccount) return;
+    setTitle(
+      suggestDocumentTitle({
+        type: "statement",
+        accountDisplayName: selectedAccount.displayName,
+        periodKey,
+      }),
+    );
+  }, [open, periodKey, selectedAccount, titleTouched]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -269,7 +277,10 @@ export function StatementUploadSheet({
               <Input
                 id="statement-title"
                 value={title}
-                onChange={(event) => setTitle(event.target.value)}
+                onChange={(event) => {
+                  setTitleTouched(true);
+                  setTitle(event.target.value);
+                }}
                 required
               />
             </div>
