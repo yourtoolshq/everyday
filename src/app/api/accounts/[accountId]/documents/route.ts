@@ -4,11 +4,11 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
+  defaultDocumentTitle,
   detectDocumentFile,
   documentMetadataSchema,
   documentTypes,
   maxDocumentBytes,
-  suggestDocumentTitle,
 } from "~/lib/documents";
 import { defaultStatementFrequency } from "~/lib/statement-frequency";
 import { databaseReady, db } from "~/server/db";
@@ -99,6 +99,7 @@ export async function POST(
     .select({
       id: accounts.id,
       displayName: accounts.displayName,
+      accountType: accounts.accountType,
       openedDate: accounts.openedDate,
       closedDate: accounts.closedDate,
       status: accounts.status,
@@ -113,11 +114,12 @@ export async function POST(
     title:
       typeof titleValue === "string" && titleValue.trim()
         ? titleValue
-        : suggestDocumentTitle({
+        : defaultDocumentTitle({
             type,
             accountDisplayName: account.displayName,
             periodKey,
             documentDate,
+            filename: originalFilename,
           }),
     type,
     documentDate,
@@ -141,6 +143,23 @@ export async function POST(
     linkedEventId = linkedEvent.id;
     if (!linkedTermsSnapshotId) {
       linkedTermsSnapshotId = linkedEvent.termsSnapshotId;
+    }
+  }
+
+  if (metadata.data.type === "void_cheque") {
+    if (account.accountType !== "chequing") {
+      return errorResponse("Void cheques belong on chequing accounts only.", 400);
+    }
+
+    const [existingVoidCheque] = await db
+      .select({ id: documents.id })
+      .from(documents)
+      .where(and(eq(documents.accountId, account.id), eq(documents.type, "void_cheque")));
+    if (existingVoidCheque) {
+      return errorResponse(
+        "This account already has a void cheque. Delete it before uploading a new one.",
+        409,
+      );
     }
   }
 

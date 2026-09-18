@@ -28,7 +28,8 @@ export function ActivityWorkspace() {
   if (sortedEvents.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No activity yet. Record bank conversations or account changes from an account page.
+        No activity yet. Record account openings, bank conversations, or account changes from an
+        account page.
       </p>
     );
   }

@@ -20,6 +20,7 @@ function sortEvents<T extends { startDate: string }>(events: T[]) {
 export function AccountActivityPanel({ accountId }: { accountId: string }) {
   const events = api.accountEvents.listByAccount.useQuery({ accountId });
   const [createOpen, setCreateOpen] = useState(false);
+  const [createOpeningOpen, setCreateOpeningOpen] = useState(false);
 
   const sortedEvents = useMemo(
     () => sortEvents(events.data ?? []),
@@ -47,18 +48,23 @@ export function AccountActivityPanel({ accountId }: { accountId: string }) {
           <div className="space-y-1">
             <CardTitle className="text-base">Activity</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Correspondence, calls, and account changes with supporting files.
+              Opening records, correspondence, calls, and account changes with supporting files.
             </p>
           </div>
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus />
-            Add
-          </Button>
+          <div className="flex shrink-0 gap-2">
+            <Button size="sm" variant="outline" onClick={() => setCreateOpeningOpen(true)}>
+              Record opening
+            </Button>
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus />
+              Add
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {sortedEvents.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No activity yet. Record a bank conversation, notice, or terms change.
+              No activity yet. Record the account opening, a bank conversation, or a terms change.
             </p>
           ) : (
             <ul className="divide-y">
@@ -103,6 +109,16 @@ export function AccountActivityPanel({ accountId }: { accountId: string }) {
           accountId={accountId}
           open={createOpen}
           onOpenChange={setCreateOpen}
+          redirectOnCreate
+        />
+      ) : null}
+
+      {createOpeningOpen ? (
+        <AccountEventSheet
+          accountId={accountId}
+          open={createOpeningOpen}
+          onOpenChange={setCreateOpeningOpen}
+          defaultType="opening"
           redirectOnCreate
         />
       ) : null}

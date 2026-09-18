@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ExternalLink, Mail, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Mail, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { AccountEventSheet } from "~/components/accounts/account-event-sheet";
 import { AccountTermsSnapshotDetailSheet } from "~/components/accounts/account-terms-snapshot-detail-sheet";
+import { ActivityDocumentUploadSheet } from "~/components/activity/activity-document-upload-sheet";
 import { EmlPreviewDialog } from "~/components/activity/eml-preview-dialog";
 import {
   accountEventTypeLabels,
@@ -18,7 +19,7 @@ import {
   listAccountTermsEntries,
   type AccountTermsField,
 } from "~/lib/account-terms";
-import { formatFileSize, isEmlMimeType } from "~/lib/documents";
+import { documentTypeLabels, formatFileSize, isEmlMimeType, type DocumentType } from "~/lib/documents";
 import { formatDateLabel } from "~/lib/format-date";
 import {
   AlertDialog,
@@ -54,6 +55,7 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
   );
 
   const [editOpen, setEditOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [emlPreview, setEmlPreview] = useState<{ id: string; title: string } | null>(null);
   const [snapshotDetailOpen, setSnapshotDetailOpen] = useState(false);
@@ -215,9 +217,17 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
           <Separator />
 
           <div className="space-y-3">
-            <h3 className="font-medium">Documents</h3>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-medium">Documents</h3>
+              <Button type="button" size="sm" variant="outline" onClick={() => setUploadOpen(true)}>
+                <Plus />
+                Add document
+              </Button>
+            </div>
             {event.data.documents.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No documents attached.</p>
+              <p className="text-sm text-muted-foreground">
+                No documents yet. Add agreements, notices, or saved email copies.
+              </p>
             ) : (
               <ul className="divide-y rounded-lg border">
                 {event.data.documents.map((document) => (
@@ -226,10 +236,22 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
                     className="flex items-start justify-between gap-3 p-3 text-sm"
                   >
                     <div className="min-w-0 space-y-1">
-                      <p className="font-medium">{document.title}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium">{document.title}</p>
+                        <Badge variant="secondary">
+                          {documentTypeLabels[document.type as DocumentType]}
+                        </Badge>
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        {document.originalFilename} · {formatFileSize(document.sizeBytes)}
+                        {formatDateLabel(document.documentDate) ?? "No date"}
+                        {" · "}
+                        {document.originalFilename}
+                        {" · "}
+                        {formatFileSize(document.sizeBytes)}
                       </p>
+                      {document.notes ? (
+                        <p className="text-xs text-muted-foreground">{document.notes}</p>
+                      ) : null}
                     </div>
                     <div className="flex shrink-0 gap-1">
                       {isEmlMimeType(document.mimeType) ? (
@@ -273,6 +295,20 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
           </div>
         </CardContent>
       </Card>
+
+      {uploadOpen ? (
+        <ActivityDocumentUploadSheet
+          accountId={event.data.accountId}
+          eventId={event.data.id}
+          activityType={event.data.type as AccountEventType}
+          defaultDocumentDate={event.data.startDate}
+          open={uploadOpen}
+          onOpenChange={(nextOpen) => {
+            setUploadOpen(nextOpen);
+            if (!nextOpen) void utils.accountEvents.invalidate();
+          }}
+        />
+      ) : null}
 
       {editOpen ? (
         <AccountEventSheet

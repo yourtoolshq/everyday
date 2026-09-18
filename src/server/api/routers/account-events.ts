@@ -43,7 +43,10 @@ const publicEventFields = {
 const publicDocumentFields = {
   id: documents.id,
   eventId: documents.eventId,
+  type: documents.type,
   title: documents.title,
+  documentDate: documents.documentDate,
+  notes: documents.notes,
   originalFilename: documents.originalFilename,
   mimeType: documents.mimeType,
   sizeBytes: documents.sizeBytes,
@@ -110,7 +113,10 @@ async function requireEvent(database: typeof db, eventId: string) {
 type EventDocument = {
   id: string;
   eventId: string | null;
+  type: string;
   title: string;
+  documentDate: string | null;
+  notes: string | null;
   originalFilename: string;
   mimeType: string;
   sizeBytes: number;

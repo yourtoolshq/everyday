@@ -5,7 +5,11 @@ import { AlertTriangle, ArrowLeft, Pencil, Settings, Upload } from "lucide-react
 import { useMemo, useState } from "react";
 
 import { AccountActivityPanel } from "~/components/accounts/account-activity-panel";
-import { AccountDocumentsPanel, ClosureDocumentPrompt } from "~/components/accounts/account-documents-panel";
+import {
+  AccountDocumentsPanel,
+  AccountVoidChequePanel,
+  ClosureDocumentPrompt,
+} from "~/components/accounts/account-documents-panel";
 import { AccountTermsPanel } from "~/components/accounts/account-terms-panel";
 import { AccountFormSheet } from "~/components/accounts/account-form-sheet";
 import { AccountSettingsSheet } from "~/components/accounts/account-settings-sheet";
@@ -177,6 +181,10 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
           </Button>
         </div>
       </div>
+
+      {account.data.accountType === "chequing" ? (
+        <AccountVoidChequePanel accountId={account.data.id} />
+      ) : null}
 
       {account.data.status === "closed" ? (
         <ClosureDocumentPrompt

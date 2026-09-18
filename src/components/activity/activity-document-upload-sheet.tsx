@@ -1,8 +1,13 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  activityAttachmentDocumentType,
+  defaultActivityDocumentType,
+  type AccountEventType,
+} from "~/lib/account-events";
 import {
   accountDocumentTypes,
   defaultDocumentTitle,
@@ -10,7 +15,7 @@ import {
   usesSuggestedDocumentTitle,
   type AccountDocumentType,
 } from "~/lib/documents";
-import { uploadAccountDocument } from "~/lib/upload-account-document";
+import { uploadEventAttachment } from "~/lib/upload-event-attachment";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -32,45 +37,49 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import { api } from "~/trpc/react";
 
-type AccountDocumentUploadSheetProps = {
+type ActivityDocumentUploadSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   accountId: string;
-  defaultType?: AccountDocumentType;
+  eventId: string;
+  activityType: AccountEventType;
+  defaultDocumentDate?: string;
 };
 
-export function AccountDocumentUploadSheet({
+export function ActivityDocumentUploadSheet({
   open,
   onOpenChange,
   accountId,
-  defaultType = "other",
-}: AccountDocumentUploadSheetProps) {
+  eventId,
+  activityType,
+  defaultDocumentDate = "",
+}: ActivityDocumentUploadSheetProps) {
   const utils = api.useUtils();
-  const account = api.accounts.get.useQuery({ id: accountId });
-  const uploadableTypes = useMemo(
-    () =>
-      account.data?.accountType === "chequing"
-        ? accountDocumentTypes
-        : accountDocumentTypes.filter((item) => item !== "void_cheque"),
-    [account.data?.accountType],
-  );
-  const [type, setType] = useState<AccountDocumentType>(defaultType);
+  const account = api.accounts.get.useQuery({ id: accountId }, { enabled: open });
+  const [type, setType] = useState<AccountDocumentType>(defaultActivityDocumentType(activityType));
+  const [typeTouched, setTypeTouched] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [titleTouched, setTitleTouched] = useState(false);
-  const [documentDate, setDocumentDate] = useState("");
+  const [documentDate, setDocumentDate] = useState(defaultDocumentDate);
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setType(defaultType);
+    setType(defaultActivityDocumentType(activityType));
+    setTypeTouched(false);
     setFile(null);
     setTitle("");
     setTitleTouched(false);
-    setDocumentDate("");
+    setDocumentDate(defaultDocumentDate);
     setNotes("");
-  }, [defaultType, open]);
+  }, [activityType, defaultDocumentDate, open]);
+
+  useEffect(() => {
+    if (!file || typeTouched) return;
+    setType(activityAttachmentDocumentType(activityType, file));
+  }, [activityType, file, typeTouched]);
 
   useEffect(() => {
     if (!open || titleTouched || !account.data || !usesSuggestedDocumentTitle(type)) return;
@@ -105,16 +114,20 @@ export function AccountDocumentUploadSheet({
 
     setUploading(true);
     try {
-      await uploadAccountDocument({
+      await uploadEventAttachment({
         accountId,
+        eventId,
         file,
         type,
         title,
         documentDate: documentDate || null,
         notes,
       });
-      await utils.documents.overview.invalidate();
-      toast.success("Document uploaded.");
+      await Promise.all([
+        utils.accountEvents.invalidate(),
+        utils.documents.invalidate(),
+      ]);
+      toast.success("Document added to activity.");
       onOpenChange(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed.");
@@ -128,35 +141,41 @@ export function AccountDocumentUploadSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <form className="flex min-h-full flex-col" onSubmit={submit}>
           <SheetHeader>
-            <SheetTitle>Upload document</SheetTitle>
+            <SheetTitle>Add document</SheetTitle>
             <SheetDescription>
-              Add an agreement, notice, or other record to this account.
+              Attach a file to this activity with its type, title, and date.
             </SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 space-y-6 px-4 py-6">
             <div className="space-y-2">
-              <Label htmlFor="account-document-file">File</Label>
+              <Label htmlFor="activity-document-file">File</Label>
               <Input
-                id="account-document-file"
+                id="activity-document-file"
                 type="file"
-                accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,.pdf,.jpg,.jpeg,.png,.webp,.heic"
+                accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,.pdf,.jpg,.jpeg,.png,.webp,.heic,.eml,message/rfc822,audio/mpeg,audio/mp4,audio/wav,audio/ogg,.mp3,.m4a,.wav,.ogg"
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
                 required
               />
               <p className="text-xs text-muted-foreground">
-                PDF, JPEG, PNG, WebP, or HEIC up to 25 MB.
+                PDF, images, .eml, or common audio files up to 25 MB.
               </p>
             </div>
 
             <div className="space-y-2">
               <Label>Document type</Label>
-              <Select value={type} onValueChange={(value) => setType(value as AccountDocumentType)}>
+              <Select
+                value={type}
+                onValueChange={(value) => {
+                  setTypeTouched(true);
+                  setType(value as AccountDocumentType);
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {uploadableTypes.map((item) => (
+                  {accountDocumentTypes.map((item) => (
                     <SelectItem key={item} value={item}>
                       {documentTypeLabels[item]}
                     </SelectItem>
@@ -166,9 +185,9 @@ export function AccountDocumentUploadSheet({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="account-document-title">Title</Label>
+              <Label htmlFor="activity-document-title">Title</Label>
               <Input
-                id="account-document-title"
+                id="activity-document-title"
                 value={title}
                 onChange={(event) => {
                   setTitleTouched(true);
@@ -179,9 +198,9 @@ export function AccountDocumentUploadSheet({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="account-document-date">Document date</Label>
+              <Label htmlFor="activity-document-date">Document date</Label>
               <Input
-                id="account-document-date"
+                id="activity-document-date"
                 type="date"
                 value={documentDate}
                 onChange={(event) => setDocumentDate(event.target.value)}
@@ -189,9 +208,9 @@ export function AccountDocumentUploadSheet({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="account-document-notes">Notes</Label>
+              <Label htmlFor="activity-document-notes">Notes</Label>
               <Textarea
-                id="account-document-notes"
+                id="activity-document-notes"
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 rows={3}

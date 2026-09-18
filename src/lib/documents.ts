@@ -2,10 +2,12 @@ import { z } from "zod";
 
 export const documentTypes = [
   "statement",
+  "void_cheque",
   "notice",
   "agreement",
   "opening_document",
   "closure_document",
+  "debit_card_letter",
   "financial_correspondence",
   "other",
 ] as const;
@@ -18,10 +20,12 @@ export type AccountDocumentType = (typeof accountDocumentTypes)[number];
 
 export const documentTypeLabels = {
   statement: "Statement",
+  void_cheque: "Void cheque",
   notice: "Notice",
   agreement: "Agreement",
   opening_document: "Opening document",
   closure_document: "Closure document",
+  debit_card_letter: "Debit card letter",
   financial_correspondence: "Financial correspondence",
   other: "Other",
 } satisfies Record<DocumentType, string>;
@@ -194,7 +198,29 @@ export function suggestDocumentTitle(input: {
     return joinTitleParts(input.periodKey, accountName, typeLabel);
   }
 
+  if (input.type === "void_cheque") {
+    return joinTitleParts(accountName, typeLabel);
+  }
+
   return joinTitleParts(documentDateYearMonth(input.documentDate), accountName, typeLabel);
+}
+
+export function usesSuggestedDocumentTitle(type: DocumentType) {
+  return type === "statement" || type === "void_cheque";
+}
+
+export function defaultDocumentTitle(input: {
+  type: DocumentType;
+  accountDisplayName: string;
+  periodKey?: string | null;
+  documentDate?: string | null;
+  filename?: string;
+}) {
+  if (usesSuggestedDocumentTitle(input.type)) {
+    return suggestDocumentTitle(input);
+  }
+
+  return titleFromFilename(input.filename ?? "");
 }
 
 export function formatFileSize(size: number) {

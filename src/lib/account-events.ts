@@ -1,8 +1,10 @@
 import { z } from "zod";
 
 import { accountTermsSchema } from "~/lib/account-terms";
+import type { AccountDocumentType } from "~/lib/documents";
 
 export const accountEventTypes = [
+  "opening",
   "account_change",
   "correspondence",
   "phone_call",
@@ -12,11 +14,33 @@ export const accountEventTypes = [
 export type AccountEventType = (typeof accountEventTypes)[number];
 
 export const accountEventTypeLabels = {
+  opening: "Account opening",
   account_change: "Account change",
   correspondence: "Correspondence",
   phone_call: "Phone call",
   other: "Other",
 } satisfies Record<AccountEventType, string>;
+
+export function suggestedAccountEventTitle(type: AccountEventType) {
+  if (type === "opening") return "Account opening";
+  return "";
+}
+
+export function activityAttachmentDocumentType(
+  activityType: AccountEventType,
+  file: File,
+): AccountDocumentType {
+  const isEmail =
+    file.type === "message/rfc822" || file.name.toLowerCase().endsWith(".eml");
+  if (isEmail) return "financial_correspondence";
+  if (activityType === "opening") return "opening_document";
+  return "financial_correspondence";
+}
+
+export function defaultActivityDocumentType(activityType: AccountEventType): AccountDocumentType {
+  if (activityType === "opening") return "opening_document";
+  return "financial_correspondence";
+}
 
 export const accountEventMetadataSchema = z.object({
   type: z.enum(accountEventTypes),

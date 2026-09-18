@@ -24,6 +24,7 @@ const idInput = z.object({ id: z.string().uuid() });
 const overviewFilter = z.object({
   accountId: z.string().uuid().optional(),
   excludeStatements: z.boolean().optional(),
+  excludeVoidCheques: z.boolean().optional(),
 });
 const now = () => new Date().toISOString();
 
@@ -78,6 +79,9 @@ export const documentsRouter = createTRPCRouter({
     }
     if (input?.excludeStatements) {
       conditions.push(not(eq(documents.type, "statement")));
+    }
+    if (input?.excludeVoidCheques) {
+      conditions.push(not(eq(documents.type, "void_cheque")));
     }
 
     const baseQuery = ctx.db

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  defaultDocumentTitle,
   detectDocumentFile,
   documentMetadataSchema,
   formatFileSize,
@@ -41,7 +42,7 @@ describe("document files", () => {
     expect(formatFileSize(1536)).toBe("2 KB");
   });
 
-  it("suggests document titles from structured fields", () => {
+  it("suggests titles for statements and void cheques only", () => {
     expect(
       suggestDocumentTitle({
         type: "statement",
@@ -52,17 +53,25 @@ describe("document files", () => {
 
     expect(
       suggestDocumentTitle({
-        type: "agreement",
+        type: "void_cheque",
         accountDisplayName: "Chequing",
-        documentDate: "2024-06-15",
       }),
-    ).toBe("2024-06 Chequing Agreement");
+    ).toBe("Chequing Void cheque");
 
     expect(
-      suggestDocumentTitle({
-        type: "notice",
+      defaultDocumentTitle({
+        type: "agreement",
         accountDisplayName: "Chequing",
+        filename: "welcome-letter.pdf",
       }),
-    ).toBe("Chequing Notice");
+    ).toBe("welcome-letter");
+
+    expect(
+      defaultDocumentTitle({
+        type: "debit_card_letter",
+        accountDisplayName: "Chequing",
+        filename: "debit-card-letter.pdf",
+      }),
+    ).toBe("debit-card-letter");
   });
 });
