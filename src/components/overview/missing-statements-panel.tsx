@@ -22,9 +22,9 @@ export function MissingStatementsPanel({ status }: { status: StatementStatus }) 
               <p className="text-2xl font-semibold">{yearSummary.expectedCount}</p>
             </div>
             <div className="rounded-lg border p-3">
-              <p className="text-muted-foreground">Complete</p>
+              <p className="text-muted-foreground">Satisfied</p>
               <p className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
-                {yearSummary.completeCount}
+                {yearSummary.completeCount + yearSummary.notApplicableCount}
               </p>
             </div>
             <div className="rounded-lg border p-3">
@@ -38,6 +38,11 @@ export function MissingStatementsPanel({ status }: { status: StatementStatus }) 
               <p className="text-2xl font-semibold">{yearSummary.waitingCount}</p>
             </div>
           </div>
+          {yearSummary.notApplicableCount > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {yearSummary.completeCount} complete · {yearSummary.notApplicableCount} not applicable
+            </p>
+          ) : null}
           {yearSummary.missingCount === 0 ? (
             <p className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300">
               <CheckCircle2 className="size-4" />

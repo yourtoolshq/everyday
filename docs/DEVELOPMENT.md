@@ -67,4 +67,4 @@ pnpm backup -- /path/to/passbook-backup.db
 pnpm restore -- /path/to/passbook-backup.db
 ```
 
-After changing the schema, generate and commit a migration with `pnpm db:generate`.
+After changing the schema, generate and commit a migration with `pnpm db:generate`. See [`ENGINEERING.md`](ENGINEERING.md) for the full migration workflow and rules.

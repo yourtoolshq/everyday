@@ -12,7 +12,8 @@ export type StatementCompletenessStatus =
   | "missing"
   | "waiting"
   | "future"
-  | "not_expected";
+  | "not_expected"
+  | "not_applicable";
 
 export type AccountForCompleteness = AccountLifecycle & {
   id: string;
@@ -33,9 +34,14 @@ export type YearCompletenessSummary = {
   year: number;
   expectedCount: number;
   completeCount: number;
+  notApplicableCount: number;
   missingCount: number;
   waitingCount: number;
 };
+
+export type PeriodExceptionsByAccount = Readonly<
+  Record<string, Readonly<Record<string, true>>>
+>;
 
 export const completenessStatusLabels: Record<StatementCompletenessStatus, string> = {
   complete: "Complete",
@@ -43,16 +49,19 @@ export const completenessStatusLabels: Record<StatementCompletenessStatus, strin
   waiting: "Waiting",
   future: "Future",
   not_expected: "Not expected",
+  not_applicable: "Not applicable",
 };
 
 export function deriveStatementCompleteness(
   period: ExpectedPeriod,
   hasDocument: boolean,
+  hasException = false,
 ): StatementCompletenessStatus {
   if (period.status === "not_expected") return "not_expected";
   if (hasDocument) return "complete";
   if (period.status === "future") return "future";
   if (period.status === "current") return "waiting";
+  if (hasException) return "not_applicable";
   return "missing";
 }
 
@@ -60,9 +69,18 @@ function comparePeriodKeysDesc(left: string, right: string): number {
   return right.localeCompare(left, undefined, { numeric: true });
 }
 
+function hasPeriodException(
+  exceptionsByAccount: PeriodExceptionsByAccount,
+  accountId: string,
+  periodKey: string,
+): boolean {
+  return Boolean(exceptionsByAccount[accountId]?.[periodKey]);
+}
+
 export function buildMissingStatements(
   accounts: AccountForCompleteness[],
   statementDocumentsByAccount: Readonly<Record<string, Readonly<Record<string, string>>>>,
+  exceptionsByAccount: PeriodExceptionsByAccount = {},
   asOfDate: Date = new Date(),
 ): MissingStatement[] {
   const missing: MissingStatement[] = [];
@@ -83,7 +101,11 @@ export function buildMissingStatements(
       );
 
       for (const period of periods) {
-        if (deriveStatementCompleteness(period, Boolean(uploaded[period.key])) !== "missing") {
+        const hasException = hasPeriodException(exceptionsByAccount, account.id, period.key);
+        if (
+          deriveStatementCompleteness(period, Boolean(uploaded[period.key]), hasException) !==
+          "missing"
+        ) {
           continue;
         }
 
@@ -109,10 +131,12 @@ export function buildYearCompletenessSummary(
   accounts: AccountForCompleteness[],
   statementDocumentsByAccount: Readonly<Record<string, Readonly<Record<string, string>>>>,
   year: number,
+  exceptionsByAccount: PeriodExceptionsByAccount = {},
   asOfDate: Date = new Date(),
 ): YearCompletenessSummary {
   let expectedCount = 0;
   let completeCount = 0;
+  let notApplicableCount = 0;
   let missingCount = 0;
   let waitingCount = 0;
 
@@ -128,24 +152,38 @@ export function buildYearCompletenessSummary(
     );
 
     for (const period of periods) {
-      const completeness = deriveStatementCompleteness(period, Boolean(uploaded[period.key]));
+      const hasException = hasPeriodException(exceptionsByAccount, account.id, period.key);
+      const completeness = deriveStatementCompleteness(
+        period,
+        Boolean(uploaded[period.key]),
+        hasException,
+      );
       if (completeness === "not_expected" || completeness === "future") continue;
 
       expectedCount += 1;
       if (completeness === "complete") completeCount += 1;
+      if (completeness === "not_applicable") notApplicableCount += 1;
       if (completeness === "missing") missingCount += 1;
       if (completeness === "waiting") waitingCount += 1;
     }
   }
 
-  return { year, expectedCount, completeCount, missingCount, waitingCount };
+  return { year, expectedCount, completeCount, notApplicableCount, missingCount, waitingCount };
 }
 
 export function countCompletenessForYear(
   periods: ExpectedPeriod[],
   statementDocumentsByPeriod: Readonly<Record<string, string>>,
-): { completeCount: number; missingCount: number; waitingCount: number; expectedCount: number } {
+  exceptionsByPeriod: Readonly<Record<string, true>> = {},
+): {
+  completeCount: number;
+  notApplicableCount: number;
+  missingCount: number;
+  waitingCount: number;
+  expectedCount: number;
+} {
   let completeCount = 0;
+  let notApplicableCount = 0;
   let missingCount = 0;
   let waitingCount = 0;
   let expectedCount = 0;
@@ -154,14 +192,30 @@ export function countCompletenessForYear(
     const completeness = deriveStatementCompleteness(
       period,
       Boolean(statementDocumentsByPeriod[period.key]),
+      Boolean(exceptionsByPeriod[period.key]),
     );
     if (completeness === "not_expected" || completeness === "future") continue;
 
     expectedCount += 1;
     if (completeness === "complete") completeCount += 1;
+    if (completeness === "not_applicable") notApplicableCount += 1;
     if (completeness === "missing") missingCount += 1;
     if (completeness === "waiting") waitingCount += 1;
   }
 
-  return { completeCount, missingCount, waitingCount, expectedCount };
+  return { completeCount, notApplicableCount, missingCount, waitingCount, expectedCount };
+}
+
+export function buildExceptionsByAccount(
+  rows: ReadonlyArray<{ accountId: string; periodKey: string }>,
+): PeriodExceptionsByAccount {
+  const exceptionsByAccount: Record<string, Record<string, true>> = {};
+
+  for (const row of rows) {
+    const accountExceptions = exceptionsByAccount[row.accountId] ?? {};
+    accountExceptions[row.periodKey] = true;
+    exceptionsByAccount[row.accountId] = accountExceptions;
+  }
+
+  return exceptionsByAccount;
 }

@@ -43,6 +43,13 @@
       "when": 1789703000000,
       "tag": "0005_unified_documents",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1789757353294,
+      "tag": "0006_curved_nekra",
+      "breakpoints": true
     }
   ]
 }

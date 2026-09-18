@@ -114,6 +114,22 @@ export const statementExpectations = sqliteTable(
   },
 );
 
+export const statementPeriodExceptions = sqliteTable(
+  "statement_period_exceptions",
+  {
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    periodKey: text("period_key").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("statement_period_exceptions_unique").on(table.accountId, table.periodKey),
+    index("statement_period_exceptions_account_idx").on(table.accountId),
+  ],
+);
+
 export const accountOwnership = sqliteTable(
   "account_ownership",
   {

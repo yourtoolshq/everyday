@@ -6,6 +6,7 @@ import { institutionsRouter } from "~/server/api/routers/institutions";
 import { overviewRouter } from "~/server/api/routers/overview";
 import { peopleRouter } from "~/server/api/routers/people";
 import { setupRouter } from "~/server/api/routers/setup";
+import { statementPeriodExceptionsRouter } from "~/server/api/routers/statement-period-exceptions";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 export const appRouter = createTRPCRouter({
@@ -17,6 +18,7 @@ export const appRouter = createTRPCRouter({
   overview: overviewRouter,
   people: peopleRouter,
   setup: setupRouter,
+  statementPeriodExceptions: statementPeriodExceptionsRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -9,7 +9,7 @@ import { accountStatusLabels } from "~/lib/account-status";
 import { accountTypeLabels } from "~/lib/account-types";
 import { canDeriveStatementPeriods } from "~/lib/expected-periods";
 import { formatDateLabel } from "~/lib/format-date";
-import { buildMissingStatements } from "~/lib/statement-completeness";
+import { buildExceptionsByAccount, buildMissingStatements } from "~/lib/statement-completeness";
 import {
   statementFrequencyLabels,
   type StatementFrequency,
@@ -42,17 +42,27 @@ function needsOpenedDateWarning(account: {
 export function AccountsWorkspace() {
   const accounts = api.accounts.list.useQuery();
   const statementDocuments = api.documents.statementDocumentsByAccount.useQuery();
+  const periodExceptions = api.statementPeriodExceptions.listAll.useQuery();
   const [formOpen, setFormOpen] = useState(false);
+
+  const exceptionsByAccount = useMemo(
+    () => buildExceptionsByAccount(periodExceptions.data ?? []),
+    [periodExceptions.data],
+  );
 
   const missingCountByAccount = useMemo(() => {
     if (!accounts.data) return {};
-    const missing = buildMissingStatements(accounts.data, statementDocuments.data ?? {});
+    const missing = buildMissingStatements(
+      accounts.data,
+      statementDocuments.data ?? {},
+      exceptionsByAccount,
+    );
     const counts: Record<string, number> = {};
     for (const item of missing) {
       counts[item.accountId] = (counts[item.accountId] ?? 0) + 1;
     }
     return counts;
-  }, [accounts.data, statementDocuments.data]);
+  }, [accounts.data, exceptionsByAccount, statementDocuments.data]);
 
   if (accounts.isLoading) {
     return (

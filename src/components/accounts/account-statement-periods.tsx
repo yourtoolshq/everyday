@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, LayoutGrid, List, Minus } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
@@ -60,28 +60,45 @@ const completenessStatusStyles: Record<
     cell: "border border-dashed border-border/80 bg-transparent text-muted-foreground/50",
     dot: "bg-muted-foreground/30",
   },
+  not_applicable: {
+    cell: "border border-zinc-500/30 bg-gradient-to-br from-zinc-500/15 to-zinc-500/5 text-zinc-700 dark:text-zinc-200",
+    dot: "bg-zinc-500",
+  },
 };
 
 function PeriodCell({
   period,
   document,
+  hasException,
   onSelect,
   onUpload,
+  onMarkNotApplicable,
+  onUndoNotApplicable,
 }: {
   period: ExpectedPeriod;
   document?: StatementDocument;
+  hasException: boolean;
   onSelect?: (document: StatementDocument) => void;
   onUpload?: () => void;
+  onMarkNotApplicable?: () => void;
+  onUndoNotApplicable?: () => void;
 }) {
-  const completeness = deriveStatementCompleteness(period, Boolean(document));
+  const completeness = deriveStatementCompleteness(period, Boolean(document), hasException);
   const styles = completenessStatusStyles[completeness];
   const canUpload =
     (completeness === "missing" || completeness === "waiting") && Boolean(onUpload);
+  const canMarkNotApplicable = completeness === "missing" && Boolean(onMarkNotApplicable);
+  const canUndoNotApplicable = completeness === "not_applicable" && Boolean(onUndoNotApplicable);
   const cellClassName = cn(
     "flex aspect-[4/3] min-h-14 w-full flex-col items-center justify-center rounded-lg px-2 py-2 text-center transition-colors",
     styles.cell,
-    (canUpload || completeness === "complete") && "cursor-pointer hover:brightness-95",
-    !canUpload && completeness !== "complete" && completeness !== "not_expected" && "cursor-default",
+    (canUpload || completeness === "complete" || canUndoNotApplicable) &&
+      "cursor-pointer hover:brightness-95",
+    !canUpload &&
+      completeness !== "complete" &&
+      completeness !== "not_expected" &&
+      !canUndoNotApplicable &&
+      "cursor-default",
   );
 
   return (
@@ -96,15 +113,38 @@ function PeriodCell({
           >
             <Check className="size-4" aria-hidden="true" />
           </button>
-        ) : (
+        ) : completeness === "not_applicable" ? (
           <button
             type="button"
-            disabled={!canUpload}
-            onClick={canUpload ? onUpload : undefined}
+            aria-label={`Undo not applicable for ${period.label}`}
             className={cellClassName}
+            onClick={onUndoNotApplicable}
           >
-            <span className="text-sm font-medium">{period.shortLabel}</span>
+            <Minus className="size-4" aria-hidden="true" />
           </button>
+        ) : (
+          <div className={cn(cellClassName, "gap-1")}>
+            <button
+              type="button"
+              disabled={!canUpload}
+              onClick={canUpload ? onUpload : undefined}
+              className="flex flex-1 flex-col items-center justify-center"
+            >
+              <span className="text-sm font-medium">{period.shortLabel}</span>
+            </button>
+            {canMarkNotApplicable ? (
+              <button
+                type="button"
+                className="text-[10px] font-medium text-red-800/80 underline underline-offset-2 dark:text-red-100/80"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onMarkNotApplicable?.();
+                }}
+              >
+                N/A
+              </button>
+            ) : null}
+          </div>
         )}
       </TooltipTrigger>
       <TooltipContent side="top" className="text-left">
@@ -112,6 +152,10 @@ function PeriodCell({
         <p>{completenessStatusLabels[completeness]}</p>
         {completeness === "complete" ? <p className="text-background/70">Click for details</p> : null}
         {canUpload ? <p className="text-background/70">Click to upload</p> : null}
+        {canMarkNotApplicable ? (
+          <p className="text-background/70">Use N/A if no statement was issued</p>
+        ) : null}
+        {canUndoNotApplicable ? <p className="text-background/70">Click to undo</p> : null}
       </TooltipContent>
     </Tooltip>
   );
@@ -121,6 +165,7 @@ function PeriodLegend() {
   const items: { status: StatementCompletenessStatus; label: string }[] = [
     { status: "complete", label: "Complete" },
     { status: "missing", label: "Missing" },
+    { status: "not_applicable", label: "Not applicable" },
     { status: "waiting", label: "Waiting" },
     { status: "future", label: "Future" },
     { status: "not_expected", label: "Not expected" },
@@ -151,14 +196,48 @@ function gridColumns(frequency: StatementFrequency): string {
   }
 }
 
+function formatYearSummary({
+  completeCount,
+  notApplicableCount,
+  expectedCount,
+  missingCount,
+  waitingCount,
+  year,
+}: {
+  completeCount: number;
+  notApplicableCount: number;
+  expectedCount: number;
+  missingCount: number;
+  waitingCount: number;
+  year: number;
+}) {
+  const satisfiedCount = completeCount + notApplicableCount;
+  const parts = [`${satisfiedCount}/${expectedCount} satisfied in ${year}`];
+
+  if (notApplicableCount > 0) {
+    parts.push(`${completeCount} complete · ${notApplicableCount} not applicable`);
+  }
+
+  if (missingCount > 0) parts.push(`${missingCount} missing`);
+  if (waitingCount > 0) parts.push(`${waitingCount} waiting`);
+
+  return parts.join(" · ");
+}
+
 export function AccountStatementPeriods({
   account,
   statementDocumentsByPeriod = {},
+  exceptionsByPeriod = {},
   onUploadPeriod,
+  onMarkNotApplicable,
+  onUndoNotApplicable,
 }: {
   account: Account;
   statementDocumentsByPeriod?: Readonly<Record<string, StatementDocument>>;
+  exceptionsByPeriod?: Readonly<Record<string, true>>;
   onUploadPeriod?: (periodKey: string) => void;
+  onMarkNotApplicable?: (periodKey: string) => void;
+  onUndoNotApplicable?: (periodKey: string) => void;
 }) {
   const { requestDelete, dialog: deleteDialog } = useDeleteDocumentDialog();
   const frequency = account.statementFrequency;
@@ -195,10 +274,8 @@ export function AccountStatementPeriods({
     return map;
   }, [statementDocumentsByPeriod]);
 
-  const { completeCount, missingCount, waitingCount, expectedCount } = countCompletenessForYear(
-    periods,
-    statementIdsByPeriod,
-  );
+  const { completeCount, notApplicableCount, missingCount, waitingCount, expectedCount } =
+    countCompletenessForYear(periods, statementIdsByPeriod, exceptionsByPeriod);
 
   if (frequency === "none") {
     return (
@@ -251,9 +328,14 @@ export function AccountStatementPeriods({
         <div className="flex items-center gap-2">
           <Badge variant="secondary">{statementFrequencyLabels[frequency]}</Badge>
           <span className="text-sm text-muted-foreground">
-            {completeCount}/{expectedCount} complete in {year}
-            {missingCount > 0 ? ` · ${missingCount} missing` : ""}
-            {waitingCount > 0 ? ` · ${waitingCount} waiting` : ""}
+            {formatYearSummary({
+              completeCount,
+              notApplicableCount,
+              expectedCount,
+              missingCount,
+              waitingCount,
+              year,
+            })}
           </span>
           <div className="flex rounded-lg border p-0.5">
             <Button
@@ -286,11 +368,16 @@ export function AccountStatementPeriods({
                 key={period.key}
                 period={period}
                 document={statementDocumentsByPeriod[period.key]}
+                hasException={Boolean(exceptionsByPeriod[period.key])}
                 onSelect={(document) =>
                   setSelectedStatement({ document, periodLabel: period.label })
                 }
-                onUpload={
-                  onUploadPeriod ? () => onUploadPeriod(period.key) : undefined
+                onUpload={onUploadPeriod ? () => onUploadPeriod(period.key) : undefined}
+                onMarkNotApplicable={
+                  onMarkNotApplicable ? () => onMarkNotApplicable(period.key) : undefined
+                }
+                onUndoNotApplicable={
+                  onUndoNotApplicable ? () => onUndoNotApplicable(period.key) : undefined
                 }
               />
             ))}
@@ -299,11 +386,20 @@ export function AccountStatementPeriods({
           <div className="divide-y rounded-lg border">
             {periods.map((period) => {
               const document = statementDocumentsByPeriod[period.key];
-              const completeness = deriveStatementCompleteness(period, Boolean(document));
+              const hasException = Boolean(exceptionsByPeriod[period.key]);
+              const completeness = deriveStatementCompleteness(
+                period,
+                Boolean(document),
+                hasException,
+              );
               const styles = completenessStatusStyles[completeness];
               const canUpload =
                 (completeness === "missing" || completeness === "waiting") &&
                 Boolean(onUploadPeriod);
+              const canMarkNotApplicable =
+                completeness === "missing" && Boolean(onMarkNotApplicable);
+              const canUndoNotApplicable =
+                completeness === "not_applicable" && Boolean(onUndoNotApplicable);
               return (
                 <div
                   key={period.key}
@@ -320,15 +416,39 @@ export function AccountStatementPeriods({
                       onEdit={() => setEditingStatement(document)}
                       onDelete={() => requestDelete({ id: document.id, title: document.title })}
                     />
-                  ) : canUpload ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onUploadPeriod?.(period.key)}
-                    >
-                      Upload
-                    </Button>
+                  ) : canUpload || canMarkNotApplicable || canUndoNotApplicable ? (
+                    <div className="flex items-center gap-1">
+                      {canUpload ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => onUploadPeriod?.(period.key)}
+                        >
+                          Upload
+                        </Button>
+                      ) : null}
+                      {canMarkNotApplicable ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => onMarkNotApplicable?.(period.key)}
+                        >
+                          Not applicable
+                        </Button>
+                      ) : null}
+                      {canUndoNotApplicable ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => onUndoNotApplicable?.(period.key)}
+                        >
+                          Undo
+                        </Button>
+                      ) : null}
+                    </div>
                   ) : (
                     <span className="text-muted-foreground">
                       {completenessStatusLabels[completeness]}
@@ -343,7 +463,8 @@ export function AccountStatementPeriods({
 
       <PeriodLegend />
       <p className="text-xs text-muted-foreground">
-        Red periods are missing. Blue is the current period still waiting for a statement.
+        Red periods are missing. Gray periods are marked not applicable. Blue is the current period
+        still waiting for a statement.
       </p>
 
       {selectedStatement ? (

@@ -19,7 +19,7 @@ import { accountStatusLabels } from "~/lib/account-status";
 import { accountTypeLabels } from "~/lib/account-types";
 import { canDeriveStatementPeriods } from "~/lib/expected-periods";
 import { formatDateLabel } from "~/lib/format-date";
-import { buildMissingStatements } from "~/lib/statement-completeness";
+import { buildExceptionsByAccount, buildMissingStatements } from "~/lib/statement-completeness";
 import { statementFrequencyLabels } from "~/lib/statement-frequency";
 import { cn } from "~/lib/utils";
 import { Badge } from "~/components/ui/badge";
@@ -36,8 +36,28 @@ type UploadTarget = {
 };
 
 export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
+  const utils = api.useUtils();
   const account = api.accounts.get.useQuery({ id: accountId });
   const accountDocuments = api.documents.overview.useQuery({ accountId });
+  const periodExceptions = api.statementPeriodExceptions.listByAccount.useQuery({ accountId });
+  const createPeriodException = api.statementPeriodExceptions.create.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.statementPeriodExceptions.listByAccount.invalidate({ accountId }),
+        utils.statementPeriodExceptions.listAll.invalidate(),
+        utils.overview.statementStatus.invalidate(),
+      ]);
+    },
+  });
+  const deletePeriodException = api.statementPeriodExceptions.delete.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.statementPeriodExceptions.listByAccount.invalidate({ accountId }),
+        utils.statementPeriodExceptions.listAll.invalidate(),
+        utils.overview.statementStatus.invalidate(),
+      ]);
+    },
+  });
   const [formOpen, setFormOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uploadTarget, setUploadTarget] = useState<UploadTarget | null>(null);
@@ -61,10 +81,27 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
     return { [accountId]: byPeriod };
   }, [accountId, statementDocumentsByPeriod]);
 
+  const exceptionsByPeriod = useMemo(() => {
+    const map: Record<string, true> = {};
+    for (const exception of periodExceptions.data ?? []) {
+      map[exception.periodKey] = true;
+    }
+    return map;
+  }, [periodExceptions.data]);
+
+  const exceptionsForCompleteness = useMemo(
+    () => buildExceptionsByAccount(periodExceptions.data ?? []),
+    [periodExceptions.data],
+  );
+
   const missingStatements = useMemo(() => {
     if (!account.data) return [];
-    return buildMissingStatements([account.data], statementDocumentsForCompleteness);
-  }, [account.data, statementDocumentsForCompleteness]);
+    return buildMissingStatements(
+      [account.data],
+      statementDocumentsForCompleteness,
+      exceptionsForCompleteness,
+    );
+  }, [account.data, exceptionsForCompleteness, statementDocumentsForCompleteness]);
 
   const hasStatements = account.data?.statementFrequency !== "none";
 
@@ -206,7 +243,14 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
             <AccountStatementPeriods
               account={account.data}
               statementDocumentsByPeriod={statementDocumentsByPeriod}
+              exceptionsByPeriod={exceptionsByPeriod}
               onUploadPeriod={(periodKey) => setUploadTarget({ periodKey })}
+              onMarkNotApplicable={(periodKey) =>
+                createPeriodException.mutate({ accountId, periodKey })
+              }
+              onUndoNotApplicable={(periodKey) =>
+                deletePeriodException.mutate({ accountId, periodKey })
+              }
             />
           </CardContent>
         </Card>
@@ -245,14 +289,29 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
                       className="flex items-center justify-between gap-3 py-3 text-sm first:pt-0 last:pb-0"
                     >
                       <span className="font-medium">{item.periodLabel}</span>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setUploadTarget({ periodKey: item.periodKey })}
-                      >
-                        Upload
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setUploadTarget({ periodKey: item.periodKey })}
+                        >
+                          Upload
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            createPeriodException.mutate({
+                              accountId,
+                              periodKey: item.periodKey,
+                            })
+                          }
+                        >
+                          Not applicable
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>

@@ -9,6 +9,8 @@ Read the project docs before making product or domain decisions:
 
 Treat those files as the source of truth for scope, terminology, boundaries, and roadmap intent.
 
+For implementation conventions — UI patterns, tRPC usage, migrations, testing — read [`docs/ENGINEERING.md`](docs/ENGINEERING.md).
+
 ## Before starting a phase
 
 Do not implement an entire roadmap phase automatically.

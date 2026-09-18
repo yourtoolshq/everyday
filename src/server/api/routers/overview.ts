@@ -2,10 +2,18 @@ import { and, asc, count, eq, isNotNull } from "drizzle-orm";
 
 import { defaultStatementFrequency } from "~/lib/statement-frequency";
 import {
+  buildExceptionsByAccount,
   buildMissingStatements,
   buildYearCompletenessSummary,
 } from "~/lib/statement-completeness";
-import { accounts, documents, institutions, people, statementExpectations } from "~/server/db/schema";
+import {
+  accounts,
+  documents,
+  institutions,
+  people,
+  statementExpectations,
+  statementPeriodExceptions,
+} from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const overviewRouter = createTRPCRouter({
@@ -68,15 +76,25 @@ export const overviewRouter = createTRPCRouter({
       statementFrequency: row.statementFrequency ?? defaultStatementFrequency,
     }));
 
+    const exceptionRows = await ctx.db
+      .select({
+        accountId: statementPeriodExceptions.accountId,
+        periodKey: statementPeriodExceptions.periodKey,
+      })
+      .from(statementPeriodExceptions);
+    const exceptionsByAccount = buildExceptionsByAccount(exceptionRows);
+
     const year = new Date().getFullYear();
     const yearSummary = buildYearCompletenessSummary(
       accountsForCompleteness,
       statementDocumentsByAccount,
       year,
+      exceptionsByAccount,
     );
     const missingStatements = buildMissingStatements(
       accountsForCompleteness,
       statementDocumentsByAccount,
+      exceptionsByAccount,
     );
 
     return {

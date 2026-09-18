@@ -44,6 +44,19 @@ describe("deriveStatementCompleteness", () => {
     expect(deriveStatementCompleteness(periods[8]!, false)).toBe("waiting");
     expect(deriveStatementCompleteness(periods[9]!, false)).toBe("future");
   });
+
+  it("marks missing periods as not applicable when an exception exists", () => {
+    expect(deriveStatementCompleteness(periods[2]!, false, true)).toBe("not_applicable");
+  });
+
+  it("prefers uploaded statements over exceptions", () => {
+    expect(deriveStatementCompleteness(periods[2]!, true, true)).toBe("complete");
+  });
+
+  it("ignores exceptions on waiting or future periods", () => {
+    expect(deriveStatementCompleteness(periods[8]!, false, true)).toBe("waiting");
+    expect(deriveStatementCompleteness(periods[9]!, false, true)).toBe("future");
+  });
 });
 
 describe("buildYearCompletenessSummary", () => {
@@ -67,6 +80,7 @@ describe("buildYearCompletenessSummary", () => {
         },
       },
       2026,
+      {},
       asOf,
     );
 
@@ -74,6 +88,36 @@ describe("buildYearCompletenessSummary", () => {
     expect(summary.completeCount).toBe(10);
     expect(summary.missingCount).toBe(6);
     expect(summary.waitingCount).toBe(2);
+    expect(summary.notApplicableCount).toBe(0);
+  });
+
+  it("counts not applicable periods toward expected totals", () => {
+    const summary = buildYearCompletenessSummary(
+      accounts,
+      {
+        "account-1": {
+          "2026-01": "doc-1",
+          "2026-02": "doc-2",
+          "2026-04": "doc-4",
+        },
+      },
+      2026,
+      {
+        "account-1": {
+          "2026-03": true,
+          "2026-07": true,
+        },
+      },
+      asOf,
+    );
+
+    expect(summary.notApplicableCount).toBe(2);
+    expect(
+      summary.completeCount +
+        summary.notApplicableCount +
+        summary.missingCount +
+        summary.waitingCount,
+    ).toBe(summary.expectedCount);
   });
 });
 
@@ -88,6 +132,7 @@ describe("buildMissingStatements", () => {
           "2026-04": "doc-4",
         },
       },
+      {},
       asOf,
     );
 
@@ -95,5 +140,31 @@ describe("buildMissingStatements", () => {
     expect(missing.some((item) => item.periodKey === "2026-07")).toBe(true);
     expect(missing.some((item) => item.periodKey === "2026-09")).toBe(false);
     expect(missing.some((item) => item.periodKey === "2026-10")).toBe(false);
+  });
+
+  it("excludes periods marked not applicable", () => {
+    const missing = buildMissingStatements(
+      accounts,
+      {
+        "account-1": {
+          "2026-01": "doc-1",
+          "2026-02": "doc-2",
+          "2026-04": "doc-4",
+        },
+      },
+      {
+        "account-1": {
+          "2026-03": true,
+        },
+      },
+      asOf,
+    );
+
+    expect(
+      missing.some((item) => item.accountId === "account-1" && item.periodKey === "2026-03"),
+    ).toBe(false);
+    expect(
+      missing.some((item) => item.accountId === "account-1" && item.periodKey === "2026-07"),
+    ).toBe(true);
   });
 });
