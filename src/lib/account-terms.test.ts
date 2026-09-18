@@ -12,10 +12,10 @@ describe("account terms", () => {
   it("normalizes blank strings to null", () => {
     expect(
       normalizeAccountTerms({
-        interestRate: "  19.99  ",
+        interestRate: "  19.99%  ",
         promotionalInterestRate: "",
         promotionalInterestRateExpires: null,
-        creditLimit: "5000",
+        creditLimit: "$5,000",
         annualFee: "   ",
         renewalDate: undefined,
         insurance: null,
@@ -26,6 +26,28 @@ describe("account terms", () => {
       promotionalInterestRateExpires: null,
       creditLimit: "5000",
       annualFee: null,
+      renewalDate: null,
+      insurance: null,
+    });
+  });
+
+  it("normalizes money and rate fields on save", () => {
+    expect(
+      normalizeAccountTerms({
+        interestRate: "19.99%",
+        promotionalInterestRate: "0%",
+        promotionalInterestRateExpires: null,
+        creditLimit: "$10,000",
+        annualFee: "$120.50",
+        renewalDate: null,
+        insurance: null,
+      }),
+    ).toEqual({
+      interestRate: "19.99",
+      promotionalInterestRate: "0",
+      promotionalInterestRateExpires: null,
+      creditLimit: "10000",
+      annualFee: "120.5",
       renewalDate: null,
       insurance: null,
     });

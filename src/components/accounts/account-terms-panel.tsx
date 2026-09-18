@@ -6,12 +6,9 @@ import { useState } from "react";
 import { AccountTermsSheet } from "~/components/accounts/account-terms-sheet";
 import { AccountTermsSnapshotDetailSheet } from "~/components/accounts/account-terms-snapshot-detail-sheet";
 import { AccountTermsSnapshotSheet } from "~/components/accounts/account-terms-snapshot-sheet";
-import {
-  hasAccountTerms,
-  listAccountTermsEntries,
-  type AccountTermsField,
-} from "~/lib/account-terms";
+import { hasAccountTerms, listAccountTermsEntries } from "~/lib/account-terms";
 import { formatDateLabel } from "~/lib/format-date";
+import { formatTermValue } from "~/lib/format-term-value";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
@@ -20,13 +17,6 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Snapshot = RouterOutputs["accountTerms"]["listSnapshots"][number];
-
-function formatTermValue(field: AccountTermsField, value: string) {
-  if (field === "renewalDate" || field === "promotionalInterestRateExpires") {
-    return formatDateLabel(value) ?? value;
-  }
-  return value;
-}
 
 export function AccountTermsPanel({ accountId }: { accountId: string }) {
   const terms = api.accountTerms.getCurrent.useQuery({ accountId });

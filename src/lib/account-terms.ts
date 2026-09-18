@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { parseMoneyValue, parseRateValue } from "~/lib/format-term-value";
+
 export const accountTermsFields = [
   "interestRate",
   "promotionalInterestRate",
@@ -21,6 +23,16 @@ export const accountTermsFieldLabels = {
   renewalDate: "Renewal date",
   insurance: "Insurance",
 } satisfies Record<AccountTermsField, string>;
+
+export const accountTermsFieldKinds = {
+  interestRate: "rate",
+  promotionalInterestRate: "rate",
+  promotionalInterestRateExpires: "date",
+  creditLimit: "money",
+  annualFee: "money",
+  renewalDate: "date",
+  insurance: "text",
+} satisfies Record<AccountTermsField, "rate" | "money" | "date" | "text">;
 
 export const accountTermsSchema = z.object({
   interestRate: z.string().trim().max(40).nullable().optional(),
@@ -46,11 +58,11 @@ export const emptyAccountTerms = (): AccountTerms => ({
 
 export function normalizeAccountTerms(input: AccountTerms): AccountTerms {
   return {
-    interestRate: input.interestRate?.trim() || null,
-    promotionalInterestRate: input.promotionalInterestRate?.trim() || null,
+    interestRate: parseRateValue(input.interestRate),
+    promotionalInterestRate: parseRateValue(input.promotionalInterestRate),
     promotionalInterestRateExpires: input.promotionalInterestRateExpires?.trim() || null,
-    creditLimit: input.creditLimit?.trim() || null,
-    annualFee: input.annualFee?.trim() || null,
+    creditLimit: parseMoneyValue(input.creditLimit),
+    annualFee: parseMoneyValue(input.annualFee),
     renewalDate: input.renewalDate?.trim() || null,
     insurance: input.insurance?.trim() || null,
   };

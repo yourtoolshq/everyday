@@ -14,13 +14,10 @@ import {
   accountEventTypeLabels,
   type AccountEventType,
 } from "~/lib/account-events";
-import {
-  accountTermsFieldLabels,
-  listAccountTermsEntries,
-  type AccountTermsField,
-} from "~/lib/account-terms";
+import { accountTermsFieldLabels, listAccountTermsEntries } from "~/lib/account-terms";
 import { documentTypeLabels, formatFileSize, isEmlMimeType, type DocumentType } from "~/lib/documents";
 import { formatDateLabel } from "~/lib/format-date";
+import { formatTermValue } from "~/lib/format-term-value";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,13 +34,6 @@ import { Card, CardContent } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
 import { api } from "~/trpc/react";
-
-function formatTermValue(field: AccountTermsField, value: string) {
-  if (field === "renewalDate" || field === "promotionalInterestRateExpires") {
-    return formatDateLabel(value) ?? value;
-  }
-  return value;
-}
 
 export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
   const router = useRouter();

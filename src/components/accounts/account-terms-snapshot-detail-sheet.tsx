@@ -6,12 +6,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { AccountTermsSnapshotSheet } from "~/components/accounts/account-terms-snapshot-sheet";
-import {
-  accountTermsFieldLabels,
-  listAccountTermsEntries,
-  type AccountTermsField,
-} from "~/lib/account-terms";
+import { accountTermsFieldLabels, listAccountTermsEntries } from "~/lib/account-terms";
 import { formatDateLabel } from "~/lib/format-date";
+import { formatTermValue } from "~/lib/format-term-value";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,13 +32,6 @@ import {
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type Snapshot = RouterOutputs["accountTerms"]["listSnapshots"][number];
-
-function formatTermValue(field: AccountTermsField, value: string) {
-  if (field === "renewalDate" || field === "promotionalInterestRateExpires") {
-    return formatDateLabel(value) ?? value;
-  }
-  return value;
-}
 
 export function AccountTermsSnapshotDetailSheet({
   accountId,
