@@ -1,5 +1,5 @@
 import { TRPCError } from "@trpc/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 import {
@@ -10,7 +10,7 @@ import {
 } from "~/lib/account-terms";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import type { db as database } from "~/server/db";
-import { accountTermsSnapshots, accounts } from "~/server/db/schema";
+import { accountEvents, accountTermsSnapshots, accounts } from "~/server/db/schema";
 
 type Database = typeof database;
 
@@ -71,6 +71,32 @@ function snapshotValues(terms: AccountTerms, effectiveDate: string, notes: strin
   };
 }
 
+async function linkedActivityForSnapshot(
+  db: Database,
+  snapshotId: string,
+) {
+  const [event] = await db
+    .select({
+      id: accountEvents.id,
+      title: accountEvents.title,
+      type: accountEvents.type,
+      startDate: accountEvents.startDate,
+    })
+    .from(accountEvents)
+    .where(eq(accountEvents.termsSnapshotId, snapshotId));
+  return event ?? null;
+}
+
+async function requireUnlinkedSnapshot(db: Database, snapshotId: string) {
+  const linked = await linkedActivityForSnapshot(db, snapshotId);
+  if (linked) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "This snapshot is linked to an activity. Change it from the activity instead.",
+    });
+  }
+}
+
 async function requireAccount(db: Database, accountId: string) {
   const [account] = await db
     .select({ id: accounts.id })
@@ -113,15 +139,46 @@ export const accountTermsRouter = createTRPCRouter({
       .where(eq(accountTermsSnapshots.accountId, input.accountId))
       .orderBy(desc(accountTermsSnapshots.effectiveDate), desc(accountTermsSnapshots.createdAt));
 
-    return rows.map((row) => ({
-      id: row.id,
-      accountId: row.accountId,
-      effectiveDate: row.effectiveDate,
-      notes: row.notes,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      terms: termsFromSnapshot(row),
-    }));
+    if (rows.length === 0) return [];
+
+    const snapshotIds = rows.map((row) => row.id);
+    const linkedEvents = await ctx.db
+      .select({
+        id: accountEvents.id,
+        title: accountEvents.title,
+        type: accountEvents.type,
+        startDate: accountEvents.startDate,
+        termsSnapshotId: accountEvents.termsSnapshotId,
+      })
+      .from(accountEvents)
+      .where(inArray(accountEvents.termsSnapshotId, snapshotIds));
+
+    const linkedBySnapshotId = new Map(
+      linkedEvents
+        .filter((event) => event.termsSnapshotId)
+        .map((event) => [event.termsSnapshotId!, event]),
+    );
+
+    return rows.map((row) => {
+      const linkedActivity = linkedBySnapshotId.get(row.id);
+      return {
+        id: row.id,
+        accountId: row.accountId,
+        effectiveDate: row.effectiveDate,
+        notes: row.notes,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        terms: termsFromSnapshot(row),
+        linkedActivity: linkedActivity
+          ? {
+              id: linkedActivity.id,
+              title: linkedActivity.title,
+              type: linkedActivity.type,
+              startDate: linkedActivity.startDate,
+            }
+          : null,
+      };
+    });
   }),
 
   saveTerms: publicProcedure.input(snapshotInput).mutation(async ({ ctx, input }) => {
@@ -205,6 +262,7 @@ export const accountTermsRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      await requireUnlinkedSnapshot(ctx.db, input.id);
       const terms = normalizeAccountTerms(input.terms);
 
       const [snapshot] = await ctx.db
@@ -224,6 +282,8 @@ export const accountTermsRouter = createTRPCRouter({
     }),
 
   deleteSnapshot: publicProcedure.input(snapshotIdInput).mutation(async ({ ctx, input }) => {
+    await requireUnlinkedSnapshot(ctx.db, input.id);
+
     const [snapshot] = await ctx.db
       .delete(accountTermsSnapshots)
       .where(eq(accountTermsSnapshots.id, input.id))

@@ -1,18 +1,18 @@
 "use client";
 
-import { History, Pencil, Plus, Trash2 } from "lucide-react";
+import { History, Link2, Pencil, Plus } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { AccountTermsSheet } from "~/components/accounts/account-terms-sheet";
+import { AccountTermsSnapshotDetailSheet } from "~/components/accounts/account-terms-snapshot-detail-sheet";
 import { AccountTermsSnapshotSheet } from "~/components/accounts/account-terms-snapshot-sheet";
 import {
-  accountTermsFieldLabels,
   hasAccountTerms,
   listAccountTermsEntries,
   type AccountTermsField,
 } from "~/lib/account-terms";
 import { formatDateLabel } from "~/lib/format-date";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
@@ -31,19 +31,10 @@ function formatTermValue(field: AccountTermsField, value: string) {
 export function AccountTermsPanel({ accountId }: { accountId: string }) {
   const terms = api.accountTerms.getCurrent.useQuery({ accountId });
   const snapshots = api.accountTerms.listSnapshots.useQuery({ accountId });
-  const utils = api.useUtils();
 
   const [editOpen, setEditOpen] = useState(false);
-  const [snapshotOpen, setSnapshotOpen] = useState(false);
-  const [editingSnapshot, setEditingSnapshot] = useState<Snapshot | null>(null);
-
-  const deleteSnapshot = api.accountTerms.deleteSnapshot.useMutation({
-    onSuccess: async () => {
-      await utils.accountTerms.invalidate();
-      toast.success("Snapshot deleted.");
-    },
-    onError: (error) => toast.error(error.message),
-  });
+  const [addSnapshotOpen, setAddSnapshotOpen] = useState(false);
+  const [selectedSnapshot, setSelectedSnapshot] = useState<Snapshot | null>(null);
 
   if (terms.isLoading || snapshots.isLoading) {
     return <Skeleton className="h-48 w-full rounded-xl" />;
@@ -60,11 +51,7 @@ export function AccountTermsPanel({ accountId }: { accountId: string }) {
   }
 
   const currentEntries = listAccountTermsEntries(terms.data);
-
-  function openSnapshotEditor(snapshot: Snapshot | null) {
-    setEditingSnapshot(snapshot);
-    setSnapshotOpen(true);
-  }
+  const snapshotList = snapshots.data ?? [];
 
   return (
     <>
@@ -85,7 +72,7 @@ export function AccountTermsPanel({ accountId }: { accountId: string }) {
               type="button"
               size="sm"
               variant="outline"
-              onClick={() => openSnapshotEditor(null)}
+              onClick={() => setAddSnapshotOpen(true)}
             >
               <Plus />
               Add snapshot
@@ -115,57 +102,60 @@ export function AccountTermsPanel({ accountId }: { accountId: string }) {
               <History className="size-4 text-muted-foreground" />
               History
             </div>
-            {(snapshots.data ?? []).length === 0 ? (
+            {snapshotList.length === 0 ? (
               <p className="text-sm text-muted-foreground">No snapshots yet.</p>
             ) : (
               <ul className="divide-y rounded-lg border">
-                {(snapshots.data ?? []).map((snapshot) => {
+                {snapshotList.map((snapshot) => {
                   const entries = listAccountTermsEntries(snapshot.terms);
                   return (
-                    <li key={snapshot.id} className="space-y-2 p-3 text-sm">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                          <p className="font-medium">
-                            {formatDateLabel(snapshot.effectiveDate) ?? snapshot.effectiveDate}
-                          </p>
-                          {snapshot.notes ? (
-                            <p className="text-muted-foreground">{snapshot.notes}</p>
-                          ) : null}
+                    <li key={snapshot.id}>
+                      <button
+                        type="button"
+                        className="w-full space-y-2 p-3 text-left text-sm hover:bg-muted/40"
+                        onClick={() => setSelectedSnapshot(snapshot)}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-medium">
+                                {formatDateLabel(snapshot.effectiveDate) ?? snapshot.effectiveDate}
+                              </p>
+                              {snapshot.linkedActivity ? (
+                                <Badge variant="secondary">
+                                  <Link2 />
+                                  Activity
+                                </Badge>
+                              ) : null}
+                            </div>
+                            {snapshot.notes ? (
+                              <p className="line-clamp-2 text-muted-foreground">{snapshot.notes}</p>
+                            ) : null}
+                            {snapshot.linkedActivity ? (
+                              <p className="text-xs text-muted-foreground">
+                                {snapshot.linkedActivity.title}
+                              </p>
+                            ) : null}
+                          </div>
                         </div>
-                        <div className="flex gap-1">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openSnapshotEditor(snapshot)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => deleteSnapshot.mutate({ id: snapshot.id })}
-                            disabled={deleteSnapshot.isPending}
-                          >
-                            <Trash2 />
-                          </Button>
-                        </div>
-                      </div>
-                      {entries.length > 0 ? (
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
-                          {entries.map((entry) => (
-                            <span key={entry.field}>
-                              {accountTermsFieldLabels[entry.field]}:{" "}
-                              <span className="text-foreground">
-                                {formatTermValue(entry.field, entry.value)}
+                        {entries.length > 0 ? (
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
+                            {entries.slice(0, 3).map((entry) => (
+                              <span key={entry.field}>
+                                {entry.label}:{" "}
+                                <span className="text-foreground">
+                                  {formatTermValue(entry.field, entry.value)}
+                                </span>
                               </span>
-                            </span>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-muted-foreground">No values recorded.</p>
-                      )}
+                            ))}
+                            {entries.length > 3 ? (
+                              <span className="text-foreground">+{entries.length - 3} more</span>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground">No values recorded.</p>
+                        )}
+                      </button>
                     </li>
                   );
                 })}
@@ -185,15 +175,25 @@ export function AccountTermsPanel({ accountId }: { accountId: string }) {
         />
       ) : null}
 
-      {snapshotOpen ? (
+      {addSnapshotOpen ? (
         <AccountTermsSnapshotSheet
-          key={editingSnapshot?.id ?? "new-snapshot"}
+          key="new-snapshot"
           accountId={accountId}
-          snapshot={editingSnapshot}
-          open={snapshotOpen}
+          snapshot={null}
+          open={addSnapshotOpen}
+          onOpenChange={setAddSnapshotOpen}
+        />
+      ) : null}
+
+      {selectedSnapshot ? (
+        <AccountTermsSnapshotDetailSheet
+          accountId={accountId}
+          snapshot={
+            snapshotList.find((item) => item.id === selectedSnapshot.id) ?? selectedSnapshot
+          }
+          open={Boolean(selectedSnapshot)}
           onOpenChange={(open) => {
-            setSnapshotOpen(open);
-            if (!open) setEditingSnapshot(null);
+            if (!open) setSelectedSnapshot(null);
           }}
         />
       ) : null}

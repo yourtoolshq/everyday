@@ -44,7 +44,39 @@ type DetectedFile = { mimeType: string; extension: string };
 
 const heicBrands = new Set(["heic", "heix", "hevc", "hevx", "heim", "heis"]);
 
-export function detectDocumentFile(bytes: Uint8Array): DetectedFile | null {
+const audioSignatures: Array<{
+  mimeType: string;
+  extension: string;
+  match: (bytes: Uint8Array) => boolean;
+}> = [
+  {
+    mimeType: "audio/mpeg",
+    extension: "mp3",
+    match: (bytes) =>
+      bytes.length >= 3 && bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33,
+  },
+  {
+    mimeType: "audio/mp4",
+    extension: "m4a",
+    match: (bytes) =>
+      bytes.length >= 12 &&
+      ascii(bytes, 4, 8) === "ftyp" &&
+      (ascii(bytes, 8, 12) === "M4A " || ascii(bytes, 8, 12) === "mp42"),
+  },
+  {
+    mimeType: "audio/wav",
+    extension: "wav",
+    match: (bytes) =>
+      bytes.length >= 12 && ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 12) === "WAVE",
+  },
+  {
+    mimeType: "audio/ogg",
+    extension: "ogg",
+    match: (bytes) => bytes.length >= 4 && ascii(bytes, 0, 4) === "OggS",
+  },
+];
+
+export function detectDocumentFile(bytes: Uint8Array, filename?: string): DetectedFile | null {
   if (
     bytes.length >= 5 &&
     bytes[0] === 0x25 &&
@@ -85,7 +117,38 @@ export function detectDocumentFile(bytes: Uint8Array): DetectedFile | null {
   ) {
     return { mimeType: "image/heic", extension: "heic" };
   }
+
+  if (looksLikeEml(bytes, filename)) {
+    return { mimeType: "message/rfc822", extension: "eml" };
+  }
+
+  for (const signature of audioSignatures) {
+    if (signature.match(bytes)) {
+      return { mimeType: signature.mimeType, extension: signature.extension };
+    }
+  }
+
+  if (filename) {
+    const extension = filename.split(".").pop()?.toLowerCase();
+    if (extension === "eml") return { mimeType: "message/rfc822", extension: "eml" };
+    if (extension === "mp3") return { mimeType: "audio/mpeg", extension: "mp3" };
+    if (extension === "m4a") return { mimeType: "audio/mp4", extension: "m4a" };
+    if (extension === "wav") return { mimeType: "audio/wav", extension: "wav" };
+    if (extension === "ogg") return { mimeType: "audio/ogg", extension: "ogg" };
+  }
+
   return null;
+}
+
+function looksLikeEml(bytes: Uint8Array, filename?: string) {
+  if (filename?.toLowerCase().endsWith(".eml")) return true;
+  const limit = Math.min(bytes.length, 4096);
+  const sample = new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(0, limit));
+  return /^(from|received|return-path|message-id|date|subject|mime-version):/im.test(sample);
+}
+
+export function isEmlMimeType(mimeType: string) {
+  return mimeType === "message/rfc822";
 }
 
 function hasHeicBrand(bytes: Uint8Array) {

@@ -1,10 +1,17 @@
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, isNotNull, ne } from "drizzle-orm";
+import { and, desc, eq, isNotNull, ne, not } from "drizzle-orm";
 import { z } from "zod";
 
 import { documentTypes } from "~/lib/documents";
 import { defaultStatementFrequency } from "~/lib/statement-frequency";
-import { accounts, documents, institutions, statementExpectations } from "~/server/db/schema";
+import {
+  accountEvents,
+  accountTermsSnapshots,
+  accounts,
+  documents,
+  institutions,
+  statementExpectations,
+} from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { validateStatementPeriod } from "~/server/documents/statement-upload";
 import {
@@ -14,7 +21,10 @@ import {
 } from "~/server/documents/storage";
 
 const idInput = z.object({ id: z.string().uuid() });
-const accountFilter = z.object({ accountId: z.string().uuid().optional() });
+const overviewFilter = z.object({
+  accountId: z.string().uuid().optional(),
+  excludeStatements: z.boolean().optional(),
+});
 const now = () => new Date().toISOString();
 
 const publicDocumentFields = {
@@ -25,6 +35,8 @@ const publicDocumentFields = {
   title: documents.title,
   documentDate: documents.documentDate,
   notes: documents.notes,
+  eventId: documents.eventId,
+  termsSnapshotId: documents.termsSnapshotId,
   originalFilename: documents.originalFilename,
   mimeType: documents.mimeType,
   sizeBytes: documents.sizeBytes,
@@ -59,24 +71,70 @@ const updateDocumentInput = z
   });
 
 export const documentsRouter = createTRPCRouter({
-  overview: publicProcedure.input(accountFilter.optional()).query(async ({ ctx, input }) => {
+  overview: publicProcedure.input(overviewFilter.optional()).query(async ({ ctx, input }) => {
+    const conditions = [];
+    if (input?.accountId) {
+      conditions.push(eq(documents.accountId, input.accountId));
+    }
+    if (input?.excludeStatements) {
+      conditions.push(not(eq(documents.type, "statement")));
+    }
+
     const baseQuery = ctx.db
       .select({
         ...publicDocumentFields,
         accountName: accounts.displayName,
         institutionName: institutions.name,
+        linkedActivityTitle: accountEvents.title,
+        linkedActivityType: accountEvents.type,
+        linkedActivityStartDate: accountEvents.startDate,
+        linkedTermsEffectiveDate: accountTermsSnapshots.effectiveDate,
       })
       .from(documents)
       .innerJoin(accounts, eq(documents.accountId, accounts.id))
-      .innerJoin(institutions, eq(accounts.institutionId, institutions.id));
+      .innerJoin(institutions, eq(accounts.institutionId, institutions.id))
+      .leftJoin(accountEvents, eq(documents.eventId, accountEvents.id))
+      .leftJoin(accountTermsSnapshots, eq(documents.termsSnapshotId, accountTermsSnapshots.id));
 
-    if (input?.accountId) {
-      return baseQuery
-        .where(eq(documents.accountId, input.accountId))
-        .orderBy(desc(documents.createdAt));
-    }
+    const rows =
+      conditions.length > 0
+        ? await baseQuery
+            .where(and(...conditions))
+            .orderBy(desc(documents.createdAt))
+        : await baseQuery.orderBy(desc(documents.createdAt));
 
-    return baseQuery.orderBy(desc(documents.createdAt));
+    return rows.map((row) => ({
+      id: row.id,
+      accountId: row.accountId,
+      type: row.type,
+      periodKey: row.periodKey,
+      title: row.title,
+      documentDate: row.documentDate,
+      notes: row.notes,
+      eventId: row.eventId,
+      termsSnapshotId: row.termsSnapshotId,
+      originalFilename: row.originalFilename,
+      mimeType: row.mimeType,
+      sizeBytes: row.sizeBytes,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      accountName: row.accountName,
+      institutionName: row.institutionName,
+      linkedActivity: row.eventId
+        ? {
+            id: row.eventId,
+            title: row.linkedActivityTitle!,
+            type: row.linkedActivityType!,
+            startDate: row.linkedActivityStartDate!,
+          }
+        : null,
+      linkedTermsSnapshot: row.termsSnapshotId
+        ? {
+            id: row.termsSnapshotId,
+            effectiveDate: row.linkedTermsEffectiveDate!,
+          }
+        : null,
+    }));
   }),
 
   statementDocumentsByAccount: publicProcedure.query(async ({ ctx }) => {

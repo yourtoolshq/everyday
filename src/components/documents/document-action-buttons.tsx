@@ -1,12 +1,14 @@
 "use client";
 
-import { ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { ExternalLink, Mail, Pencil, Trash2 } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 
 type DocumentActionButtonsProps = {
   documentId: string;
   title: string;
+  mimeType?: string;
+  onPreview?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
   size?: "icon" | "icon-sm";
@@ -15,12 +17,23 @@ type DocumentActionButtonsProps = {
 export function DocumentActionButtons({
   documentId,
   title,
+  onPreview,
   onEdit,
   onDelete,
   size = "icon-sm",
 }: DocumentActionButtonsProps) {
   return (
     <div className="flex shrink-0 gap-1">
+      {onPreview ? (
+        <Button
+          variant="ghost"
+          size={size}
+          aria-label={`Preview ${title}`}
+          onClick={onPreview}
+        >
+          <Mail />
+        </Button>
+      ) : null}
       <Button variant="ghost" size={size} asChild>
         <a
           href={`/api/documents/${documentId}/file`}

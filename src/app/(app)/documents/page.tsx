@@ -7,7 +7,8 @@ export default function DocumentsPage() {
         <p className="text-sm font-medium text-primary">Records</p>
         <h2 className="text-3xl font-semibold tracking-tight">Documents</h2>
         <p className="text-muted-foreground">
-          Statements, notices, and other files linked to accounts.
+          Account records and files, including those linked to activity or terms changes.
+          Statements are tracked separately on each account.
         </p>
       </div>
       <DocumentsWorkspace />

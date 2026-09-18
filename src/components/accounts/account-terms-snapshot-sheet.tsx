@@ -94,6 +94,26 @@ export function AccountTermsSnapshotSheet({
   }
 
   const pending = addSnapshot.isPending || updateSnapshot.isPending;
+  const isLinked = Boolean(snapshot?.linkedActivity);
+
+  if (snapshot && isLinked) {
+    return (
+      <Sheet open={open} onOpenChange={onOpenChange}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle>Snapshot linked to activity</SheetTitle>
+            <SheetDescription>
+              This snapshot was recorded from &quot;{snapshot.linkedActivity?.title}&quot;. Edit the
+              terms change from that activity instead.
+            </SheetDescription>
+          </SheetHeader>
+          <SheetFooter>
+            <Button type="button" onClick={() => onOpenChange(false)}>Close</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

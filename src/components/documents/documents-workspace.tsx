@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
+import { EmlPreviewDialog } from "~/components/activity/eml-preview-dialog";
 import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
 import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
-import { documentTypeLabels, formatFileSize } from "~/lib/documents";
+import { documentTypeLabels, formatFileSize, isEmlMimeType } from "~/lib/documents";
 import { formatDateLabel } from "~/lib/format-date";
-import { formatPeriodKey } from "~/lib/expected-periods";
 import { Badge } from "~/components/ui/badge";
 import { api, type RouterOutputs } from "~/trpc/react";
 
@@ -23,10 +23,11 @@ function sortDocuments(documents: Document[]) {
 }
 
 export function DocumentsWorkspace() {
-  const documents = api.documents.overview.useQuery();
+  const documents = api.documents.overview.useQuery({ excludeStatements: true });
   const accounts = api.accounts.list.useQuery();
   const { requestDelete, dialog: deleteDialog } = useDeleteDocumentDialog();
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
+  const [emlPreview, setEmlPreview] = useState<{ id: string; title: string } | null>(null);
 
   const sortedDocuments = useMemo(
     () => sortDocuments(documents.data ?? []),
@@ -48,7 +49,7 @@ export function DocumentsWorkspace() {
   if (sortedDocuments.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No documents yet. Upload statements or account records from an account page.
+        No documents yet. Upload records from an account page or attach files to activity.
       </p>
     );
   }
@@ -56,13 +57,14 @@ export function DocumentsWorkspace() {
   return (
     <>
       <div className="overflow-x-auto rounded-xl border">
-        <table className="w-full min-w-[720px] text-sm">
+        <table className="w-full min-w-[900px] text-sm">
           <thead>
             <tr className="border-b bg-muted/40 text-left text-muted-foreground">
               <th className="px-4 py-3 font-medium">Title</th>
               <th className="px-4 py-3 font-medium">Type</th>
               <th className="px-4 py-3 font-medium">Account</th>
               <th className="px-4 py-3 font-medium">Date</th>
+              <th className="px-4 py-3 font-medium">Linked to</th>
               <th className="px-4 py-3 font-medium">File</th>
               <th className="px-4 py-3 font-medium text-right">Actions</th>
             </tr>
@@ -81,14 +83,29 @@ export function DocumentsWorkspace() {
                   >
                     {document.institutionName} · {document.accountName}
                   </Link>
-                  {document.periodKey ? (
-                    <p className="text-xs text-muted-foreground">
-                      {formatPeriodKey(document.periodKey)}
-                    </p>
-                  ) : null}
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {formatDateLabel(document.documentDate) ?? "—"}
+                </td>
+                <td className="px-4 py-3 text-muted-foreground">
+                  <div className="space-y-1">
+                    {document.linkedActivity ? (
+                      <Link
+                        href={`/activity/${document.linkedActivity.id}`}
+                        className="block text-primary hover:underline"
+                      >
+                        Activity: {document.linkedActivity.title}
+                      </Link>
+                    ) : null}
+                    {document.linkedTermsSnapshot ? (
+                      <p>
+                        Terms:{" "}
+                        {formatDateLabel(document.linkedTermsSnapshot.effectiveDate) ??
+                          document.linkedTermsSnapshot.effectiveDate}
+                      </p>
+                    ) : null}
+                    {!document.linkedActivity && !document.linkedTermsSnapshot ? "—" : null}
+                  </div>
                 </td>
                 <td className="px-4 py-3 text-muted-foreground">
                   {document.originalFilename}
@@ -99,6 +116,12 @@ export function DocumentsWorkspace() {
                     <DocumentActionButtons
                       documentId={document.id}
                       title={document.title}
+                      mimeType={document.mimeType}
+                      onPreview={
+                        isEmlMimeType(document.mimeType)
+                          ? () => setEmlPreview({ id: document.id, title: document.title })
+                          : undefined
+                      }
                       onEdit={() => setEditingDocument(document)}
                       onDelete={() => requestDelete({ id: document.id, title: document.title })}
                     />
@@ -121,6 +144,18 @@ export function DocumentsWorkspace() {
           }}
         />
       ) : null}
+
+      {emlPreview ? (
+        <EmlPreviewDialog
+          documentId={emlPreview.id}
+          title={emlPreview.title}
+          open={Boolean(emlPreview)}
+          onOpenChange={(open) => {
+            if (!open) setEmlPreview(null);
+          }}
+        />
+      ) : null}
+
       {deleteDialog}
     </>
   );

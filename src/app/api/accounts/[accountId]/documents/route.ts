@@ -11,7 +11,7 @@ import {
 } from "~/lib/documents";
 import { defaultStatementFrequency } from "~/lib/statement-frequency";
 import { databaseReady, db } from "~/server/db";
-import { accounts, documents, statementExpectations } from "~/server/db/schema";
+import { accountEvents, accounts, documents, statementExpectations } from "~/server/db/schema";
 import { removeDocument, writeDocument } from "~/server/documents/storage";
 import { validateStatementPeriod } from "~/server/documents/statement-upload";
 
@@ -52,13 +52,28 @@ export async function POST(
   const periodKey =
     typeof periodKeyValue === "string" && periodKeyValue.trim() ? periodKeyValue.trim() : null;
 
+  const eventIdValue = form.get("eventId");
+  const eventId =
+    typeof eventIdValue === "string" && eventIdValue.trim() ? eventIdValue.trim() : null;
+  const termsSnapshotIdValue = form.get("termsSnapshotId");
+  const termsSnapshotId =
+    typeof termsSnapshotIdValue === "string" && termsSnapshotIdValue.trim()
+      ? termsSnapshotIdValue.trim()
+      : null;
+
   const titleValue = form.get("title");
+  const typeValue = form.get("type");
   const metadata = documentMetadataSchema.safeParse({
     title:
       typeof titleValue === "string" && titleValue.trim()
         ? titleValue
         : titleFromFilename(originalFilename),
-    type: form.get("type"),
+    type:
+      typeof typeValue === "string" && typeValue.trim()
+        ? typeValue
+        : eventId
+          ? "financial_correspondence"
+          : "other",
     documentDate:
       typeof form.get("documentDate") === "string" ? form.get("documentDate") : null,
     notes: typeof form.get("notes") === "string" ? form.get("notes") : null,
@@ -73,9 +88,12 @@ export async function POST(
   }
 
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const detected = detectDocumentFile(bytes);
+  const detected = detectDocumentFile(bytes, originalFilename);
   if (!detected) {
-    return errorResponse("Upload a PDF, JPEG, PNG, WebP, or HEIC file.", 415);
+    return errorResponse(
+      "Upload a PDF, image, .eml, or common audio file (MP3, M4A, WAV, OGG).",
+      415,
+    );
   }
 
   const [account] = await db
@@ -90,6 +108,25 @@ export async function POST(
     .leftJoin(statementExpectations, eq(statementExpectations.accountId, accounts.id))
     .where(eq(accounts.id, parsedParams.data.accountId));
   if (!account) return errorResponse("Account not found.", 404);
+
+  let linkedEventId: string | null = null;
+  let linkedTermsSnapshotId: string | null = termsSnapshotId;
+  if (eventId) {
+    const [linkedEvent] = await db
+      .select({
+        id: accountEvents.id,
+        termsSnapshotId: accountEvents.termsSnapshotId,
+      })
+      .from(accountEvents)
+      .where(
+        and(eq(accountEvents.id, eventId), eq(accountEvents.accountId, parsedParams.data.accountId)),
+      );
+    if (!linkedEvent) return errorResponse("Activity not found.", 404);
+    linkedEventId = linkedEvent.id;
+    if (!linkedTermsSnapshotId) {
+      linkedTermsSnapshotId = linkedEvent.termsSnapshotId;
+    }
+  }
 
   let validatedPeriodKey: string | null = null;
   if (metadata.data.type === "statement" && periodKey) {
@@ -135,6 +172,8 @@ export async function POST(
         periodKey: validatedPeriodKey,
         documentDate: metadata.data.documentDate ?? null,
         notes: metadata.data.notes ?? null,
+        eventId: linkedEventId,
+        termsSnapshotId: linkedTermsSnapshotId,
         originalFilename,
         storageKey,
         mimeType: detected.mimeType,

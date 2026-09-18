@@ -3,6 +3,7 @@
 import {
   Building2,
   FileText,
+  History,
   Landmark,
   LayoutDashboard,
   Settings,
@@ -36,6 +37,11 @@ const futureNavigation: FutureNavigationItem[] = [
   { title: "Settings", icon: Settings },
 ];
 
+function isNavActive(pathname: string, href: string) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const navigation = [
@@ -44,6 +50,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     { title: "Institutions", href: "/institutions", icon: Building2 },
     { title: "Members", href: "/members", icon: Users },
     { title: "Documents", href: "/documents", icon: FileText },
+    { title: "Activity", href: "/activity", icon: History },
   ];
 
   return (
@@ -65,7 +72,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild
-                    isActive={pathname === item.href}
+                    isActive={isNavActive(pathname, item.href)}
                     tooltip={item.title}
                   >
                     <Link href={item.href}>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { AlertTriangle, ArrowLeft, Pencil, Settings, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 
+import { AccountActivityPanel } from "~/components/accounts/account-activity-panel";
 import { AccountDocumentsPanel, ClosureDocumentPrompt } from "~/components/accounts/account-documents-panel";
 import { AccountTermsPanel } from "~/components/accounts/account-terms-panel";
 import { AccountFormSheet } from "~/components/accounts/account-form-sheet";
@@ -204,6 +205,8 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
       ) : null}
 
       <AccountTermsPanel accountId={account.data.id} />
+
+      <AccountActivityPanel accountId={account.data.id} />
 
       <div className={cn("grid gap-4", hasStatements && "lg:grid-cols-2")}>
         <AccountDocumentsPanel
