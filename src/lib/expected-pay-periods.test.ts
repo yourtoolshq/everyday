@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   deriveAllSelectablePayPeriods,
   deriveExpectedPayPeriodsForYear,
+  findExpectedPeriodForPayDate,
   formatCompactPeriodRange,
   paycheckMatchesPeriod,
   periodKeyForPaycheck,
@@ -66,6 +67,19 @@ describe("expected pay periods", () => {
     expect(januarySecond?.shortLabel).toBe("Jan 16–31");
     expect(februarySecond?.shortLabel).toBe("Feb 16–28");
     expect(formatCompactPeriodRange("2026-01-03", "2026-01-16")).toBe("Jan 3–16");
+  });
+
+  it("finds the expected period for a pay date after period end", () => {
+    const period = findExpectedPeriodForPayDate(
+      lifecycle,
+      "biweekly",
+      "2026-01-03",
+      "2026-01-20",
+      new Date("2026-03-01T12:00:00"),
+    );
+
+    expect(period?.key).toBe("2026-01-03");
+    expect(period?.periodEndDate).toBe("2026-01-16");
   });
 
   it("matches multiple paychecks to the same pay period", () => {

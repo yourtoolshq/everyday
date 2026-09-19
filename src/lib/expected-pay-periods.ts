@@ -424,6 +424,63 @@ export function findPayPeriodByKey(
   return periods.find((period) => period.key === periodKey) ?? null;
 }
 
+function graceDaysAfterPeriodEnd(frequency: PayFrequency): number {
+  switch (frequency) {
+    case "weekly":
+      return 7;
+    case "biweekly":
+      return 14;
+    case "semimonthly":
+      return 15;
+    case "monthly":
+      return 31;
+    default:
+      return 0;
+  }
+}
+
+export function findExpectedPeriodForPayDate(
+  lifecycle: EmploymentLifecycle,
+  frequency: PayFrequency,
+  anchorDate: string | null,
+  payDate: string,
+  asOfDate: Date = new Date(),
+): ExpectedPayPeriod | null {
+  if (!canDerivePayPeriods(lifecycle, frequency)) return null;
+
+  const parsed = parseDateOnly(payDate);
+  if (!parsed) return null;
+
+  const periods = deriveExpectedPayPeriodsForYear(
+    lifecycle,
+    frequency,
+    parsed.year,
+    anchorDate,
+    asOfDate,
+  ).filter((period) => period.status !== "not_expected");
+
+  const grace = graceDaysAfterPeriodEnd(frequency);
+  const afterPeriodEnd = periods.filter((period) => {
+    if (compareIsoDates(payDate, period.periodEndDate) < 0) return false;
+    const graceEnd = addDays(period.periodEndDate, grace);
+    return compareIsoDates(payDate, graceEnd) <= 0;
+  });
+
+  if (afterPeriodEnd.length > 0) {
+    return [...afterPeriodEnd].sort((left, right) =>
+      right.periodEndDate.localeCompare(left.periodEndDate),
+    )[0]!;
+  }
+
+  return (
+    periods.find(
+      (period) =>
+        compareIsoDates(payDate, period.periodStartDate) >= 0 &&
+        compareIsoDates(payDate, period.periodEndDate) <= 0,
+    ) ?? null
+  );
+}
+
 export function suggestDefaultPayPeriodKey(
   selectablePeriods: ExpectedPayPeriod[],
   coveredPeriodKeys: ReadonlySet<string>,

@@ -68,6 +68,15 @@ Paycheck line items use a **fixed catalog** of earnings and deduction types. Eac
 
 **Tenure owns** employment relationships, compensation history, paycheck detail, employment documents, and meaningful employment discussions. **Taxbook consumes** relevant paycheck totals for tax tracking; it should not become a second independent owner of the same paychecks. Passbook owns financial institutions and account statements, not employment pay stubs. Other domain apps retain their own documents rather than using Tenure as a general file cabinet.
 
+### Taxbook integration
+
+Tenure is the source of truth for paycheck line items and pay periods. Taxbook can:
+
+- import historical paycheques from a Taxbook CSV export into a single Tenure employment
+- read paycheck data from Tenure's local integration API for ongoing sync
+
+Imported or synced paychecks may exist without pay stub PDFs; Tenure's existing pay-stub completeness views surface those gaps for follow-up.
+
 ## Not modeled yet
 
 Commission reconciliation, detailed benefits administration, professional licensing, automatic payroll-portal downloads, and email synchronization need separate design before being added. In particular, a commission arrangement is not necessarily equivalent to a fixed salary or hourly rate.

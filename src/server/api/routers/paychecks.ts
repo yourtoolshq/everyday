@@ -14,6 +14,12 @@ import {
   paycheckInput,
 } from "~/lib/paycheck-deductions";
 import {
+  buildPaycheckImportPreview,
+  detectPaycheckColumnMapping,
+  paycheckImportRowToInput,
+  type PaycheckColumnMapping,
+} from "~/lib/paycheck-csv-import";
+import {
   buildExceptionsByEmployment,
   buildMissingPayStubItems,
   countPayCompletenessForYear,
@@ -116,6 +122,133 @@ export const paychecksRouter = createTRPCRouter({
       .where(eq(paychecks.employmentId, input.employmentId))
       .orderBy(desc(paychecks.payDate), desc(paychecks.createdAt));
   }),
+
+  previewImport: publicProcedure
+    .input(
+      z.object({
+        employmentId: z.string().uuid(),
+        csvText: z.string().min(1),
+        mapping: z.record(z.string(), z.string()).optional(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [employment] = await ctx.db
+        .select({
+          id: employments.id,
+          status: employments.status,
+          startDate: employments.startDate,
+          endDate: employments.endDate,
+          payFrequency: employments.payFrequency,
+          biweeklyAnchorDate: employments.biweeklyAnchorDate,
+        })
+        .from(employments)
+        .where(eq(employments.id, input.employmentId));
+
+      if (!employment) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+      }
+
+      const existingPaychecks = await ctx.db
+        .select({
+          payDate: paychecks.payDate,
+          grossPayCents: paychecks.grossPayCents,
+        })
+        .from(paychecks)
+        .where(eq(paychecks.employmentId, input.employmentId));
+
+      const mapping = (input.mapping ?? detectPaycheckColumnMapping(
+        input.csvText.trim().split(/\r?\n/)[0]?.split(",") ?? [],
+      )) as PaycheckColumnMapping;
+
+      return buildPaycheckImportPreview({
+        csvText: input.csvText,
+        mapping,
+        lifecycle: employment,
+        payFrequency: employment.payFrequency,
+        biweeklyAnchorDate: employment.biweeklyAnchorDate,
+        existingPaychecks,
+      });
+    }),
+
+  import: publicProcedure
+    .input(
+      z.object({
+        employmentId: z.string().uuid(),
+        csvText: z.string().min(1),
+        mapping: z.record(z.string(), z.string()).optional(),
+        skipDuplicates: z.boolean().default(true),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const [employment] = await ctx.db
+        .select({
+          id: employments.id,
+          status: employments.status,
+          startDate: employments.startDate,
+          endDate: employments.endDate,
+          payFrequency: employments.payFrequency,
+          biweeklyAnchorDate: employments.biweeklyAnchorDate,
+          deductionSettings: employments.deductionSettings,
+        })
+        .from(employments)
+        .where(eq(employments.id, input.employmentId));
+
+      if (!employment) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+      }
+
+      const existingPaychecks = await ctx.db
+        .select({
+          payDate: paychecks.payDate,
+          grossPayCents: paychecks.grossPayCents,
+        })
+        .from(paychecks)
+        .where(eq(paychecks.employmentId, input.employmentId));
+
+      const mapping = (input.mapping ?? detectPaycheckColumnMapping(
+        input.csvText.trim().split(/\r?\n/)[0]?.split(",") ?? [],
+      )) as PaycheckColumnMapping;
+
+      const preview = buildPaycheckImportPreview({
+        csvText: input.csvText,
+        mapping,
+        lifecycle: employment,
+        payFrequency: employment.payFrequency,
+        biweeklyAnchorDate: employment.biweeklyAnchorDate,
+        existingPaychecks,
+      });
+
+      const settings = parseDeductionSettings(employment.deductionSettings);
+      const rowsToImport = preview.rows.filter((row) => {
+        if (row.errors.length > 0) return false;
+        if (input.skipDuplicates && row.isDuplicate) return false;
+        return true;
+      });
+
+      const created = await ctx.db.transaction(async (tx) => {
+        const inserted = [];
+        for (const row of rowsToImport) {
+          const parsed = paycheckImportRowToInput(input.employmentId, row);
+          const values = buildPaycheckValues(parsed, settings);
+          const [paycheck] = await tx
+            .insert(paychecks)
+            .values({
+              employmentId: input.employmentId,
+              ...values,
+            })
+            .returning();
+          if (paycheck) inserted.push(paycheck);
+        }
+        return inserted;
+      });
+
+      return {
+        importedCount: created.length,
+        skippedDuplicateCount: preview.rows.filter((row) => row.isDuplicate).length,
+        skippedErrorCount: preview.errorCount,
+        estimatedPeriodCount: preview.estimatedPeriodCount,
+      };
+    }),
 
   create: publicProcedure.input(paycheckInput).mutation(async ({ ctx, input }) => {
     const settings = await getEmploymentPaySettings(ctx, input.employmentId);

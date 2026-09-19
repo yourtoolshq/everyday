@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Settings2, Trash2 } from "lucide-react";
+import { Plus, Settings2, Trash2, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -8,6 +8,7 @@ import { EmploymentPayPeriods } from "~/components/paychecks/employment-pay-peri
 import { EmploymentPaySettingsSheet } from "~/components/paychecks/employment-pay-settings-sheet";
 import { PayStubUploadSheet } from "~/components/paychecks/pay-stub-upload-sheet";
 import { PaycheckFormSheet } from "~/components/paychecks/paycheck-form-sheet";
+import { PaycheckImportSheet } from "~/components/paychecks/paycheck-import-sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -57,6 +58,7 @@ export function EmploymentPaychecksPanel({
   const review = api.paychecks.listForReview.useQuery();
 
   const [formOpen, setFormOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [stubOpen, setStubOpen] = useState(false);
   const [editingPaycheck, setEditingPaycheck] = useState<Paycheck | null>(null);
@@ -124,6 +126,10 @@ export function EmploymentPaychecksPanel({
           <Button size="sm" variant="outline" onClick={() => setSettingsOpen(true)}>
             <Settings2 />
             Pay settings
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload />
+            Import CSV
           </Button>
           <Button size="sm" onClick={() => openCreate()}>
             <Plus />
@@ -251,6 +257,12 @@ export function EmploymentPaychecksPanel({
         employerName={employerName}
         personName={personName}
         paycheck={stubPaycheck}
+      />
+
+      <PaycheckImportSheet
+        employmentId={employmentId}
+        open={importOpen}
+        onOpenChange={setImportOpen}
       />
 
       <AlertDialog open={Boolean(deleteTarget)} onOpenChange={() => setDeleteTarget(null)}>

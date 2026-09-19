@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    exclude: ["e2e/**", "node_modules/**"],
+    exclude: ["e2e/**", "node_modules/**", ".context/**"],
     env: {
       DATABASE_URL: "file::memory:",
       DOCUMENTS_DIR: "./.data/test-documents",
