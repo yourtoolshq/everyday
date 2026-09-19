@@ -3,8 +3,31 @@ import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { employmentStatuses } from "~/lib/employment-status";
+import { payFrequencies } from "~/lib/pay-frequency";
+import {
+  normalizeDeductionSettings,
+  parseDeductionSettings,
+  serializeDeductionSettings,
+  type DeductionSettings,
+} from "~/lib/paycheck-deductions";
 import { employers, employments, people } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+
+const deductionSettingsInput = z.object({
+  incomeTaxEnabled: z.boolean(),
+  federalIncomeTaxEnabled: z.boolean(),
+  manitobaIncomeTaxEnabled: z.boolean(),
+  cppEnabled: z.boolean(),
+  cpp2Enabled: z.boolean(),
+  eiEnabled: z.boolean(),
+  wiEnabled: z.boolean(),
+  ltdEnabled: z.boolean(),
+  extendedHealthEnabled: z.boolean(),
+  travelMedicalEnabled: z.boolean(),
+  unionDuesEnabled: z.boolean(),
+  otherDeductionsEnabled: z.boolean(),
+  deductionFieldOrder: z.array(z.string()).nullable(),
+});
 
 const employmentInput = z.object({
   employerId: z.string().uuid(),
@@ -14,7 +37,41 @@ const employmentInput = z.object({
   startDate: z.string().trim().max(10).nullable().optional(),
   endDate: z.string().trim().max(10).nullable().optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
+  payFrequency: z.enum(payFrequencies).default("irregular"),
+  biweeklyAnchorDate: z.string().trim().max(10).nullable().optional(),
 });
+
+const paySettingsInput = z.object({
+  employmentId: z.string().uuid(),
+  payFrequency: z.enum(payFrequencies),
+  biweeklyAnchorDate: z.string().trim().max(10).nullable().optional(),
+  deductionSettings: deductionSettingsInput,
+});
+
+function mapEmploymentRow(
+  row: {
+    id: string;
+    employerId: string;
+    employerName: string;
+    personId: string;
+    personName: string;
+    jobTitle: string | null;
+    status: (typeof employmentStatuses)[number];
+    startDate: string | null;
+    endDate: string | null;
+    notes: string | null;
+    payFrequency: (typeof payFrequencies)[number];
+    biweeklyAnchorDate: string | null;
+    deductionSettings: string;
+    createdAt: string;
+    updatedAt: string;
+  },
+) {
+  return {
+    ...row,
+    deductionSettings: parseDeductionSettings(row.deductionSettings),
+  };
+}
 
 const idInput = z.object({ id: z.string().uuid() });
 const now = () => new Date().toISOString();
@@ -33,6 +90,9 @@ export const employmentsRouter = createTRPCRouter({
         startDate: employments.startDate,
         endDate: employments.endDate,
         notes: employments.notes,
+        payFrequency: employments.payFrequency,
+        biweeklyAnchorDate: employments.biweeklyAnchorDate,
+        deductionSettings: employments.deductionSettings,
         createdAt: employments.createdAt,
         updatedAt: employments.updatedAt,
       })
@@ -43,7 +103,7 @@ export const employmentsRouter = createTRPCRouter({
     if (!employment) {
       throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
     }
-    return employment;
+    return mapEmploymentRow(employment);
   }),
 
   list: publicProcedure.query(async ({ ctx }) => {
@@ -59,13 +119,17 @@ export const employmentsRouter = createTRPCRouter({
         startDate: employments.startDate,
         endDate: employments.endDate,
         notes: employments.notes,
+        payFrequency: employments.payFrequency,
+        biweeklyAnchorDate: employments.biweeklyAnchorDate,
+        deductionSettings: employments.deductionSettings,
         createdAt: employments.createdAt,
         updatedAt: employments.updatedAt,
       })
       .from(employments)
       .innerJoin(employers, eq(employments.employerId, employers.id))
       .innerJoin(people, eq(employments.personId, people.id))
-      .orderBy(asc(employers.name), asc(people.displayName));
+      .orderBy(asc(employers.name), asc(people.displayName))
+      .then((rows) => rows.map(mapEmploymentRow));
   }),
 
   create: publicProcedure.input(employmentInput).mutation(async ({ ctx, input }) => {
@@ -94,10 +158,15 @@ export const employmentsRouter = createTRPCRouter({
         startDate: input.startDate ?? null,
         endDate: input.endDate ?? null,
         notes: input.notes ?? null,
+        payFrequency: input.payFrequency,
+        biweeklyAnchorDate: input.biweeklyAnchorDate ?? null,
       })
       .returning();
     if (!employment) throw new Error("Employment creation failed.");
-    return employment;
+    return {
+      ...employment,
+      deductionSettings: parseDeductionSettings(employment.deductionSettings),
+    };
   }),
 
   update: publicProcedure
@@ -120,6 +189,8 @@ export const employmentsRouter = createTRPCRouter({
           startDate: input.startDate ?? null,
           endDate: input.endDate ?? null,
           notes: input.notes ?? null,
+          payFrequency: input.payFrequency,
+          biweeklyAnchorDate: input.biweeklyAnchorDate ?? null,
           updatedAt: now(),
         })
         .where(eq(employments.id, input.id))
@@ -127,8 +198,35 @@ export const employmentsRouter = createTRPCRouter({
       if (!employment) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
       }
-      return employment;
+      return {
+        ...employment,
+        deductionSettings: parseDeductionSettings(employment.deductionSettings),
+      };
     }),
+
+  updatePaySettings: publicProcedure.input(paySettingsInput).mutation(async ({ ctx, input }) => {
+    const settings = normalizeDeductionSettings(
+      input.deductionSettings as DeductionSettings,
+    );
+
+    const [employment] = await ctx.db
+      .update(employments)
+      .set({
+        payFrequency: input.payFrequency,
+        biweeklyAnchorDate: input.biweeklyAnchorDate ?? null,
+        deductionSettings: serializeDeductionSettings(settings),
+        updatedAt: now(),
+      })
+      .where(eq(employments.id, input.employmentId))
+      .returning();
+    if (!employment) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+    }
+    return {
+      ...employment,
+      deductionSettings: parseDeductionSettings(employment.deductionSettings),
+    };
+  }),
 
   delete: publicProcedure.input(idInput).mutation(async ({ ctx, input }) => {
     const [employment] = await ctx.db

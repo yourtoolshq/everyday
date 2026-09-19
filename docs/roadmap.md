@@ -24,17 +24,21 @@ Tenure is a local-first record of a person's employment history. Build it in sma
 
 **Done when:** Important documents and discussions remain findable under the correct employment without relying on an employer portal or original inbox.
 
-## Phase 3 — Paychecks and pay stubs
+## Phase 3 — Paychecks, pay stubs, and pay-stub completeness
 
-**Goal:** Keep a structured pay history backed by original pay stubs.
+**Goal:** Keep a structured pay history backed by original pay stubs, and make it obvious what is still missing.
 
-- Record pay date and pay-period start/end dates.
-- Enter gross pay, itemized earnings, income tax, CPP, EI, other deductions, and net pay as shown on the stub.
+- Record pay date and the pay period the cheque covers (start and end dates). Pay date and pay period are distinct.
+- Allow more than one paycheck for the same pay period when an employer issues multiple cheques (for example a correction, bonus, or separate run).
+- Enter gross pay and itemized earnings and deductions (income tax, CPP, EI, and other lines from a fixed catalog). Configure which lines appear per employment, since employer pay-stub formats differ.
+- Calculate net pay from the entered line items; do not allow net pay to be entered directly. A mismatch with the pay stub means a line item was entered incorrectly.
 - Attach the original pay stub to its paycheck; allow a paycheck to exist while its stub is still missing.
-- Display paychecks chronologically within an employment, with basic totals and visible missing attachments.
-- Keep the line-item model flexible enough for different employer pay-stub formats without attempting to process payroll.
+- Display paychecks chronologically within an employment, with basic totals.
+- Record pay frequency on each employment (weekly, biweekly, semi-monthly, monthly, or irregular) and derive expected pay periods from that schedule and the employment dates, including biweekly schedules.
+- Show pay-stub completeness per employment: expected periods with no recorded paycheck, periods with one or more paychecks where any still lack a stub, current periods still waiting, and periods marked not applicable when no pay was issued.
+- Surface missing pay stubs and missing paychecks on the employment overview, in a reviewable period view, and in a global review useful for monthly check-ins.
 
-**Done when:** A person can enter and review each paycheck and tell which recorded paychecks still need their original PDFs.
+**Done when:** A person can enter and review each paycheck, reconcile calculated net pay against the stub, attach the original PDF, and see at a glance — per employment and across employments — which expected pay periods are complete, which recorded paychecks still need a stub, and which pay periods have no paycheck at all.
 
 ## Phase 4 — Compensation history
 
@@ -61,21 +65,21 @@ Tenure is a local-first record of a person's employment history. Build it in sma
 
 **Done when:** The user can investigate why an expected commission does or does not appear in a paycheck and retain the supporting references. Automated ClinicMaster or Payworks integration is **not** required.
 
-## Phase 6 — Completeness and portability
+## Phase 6 — Employment-record completeness and portability
 
-**Goal:** Reduce recordkeeping gaps and make the archive useful beyond a single job.
+**Goal:** Reduce recordkeeping gaps beyond pay stubs and make the archive useful beyond a single job.
 
-- Identify expected pay periods without a recorded paycheck when a pay schedule is known.
-- Add simple reminders or review views for missing stubs and important employment records.
+- Identify expected but missing employment documents such as offer letters, employment agreements, contracts, and salary-change letters.
+- Add simple reminders or review views for important employment records that are not pay stubs.
 - Export or archive an employment's records and attachments together when leaving an employer.
 - Improve summaries across paychecks and compensation changes without losing the employer-first navigation.
 
-**Done when:** Missing records are easy to spot and a complete employment history can be retained independently of Tenure's day-to-day UI.
+**Done when:** Missing non-pay-stub employment records are easy to spot and a complete employment history can be retained independently of Tenure's day-to-day UI.
 
 ## Later / only if needed
 
 - Faster import of pay stubs or commission reports if manual entry becomes tedious.
-- Optional Taxbook handoff of relevant earnings and deduction totals; Tenure remains the owner of paycheck details.
+- Optional Taxbook handoff of relevant earnings and deduction totals; Tenure remains the owner of paycheck details. No cross-app integration is required for Phase 3.
 - More detailed role history, benefits, or professional-licensing records if their ownership and workflows become clear.
 - Automatic payroll-portal downloads or email synchronization only if the value justifies the maintenance and security cost.
 

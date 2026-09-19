@@ -19,7 +19,7 @@ Employment records end up scattered across payroll portals, inboxes, downloads, 
 | Area | What the user can do |
 | --- | --- |
 | Employment | Create an employer and record a person's employment period, status, and current role. Return to that employer for all related records. |
-| Paychecks | Record pay dates and periods; enter gross pay, itemized earnings and deductions (including tax, CPP, and EI), and net pay; attach the original pay stub. |
+| Paychecks | Record pay date and pay period (start/end); enter gross pay and itemized earnings and deductions (including tax, CPP, and EI) with per-employment line configuration; support multiple paychecks for the same pay period; net pay is calculated for reconciliation; attach the original pay stub; review missing paychecks and stubs per employment and across employments. |
 | Compensation | Record effective-dated salary or hourly-rate changes; view a timeline and dollar/percentage changes between comparable rates. |
 | Documents | Upload and organize contracts, offer letters, employment letters, and other official records under an employment. |
 | Discussions | Record important conversations, meetings, and email context with dates, participants, and notes. |
@@ -29,13 +29,13 @@ Employment records end up scattered across payroll portals, inboxes, downloads, 
 1. Choose the person and employer.
 2. Open that employment's overview to see its current details and recent records.
 3. Add a paycheck, compensation change, document, or discussion as it occurs.
-4. Review pay history and check which paychecks still need their original stubs attached.
+4. Review pay history, check which paychecks still need their original stubs attached, see which expected pay periods are still missing a paycheck or stub, and use a global review for monthly check-ins.
 5. Retain the employment and its records after leaving the employer.
 
 ## What success looks like
 
 - An employer's important records are findable from one place.
-- Every entered paycheck can be checked against its original stub, and missing attachments are visible.
+- Every entered paycheck can be checked against its original stub, missing attachments are visible, and expected pay periods without a paycheck or stub are easy to spot.
 - A person can understand how their agreed compensation changed over time without confusing it with variable take-home pay.
 - Important employment discussions remain available independently of the original inbox or payroll portal.
 

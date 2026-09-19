@@ -3,6 +3,7 @@
 import {
   Briefcase,
   Building2,
+  ClipboardCheck,
   LayoutDashboard,
   Settings,
   Users,
@@ -44,6 +45,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const navigation = [
     { title: "Overview", href: "/", icon: LayoutDashboard },
     { title: "Employments", href: "/employments", icon: Briefcase },
+    { title: "Pay review", href: "/review/pay-stubs", icon: ClipboardCheck },
     { title: "Employers", href: "/employers", icon: Building2 },
     { title: "People", href: "/people", icon: Users },
   ];

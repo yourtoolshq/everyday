@@ -32,7 +32,8 @@ flowchart TD
 | Employment | A dated relationship between a person and employer, with current/former status and optional end date. |
 | Role history | Positions or titles held during an employment, with effective dates. A simple current title is sufficient initially. |
 | Compensation change | An agreed salary, hourly rate, or other compensation arrangement effective from a date. May include a reason and supporting document. |
-| Paycheck | A particular payment and its pay period, with itemized earnings, deductions, and net pay. |
+| Paycheck | A particular payment for a pay period (start and end dates), with itemized earnings, deductions, and derived net pay. More than one paycheck may exist for the same pay period. |
+| Pay period | The date range a paycheck covers, distinct from the pay date when funds are issued. Used for completeness tracking and grouping paychecks. |
 | Pay stub | The original file supporting a paycheck; its presence can be tracked independently from the entered amounts. |
 | Document | A retained contract, offer, employment letter, or other official record associated with an employment. |
 | Discussion | An important conversation, meeting, or email thread retained with its date, participants, and notes. May exist without an attached file. |
@@ -40,16 +41,18 @@ flowchart TD
 
 ## Paychecks and compensation are different
 
-A **compensation change** records the agreed rate and when it took effect. It is not calculated from a pay stub. A **paycheck** records what was actually paid, including gross earnings, income tax, CPP, EI, other line items, and net pay. A bonus, overtime, partial period, or deduction can change a paycheck without changing the agreed rate.
+A **compensation change** records the agreed rate and when it took effect. It is not calculated from a pay stub. A **paycheck** records what was actually paid, including gross earnings, income tax, CPP, EI, and other line items. **Net pay is derived** from those line items, not entered independently; if the calculated net does not match the pay stub, a line item was entered incorrectly. A bonus, overtime, partial period, or deduction can change a paycheck without changing the agreed rate.
 
-For a paycheck, preserve the line items as they appear on the stub rather than assuming every employer uses the same categories. Amounts and the original file should remain traceable to that paycheck.
+Paycheck line items use a **fixed catalog** of earnings and deduction types. Each employment configures which catalog lines appear and in what order, since employer pay-stub formats differ. Amounts and the original file should remain traceable to that paycheck.
 
 ## Relationships and rules
 
 - One person may have many employments; one employer may be linked to many people or separate periods of employment.
 - Each paycheck, compensation change, document, discussion, and note belongs to an employment. A document may optionally link to a discussion and may additionally support a particular change or role in later phases.
 - Compensation entries have effective dates; the percentage change is derived from the previous comparable rate, not stored as an independent fact. Do not compare annual salary and hourly rate without an explicit conversion basis.
-- Pay date and pay-period dates are distinct. A paycheck can be entered before its original pay stub has been saved.
+- Pay date and pay-period dates are distinct. Each paycheck records the pay period it covers (start and end). A paycheck can be entered before its original pay stub has been saved.
+- More than one paycheck may belong to the same pay period. Completeness treats a period as covered when at least one paycheck exists for it; each paycheck still tracks its own pay-stub attachment independently.
+- Pay frequency is recorded on the employment (including biweekly) and used to derive expected pay periods for completeness tracking.
 - Retained email exports are stored as documents; discussions capture the surrounding context in notes. Notes add context without altering the original evidence.
 - Ending an employment does not remove its records. Corrections to entered figures should not silently replace the original attached pay stub.
 
@@ -58,7 +61,8 @@ For a paycheck, preserve the line items as they appear on the stub rather than a
 - **Employer overview:** current/former relationship, role, compensation, and recent records.
 - **Compensation timeline:** effective rates and comparable dollar/percentage changes.
 - **Pay history:** paychecks and their earnings/deductions, organized within an employment.
-- **Record completeness:** paychecks missing a pay stub, or expected pay periods with no recorded paycheck when a pay schedule is known.
+- **Pay-stub completeness:** expected pay periods derived from employment pay frequency (including biweekly); expected periods with no recorded paycheck; periods with paychecks where any lack a pay stub; periods marked not applicable when no pay was issued. Reviewable per employment and across employments.
+- **Employment-record completeness:** expected but missing non-pay-stub documents such as offer letters, employment agreements, and contracts (later phase).
 
 ## Boundaries with other Your Tools apps
 

@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { EmploymentDiscussionsPanel } from "~/components/discussions/employment-discussions-panel";
 import { EmploymentDocumentsPanel } from "~/components/employments/employment-documents-panel";
+import { EmploymentPaychecksPanel } from "~/components/paychecks/employment-paychecks-panel";
 import { EmploymentFormDrawer } from "~/components/employments/employment-form-drawer";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -99,18 +100,19 @@ export function EmploymentDetail({ employment }: EmploymentDetailProps) {
         </Card>
 
         <div className="grid gap-4">
+          <EmploymentPaychecksPanel
+            employmentId={employment.id}
+            employerName={employment.employerName}
+            personName={employment.personName}
+            payFrequency={employment.payFrequency}
+            biweeklyAnchorDate={employment.biweeklyAnchorDate}
+            deductionSettings={employment.deductionSettings}
+            startDate={employment.startDate}
+            endDate={employment.endDate}
+            status={employment.status}
+          />
           <EmploymentDocumentsPanel employmentId={employment.id} />
           <EmploymentDiscussionsPanel employmentId={employment.id} />
-          <Card className="shadow-none">
-            <CardHeader>
-              <CardTitle className="text-base">Paychecks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Pay history and pay stubs will live here in Phase 3.
-              </p>
-            </CardContent>
-          </Card>
         </div>
       </div>
 

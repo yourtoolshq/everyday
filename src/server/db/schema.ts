@@ -1,8 +1,9 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import type { DocumentType } from "~/lib/documents";
 import type { EmploymentStatus } from "~/lib/employment-status";
+import type { PayFrequency } from "~/lib/pay-frequency";
 
 const id = () =>
   text("id")
@@ -65,6 +66,9 @@ export const employments = sqliteTable(
     startDate: text("start_date"),
     endDate: text("end_date"),
     notes: text("notes"),
+    payFrequency: text("pay_frequency").$type<PayFrequency>().notNull().default("irregular"),
+    biweeklyAnchorDate: text("biweekly_anchor_date"),
+    deductionSettings: text("deduction_settings").notNull().default("{}"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -113,5 +117,54 @@ export const documents = sqliteTable(
   (table) => [
     index("documents_employment_idx").on(table.employmentId),
     index("documents_discussion_idx").on(table.discussionId),
+  ],
+);
+
+export const paychecks = sqliteTable(
+  "paychecks",
+  {
+    id: id(),
+    employmentId: text("employment_id")
+      .notNull()
+      .references(() => employments.id, { onDelete: "cascade" }),
+    payDate: text("pay_date").notNull(),
+    periodStartDate: text("period_start_date").notNull(),
+    periodEndDate: text("period_end_date").notNull(),
+    grossPayCents: integer("gross_pay_cents").notNull(),
+    incomeTaxCents: integer("income_tax_cents").notNull(),
+    federalIncomeTaxCents: integer("federal_income_tax_cents").notNull().default(0),
+    manitobaIncomeTaxCents: integer("manitoba_income_tax_cents").notNull().default(0),
+    cppCents: integer("cpp_cents").notNull(),
+    cpp2Cents: integer("cpp2_cents").notNull(),
+    eiCents: integer("ei_cents").notNull(),
+    wiCents: integer("wi_cents").notNull().default(0),
+    ltdCents: integer("ltd_cents").notNull().default(0),
+    extendedHealthCents: integer("extended_health_cents").notNull().default(0),
+    travelMedicalCents: integer("travel_medical_cents").notNull().default(0),
+    unionDuesCents: integer("union_dues_cents").notNull().default(0),
+    otherDeductionsCents: integer("other_deductions_cents").notNull(),
+    netPayCents: integer("net_pay_cents").notNull(),
+    documentId: text("document_id").references(() => documents.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("paychecks_employment_idx").on(table.employmentId),
+    index("paychecks_document_idx").on(table.documentId),
+  ],
+);
+
+export const payPeriodExceptions = sqliteTable(
+  "pay_period_exceptions",
+  {
+    employmentId: text("employment_id")
+      .notNull()
+      .references(() => employments.id, { onDelete: "cascade" }),
+    periodKey: text("period_key").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.employmentId, table.periodKey] }),
+    index("pay_period_exceptions_employment_idx").on(table.employmentId),
   ],
 );
