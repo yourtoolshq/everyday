@@ -104,7 +104,7 @@ export function TaxDocuments() {
         <Button asChild variant="outline"><Link href="/items">Manage Tax Items</Link></Button>
       </div>
 
-      <Card className={readiness.isReady ? "border-emerald-200 bg-emerald-50/60" : undefined}>
+      <Card className={readiness.isReady ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/40" : undefined}>
         <CardContent className="flex flex-wrap items-center gap-3">
           <span className="flex size-10 items-center justify-center rounded-full bg-background">{readiness.isReady ? <IconCircleCheck className="size-5 text-emerald-600" /> : <IconClock className="size-5 text-primary" />}</span>
           <div><p className="font-medium">{readinessMessage}</p><p className="text-sm text-muted-foreground">{readiness.total.toLocaleString()} tracked {readiness.total === 1 ? "document" : "documents"} for this year</p></div>

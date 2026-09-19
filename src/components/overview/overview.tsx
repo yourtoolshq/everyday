@@ -23,9 +23,9 @@ import {
 import { api } from "~/trpc/react";
 
 const statusStyles: Record<ItemStatus, string> = {
-  planned: "border-slate-200 bg-slate-50 text-slate-700",
-  in_progress: "border-amber-200 bg-amber-50 text-amber-800",
-  complete: "border-emerald-200 bg-emerald-50 text-emerald-800",
+  planned: "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200",
+  in_progress: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200",
+  complete: "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200",
 };
 
 export function Overview() {
@@ -119,7 +119,7 @@ export function Overview() {
         </Card>
 
         <div className="space-y-6">
-          <Card className={estimate.data.supported && estimate.data.projected.householdResultCents >= 0 ? "border-emerald-200 bg-emerald-50/60" : undefined}>
+          <Card className={estimate.data.supported && estimate.data.projected.householdResultCents >= 0 ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/40" : undefined}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base"><IconCalculator className="size-5 text-primary" /> Tax estimate</CardTitle>
               <CardDescription>{estimate.data.supported ? `${estimate.data.projected.householdResultCents >= 0 ? "Projected refund" : "Projected amount owing"}: ${formatCad(Math.abs(estimate.data.projected.householdResultCents))}${estimate.data.incomplete ? " · incomplete" : ""}` : estimate.data.blockingReasons[0]}</CardDescription>
@@ -144,7 +144,7 @@ export function Overview() {
               })}
             </CardContent>
           </Card>
-          <Card className={documentData.isReady ? "border-emerald-200 bg-emerald-50/60" : undefined}>
+          <Card className={documentData.isReady ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900 dark:bg-emerald-950/40" : undefined}>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base"><IconFileDescription className="size-5 text-primary" /> Filing documents</CardTitle>
               <CardDescription>{documentData.total === 0 ? "No tax documents tracked" : documentData.isReady ? "All tracked documents are ready" : `${documentData.counts.expected} waiting · ${documentData.counts.received} need review`}</CardDescription>
