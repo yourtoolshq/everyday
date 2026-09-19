@@ -48,10 +48,10 @@ TENURE_PORT=3200 docker compose up --build -d
 
 Tenure joins the external `web` Docker network and registers with Traefik at `tenure.tools.local`.
 
-Add a hosts entry if needed:
+Add hosts entries if needed (`/etc/hosts` does not support wildcards):
 
 ```sh
-echo "127.0.0.1 tenure.tools.local" | sudo tee -a /etc/hosts
+echo "127.0.0.1 taxbook.tools.local tenure.tools.local passbook.tools.local tools.local" | sudo tee -a /etc/hosts
 ```
 
 Then open https://tenure.tools.local. Traefik serves a locally-trusted mkcert
