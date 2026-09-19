@@ -20,6 +20,32 @@ const idInput = z.object({ id: z.string().uuid() });
 const now = () => new Date().toISOString();
 
 export const employmentsRouter = createTRPCRouter({
+  getById: publicProcedure.input(idInput).query(async ({ ctx, input }) => {
+    const [employment] = await ctx.db
+      .select({
+        id: employments.id,
+        employerId: employers.id,
+        employerName: employers.name,
+        personId: people.id,
+        personName: people.displayName,
+        jobTitle: employments.jobTitle,
+        status: employments.status,
+        startDate: employments.startDate,
+        endDate: employments.endDate,
+        notes: employments.notes,
+        createdAt: employments.createdAt,
+        updatedAt: employments.updatedAt,
+      })
+      .from(employments)
+      .innerJoin(employers, eq(employments.employerId, employers.id))
+      .innerJoin(people, eq(employments.personId, people.id))
+      .where(eq(employments.id, input.id));
+    if (!employment) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+    }
+    return employment;
+  }),
+
   list: publicProcedure.query(async ({ ctx }) => {
     return ctx.db
       .select({

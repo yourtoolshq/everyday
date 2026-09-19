@@ -1,4 +1,5 @@
 import { Briefcase, Building2, Users } from "lucide-react";
+import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { api } from "~/trpc/server";
@@ -9,9 +10,14 @@ export default async function OverviewPage() {
   const summary = await api.overview.summary();
 
   const stats = [
-    { label: "People", value: summary.peopleCount, icon: Users },
-    { label: "Employers", value: summary.employerCount, icon: Building2 },
-    { label: "Employments", value: summary.employmentCount, icon: Briefcase },
+    { label: "People", value: summary.peopleCount, icon: Users, href: "/people" },
+    { label: "Employers", value: summary.employerCount, icon: Building2, href: "/employers" },
+    {
+      label: "Employments",
+      value: summary.employmentCount,
+      icon: Briefcase,
+      href: "/employments",
+    },
   ];
 
   return (
@@ -28,17 +34,19 @@ export default async function OverviewPage() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map((stat) => (
-          <Card key={stat.label} className="shadow-none">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.label}
-              </CardTitle>
-              <stat.icon className="size-4 text-primary" aria-hidden="true" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-3xl font-semibold">{stat.value}</p>
-            </CardContent>
-          </Card>
+          <Link key={stat.label} href={stat.href}>
+            <Card className="shadow-none transition-colors hover:bg-muted/40">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {stat.label}
+                </CardTitle>
+                <stat.icon className="size-4 text-primary" aria-hidden="true" />
+              </CardHeader>
+              <CardContent>
+                <p className="text-3xl font-semibold">{stat.value}</p>
+              </CardContent>
+            </Card>
+          </Link>
         ))}
       </div>
     </main>

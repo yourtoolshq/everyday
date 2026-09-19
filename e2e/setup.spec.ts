@@ -10,5 +10,5 @@ test("setup flow creates a household", async ({ page }) => {
   await page.getByRole("button", { name: "Open Tenure" }).click();
 
   await expect(page.getByRole("heading", { name: "Test household" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "People" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "People", exact: true })).toBeVisible();
 });

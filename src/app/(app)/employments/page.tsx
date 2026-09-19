@@ -6,7 +6,7 @@ export default function EmploymentsPage() {
       <div className="space-y-1">
         <h2 className="text-2xl font-semibold tracking-tight">Employments</h2>
         <p className="text-sm text-muted-foreground">
-          Record each person&apos;s employment period with an employer.
+          Each job is a role at an employer — open one to see everything for that position.
         </p>
       </div>
       <EmploymentsWorkspace />

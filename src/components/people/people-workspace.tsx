@@ -1,25 +1,22 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { PersonFormDrawer } from "~/components/people/person-form-drawer";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
 import { api } from "~/trpc/react";
 
 export function PeopleWorkspace() {
   const utils = api.useUtils();
   const people = api.people.list.useQuery();
-  const createPerson = api.people.create.useMutation({
-    onSuccess: async () => {
-      setName("");
-      await utils.people.list.invalidate();
-      toast.success("Person added.");
-    },
-    onError: (error) => toast.error(error.message),
-  });
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editPerson, setEditPerson] = useState<
+    (typeof people.data extends (infer Item)[] | undefined ? Item : never) | null
+  >(null);
+
   const deletePerson = api.people.delete.useMutation({
     onSuccess: async () => {
       await utils.people.list.invalidate();
@@ -27,41 +24,39 @@ export function PeopleWorkspace() {
     },
     onError: (error) => toast.error(error.message),
   });
-  const [name, setName] = useState("");
 
   return (
-    <div className="space-y-6">
-      <form
-        className="flex flex-col gap-3 sm:flex-row"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!name.trim()) return;
-          createPerson.mutate({ displayName: name.trim() });
-        }}
-      >
-        <Input
-          placeholder="Person name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-        />
-        <Button type="submit" disabled={createPerson.isPending}>
-          <Plus /> Add person
+    <>
+      <div className="flex justify-end">
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus />
+          Add person
         </Button>
-      </form>
+      </div>
 
       <div className="space-y-3">
         {people.data?.map((person) => (
           <Card key={person.id} className="shadow-none">
             <CardContent className="flex items-center justify-between gap-4 p-4">
               <p className="font-medium">{person.displayName}</p>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Remove ${person.displayName}`}
-                onClick={() => deletePerson.mutate({ id: person.id })}
-              >
-                <Trash2 />
-              </Button>
+              <div className="flex shrink-0 items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Edit ${person.displayName}`}
+                  onClick={() => setEditPerson(person)}
+                >
+                  <Pencil />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Remove ${person.displayName}`}
+                  onClick={() => deletePerson.mutate({ id: person.id })}
+                >
+                  <Trash2 />
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
@@ -69,6 +64,18 @@ export function PeopleWorkspace() {
           <p className="text-sm text-muted-foreground">No people yet.</p>
         ) : null}
       </div>
-    </div>
+
+      <PersonFormDrawer open={createOpen} onOpenChange={setCreateOpen} mode="create" />
+
+      <PersonFormDrawer
+        open={Boolean(editPerson)}
+        onOpenChange={(open) => {
+          if (!open) setEditPerson(null);
+        }}
+        mode="edit"
+        person={editPerson ?? undefined}
+        onSuccess={() => setEditPerson(null)}
+      />
+    </>
   );
 }

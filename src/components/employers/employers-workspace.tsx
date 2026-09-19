@@ -1,29 +1,23 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { EmployerFormDrawer } from "~/components/employers/employer-form-drawer";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
 import { api } from "~/trpc/react";
 
 export function EmployersWorkspace() {
   const utils = api.useUtils();
   const employers = api.employers.list.useQuery();
-  const createEmployer = api.employers.create.useMutation({
-    onSuccess: async () => {
-      setName("");
-      setWebsite("");
-      setNotes("");
-      await utils.employers.list.invalidate();
-      toast.success("Employer added.");
-    },
-    onError: (error) => toast.error(error.message),
-  });
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editEmployer, setEditEmployer] = useState<
+    (typeof employers.data extends (infer Item)[] | undefined ? Item : never) | null
+  >(null);
+
   const deleteEmployer = api.employers.delete.useMutation({
     onSuccess: async () => {
       await utils.employers.list.invalidate();
@@ -31,65 +25,21 @@ export function EmployersWorkspace() {
     },
     onError: (error) => toast.error(error.message),
   });
-  const [name, setName] = useState("");
-  const [website, setWebsite] = useState("");
-  const [notes, setNotes] = useState("");
 
   return (
-    <div className="space-y-6">
-      <Card className="shadow-none">
-        <CardContent className="space-y-4 p-4">
-          <form
-            className="space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!name.trim()) return;
-              createEmployer.mutate({
-                name: name.trim(),
-                website: website.trim() || null,
-                notes: notes.trim() || null,
-              });
-            }}
-          >
-            <div className="space-y-2">
-              <Label htmlFor="employer-name">Employer name</Label>
-              <Input
-                id="employer-name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="employer-website">Website</Label>
-              <Input
-                id="employer-website"
-                value={website}
-                onChange={(event) => setWebsite(event.target.value)}
-                placeholder="https://"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="employer-notes">Notes</Label>
-              <Textarea
-                id="employer-notes"
-                value={notes}
-                onChange={(event) => setNotes(event.target.value)}
-                rows={3}
-              />
-            </div>
-            <Button type="submit" disabled={createEmployer.isPending}>
-              <Plus /> Add employer
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+    <>
+      <div className="flex justify-end">
+        <Button onClick={() => setCreateOpen(true)}>
+          <Plus />
+          Add employer
+        </Button>
+      </div>
 
       <div className="space-y-3">
         {employers.data?.map((employer) => (
           <Card key={employer.id} className="shadow-none">
             <CardContent className="flex items-start justify-between gap-4 p-4">
-              <div>
+              <Link href={`/employers/${employer.id}`} className="min-w-0 flex-1">
                 <p className="font-medium">{employer.name}</p>
                 {employer.website ? (
                   <p className="text-sm text-muted-foreground">{employer.website}</p>
@@ -97,15 +47,25 @@ export function EmployersWorkspace() {
                 {employer.notes ? (
                   <p className="mt-2 text-sm text-muted-foreground">{employer.notes}</p>
                 ) : null}
+              </Link>
+              <div className="flex shrink-0 items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Edit ${employer.name}`}
+                  onClick={() => setEditEmployer(employer)}
+                >
+                  <Pencil />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`Remove ${employer.name}`}
+                  onClick={() => deleteEmployer.mutate({ id: employer.id })}
+                >
+                  <Trash2 />
+                </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={`Remove ${employer.name}`}
-                onClick={() => deleteEmployer.mutate({ id: employer.id })}
-              >
-                <Trash2 />
-              </Button>
             </CardContent>
           </Card>
         ))}
@@ -113,6 +73,18 @@ export function EmployersWorkspace() {
           <p className="text-sm text-muted-foreground">No employers yet.</p>
         ) : null}
       </div>
-    </div>
+
+      <EmployerFormDrawer open={createOpen} onOpenChange={setCreateOpen} mode="create" />
+
+      <EmployerFormDrawer
+        open={Boolean(editEmployer)}
+        onOpenChange={(open) => {
+          if (!open) setEditEmployer(null);
+        }}
+        mode="edit"
+        employer={editEmployer ?? undefined}
+        onSuccess={() => setEditEmployer(null)}
+      />
+    </>
   );
 }
