@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyPaychequeIncomeTax,
+  calculateIncomeTaxCents,
   calculateNetPay,
   calculateEmploymentProjection,
   countRemainingPaycheques,
+  deductionFields,
+  normalizeDeductionFieldOrder,
+  orderedDeductionFields,
   paychequeInput,
 } from "./employment";
 
@@ -11,6 +16,8 @@ describe("paycheque amounts", () => {
   const amounts = {
     grossPayCents: 200_000,
     incomeTaxCents: 35_000,
+    federalIncomeTaxCents: 0,
+    manitobaIncomeTaxCents: 0,
     cppCents: 11_000,
     cpp2Cents: 1_000,
     eiCents: 3_200,
@@ -26,6 +33,53 @@ describe("paycheque amounts", () => {
     expect(calculateNetPay(amounts)).toBe(141_200);
   });
 
+  it("does not double-count federal and Manitoba tax in net pay", () => {
+    expect(
+      calculateNetPay({
+        ...amounts,
+        federalIncomeTaxCents: 20_000,
+        manitobaIncomeTaxCents: 15_000,
+      }),
+    ).toBe(141_200);
+  });
+
+  it("calculates combined income tax from federal and Manitoba amounts", () => {
+    expect(
+      calculateIncomeTaxCents(
+        {
+          incomeTaxCents: 1,
+          federalIncomeTaxCents: 20_000,
+          manitobaIncomeTaxCents: 15_000,
+        },
+        true,
+      ),
+    ).toBe(35_000);
+    expect(
+      calculateIncomeTaxCents(
+        {
+          incomeTaxCents: 35_000,
+          federalIncomeTaxCents: 20_000,
+          manitobaIncomeTaxCents: 15_000,
+        },
+        false,
+      ),
+    ).toBe(35_000);
+  });
+
+  it("overwrites combined income tax when the split is enabled", () => {
+    expect(
+      applyPaychequeIncomeTax(
+        {
+          ...amounts,
+          incomeTaxCents: 1,
+          federalIncomeTaxCents: 20_000,
+          manitobaIncomeTaxCents: 15_000,
+        },
+        true,
+      ).incomeTaxCents,
+    ).toBe(35_000);
+  });
+
   it("rejects deductions greater than gross pay", () => {
     expect(
       paychequeInput.safeParse({
@@ -35,6 +89,24 @@ describe("paycheque amounts", () => {
         grossPayCents: 10_000,
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("deduction field order", () => {
+  it("applies a saved order and appends missing fields in canonical order", () => {
+    expect(
+      orderedDeductionFields(["eiCents", "cppCents", "unknown"]).map(
+        (field) => field.amountField,
+      ),
+    ).toEqual(normalizeDeductionFieldOrder(["eiCents", "cppCents"]));
+    expect(normalizeDeductionFieldOrder(["eiCents", "cppCents"])).toHaveLength(
+      deductionFields.length,
+    );
+    expect(normalizeDeductionFieldOrder(["eiCents", "cppCents"])[0]).toBe("eiCents");
+    expect(normalizeDeductionFieldOrder(["eiCents", "cppCents"])[1]).toBe("cppCents");
+    expect(normalizeDeductionFieldOrder(null)).toEqual(
+      deductionFields.map((field) => field.amountField),
+    );
   });
 });
 

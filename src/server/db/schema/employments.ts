@@ -11,6 +11,7 @@ import {
 import {
   employmentStatuses,
   payFrequencies,
+  type DeductionAmountField,
 } from "~/domain/employment";
 import { people } from "./people";
 import { timestamps } from "./shared";
@@ -38,6 +39,19 @@ export const employments = sqliteTable(
     incomeTaxEnabled: integer("income_tax_enabled", { mode: "boolean" })
       .default(true)
       .notNull(),
+    federalIncomeTaxEnabled: integer("federal_income_tax_enabled", {
+      mode: "boolean",
+    })
+      .default(false)
+      .notNull(),
+    manitobaIncomeTaxEnabled: integer("manitoba_income_tax_enabled", {
+      mode: "boolean",
+    })
+      .default(false)
+      .notNull(),
+    deductionFieldOrder: text("deduction_field_order", { mode: "json" }).$type<
+      DeductionAmountField[] | null
+    >(),
     cppEnabled: integer("cpp_enabled", { mode: "boolean" }).default(true).notNull(),
     cpp2Enabled: integer("cpp2_enabled", { mode: "boolean" }).default(true).notNull(),
     eiEnabled: integer("ei_enabled", { mode: "boolean" }).default(true).notNull(),

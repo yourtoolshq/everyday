@@ -3,6 +3,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
+  employmentDeductionSettings,
   employmentInput,
   employmentUpdateInput,
 } from "~/domain/employment";
@@ -59,6 +60,9 @@ export const employmentRouter = createTRPCRouter({
         endDate: employments.endDate,
         typicalGrossOverrideCents: employments.typicalGrossOverrideCents,
         incomeTaxEnabled: employments.incomeTaxEnabled,
+        federalIncomeTaxEnabled: employments.federalIncomeTaxEnabled,
+        manitobaIncomeTaxEnabled: employments.manitobaIncomeTaxEnabled,
+        deductionFieldOrder: employments.deductionFieldOrder,
         cppEnabled: employments.cppEnabled,
         cpp2Enabled: employments.cpp2Enabled,
         eiEnabled: employments.eiEnabled,
@@ -117,7 +121,7 @@ export const employmentRouter = createTRPCRouter({
           .values({
             taxYearId: year.id,
             taxItemId: taxItem!.id,
-            ...input,
+            ...employmentDeductionSettings(input),
           })
           .returning();
         const linked = await reconcileEmploymentLinkedTaxItems(tx, employment!, {
@@ -137,7 +141,7 @@ export const employmentRouter = createTRPCRouter({
       const year = await requireEditableActiveYear(ctx.db, household.id);
       await requirePerson(ctx.db, household.id, input.personId);
       validateEndDate(input.endDate, year.year);
-      const { id, ...values } = input;
+      const { id, ...values } = employmentDeductionSettings(input);
       return ctx.db.transaction(async (tx) => {
         const [employment] = await tx
           .update(employments)

@@ -24,6 +24,8 @@ import {
 import {
   calculateNetPay,
   deductionFields,
+  isIncomeTaxSplit,
+  orderedDeductionFields,
   type DeductionAmountField,
 } from "~/domain/employment";
 import { centsToDollars, dollarsToCents } from "~/domain/money";
@@ -69,15 +71,37 @@ export function PaychequeFormSheet({
   const selectedEmployment = employments.find(
     (employment) => String(employment.id) === employmentId,
   );
-  const visibleDeductionFields = deductionFields.filter(
-    (field) =>
-      selectedEmployment?.[field.enabledField] ||
-      (dollarsToCents(amounts[field.amountField]) ?? 0) > 0,
-  );
+  const splitIncomeTax = selectedEmployment
+    ? isIncomeTaxSplit(selectedEmployment)
+    : false;
+  const visibleDeductionFields = orderedDeductionFields(
+    selectedEmployment?.deductionFieldOrder,
+  ).filter((field) => {
+    if (field.amountField === "incomeTaxCents" && splitIncomeTax) return true;
+    if (
+      (field.amountField === "federalIncomeTaxCents" ||
+        field.amountField === "manitobaIncomeTaxCents") &&
+      !selectedEmployment?.[field.enabledField]
+    ) {
+      return false;
+    }
+    return (
+      Boolean(selectedEmployment?.[field.enabledField]) ||
+      (dollarsToCents(amounts[field.amountField]) ?? 0) > 0
+    );
+  });
   const parsedAmounts = Object.fromEntries(
     (["grossPayCents", ...deductionFields.map((field) => field.amountField)] as const)
       .map((field) => [field, dollarsToCents(amounts[field])]),
   ) as Record<AmountField, number | null>;
+  if (
+    splitIncomeTax &&
+    parsedAmounts.federalIncomeTaxCents !== null &&
+    parsedAmounts.manitobaIncomeTaxCents !== null
+  ) {
+    parsedAmounts.incomeTaxCents =
+      parsedAmounts.federalIncomeTaxCents + parsedAmounts.manitobaIncomeTaxCents;
+  }
   const netPayCents = Object.values(parsedAmounts).some((value) => value === null)
     ? null
     : calculateNetPay(parsedAmounts as Record<AmountField, number>);
@@ -170,25 +194,41 @@ export function PaychequeFormSheet({
                   />
                 </div>
               </div>
-              {visibleDeductionFields.map((field) => (
-                <div key={field.amountField} className="space-y-2">
-                  <Label htmlFor={field.amountField}>{field.label}</Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
-                    <Input
-                      id={field.amountField}
-                      className="pl-7 tabular-nums"
-                      inputMode="decimal"
-                      value={amounts[field.amountField]}
-                      onChange={(event) => setAmounts((current) => ({
-                        ...current,
-                        [field.amountField]: event.target.value,
-                      }))}
-                      required
-                    />
+              {visibleDeductionFields.map((field) => {
+                const computedIncomeTax =
+                  field.amountField === "incomeTaxCents" && splitIncomeTax;
+                return (
+                  <div key={field.amountField} className="space-y-2">
+                    <Label htmlFor={field.amountField}>{field.label}</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
+                      <Input
+                        id={field.amountField}
+                        className="pl-7 tabular-nums"
+                        inputMode="decimal"
+                        value={
+                          computedIncomeTax
+                            ? parsedAmounts.incomeTaxCents === null
+                              ? ""
+                              : centsToDollars(parsedAmounts.incomeTaxCents)
+                            : amounts[field.amountField]
+                        }
+                        onChange={(event) => setAmounts((current) => ({
+                          ...current,
+                          [field.amountField]: event.target.value,
+                        }))}
+                        readOnly={computedIncomeTax}
+                        required={!computedIncomeTax}
+                      />
+                    </div>
+                    {computedIncomeTax ? (
+                      <p className="text-xs text-muted-foreground">
+                        Sum of federal and Manitoba tax withheld.
+                      </p>
+                    ) : null}
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="calculated-net-pay">Net pay (calculated)</Label>
                 <div className="relative">

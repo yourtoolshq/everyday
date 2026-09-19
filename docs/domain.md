@@ -135,8 +135,12 @@ Employment. This keeps the paycheques, projections, and eventual T4 for each
 employer distinct.
 
 An Employment also identifies which supported deduction fields are relevant to
-its paycheques. Paycheque net pay is calculated from gross pay minus the recorded
-deductions rather than entered separately.
+its paycheques and the order those fields appear during entry. Some employers
+split income tax withheld into federal and Manitoba amounts; in that case the
+combined income tax is calculated from the two parts. Paycheque net pay is
+calculated from gross pay minus the recorded deductions rather than entered
+separately. Federal and Manitoba tax parts are not counted again on top of
+combined income tax.
 
 Each Employment creates one calculated employment-income Tax Item. Its actual
 amount is the sum of recorded gross pay. Its expected amount is the current

@@ -331,6 +331,67 @@ describe("Tax Book API", () => {
     expect((await caller.taxItem.list()).items).toHaveLength(1);
   });
 
+  it("computes combined income tax from federal and Manitoba withholding", async () => {
+    await caller.setup.initialize({
+      householdName: "Example household",
+      people: ["Person A", "Person B"],
+      year: 2026,
+    });
+    const [personA] = (await caller.settings.get()).people;
+    const employment = await caller.employment.create({
+      personId: personA!.id,
+      employerName: "Employer A",
+      payFrequency: "biweekly",
+      status: "active",
+      endDate: null,
+      typicalGrossOverrideCents: null,
+      federalIncomeTaxEnabled: true,
+      manitobaIncomeTaxEnabled: true,
+      deductionFieldOrder: [
+        "cppCents",
+        "federalIncomeTaxCents",
+        "eiCents",
+        "manitobaIncomeTaxCents",
+        "incomeTaxCents",
+      ],
+    });
+
+    const listed = (await caller.employment.list()).items.find(
+      (item) => item.id === employment!.id,
+    );
+    expect(listed).toMatchObject({
+      incomeTaxEnabled: true,
+      federalIncomeTaxEnabled: true,
+      manitobaIncomeTaxEnabled: true,
+    });
+    expect(listed?.deductionFieldOrder?.slice(0, 5)).toEqual([
+      "cppCents",
+      "federalIncomeTaxCents",
+      "eiCents",
+      "manitobaIncomeTaxCents",
+      "incomeTaxCents",
+    ]);
+
+    const paycheque = await caller.paycheque.create({
+      employmentId: employment!.id,
+      payDate: "2026-06-19",
+      grossPayCents: 200_000,
+      incomeTaxCents: 0,
+      federalIncomeTaxCents: 20_000,
+      manitobaIncomeTaxCents: 15_000,
+      cppCents: 11_000,
+      cpp2Cents: 1_000,
+      eiCents: 3_200,
+      otherDeductionsCents: 4_800,
+    });
+    expect(paycheque).toMatchObject({
+      incomeTaxCents: 35_000,
+      federalIncomeTaxCents: 20_000,
+      manitobaIncomeTaxCents: 15_000,
+      netPayCents: 145_000,
+    });
+  });
+
   it("links PHSP and union-dues paycheque deductions to Tax Items when reported on T4", async () => {
     await caller.setup.initialize({
       householdName: "Example household",

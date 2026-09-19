@@ -3,7 +3,9 @@ import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import {
+  applyPaychequeIncomeTax,
   calculateNetPay,
+  isIncomeTaxSplit,
   paychequeInput,
   paychequeUpdateInput,
 } from "~/domain/employment";
@@ -42,6 +44,24 @@ function validatePayDate(payDate: string, year: number) {
   }
 }
 
+function paychequeWriteValues(
+  input: z.infer<typeof paychequeInput>,
+  employment: {
+    federalIncomeTaxEnabled: boolean;
+    manitobaIncomeTaxEnabled: boolean;
+  },
+) {
+  const values = applyPaychequeIncomeTax(input, isIncomeTaxSplit(employment));
+  const netPayCents = calculateNetPay(values);
+  if (netPayCents < 0) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Total deductions cannot exceed gross pay.",
+    });
+  }
+  return { ...values, netPayCents };
+}
+
 export const paychequeRouter = createTRPCRouter({
   list: publicProcedure.query(async ({ ctx }) => {
     const household = await requireHousehold(ctx.db);
@@ -53,6 +73,8 @@ export const paychequeRouter = createTRPCRouter({
         payDate: paycheques.payDate,
         grossPayCents: paycheques.grossPayCents,
         incomeTaxCents: paycheques.incomeTaxCents,
+        federalIncomeTaxCents: paycheques.federalIncomeTaxCents,
+        manitobaIncomeTaxCents: paycheques.manitobaIncomeTaxCents,
         cppCents: paycheques.cppCents,
         cpp2Cents: paycheques.cpp2Cents,
         eiCents: paycheques.eiCents,
@@ -81,12 +103,12 @@ export const paychequeRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const household = await requireHousehold(ctx.db);
       const year = await requireEditableActiveYear(ctx.db, household.id);
-      await requireEmployment(ctx.db, input.employmentId, year.id);
+      const employment = await requireEmployment(ctx.db, input.employmentId, year.id);
       validatePayDate(input.payDate, year.year);
       return ctx.db.transaction(async (tx) => {
         const [paycheque] = await tx
           .insert(paycheques)
-          .values({ ...input, netPayCents: calculateNetPay(input) })
+          .values(paychequeWriteValues(input, employment))
           .returning();
         await syncEmploymentTaxItem(tx, input.employmentId);
         return paycheque;
@@ -97,7 +119,7 @@ export const paychequeRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const household = await requireHousehold(ctx.db);
       const year = await requireEditableActiveYear(ctx.db, household.id);
-      await requireEmployment(ctx.db, input.employmentId, year.id);
+      const employment = await requireEmployment(ctx.db, input.employmentId, year.id);
       validatePayDate(input.payDate, year.year);
       const { id, ...values } = input;
       return ctx.db.transaction(async (tx) => {
@@ -116,7 +138,7 @@ export const paychequeRouter = createTRPCRouter({
         }
         const [paycheque] = await tx
           .update(paycheques)
-          .set({ ...values, netPayCents: calculateNetPay(values) })
+          .set(paychequeWriteValues(values, employment))
           .where(eq(paycheques.id, id))
           .returning();
         await syncEmploymentTaxItem(tx, existing.employmentId);

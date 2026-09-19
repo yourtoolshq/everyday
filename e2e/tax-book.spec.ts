@@ -149,13 +149,17 @@ test("sets up a household and tracks an item", async ({ page }) => {
   await page.getByLabel("CPP2", { exact: true }).uncheck();
   await page.getByLabel("WI", { exact: true }).check();
   await page.getByLabel("LTD", { exact: true }).check();
+  await page.getByLabel("Federal tax withheld", { exact: true }).check();
+  await page.getByLabel("Manitoba tax withheld", { exact: true }).check();
   await page.getByRole("button", { name: "Add employment" }).last().click();
   await expect(page.getByText("Employment added.")).toBeVisible();
 
   await page.getByRole("button", { name: "Add paycheque" }).first().click();
   await page.getByLabel("Pay date").fill("2026-06-19");
   await page.getByLabel("Gross pay").fill("2000");
-  await page.getByLabel("Income tax withheld").fill("350");
+  await page.getByLabel("Federal tax withheld").fill("200");
+  await page.getByLabel("Manitoba tax withheld").fill("150");
+  await expect(page.getByLabel("Income tax withheld")).toHaveValue("350.00");
   await page.getByLabel("CPP", { exact: true }).fill("110");
   await expect(page.getByLabel("CPP2", { exact: true })).toHaveCount(0);
   await page.getByLabel("EI", { exact: true }).fill("32");

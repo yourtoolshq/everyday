@@ -15,67 +15,180 @@ export const deductionFields = [
     enabledField: "incomeTaxEnabled",
     label: "Income tax withheld",
     defaultEnabled: true,
+    countsTowardNet: true,
+  },
+  {
+    amountField: "federalIncomeTaxCents",
+    enabledField: "federalIncomeTaxEnabled",
+    label: "Federal tax withheld",
+    defaultEnabled: false,
+    countsTowardNet: false,
+  },
+  {
+    amountField: "manitobaIncomeTaxCents",
+    enabledField: "manitobaIncomeTaxEnabled",
+    label: "Manitoba tax withheld",
+    defaultEnabled: false,
+    countsTowardNet: false,
   },
   {
     amountField: "cppCents",
     enabledField: "cppEnabled",
     label: "CPP",
     defaultEnabled: true,
+    countsTowardNet: true,
   },
   {
     amountField: "cpp2Cents",
     enabledField: "cpp2Enabled",
     label: "CPP2",
     defaultEnabled: true,
+    countsTowardNet: true,
   },
   {
     amountField: "eiCents",
     enabledField: "eiEnabled",
     label: "EI",
     defaultEnabled: true,
+    countsTowardNet: true,
   },
   {
     amountField: "wiCents",
     enabledField: "wiEnabled",
     label: "WI",
     defaultEnabled: false,
+    countsTowardNet: true,
   },
   {
     amountField: "ltdCents",
     enabledField: "ltdEnabled",
     label: "LTD",
     defaultEnabled: false,
+    countsTowardNet: true,
   },
   {
     amountField: "extendedHealthCents",
     enabledField: "extendedHealthEnabled",
     label: "Extended health",
     defaultEnabled: false,
+    countsTowardNet: true,
   },
   {
     amountField: "travelMedicalCents",
     enabledField: "travelMedicalEnabled",
     label: "Travel medical insurance",
     defaultEnabled: false,
+    countsTowardNet: true,
   },
   {
     amountField: "unionDuesCents",
     enabledField: "unionDuesEnabled",
     label: "Union dues",
     defaultEnabled: false,
+    countsTowardNet: true,
   },
   {
     amountField: "otherDeductionsCents",
     enabledField: "otherDeductionsEnabled",
     label: "Other deductions",
     defaultEnabled: true,
+    countsTowardNet: true,
   },
 ] as const;
 
 export type PayFrequency = (typeof payFrequencies)[number];
 export type EmploymentStatus = (typeof employmentStatuses)[number];
-export type DeductionAmountField = (typeof deductionFields)[number]["amountField"];
-export type DeductionEnabledField = (typeof deductionFields)[number]["enabledField"];
+export type DeductionField = (typeof deductionFields)[number];
+export type DeductionAmountField = DeductionField["amountField"];
+export type DeductionEnabledField = DeductionField["enabledField"];
+
+const deductionAmountFieldSet = new Set<string>(
+  deductionFields.map((field) => field.amountField),
+);
+
+export function isDeductionAmountField(value: string): value is DeductionAmountField {
+  return deductionAmountFieldSet.has(value);
+}
+
+export function orderedDeductionFields(
+  order: readonly string[] | null | undefined,
+): DeductionField[] {
+  const byKey = new Map(deductionFields.map((field) => [field.amountField, field]));
+  const seen = new Set<DeductionAmountField>();
+  const result: DeductionField[] = [];
+  for (const key of order ?? []) {
+    if (!isDeductionAmountField(key) || seen.has(key)) continue;
+    const field = byKey.get(key);
+    if (!field) continue;
+    result.push(field);
+    seen.add(key);
+  }
+  for (const field of deductionFields) {
+    if (!seen.has(field.amountField)) result.push(field);
+  }
+  return result;
+}
+
+export function normalizeDeductionFieldOrder(
+  order: readonly string[] | null | undefined,
+): DeductionAmountField[] {
+  return orderedDeductionFields(order).map((field) => field.amountField);
+}
+
+export function isIncomeTaxSplit(flags: {
+  federalIncomeTaxEnabled?: boolean | null;
+  manitobaIncomeTaxEnabled?: boolean | null;
+}) {
+  return Boolean(flags.federalIncomeTaxEnabled || flags.manitobaIncomeTaxEnabled);
+}
+
+export function calculateIncomeTaxCents(
+  amounts: {
+    incomeTaxCents: number;
+    federalIncomeTaxCents: number;
+    manitobaIncomeTaxCents: number;
+  },
+  split: boolean,
+) {
+  return split
+    ? amounts.federalIncomeTaxCents + amounts.manitobaIncomeTaxCents
+    : amounts.incomeTaxCents;
+}
+
+export function applyPaychequeIncomeTax<
+  T extends {
+    incomeTaxCents: number;
+    federalIncomeTaxCents: number;
+    manitobaIncomeTaxCents: number;
+  },
+>(amounts: T, split: boolean): T {
+  if (!split) {
+    return {
+      ...amounts,
+      federalIncomeTaxCents: 0,
+      manitobaIncomeTaxCents: 0,
+    };
+  }
+  return {
+    ...amounts,
+    incomeTaxCents: calculateIncomeTaxCents(amounts, true),
+  };
+}
+
+export function employmentDeductionSettings<
+  T extends {
+    incomeTaxEnabled: boolean;
+    federalIncomeTaxEnabled: boolean;
+    manitobaIncomeTaxEnabled: boolean;
+    deductionFieldOrder?: string[] | null;
+  },
+>(input: T) {
+  return {
+    ...input,
+    incomeTaxEnabled: isIncomeTaxSplit(input) ? true : input.incomeTaxEnabled,
+    deductionFieldOrder: normalizeDeductionFieldOrder(input.deductionFieldOrder),
+  };
+}
 
 export const payFrequencyLabels: Record<PayFrequency, string> = {
   weekly: "Weekly",
@@ -109,6 +222,9 @@ export const employmentInput = z
     endDate: isoDate.nullable(),
     typicalGrossOverrideCents: z.number().int().nonnegative().nullable(),
     incomeTaxEnabled: z.boolean().default(true),
+    federalIncomeTaxEnabled: z.boolean().default(false),
+    manitobaIncomeTaxEnabled: z.boolean().default(false),
+    deductionFieldOrder: z.array(z.string()).nullable().optional(),
     cppEnabled: z.boolean().default(true),
     cpp2Enabled: z.boolean().default(true),
     eiEnabled: z.boolean().default(true),
@@ -136,6 +252,13 @@ export const employmentInput = z
         message: "A current employment cannot have an end date.",
       });
     }
+    if (isIncomeTaxSplit(value) && !value.incomeTaxEnabled) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["incomeTaxEnabled"],
+        message: "Income tax withheld is required when federal or Manitoba tax is split.",
+      });
+    }
   });
 
 export const employmentUpdateInput = z.intersection(
@@ -149,6 +272,8 @@ export const paychequeInput = z
     payDate: isoDate,
     grossPayCents: z.number().int().nonnegative(),
     incomeTaxCents: z.number().int().nonnegative(),
+    federalIncomeTaxCents: z.number().int().nonnegative().default(0),
+    manitobaIncomeTaxCents: z.number().int().nonnegative().default(0),
     cppCents: z.number().int().nonnegative(),
     cpp2Cents: z.number().int().nonnegative(),
     eiCents: z.number().int().nonnegative(),
@@ -178,7 +303,8 @@ export function calculateTotalDeductions(
   amounts: Record<DeductionAmountField, number>,
 ) {
   return deductionFields.reduce(
-    (total, field) => total + amounts[field.amountField],
+    (total, field) =>
+      field.countsTowardNet ? total + amounts[field.amountField] : total,
     0,
   );
 }

@@ -88,6 +88,8 @@ Each paycheque may include values such as:
 
 * gross pay
 * income tax withheld
+* federal tax withheld
+* Manitoba tax withheld
 * CPP
 * CPP2
 * EI
@@ -96,7 +98,9 @@ Each paycheque may include values such as:
 * other deductions
 * net pay
 
-Each Employment chooses which deduction fields appear during paycheque entry.
+Each Employment chooses which deduction fields appear during paycheque entry and
+can reorder those fields to match the pay statement. When federal or Manitoba
+tax is enabled, income tax withheld is calculated as their total.
 Net pay is calculated from gross pay minus all recorded deductions so that it can
 be compared with the amount on the pay statement.
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
@@ -25,10 +26,13 @@ import {
   deductionFields,
   employmentStatuses,
   employmentStatusLabels,
+  isIncomeTaxSplit,
+  orderedDeductionFields,
   payFrequencies,
   payFrequencyLabels,
-  type EmploymentStatus,
+  type DeductionAmountField,
   type DeductionEnabledField,
+  type EmploymentStatus,
   type PayFrequency,
 } from "~/domain/employment";
 import { centsToDollars, dollarsToCents } from "~/domain/money";
@@ -81,6 +85,46 @@ export function EmploymentFormSheet({
       ]),
     ) as Record<DeductionEnabledField, boolean>,
   );
+  const [fieldOrder, setFieldOrder] = useState<DeductionAmountField[]>(() =>
+    orderedDeductionFields(employment?.deductionFieldOrder).map(
+      (field) => field.amountField,
+    ),
+  );
+  const splitIncomeTax = isIncomeTaxSplit(enabledDeductions);
+  const orderedFields = orderedDeductionFields(fieldOrder);
+
+  function setDeductionEnabled(field: DeductionEnabledField, enabled: boolean) {
+    setEnabledDeductions((current) => {
+      if (
+        field === "incomeTaxEnabled" &&
+        !enabled &&
+        isIncomeTaxSplit(current)
+      ) {
+        return current;
+      }
+      const next = { ...current, [field]: enabled };
+      if (
+        (field === "federalIncomeTaxEnabled" ||
+          field === "manitobaIncomeTaxEnabled") &&
+        enabled
+      ) {
+        next.incomeTaxEnabled = true;
+      }
+      return next;
+    });
+  }
+
+  function moveField(index: number, direction: -1 | 1) {
+    setFieldOrder((current) => {
+      const target = index + direction;
+      if (target < 0 || target >= current.length) return current;
+      const next = [...current];
+      const [moved] = next.splice(index, 1);
+      next.splice(target, 0, moved!);
+      return next;
+    });
+  }
+
   const [phspReportedOnT4, setPhspReportedOnT4] = useState(
     employment?.phspReportedOnT4 ?? false,
   );
@@ -124,7 +168,9 @@ export function EmploymentFormSheet({
       typicalGrossOverrideCents,
       phspReportedOnT4,
       unionDuesReportedOnT4,
+      deductionFieldOrder: fieldOrder,
       ...enabledDeductions,
+      incomeTaxEnabled: splitIncomeTax ? true : enabledDeductions.incomeTaxEnabled,
     };
     if (employment) update.mutate({ id: employment.id, ...values });
     else create.mutate(values);
@@ -207,28 +253,68 @@ export function EmploymentFormSheet({
               <legend className="text-sm font-medium">Paycheque deductions</legend>
               <p className="text-xs text-muted-foreground">
                 Choose the deduction fields that appear when entering a paycheque.
+                Use the arrows to match the order on the pay statement.
               </p>
-              <div className="grid gap-3 rounded-lg border p-4 sm:grid-cols-2">
-                {deductionFields.map((field) => (
-                  <label
-                    key={field.enabledField}
-                    className="flex cursor-pointer items-center gap-3 text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      className="size-4 rounded border-input accent-primary"
-                      checked={enabledDeductions[field.enabledField]}
-                      onChange={(event) =>
-                        setEnabledDeductions((current) => ({
-                          ...current,
-                          [field.enabledField]: event.target.checked,
-                        }))
-                      }
-                    />
-                    {field.label}
-                  </label>
-                ))}
+              <div className="space-y-1 rounded-lg border p-2">
+                {orderedFields.map((field, index) => {
+                  const incomeTaxLocked =
+                    field.enabledField === "incomeTaxEnabled" && splitIncomeTax;
+                  return (
+                    <div
+                      key={field.enabledField}
+                      className="flex items-center gap-2 rounded-md px-2 py-1.5"
+                    >
+                      <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-sm">
+                        <input
+                          type="checkbox"
+                          className="size-4 rounded border-input accent-primary disabled:cursor-not-allowed"
+                          checked={
+                            incomeTaxLocked ||
+                            enabledDeductions[field.enabledField]
+                          }
+                          disabled={incomeTaxLocked}
+                          onChange={(event) =>
+                            setDeductionEnabled(
+                              field.enabledField,
+                              event.target.checked,
+                            )
+                          }
+                        />
+                        {field.label}
+                      </label>
+                      <div className="flex shrink-0">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          aria-label={`Move ${field.label} up`}
+                          disabled={index === 0}
+                          onClick={() => moveField(index, -1)}
+                        >
+                          <ChevronUpIcon />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-xs"
+                          aria-label={`Move ${field.label} down`}
+                          disabled={index === orderedFields.length - 1}
+                          onClick={() => moveField(index, 1)}
+                        >
+                          <ChevronDownIcon />
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
+              {splitIncomeTax ? (
+                <p className="text-xs text-muted-foreground">
+                  Income tax withheld is calculated as federal plus Manitoba tax.
+                  Existing paycheques keep their current total until you edit them
+                  and enter the split amounts.
+                </p>
+              ) : null}
             </fieldset>
             <fieldset className="space-y-3">
               <legend className="text-sm font-medium">T4 reporting</legend>
