@@ -54,7 +54,8 @@ Add a hosts entry if needed:
 echo "127.0.0.1 passbook.tools.local" | sudo tee -a /etc/hosts
 ```
 
-Then open http://passbook.tools.local.
+Then open https://passbook.tools.local. Traefik serves a locally-trusted mkcert
+wildcard certificate for `*.tools.local` (configured in dotfiles).
 
 ## Documents and backups
 
