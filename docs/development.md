@@ -57,10 +57,10 @@ TAXBOOK_PORT=3200 docker compose up --build -d
 Tax Book joins the external `web` Docker network and registers with Traefik at
 `taxbook.tools.local`.
 
-Add a hosts entry if needed:
+Add hosts entries if needed (`/etc/hosts` does not support wildcards):
 
 ```sh
-echo "127.0.0.1 taxbook.tools.local" | sudo tee -a /etc/hosts
+echo "127.0.0.1 taxbook.tools.local tenure.tools.local passbook.tools.local tools.local" | sudo tee -a /etc/hosts
 ```
 
 Then open https://taxbook.tools.local. Traefik serves a locally-trusted mkcert
