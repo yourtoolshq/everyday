@@ -74,6 +74,23 @@ export const employments = sqliteTable(
   ],
 );
 
+export const discussions = sqliteTable(
+  "discussions",
+  {
+    id: id(),
+    employmentId: text("employment_id")
+      .notNull()
+      .references(() => employments.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    discussionDate: text("discussion_date"),
+    participants: text("participants"),
+    body: text("body"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("discussions_employment_idx").on(table.employmentId)],
+);
+
 export const documents = sqliteTable(
   "documents",
   {
@@ -81,6 +98,7 @@ export const documents = sqliteTable(
     employmentId: text("employment_id")
       .notNull()
       .references(() => employments.id, { onDelete: "cascade" }),
+    discussionId: text("discussion_id").references(() => discussions.id, { onDelete: "set null" }),
     type: text("type").$type<DocumentType>().notNull(),
     title: text("title").notNull(),
     documentDate: text("document_date"),
@@ -92,5 +110,8 @@ export const documents = sqliteTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (table) => [index("documents_employment_idx").on(table.employmentId)],
+  (table) => [
+    index("documents_employment_idx").on(table.employmentId),
+    index("documents_discussion_idx").on(table.discussionId),
+  ],
 );

@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { EmploymentDiscussionsPanel } from "~/components/discussions/employment-discussions-panel";
+import { EmploymentDocumentsPanel } from "~/components/employments/employment-documents-panel";
 import { EmploymentFormDrawer } from "~/components/employments/employment-form-drawer";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -96,17 +98,9 @@ export function EmploymentDetail({ employment }: EmploymentDetailProps) {
           </CardContent>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="shadow-none">
-            <CardHeader>
-              <CardTitle className="text-base">Documents</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Contracts, offer letters, and employment letters will live here in Phase 2.
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4">
+          <EmploymentDocumentsPanel employmentId={employment.id} />
+          <EmploymentDiscussionsPanel employmentId={employment.id} />
           <Card className="shadow-none">
             <CardHeader>
               <CardTitle className="text-base">Paychecks</CardTitle>

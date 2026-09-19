@@ -11,7 +11,6 @@ const titles: Record<string, string> = {
   "/employments": "Employments",
   "/employers": "Employers",
   "/people": "People",
-  "/documents": "Documents",
 };
 
 export function SiteHeader() {

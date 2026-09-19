@@ -15,6 +15,10 @@ describe("document files", () => {
     [new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), "image/png"],
     [new TextEncoder().encode("RIFF0000WEBP"), "image/webp"],
     [new Uint8Array([0, 0, 0, 20, ...new TextEncoder().encode("ftypheic")]), "image/heic"],
+    [
+      new TextEncoder().encode("From: hr@example.com\r\nSubject: Offer\r\n\r\nHello"),
+      "message/rfc822",
+    ],
   ])("detects allowed content signatures", (bytes, mimeType) => {
     expect(detectDocumentFile(bytes)?.mimeType).toBe(mimeType);
   });

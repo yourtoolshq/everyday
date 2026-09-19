@@ -12,12 +12,13 @@ flowchart TD
     E --> C[Compensation history]
     E --> Y[Paychecks]
     E --> D[Documents]
-    E --> N[Correspondence & notes]
+    E --> G[Discussions]
+    D -. optional link .-> G
     Y --> S[Pay stub attachment]
     D -. supports .-> R
     D -. supports .-> C
-    N -. provides context for .-> R
-    N -. provides context for .-> C
+    G -. provides context for .-> R
+    G -. provides context for .-> C
 ```
 
 **Employer** is the organization. **Employment** is a person's relationship with that organization over a period of time. Keeping them distinct allows a person to leave and later rejoin the same employer without merging separate periods of employment.
@@ -34,7 +35,7 @@ flowchart TD
 | Paycheck | A particular payment and its pay period, with itemized earnings, deductions, and net pay. |
 | Pay stub | The original file supporting a paycheck; its presence can be tracked independently from the entered amounts. |
 | Document | A retained contract, offer, employment letter, or other official record associated with an employment. |
-| Correspondence | An important exported email or discussion retained with its date, participants, and context. |
+| Discussion | An important conversation, meeting, or email thread retained with its date, participants, and notes. May exist without an attached file. |
 | Note | A manually written explanation or observation related to an employment or its records. |
 
 ## Paychecks and compensation are different
@@ -46,10 +47,10 @@ For a paycheck, preserve the line items as they appear on the stub rather than a
 ## Relationships and rules
 
 - One person may have many employments; one employer may be linked to many people or separate periods of employment.
-- Each paycheck, compensation change, document, correspondence item, and note belongs to an employment. A document may additionally support a particular change or role.
+- Each paycheck, compensation change, document, discussion, and note belongs to an employment. A document may optionally link to a discussion and may additionally support a particular change or role in later phases.
 - Compensation entries have effective dates; the percentage change is derived from the previous comparable rate, not stored as an independent fact. Do not compare annual salary and hourly rate without an explicit conversion basis.
 - Pay date and pay-period dates are distinct. A paycheck can be entered before its original pay stub has been saved.
-- Retained email exports are records, not a synchronized mailbox. Notes add context without altering the original evidence.
+- Retained email exports are stored as documents; discussions capture the surrounding context in notes. Notes add context without altering the original evidence.
 - Ending an employment does not remove its records. Corrections to entered figures should not silently replace the original attached pay stub.
 
 ## Useful derived views
@@ -61,7 +62,7 @@ For a paycheck, preserve the line items as they appear on the stub rather than a
 
 ## Boundaries with other Your Tools apps
 
-**Tenure owns** employment relationships, compensation history, paycheck detail, employment documents, and meaningful employment correspondence. **Taxbook consumes** relevant paycheck totals for tax tracking; it should not become a second independent owner of the same paychecks. Passbook owns financial institutions and account statements, not employment pay stubs. Other domain apps retain their own documents rather than using Tenure as a general file cabinet.
+**Tenure owns** employment relationships, compensation history, paycheck detail, employment documents, and meaningful employment discussions. **Taxbook consumes** relevant paycheck totals for tax tracking; it should not become a second independent owner of the same paychecks. Passbook owns financial institutions and account statements, not employment pay stubs. Other domain apps retain their own documents rather than using Tenure as a general file cabinet.
 
 ## Not modeled yet
 

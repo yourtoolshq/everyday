@@ -7,6 +7,9 @@ describe("document storage paths", () => {
     expect(documentPath("123e4567-e89b-12d3-a456-426614174000.pdf")).toContain(
       "123e4567-e89b-12d3-a456-426614174000.pdf",
     );
+    expect(documentPath("123e4567-e89b-12d3-a456-426614174000.eml")).toContain(
+      "123e4567-e89b-12d3-a456-426614174000.eml",
+    );
   });
 
   it.each(["../private.pdf", "receipt.pdf", "123e4567-e89b-12d3-a456-426614174000.exe"])(

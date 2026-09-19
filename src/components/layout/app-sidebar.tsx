@@ -3,7 +3,6 @@
 import {
   Briefcase,
   Building2,
-  FileText,
   LayoutDashboard,
   Settings,
   Users,
@@ -47,7 +46,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     { title: "Employments", href: "/employments", icon: Briefcase },
     { title: "Employers", href: "/employers", icon: Building2 },
     { title: "People", href: "/people", icon: Users },
-    { title: "Documents", href: "/documents", icon: FileText },
   ];
 
   return (

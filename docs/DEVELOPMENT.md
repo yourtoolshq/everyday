@@ -58,7 +58,7 @@ Then open http://tenure.tools.local.
 
 ## Documents and backups
 
-Employment documents are managed copies under `DOCUMENTS_DIR` (default `.data/documents`, or `/data/documents` in Docker). Uploads are limited to one PDF, JPEG, PNG, WebP, or HEIC file at a time and 25 MiB per file.
+Employment documents are managed copies under `DOCUMENTS_DIR` (default `.data/documents`, or `/data/documents` in Docker). Uploads are limited to one PDF, JPEG, PNG, WebP, HEIC, or EML file at a time and 25 MiB per file.
 
 A complete backup must include both the SQLite database and the entire documents directory. Restore both from the same backup point so document metadata and managed files remain consistent.
 

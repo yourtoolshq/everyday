@@ -7,7 +7,6 @@ export const documentTypes = [
   "promotion_letter",
   "salary_letter",
   "pay_stub",
-  "correspondence",
   "other",
 ] as const;
 
@@ -20,7 +19,6 @@ export const documentTypeLabels = {
   promotion_letter: "Promotion letter",
   salary_letter: "Salary letter",
   pay_stub: "Pay stub",
-  correspondence: "Correspondence",
   other: "Other",
 } satisfies Record<DocumentType, string>;
 
@@ -29,6 +27,7 @@ export const documentMetadataSchema = z.object({
   type: z.enum(documentTypes),
   documentDate: z.string().trim().max(10).nullable().optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
+  discussionId: z.string().uuid().nullable().optional(),
 });
 
 export const maxDocumentBytes = 25 * 1024 * 1024;
@@ -37,7 +36,7 @@ type DetectedFile = { mimeType: string; extension: string };
 
 const heicBrands = new Set(["heic", "heix", "hevc", "hevx", "heim", "heis"]);
 
-export function detectDocumentFile(bytes: Uint8Array): DetectedFile | null {
+export function detectDocumentFile(bytes: Uint8Array, filename?: string): DetectedFile | null {
   if (
     bytes.length >= 5 &&
     bytes[0] === 0x25 &&
@@ -78,7 +77,27 @@ export function detectDocumentFile(bytes: Uint8Array): DetectedFile | null {
   ) {
     return { mimeType: "image/heic", extension: "heic" };
   }
+
+  if (looksLikeEml(bytes, filename)) {
+    return { mimeType: "message/rfc822", extension: "eml" };
+  }
+
+  if (filename?.toLowerCase().endsWith(".eml")) {
+    return { mimeType: "message/rfc822", extension: "eml" };
+  }
+
   return null;
+}
+
+function looksLikeEml(bytes: Uint8Array, filename?: string) {
+  if (filename?.toLowerCase().endsWith(".eml")) return true;
+  const limit = Math.min(bytes.length, 4096);
+  const sample = new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(0, limit));
+  return /^(from|received|return-path|message-id|date|subject|mime-version):/im.test(sample);
+}
+
+export function isEmlMimeType(mimeType: string) {
+  return mimeType === "message/rfc822";
 }
 
 function hasHeicBrand(bytes: Uint8Array) {
@@ -102,4 +121,15 @@ export function formatFileSize(size: number) {
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+export function formatDateLabel(value: string | null | undefined) {
+  if (!value?.trim()) return null;
+  const date = new Date(`${value.trim()}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }

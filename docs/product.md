@@ -8,7 +8,7 @@ Employment records end up scattered across payroll portals, inboxes, downloads, 
 
 ## Product principles
 
-- **Employer first.** Open an employer to find its pay history, compensation, documents, and correspondence. Avoid making users navigate separate global document libraries.
+- **Employer first.** Open an employer to find its pay history, compensation, documents, and discussions. Avoid making users navigate separate global document libraries.
 - **Keep the originals.** Preserve pay stubs, letters, and exported emails alongside any structured entries or notes.
 - **Record facts; derive summaries.** Enter the agreed pay rate and actual paychecks separately. Calculate comparable changes and totals from those records.
 - **Useful without integrations.** Manual entry and local file uploads must be sufficient. Automatic collection can come later.
@@ -22,13 +22,13 @@ Employment records end up scattered across payroll portals, inboxes, downloads, 
 | Paychecks | Record pay dates and periods; enter gross pay, itemized earnings and deductions (including tax, CPP, and EI), and net pay; attach the original pay stub. |
 | Compensation | Record effective-dated salary or hourly-rate changes; view a timeline and dollar/percentage changes between comparable rates. |
 | Documents | Upload and organize contracts, offer letters, employment letters, and other official records under an employment. |
-| Correspondence | Preserve important exported emails or discussions with dates and explanatory notes. |
+| Discussions | Record important conversations, meetings, and email context with dates, participants, and notes. |
 
 ## Main workflow
 
 1. Choose the person and employer.
 2. Open that employment's overview to see its current details and recent records.
-3. Add a paycheck, compensation change, document, or correspondence item as it occurs.
+3. Add a paycheck, compensation change, document, or discussion as it occurs.
 4. Review pay history and check which paychecks still need their original stubs attached.
 5. Retain the employment and its records after leaving the employer.
 

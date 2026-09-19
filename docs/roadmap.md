@@ -13,13 +13,13 @@ Tenure is a local-first record of a person's employment history. Build it in sma
 
 **Done when:** A household member can select an employer and find a persistent overview of that employment.
 
-## Phase 2 — Documents and correspondence
+## Phase 2 — Documents and discussions
 
 **Goal:** Preserve the evidence and context that currently live in scattered folders and inboxes.
 
 - Upload and retrieve contracts, offer letters, employment letters, promotion or salary letters, and other employment-specific documents.
-- Save important email exports and discussions with dates, participants when useful, and explanatory notes.
-- Associate a record with its employment; optionally connect a letter or discussion to a role or compensation change later.
+- Record important discussions with dates, participants when useful, and rich notes; optionally attach exported `.eml` files as linked documents.
+- Keep documents and discussions as separate records under an employment; a document may optionally link to a discussion.
 - Preserve the original uploaded file rather than replacing it with a note or extracted summary.
 
 **Done when:** Important documents and discussions remain findable under the correct employment without relying on an employer portal or original inbox.
@@ -42,7 +42,7 @@ Tenure is a local-first record of a person's employment history. Build it in sma
 
 - Record effective-dated annual salary or hourly rate, with an optional reason or note.
 - Show a timeline and calculate dollar and percentage changes between comparable rates.
-- Allow a supporting salary letter or other document to be linked to a change.
+- Allow a supporting salary letter or other document to be linked to a change; reuse existing document-to-discussion links where helpful.
 - Show the current agreed rate on the employment overview.
 - Introduce only the basic details needed to describe a commission arrangement; refine commission-specific fields and calculations during implementation.
 

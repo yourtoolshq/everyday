@@ -10,7 +10,7 @@ import {
   titleFromFilename,
 } from "~/lib/documents";
 import { databaseReady, db } from "~/server/db";
-import { documents, employments } from "~/server/db/schema";
+import { discussions, documents, employments } from "~/server/db/schema";
 import { removeDocument, writeDocument } from "~/server/documents/storage";
 
 export const runtime = "nodejs";
@@ -46,6 +46,7 @@ export async function POST(
   }
 
   const originalFilename = safeOriginalFilename(file.name);
+  const discussionIdValue = form.get("discussionId");
   const titleValue = form.get("title");
   const metadata = documentMetadataSchema.safeParse({
     title:
@@ -56,13 +57,17 @@ export async function POST(
     documentDate:
       typeof form.get("documentDate") === "string" ? form.get("documentDate") : null,
     notes: typeof form.get("notes") === "string" ? form.get("notes") : null,
+    discussionId:
+      typeof discussionIdValue === "string" && discussionIdValue.trim()
+        ? discussionIdValue
+        : null,
   });
   if (!metadata.success) return errorResponse("Choose a type and enter a title.", 400);
 
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const detected = detectDocumentFile(bytes);
+  const detected = detectDocumentFile(bytes, originalFilename);
   if (!detected) {
-    return errorResponse("Upload a PDF, JPEG, PNG, WebP, or HEIC file.", 415);
+    return errorResponse("Upload a PDF, JPEG, PNG, WebP, HEIC, or EML file.", 415);
   }
 
   const [employment] = await db
@@ -70,6 +75,16 @@ export async function POST(
     .from(employments)
     .where(eq(employments.id, parsedParams.data.employmentId));
   if (!employment) return errorResponse("Employment not found.", 404);
+
+  if (metadata.data.discussionId) {
+    const [discussion] = await db
+      .select({ id: discussions.id, employmentId: discussions.employmentId })
+      .from(discussions)
+      .where(eq(discussions.id, metadata.data.discussionId));
+    if (!discussion || discussion.employmentId !== employment.id) {
+      return errorResponse("Discussion not found.", 404);
+    }
+  }
 
   const id = crypto.randomUUID();
   const storageKey = `${crypto.randomUUID()}.${detected.extension}`;
@@ -81,6 +96,7 @@ export async function POST(
       .values({
         id,
         employmentId: employment.id,
+        discussionId: metadata.data.discussionId ?? null,
         title: metadata.data.title,
         type: metadata.data.type,
         documentDate: metadata.data.documentDate ?? null,
@@ -93,6 +109,7 @@ export async function POST(
       .returning({
         id: documents.id,
         employmentId: documents.employmentId,
+        discussionId: documents.discussionId,
         type: documents.type,
         title: documents.title,
         documentDate: documents.documentDate,

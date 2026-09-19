@@ -3,7 +3,7 @@ import { basename, resolve } from "node:path";
 
 import { env } from "~/env";
 
-const storageKeyPattern = /^[0-9a-f-]{36}\.(pdf|jpg|png|webp|heic)$/;
+const storageKeyPattern = /^[0-9a-f-]{36}\.(pdf|jpg|png|webp|heic|eml)$/;
 
 export function documentPath(storageKey: string) {
   if (!storageKeyPattern.test(storageKey) || basename(storageKey) !== storageKey) {

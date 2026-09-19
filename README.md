@@ -12,7 +12,7 @@ Part of [Your Tools](https://your-tools.dev/), a collection of focused personal 
 - **Paychecks:** Record earnings, deductions, and net pay alongside original pay stubs.
 - **Compensation history:** See how your salary or hourly rate changed over time.
 - **Documents:** Preserve contracts, offer letters, and employment letters.
-- **Correspondence:** Save important email exports and notes about employment discussions.
+- **Discussions:** Save meeting notes, compensation conversations, and exported emails.
 
 Commission-based compensation tracking and expected-versus-paid reconciliation are planned for a later phase.
 
