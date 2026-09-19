@@ -5,7 +5,7 @@ import { timestamps } from "./shared";
 export const households = sqliteTable("households", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
-  tenureBaseUrl: text("tenure_base_url").notNull().default("http://localhost:3003"),
+  tenureBaseUrl: text("tenure_base_url").notNull().default("https://tenure.tools.local"),
   tenureLastSyncAt: text("tenure_last_sync_at"),
   tenureLastSyncError: text("tenure_last_sync_error"),
   tenurePersonMappings: text("tenure_person_mappings", { mode: "json" })

@@ -37,7 +37,7 @@ export function TenureIntegrationSetting() {
   const employmentLinks = api.tenureSync.employmentLinks.useQuery(undefined, {
     enabled: status.data?.connected ?? false,
   });
-  const [baseUrl, setBaseUrl] = useState("http://localhost:3003");
+  const [baseUrl, setBaseUrl] = useState("https://tenure.tools.local");
 
   useEffect(() => {
     if (status.data?.baseUrl) setBaseUrl(status.data.baseUrl);
@@ -139,7 +139,7 @@ export function TenureIntegrationSetting() {
               id="tenure-base-url"
               value={baseUrl}
               onChange={(event) => setBaseUrl(event.target.value)}
-              placeholder="http://localhost:3003"
+              placeholder="https://tenure.tools.local"
               required
             />
           </div>

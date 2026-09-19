@@ -74,7 +74,8 @@ Because this project is primarily driven by a real personal workflow, proposed f
 ## Run the local production app
 
 Tax Book runs as a private local container and is available only from the same
-computer at <http://localhost:3000>.
+computer at <http://localhost:3000> or, when Traefik is running,
+<https://taxbook.tools.local>.
 
     docker compose up --build -d
 

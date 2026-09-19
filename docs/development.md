@@ -36,3 +36,39 @@ Never use `db:push` against the production database. Production starts by
 applying committed migrations and refuses to start if migration fails.
 
 Tests, screenshots, documentation, and examples must use fictional data only.
+
+## Self-hosting with Docker
+
+```sh
+docker compose up --build -d
+```
+
+The service binds to `127.0.0.1:3000` by default and stores its SQLite file in
+the `taxbook-data` Docker volume.
+
+Set `TAXBOOK_PORT` when port 3000 is already in use:
+
+```sh
+TAXBOOK_PORT=3200 docker compose up --build -d
+```
+
+## Traefik
+
+Tax Book joins the external `web` Docker network and registers with Traefik at
+`taxbook.tools.local`.
+
+Add a hosts entry if needed:
+
+```sh
+echo "127.0.0.1 taxbook.tools.local" | sudo tee -a /etc/hosts
+```
+
+Then open https://taxbook.tools.local. Traefik serves a locally-trusted mkcert
+wildcard certificate for `*.tools.local` (configured in dotfiles).
+
+When Tenure is also running behind Traefik, set the Tenure base URL in Settings
+to `https://tenure.tools.local`. The Docker Compose file maps that hostname to
+the host gateway so server-side sync works from inside the container.
+
+If your household was created before this hostname convention, update the Tenure
+URL once in Settings.
