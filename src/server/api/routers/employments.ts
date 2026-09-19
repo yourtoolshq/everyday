@@ -10,7 +10,8 @@ import {
   serializeDeductionSettings,
   type DeductionSettings,
 } from "~/lib/paycheck-deductions";
-import { employers, employments, people } from "~/server/db/schema";
+import { getCurrentCompensationChange } from "~/lib/compensation";
+import { compensationChanges, employers, employments, people } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 const deductionSettingsInput = z.object({
@@ -107,7 +108,7 @@ export const employmentsRouter = createTRPCRouter({
   }),
 
   list: publicProcedure.query(async ({ ctx }) => {
-    return ctx.db
+    const rows = await ctx.db
       .select({
         id: employments.id,
         employerId: employers.id,
@@ -128,8 +129,57 @@ export const employmentsRouter = createTRPCRouter({
       .from(employments)
       .innerJoin(employers, eq(employments.employerId, employers.id))
       .innerJoin(people, eq(employments.personId, people.id))
-      .orderBy(asc(employers.name), asc(people.displayName))
-      .then((rows) => rows.map(mapEmploymentRow));
+      .orderBy(asc(employers.name), asc(people.displayName));
+
+    const compensationRows = await ctx.db
+      .select({
+        employmentId: compensationChanges.employmentId,
+        type: compensationChanges.type,
+        currency: compensationChanges.currency,
+        effectiveDate: compensationChanges.effectiveDate,
+        amountCents: compensationChanges.amountCents,
+        commissionBasisPoints: compensationChanges.commissionBasisPoints,
+      })
+      .from(compensationChanges)
+      .orderBy(asc(compensationChanges.effectiveDate));
+
+    const changesByEmployment = new Map<
+      string,
+      {
+        id: string;
+        employmentId: string;
+        type: (typeof compensationRows)[number]["type"];
+        currency: (typeof compensationRows)[number]["currency"];
+        effectiveDate: string;
+        amountCents: number | null;
+        commissionBasisPoints: number | null;
+        notes: null;
+        documentId: null;
+        discussionId: null;
+      }[]
+    >();
+
+    for (const row of compensationRows) {
+      const list = changesByEmployment.get(row.employmentId) ?? [];
+      list.push({
+        id: `${row.employmentId}-${row.effectiveDate}`,
+        employmentId: row.employmentId,
+        type: row.type,
+        currency: row.currency,
+        effectiveDate: row.effectiveDate,
+        amountCents: row.amountCents,
+        commissionBasisPoints: row.commissionBasisPoints,
+        notes: null,
+        documentId: null,
+        discussionId: null,
+      });
+      changesByEmployment.set(row.employmentId, list);
+    }
+
+    return rows.map((row) => ({
+      ...mapEmploymentRow(row),
+      currentCompensation: getCurrentCompensationChange(changesByEmployment.get(row.id) ?? []),
+    }));
   }),
 
   create: publicProcedure.input(employmentInput).mutation(async ({ ctx, input }) => {

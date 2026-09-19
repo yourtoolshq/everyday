@@ -5,15 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { EmploymentCompensationPanel } from "~/components/compensation/employment-compensation-panel";
 import { EmploymentDiscussionsPanel } from "~/components/discussions/employment-discussions-panel";
 import { EmploymentDocumentsPanel } from "~/components/employments/employment-documents-panel";
 import { EmploymentPaychecksPanel } from "~/components/paychecks/employment-paychecks-panel";
+import { formatCompensationRate } from "~/lib/compensation";
 import { EmploymentFormDrawer } from "~/components/employments/employment-form-drawer";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { employmentStatusLabels } from "~/lib/employment-status";
-import type { RouterOutputs } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 
 type EmploymentDetailProps = {
   employment: RouterOutputs["employments"]["getById"];
@@ -26,6 +28,9 @@ function formatDate(value: string | null) {
 export function EmploymentDetail({ employment }: EmploymentDetailProps) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
+  const currentCompensation = api.compensationChanges.getCurrentByEmployment.useQuery({
+    employmentId: employment.id,
+  });
 
   return (
     <>
@@ -85,6 +90,14 @@ export function EmploymentDetail({ employment }: EmploymentDetailProps) {
               <p className="text-sm">{employmentStatusLabels[employment.status]}</p>
             </div>
             <div>
+              <p className="text-sm font-medium text-muted-foreground">Current compensation</p>
+              <p className="text-sm">
+                {currentCompensation.data
+                  ? formatCompensationRate(currentCompensation.data)
+                  : "Not recorded"}
+              </p>
+            </div>
+            <div>
               <p className="text-sm font-medium text-muted-foreground">Start date</p>
               <p className="text-sm">{formatDate(employment.startDate)}</p>
             </div>
@@ -111,7 +124,13 @@ export function EmploymentDetail({ employment }: EmploymentDetailProps) {
             endDate={employment.endDate}
             status={employment.status}
           />
-          <EmploymentDocumentsPanel employmentId={employment.id} />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <EmploymentCompensationPanel
+              employmentId={employment.id}
+              startDate={employment.startDate}
+            />
+            <EmploymentDocumentsPanel employmentId={employment.id} />
+          </div>
           <EmploymentDiscussionsPanel employmentId={employment.id} />
         </div>
       </div>

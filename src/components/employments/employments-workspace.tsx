@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { EmploymentFormDrawer } from "~/components/employments/employment-form-drawer";
+import { formatCompensationRate } from "~/lib/compensation";
 import { employmentStatusLabels } from "~/lib/employment-status";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
@@ -65,6 +66,11 @@ export function EmploymentsWorkspace() {
                   {employment.startDate ? ` · from ${employment.startDate}` : ""}
                   {employment.endDate ? ` to ${employment.endDate}` : ""}
                 </p>
+                {employment.currentCompensation ? (
+                  <p className="text-sm text-muted-foreground">
+                    {formatCompensationRate(employment.currentCompensation)}
+                  </p>
+                ) : null}
               </Link>
               <div className="flex shrink-0 items-center gap-1">
                 <Button

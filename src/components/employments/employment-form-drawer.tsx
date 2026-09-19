@@ -3,6 +3,15 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  commissionPercentToBasisPoints,
+  compensationCurrencies,
+  compensationCurrencyLabels,
+  compensationTypeLabels,
+  compensationTypes,
+  type CompensationCurrency,
+  type CompensationType,
+} from "~/lib/compensation";
 import { employmentStatusLabels, employmentStatuses } from "~/lib/employment-status";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -66,6 +75,12 @@ export function EmploymentFormDrawer({
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [includeStartingCompensation, setIncludeStartingCompensation] = useState(false);
+  const [compensationType, setCompensationType] = useState<CompensationType>("annual_salary");
+  const [compensationCurrency, setCompensationCurrency] = useState<CompensationCurrency>("CAD");
+  const [compensationAmount, setCompensationAmount] = useState("");
+  const [compensationPercent, setCompensationPercent] = useState("");
+  const [compensationEffectiveDate, setCompensationEffectiveDate] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -88,6 +103,12 @@ export function EmploymentFormDrawer({
     setStartDate("");
     setEndDate("");
     setNotes("");
+    setIncludeStartingCompensation(false);
+    setCompensationType("annual_salary");
+    setCompensationCurrency("CAD");
+    setCompensationAmount("");
+    setCompensationPercent("");
+    setCompensationEffectiveDate("");
   }, [open, mode, employment, defaultEmployerId, defaultPersonId]);
 
   const invalidateEmploymentQueries = async (employmentId: string, employerIdValue: string) => {
@@ -98,15 +119,8 @@ export function EmploymentFormDrawer({
     ]);
   };
 
-  const createEmployment = api.employments.create.useMutation({
-    onSuccess: async (created) => {
-      await invalidateEmploymentQueries(created.id, created.employerId);
-      toast.success("Employment added.");
-      onOpenChange(false);
-      onSuccess?.(created.id);
-    },
-    onError: (error) => toast.error(error.message),
-  });
+  const createCompensationChange = api.compensationChanges.create.useMutation();
+  const createEmployment = api.employments.create.useMutation();
 
   const updateEmployment = api.employments.update.useMutation({
     onSuccess: async (updated) => {
@@ -118,9 +132,52 @@ export function EmploymentFormDrawer({
     onError: (error) => toast.error(error.message),
   });
 
-  const isPending = createEmployment.isPending || updateEmployment.isPending;
+  const isPending =
+    createEmployment.isPending || updateEmployment.isPending || createCompensationChange.isPending;
 
-  function submitEmployment() {
+  function buildStartingCompensation() {
+    if (!includeStartingCompensation) return null;
+
+    const effectiveDate = compensationEffectiveDate || startDate;
+    if (!effectiveDate) {
+      toast.error("Enter a start date or compensation effective date.");
+      return undefined;
+    }
+
+    const amountCents =
+      compensationType === "commission"
+        ? null
+        : (() => {
+            const normalized = compensationAmount.trim().replaceAll(",", "");
+            if (normalized === "") return null;
+            const amount = Number(normalized);
+            if (!Number.isFinite(amount) || amount < 0) return null;
+            return Math.round(amount * 100);
+          })();
+    const commissionBasisPoints =
+      compensationType === "commission"
+        ? commissionPercentToBasisPoints(compensationPercent)
+        : null;
+
+    if (compensationType === "commission" && commissionBasisPoints === null) {
+      toast.error("Enter a valid commission percentage.");
+      return undefined;
+    }
+    if (compensationType !== "commission" && amountCents === null) {
+      toast.error("Enter a valid starting compensation amount.");
+      return undefined;
+    }
+
+    return {
+      type: compensationType,
+      currency: compensationCurrency,
+      effectiveDate,
+      amountCents,
+      commissionBasisPoints,
+    };
+  }
+
+  async function submitEmployment() {
     if (!employerId || !personId) {
       toast.error("Choose an employer and person.");
       return;
@@ -137,7 +194,27 @@ export function EmploymentFormDrawer({
     };
 
     if (mode === "create") {
-      createEmployment.mutate(payload);
+      const startingCompensation = buildStartingCompensation();
+      if (startingCompensation === undefined) return;
+
+      try {
+        const created = await createEmployment.mutateAsync(payload);
+        if (startingCompensation) {
+          await createCompensationChange.mutateAsync({
+            employmentId: created.id,
+            ...startingCompensation,
+          });
+        }
+        await invalidateEmploymentQueries(created.id, created.employerId);
+        await utils.compensationChanges.getCurrentByEmployment.invalidate({
+          employmentId: created.id,
+        });
+        toast.success("Employment added.");
+        onOpenChange(false);
+        onSuccess?.(created.id);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Could not add employment.");
+      }
       return;
     }
     if (!employment) return;
@@ -258,6 +335,101 @@ export function EmploymentFormDrawer({
               rows={4}
             />
           </div>
+
+          {mode === "create" ? (
+            <div className="space-y-4 rounded-lg border p-4">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input
+                  type="checkbox"
+                  checked={includeStartingCompensation}
+                  onChange={(event) => setIncludeStartingCompensation(event.target.checked)}
+                />
+                Record starting compensation
+              </label>
+
+              {includeStartingCompensation ? (
+                <div className="space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label>Type</Label>
+                      <Select
+                        value={compensationType}
+                        onValueChange={(value) =>
+                          setCompensationType(value as CompensationType)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {compensationTypes.map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {compensationTypeLabels[item]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Currency</Label>
+                      <Select
+                        value={compensationCurrency}
+                        onValueChange={(value) =>
+                          setCompensationCurrency(value as CompensationCurrency)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {compensationCurrencies.map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {compensationCurrencyLabels[item]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="starting-compensation-effective-date">Effective date</Label>
+                    <Input
+                      id="starting-compensation-effective-date"
+                      type="date"
+                      value={compensationEffectiveDate}
+                      onChange={(event) => setCompensationEffectiveDate(event.target.value)}
+                      placeholder={startDate ? `Defaults to ${startDate}` : undefined}
+                    />
+                  </div>
+
+                  {compensationType === "commission" ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="starting-compensation-percent">Commission percentage</Label>
+                      <Input
+                        id="starting-compensation-percent"
+                        inputMode="decimal"
+                        value={compensationPercent}
+                        onChange={(event) => setCompensationPercent(event.target.value)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="starting-compensation-amount">
+                        {compensationType === "annual_salary" ? "Annual salary" : "Hourly rate"}
+                      </Label>
+                      <Input
+                        id="starting-compensation-amount"
+                        inputMode="decimal"
+                        value={compensationAmount}
+                        onChange={(event) => setCompensationAmount(event.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           <SheetFooter className="px-0">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

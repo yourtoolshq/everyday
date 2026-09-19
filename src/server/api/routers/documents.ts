@@ -3,7 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { documentMetadataSchema } from "~/lib/documents";
-import { discussions, documents, paychecks } from "~/server/db/schema";
+import { compensationChanges, discussions, documents, paychecks } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   discardStagedDocuments,
@@ -92,10 +92,16 @@ export const documentsRouter = createTRPCRouter({
 
     const staged = await stageDocumentsForDeletion([document.storageKey]);
     try {
-      await ctx.db
-        .update(paychecks)
-        .set({ documentId: null, updatedAt: now() })
-        .where(eq(paychecks.documentId, input.id));
+      await Promise.all([
+        ctx.db
+          .update(paychecks)
+          .set({ documentId: null, updatedAt: now() })
+          .where(eq(paychecks.documentId, input.id)),
+        ctx.db
+          .update(compensationChanges)
+          .set({ documentId: null, updatedAt: now() })
+          .where(eq(compensationChanges.documentId, input.id)),
+      ]);
       await ctx.db.delete(documents).where(eq(documents.id, input.id));
     } catch (error) {
       await restoreStagedDocuments(staged);

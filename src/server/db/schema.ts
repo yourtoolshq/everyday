@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
+import type { CompensationCurrency, CompensationType } from "~/lib/compensation";
 import type { DocumentType } from "~/lib/documents";
 import type { EmploymentStatus } from "~/lib/employment-status";
 import type { PayFrequency } from "~/lib/pay-frequency";
@@ -151,6 +152,31 @@ export const paychecks = sqliteTable(
   (table) => [
     index("paychecks_employment_idx").on(table.employmentId),
     index("paychecks_document_idx").on(table.documentId),
+  ],
+);
+
+export const compensationChanges = sqliteTable(
+  "compensation_changes",
+  {
+    id: id(),
+    employmentId: text("employment_id")
+      .notNull()
+      .references(() => employments.id, { onDelete: "cascade" }),
+    type: text("type").$type<CompensationType>().notNull(),
+    currency: text("currency").$type<CompensationCurrency>().notNull().default("CAD"),
+    effectiveDate: text("effective_date").notNull(),
+    amountCents: integer("amount_cents"),
+    commissionBasisPoints: integer("commission_basis_points"),
+    notes: text("notes"),
+    documentId: text("document_id").references(() => documents.id, { onDelete: "set null" }),
+    discussionId: text("discussion_id").references(() => discussions.id, { onDelete: "set null" }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("compensation_changes_employment_idx").on(table.employmentId),
+    index("compensation_changes_document_idx").on(table.documentId),
+    index("compensation_changes_discussion_idx").on(table.discussionId),
   ],
 );
 

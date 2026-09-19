@@ -14,8 +14,22 @@ export function centsToDollars(cents: number | null | undefined): string {
 }
 
 export function formatCad(cents: number): string {
-  return new Intl.NumberFormat("en-CA", {
+  return formatMoney(cents, "CAD");
+}
+
+export function formatMoney(
+  cents: number,
+  currency: "CAD" | "INR",
+  options?: { maximumFractionDigits?: number },
+): string {
+  const locale = currency === "INR" ? "en-IN" : "en-CA";
+  const maximumFractionDigits =
+    options?.maximumFractionDigits ?? (currency === "INR" ? 0 : 2);
+
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "CAD",
+    currency,
+    maximumFractionDigits,
+    minimumFractionDigits: maximumFractionDigits === 0 ? 0 : 2,
   }).format(cents / 100);
 }

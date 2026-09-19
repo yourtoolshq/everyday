@@ -1,3 +1,4 @@
+import { compensationChangesRouter } from "~/server/api/routers/compensation-changes";
 import { discussionsRouter } from "~/server/api/routers/discussions";
 import { documentsRouter } from "~/server/api/routers/documents";
 import { employersRouter } from "~/server/api/routers/employers";
@@ -9,6 +10,7 @@ import { setupRouter } from "~/server/api/routers/setup";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 export const appRouter = createTRPCRouter({
+  compensationChanges: compensationChangesRouter,
   discussions: discussionsRouter,
   documents: documentsRouter,
   employers: employersRouter,
