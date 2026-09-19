@@ -4,6 +4,7 @@ import {
   Briefcase,
   Building2,
   ClipboardCheck,
+  FileCheck,
   LayoutDashboard,
   Settings,
   Users,
@@ -46,6 +47,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     { title: "Overview", href: "/", icon: LayoutDashboard },
     { title: "Employments", href: "/employments", icon: Briefcase },
     { title: "Pay review", href: "/review/pay-stubs", icon: ClipboardCheck },
+    { title: "Record review", href: "/review/employment-records", icon: FileCheck },
     { title: "Employers", href: "/employers", icon: Building2 },
     { title: "People", href: "/people", icon: Users },
   ];

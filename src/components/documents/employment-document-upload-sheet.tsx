@@ -36,6 +36,8 @@ type EmploymentDocumentUploadSheetProps = {
   onOpenChange: (open: boolean) => void;
   employmentId: string;
   defaultDiscussionId?: string | null;
+  defaultType?: DocumentType;
+  onUploaded?: () => void | Promise<void>;
 };
 
 export function EmploymentDocumentUploadSheet({
@@ -43,6 +45,8 @@ export function EmploymentDocumentUploadSheet({
   onOpenChange,
   employmentId,
   defaultDiscussionId,
+  defaultType,
+  onUploaded,
 }: EmploymentDocumentUploadSheetProps) {
   const utils = api.useUtils();
   const discussions = api.discussions.listByEmployment.useQuery({ employmentId }, { enabled: open });
@@ -57,14 +61,14 @@ export function EmploymentDocumentUploadSheet({
 
   useEffect(() => {
     if (!open) return;
-    setType("other");
+    setType(defaultType ?? "other");
     setFile(null);
     setTitle("");
     setTitleTouched(false);
     setDocumentDate("");
     setNotes("");
     setDiscussionId(defaultDiscussionId ?? "none");
-  }, [defaultDiscussionId, open]);
+  }, [defaultDiscussionId, defaultType, open]);
 
   useEffect(() => {
     if (!file || titleTouched) return;
@@ -92,7 +96,10 @@ export function EmploymentDocumentUploadSheet({
       await Promise.all([
         utils.documents.listByEmployment.invalidate({ employmentId }),
         utils.discussions.listByEmployment.invalidate({ employmentId }),
+        utils.employmentRecords.completenessByEmployment.invalidate({ employmentId }),
+        utils.employmentRecords.listForReview.invalidate(),
       ]);
+      await onUploaded?.();
       toast.success("Document uploaded.");
       onOpenChange(false);
     } catch (error) {

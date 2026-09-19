@@ -84,6 +84,8 @@ export function EmploymentPaychecksPanel({
         utils.paychecks.listByEmployment.invalidate({ employmentId }),
         utils.paychecks.periodCompleteness.invalidate({ employmentId }),
         utils.paychecks.listForReview.invalidate(),
+        utils.overview.paySummary.invalidate(),
+        utils.employmentRecords.paySummaryByEmployment.invalidate({ employmentId }),
       ]);
       toast.success("Paycheck deleted.");
       setDeleteTarget(null);

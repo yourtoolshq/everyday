@@ -1,6 +1,8 @@
 import { Briefcase, Building2, Users } from "lucide-react";
 import Link from "next/link";
 
+import { HouseholdPaySummaryPanel } from "~/components/employment-records/household-pay-summary-panel";
+import { MissingEmploymentRecordsPanel } from "~/components/employment-records/missing-employment-records-panel";
 import { MissingPayStubsPanel } from "~/components/paychecks/missing-pay-stubs-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { api } from "~/trpc/server";
@@ -51,7 +53,12 @@ export default async function OverviewPage() {
         ))}
       </div>
 
-      <MissingPayStubsPanel />
+      <HouseholdPaySummaryPanel />
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <MissingPayStubsPanel />
+        <MissingEmploymentRecordsPanel />
+      </div>
     </main>
   );
 }

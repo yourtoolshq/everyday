@@ -267,6 +267,8 @@ export function PaycheckFormSheet({
       utils.paychecks.listForReview.invalidate(),
       utils.documents.listByEmployment.invalidate({ employmentId }),
       utils.overview.summary.invalidate(),
+      utils.overview.paySummary.invalidate(),
+      utils.employmentRecords.paySummaryByEmployment.invalidate({ employmentId }),
     ]);
   }
 

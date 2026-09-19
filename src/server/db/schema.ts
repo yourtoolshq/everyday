@@ -194,3 +194,18 @@ export const payPeriodExceptions = sqliteTable(
     index("pay_period_exceptions_employment_idx").on(table.employmentId),
   ],
 );
+
+export const employmentRecordExceptions = sqliteTable(
+  "employment_record_exceptions",
+  {
+    employmentId: text("employment_id")
+      .notNull()
+      .references(() => employments.id, { onDelete: "cascade" }),
+    requirementKey: text("requirement_key").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.employmentId, table.requirementKey] }),
+    index("employment_record_exceptions_employment_idx").on(table.employmentId),
+  ],
+);

@@ -50,6 +50,8 @@ export function EmploymentCompensationPanel({
         utils.compensationChanges.listByEmployment.invalidate({ employmentId }),
         utils.compensationChanges.getCurrentByEmployment.invalidate({ employmentId }),
         utils.employments.list.invalidate(),
+        utils.employmentRecords.completenessByEmployment.invalidate({ employmentId }),
+        utils.employmentRecords.listForReview.invalidate(),
       ]);
       toast.success("Compensation change removed.");
       setDeleteTarget(null);

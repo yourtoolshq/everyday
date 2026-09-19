@@ -193,6 +193,8 @@ export function CompensationChangeFormSheet({
         utils.compensationChanges.getCurrentByEmployment.invalidate({ employmentId }),
         utils.employments.list.invalidate(),
         utils.documents.listByEmployment.invalidate({ employmentId }),
+        utils.employmentRecords.completenessByEmployment.invalidate({ employmentId }),
+        utils.employmentRecords.listForReview.invalidate(),
       ]);
 
       toast.success(mode === "edit" ? "Compensation change updated." : "Compensation change added.");

@@ -1,9 +1,12 @@
 import { count } from "drizzle-orm";
 
+import { householdPaySummaryProcedure } from "~/server/api/routers/employment-records";
 import { employers, employments, people } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const overviewRouter = createTRPCRouter({
+  paySummary: householdPaySummaryProcedure,
+
   summary: publicProcedure.query(async ({ ctx }) => {
     const [household] = await ctx.db.query.households.findMany({ limit: 1 });
     const [[peopleCount], [employerCount], [employmentCount]] = await Promise.all([

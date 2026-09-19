@@ -7,6 +7,8 @@ import { useState } from "react";
 
 import { EmploymentCompensationPanel } from "~/components/compensation/employment-compensation-panel";
 import { EmploymentDiscussionsPanel } from "~/components/discussions/employment-discussions-panel";
+import { EmploymentPaySummaryCard } from "~/components/employment-records/employment-pay-summary-card";
+import { EmploymentRecordCompletenessPanel } from "~/components/employment-records/employment-record-completeness-panel";
 import { EmploymentDocumentsPanel } from "~/components/employments/employment-documents-panel";
 import { EmploymentPaychecksPanel } from "~/components/paychecks/employment-paychecks-panel";
 import { formatCompensationRate } from "~/lib/compensation";
@@ -112,7 +114,14 @@ export function EmploymentDetail({ employment }: EmploymentDetailProps) {
           </CardContent>
         </Card>
 
+        <EmploymentPaySummaryCard employmentId={employment.id} />
+
         <div className="grid gap-4">
+          <EmploymentRecordCompletenessPanel
+            employmentId={employment.id}
+            employerName={employment.employerName}
+            personName={employment.personName}
+          />
           <EmploymentPaychecksPanel
             employmentId={employment.id}
             employerName={employment.employerName}
