@@ -85,6 +85,9 @@ export const paychequeRouter = createTRPCRouter({
         unionDuesCents: paycheques.unionDuesCents,
         otherDeductionsCents: paycheques.otherDeductionsCents,
         netPayCents: paycheques.netPayCents,
+        tenurePaycheckId: paycheques.tenurePaycheckId,
+        syncedFromTenure: paycheques.syncedFromTenure,
+        tenureEmploymentId: employments.tenureEmploymentId,
         personId: employments.personId,
         personName: people.name,
         employerName: employments.employerName,
@@ -124,7 +127,10 @@ export const paychequeRouter = createTRPCRouter({
       const { id, ...values } = input;
       return ctx.db.transaction(async (tx) => {
         const [existing] = await tx
-          .select({ employmentId: paycheques.employmentId })
+          .select({
+            employmentId: paycheques.employmentId,
+            syncedFromTenure: paycheques.syncedFromTenure,
+          })
           .from(paycheques)
           .innerJoin(employments, eq(paycheques.employmentId, employments.id))
           .where(
@@ -134,6 +140,12 @@ export const paychequeRouter = createTRPCRouter({
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Paycheque not found.",
+          });
+        }
+        if (existing.syncedFromTenure) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Synced paycheques are read-only in Tax Book. Edit them in Tenure.",
           });
         }
         const [paycheque] = await tx
@@ -155,7 +167,10 @@ export const paychequeRouter = createTRPCRouter({
       const year = await requireEditableActiveYear(ctx.db, household.id);
       return ctx.db.transaction(async (tx) => {
         const [existing] = await tx
-          .select({ employmentId: paycheques.employmentId })
+          .select({
+            employmentId: paycheques.employmentId,
+            syncedFromTenure: paycheques.syncedFromTenure,
+          })
           .from(paycheques)
           .innerJoin(employments, eq(paycheques.employmentId, employments.id))
           .where(
@@ -168,6 +183,12 @@ export const paychequeRouter = createTRPCRouter({
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Paycheque not found.",
+          });
+        }
+        if (existing.syncedFromTenure) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Synced paycheques are read-only in Tax Book. Delete them in Tenure.",
           });
         }
         await tx.delete(paycheques).where(eq(paycheques.id, input.id));

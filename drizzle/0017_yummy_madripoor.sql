@@ -1,0 +1,1 @@
+ALTER TABLE `households` ADD `tenure_person_mappings` text DEFAULT '{}' NOT NULL;

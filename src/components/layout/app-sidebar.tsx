@@ -43,6 +43,11 @@ const navigation = [
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const settings = api.settings.get.useQuery();
+  const employments = api.employment.list.useQuery();
+  const showPaychequesWorkspace = employments.data?.showPaychequesWorkspace ?? true;
+  const visibleNavigation = navigation.filter(
+    (item) => item.href !== "/paycheques" || showPaychequesWorkspace,
+  );
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -60,7 +65,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>{settings.data?.household.name ?? "Household"}</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigation.map((item) => (
+              {visibleNavigation.map((item) => (
                 <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     asChild

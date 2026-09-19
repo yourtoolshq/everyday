@@ -78,6 +78,7 @@ export const employments = sqliteTable(
     unionDuesTaxItemId: integer("union_dues_tax_item_id").references(() => taxItems.id, {
       onDelete: "set null",
     }),
+    tenureEmploymentId: text("tenure_employment_id"),
     otherDeductionsEnabled: integer("other_deductions_enabled", { mode: "boolean" })
       .default(true)
       .notNull(),

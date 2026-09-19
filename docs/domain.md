@@ -147,6 +147,10 @@ amount is the sum of recorded gross pay. Its expected amount is the current
 projection. These calculated amounts are managed through Paycheques rather than
 edited manually on the Tax Item.
 
+When an Employment is linked to Tenure, paycheques synced from Tenure are
+read-only mirrors in Tax Book. Tenure remains the source of truth for paycheck
+detail and pay periods.
+
 ---
 
 ## Domain Relationships

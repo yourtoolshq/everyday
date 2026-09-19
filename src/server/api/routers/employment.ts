@@ -76,6 +76,7 @@ export const employmentRouter = createTRPCRouter({
         phspTaxItemId: employments.phspTaxItemId,
         unionDuesTaxItemId: employments.unionDuesTaxItemId,
         otherDeductionsEnabled: employments.otherDeductionsEnabled,
+        tenureEmploymentId: employments.tenureEmploymentId,
         createdAt: employments.createdAt,
         updatedAt: employments.updatedAt,
       })
@@ -89,7 +90,12 @@ export const employmentRouter = createTRPCRouter({
         projection: await employmentProjection(ctx.db, row.id),
       })),
     );
-    return { year, items };
+    return {
+      year,
+      items,
+      showPaychequesWorkspace:
+        items.length === 0 || items.some((item) => !item.tenureEmploymentId),
+    };
   }),
   create: publicProcedure
     .input(employmentInput)

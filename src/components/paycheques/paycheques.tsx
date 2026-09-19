@@ -1,6 +1,6 @@
 "use client";
 
-import { IconBriefcase, IconPlus } from "@tabler/icons-react";
+import { IconBriefcase, IconDownload, IconPlus } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -197,7 +197,22 @@ export function Paycheques() {
             ))}
           </SelectContent>
         </Select>
-        {selectedEmployment ? <Button variant="ghost" onClick={() => editEmployment(selectedEmployment.id)}>Edit employment</Button> : null}
+        {selectedEmployment ? (
+          <>
+            <Button variant="ghost" onClick={() => editEmployment(selectedEmployment.id)}>
+              Edit employment
+            </Button>
+            <Button asChild variant="outline">
+              <a
+                href={`/api/paycheques/export?employmentId=${selectedEmployment.id}`}
+                download
+              >
+                <IconDownload />
+                Export for Tenure
+              </a>
+            </Button>
+          </>
+        ) : null}
         <span className="ml-auto text-xs text-muted-foreground">{filteredPaycheques.length} of {paycheques.length} shown</span>
       </div>
 

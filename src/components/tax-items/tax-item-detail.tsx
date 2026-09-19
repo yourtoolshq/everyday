@@ -26,8 +26,14 @@ import { Skeleton } from "~/components/ui/skeleton";
 import { formatCad } from "~/domain/money";
 import { itemTypeLabels, taxTreatmentLabels } from "~/domain/tax-item";
 import { api, type RouterOutputs } from "~/trpc/react";
+import {
+  TenureEmploymentButton,
+  TenureEmploymentLink,
+  TenureEmploymentTag,
+} from "~/components/tenure/tenure-external-link";
 import { ItemFormSheet } from "./item-form-sheet";
 import { ItemStatusBadge } from "./item-status-badge";
+import { TaxItemPaychequesTable } from "./tax-item-paycheques-table";
 
 type RecordItem = RouterOutputs["record"]["list"]["items"][number];
 type TaxDocument = RouterOutputs["taxDocument"]["list"]["items"][number];
@@ -59,8 +65,13 @@ export function TaxItemDetail({ id }: { id: number }) {
   const item = itemQuery.data.item;
   const recordItems = recordsQuery.data.items;
   const documentItems = documentsQuery.data.items;
+  const tenureManaged = itemQuery.data.tenureManaged;
+  const tenureEmploymentId = itemQuery.data.tenureEmploymentId;
+  const tenurePaycheques = itemQuery.data.tenurePaycheques;
   const canAdd = item.valueSource !== "paycheques" && item.valueSource !== "self_employment";
   const managedBusiness = item.valueSource === "self_employment";
+  const managedPaycheques = item.valueSource === "paycheques" && !tenureManaged;
+  const supportingCount = tenureManaged ? tenurePaycheques.length : recordItems.length;
 
   function addRecord() {
     setEditingRecord(null);
@@ -139,20 +150,61 @@ export function TaxItemDetail({ id }: { id: number }) {
               <span>{item.personName ?? "Household"}</span>
               {item.taxLineReference ? <span>· {item.taxLineReference}</span> : null}
               {item.taxTreatment ? <Badge variant="outline">{taxTreatmentLabels[item.taxTreatment]}</Badge> : <Badge variant="outline">Tracking only</Badge>}
+              {tenureManaged && tenureEmploymentId ? (
+                <TenureEmploymentTag employmentId={tenureEmploymentId} />
+              ) : null}
             </div>
           </div>
-          <div className="flex gap-2">
-            {managedBusiness ? <Button asChild><Link href={`/self-employment/${item.businessActivityId}`}>Manage self-employment Records</Link></Button> : <><Button variant="outline" onClick={() => setItemFormOpen(true)}><IconEdit /> Edit Tax Item</Button><Button variant="outline" onClick={addDocument}><IconFileDescription /> Add Tax Document</Button><Button onClick={addRecord} disabled={!canAdd}><IconPlus /> Add Record</Button></>}
+          <div className="flex flex-wrap gap-2">
+            {managedBusiness ? (
+              <Button asChild>
+                <Link href={`/self-employment/${item.businessActivityId}`}>
+                  Manage self-employment Records
+                </Link>
+              </Button>
+            ) : tenureManaged && tenureEmploymentId ? (
+              <>
+                <TenureEmploymentButton employmentId={tenureEmploymentId} />
+                <Button variant="outline" onClick={() => setItemFormOpen(true)}>
+                  <IconEdit /> Edit Tax Item
+                </Button>
+                <Button variant="outline" onClick={addDocument}>
+                  <IconFileDescription /> Add Tax Document
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setItemFormOpen(true)}>
+                  <IconEdit /> Edit Tax Item
+                </Button>
+                <Button variant="outline" onClick={addDocument}>
+                  <IconFileDescription /> Add Tax Document
+                </Button>
+                <Button onClick={addRecord} disabled={!canAdd}>
+                  <IconPlus /> Add Record
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
 
-      {!canAdd ? <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">This Tax Item is calculated from {managedBusiness ? "Self-employment Records" : "Paycheques"}. Manage it from its dedicated workspace.</div> : null}
+      {managedBusiness ? <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">This Tax Item is calculated from Self-employment Records. Manage it from its dedicated workspace.</div> : null}
+      {managedPaycheques ? <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">This Tax Item is calculated from Paycheques. Manage it from the <Link href="/paycheques" className="text-primary underline-offset-4 hover:underline">Paycheques</Link> workspace.</div> : null}
+      {tenureManaged && tenureEmploymentId ? (
+        <div className="rounded-lg border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          Pay stubs sync from Tenure and count toward this item&apos;s actual total.{" "}
+          <TenureEmploymentLink employmentId={tenureEmploymentId}>
+            Manage employment in Tenure
+          </TenureEmploymentLink>
+          .
+        </div>
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card><CardHeader className="pb-1"><CardDescription>Expected amount</CardDescription><CardTitle className="text-xl tabular-nums">{formatCad(item.expectedAmountCents)}</CardTitle></CardHeader></Card>
         <Card className={item.valueSource === "records" ? "bg-gradient-to-b from-primary/[0.06] to-card" : undefined}><CardHeader className="pb-1"><CardDescription>Actual amount</CardDescription><CardTitle className="text-xl tabular-nums">{formatCad(item.actualAmountCents)}</CardTitle></CardHeader><CardContent><p className="text-xs text-muted-foreground">{item.valueSource === "records" ? "Calculated from Records" : item.valueSource === "paycheques" ? "Calculated from Paycheques" : "Entered manually"}</p></CardContent></Card>
-        <Card><CardHeader className="pb-1"><CardDescription>Supporting Records</CardDescription><CardTitle className="text-xl">{recordItems.length.toLocaleString()}</CardTitle></CardHeader><CardContent><p className="text-xs text-muted-foreground">{recordItems.filter((record) => record.attachmentFileName).length.toLocaleString()} with attachments</p></CardContent></Card>
+        <Card><CardHeader className="pb-1"><CardDescription>{tenureManaged ? "Pay stubs" : "Supporting Records"}</CardDescription><CardTitle className="text-xl">{supportingCount.toLocaleString()}</CardTitle></CardHeader><CardContent><p className="text-xs text-muted-foreground">{tenureManaged ? "From Tenure" : `${recordItems.filter((record) => record.attachmentFileName).length.toLocaleString()} with attachments`}</p></CardContent></Card>
         <Card><CardHeader className="pb-1"><CardDescription>Tax Documents</CardDescription><CardTitle className="text-xl">{documentItems.length.toLocaleString()}</CardTitle></CardHeader><CardContent><p className="text-xs text-muted-foreground">{documentItems.filter((document) => document.status === "expected").length.toLocaleString()} still expected</p></CardContent></Card>
       </div>
 
@@ -167,10 +219,23 @@ export function TaxItemDetail({ id }: { id: number }) {
       </> : null}
 
       <div className="flex items-end justify-between gap-4">
-        <div><h3 className="text-lg font-semibold">Records</h3><p className="text-sm text-muted-foreground">Amounts are listed newest first and counted toward the actual total.</p></div>
+        <div>
+          <h3 className="text-lg font-semibold">{tenureManaged ? "Pay stubs" : "Records"}</h3>
+          <p className="text-sm text-muted-foreground">
+            {tenureManaged
+              ? "Pay stubs act as supporting records and are listed newest first."
+              : "Amounts are listed newest first and counted toward the actual total."}
+          </p>
+        </div>
         {recordItems.length > 0 && canAdd ? <Button variant="outline" onClick={addRecord}><IconPlus /> Add Record</Button> : null}
       </div>
-      {!managedBusiness ? <RecordsTable items={recordItems} canAdd={canAdd} onAdd={addRecord} onEdit={editRecord} onDelete={setDeletingRecord} /> : null}
+      {!managedBusiness && tenureManaged ? (
+        <TaxItemPaychequesTable
+          items={tenurePaycheques}
+          tenureEmploymentId={tenureEmploymentId}
+        />
+      ) : null}
+      {!managedBusiness && !tenureManaged ? <RecordsTable items={recordItems} canAdd={canAdd} onAdd={addRecord} onEdit={editRecord} onDelete={setDeletingRecord} /> : null}
 
       {recordFormOpen ? <RecordFormSheet key={editingRecord?.id ?? "new"} item={item} record={editingRecord} people={settingsQuery.data.people} open={recordFormOpen} onOpenChange={setRecordFormOpen} /> : null}
       {documentFormOpen ? <TaxDocumentFormSheet key={editingDocument?.id ?? "new"} item={item} document={editingDocument} people={settingsQuery.data.people} open={documentFormOpen} onOpenChange={setDocumentFormOpen} /> : null}

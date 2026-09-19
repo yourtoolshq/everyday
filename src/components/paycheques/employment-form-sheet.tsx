@@ -143,6 +143,27 @@ export function EmploymentFormSheet({
     toast.success(message);
     onOpenChange(false);
   };
+  const tenureEmployments = api.tenureSync.listTenureEmployments.useQuery(undefined, {
+    enabled: open && Boolean(employment),
+  });
+  const [tenureEmploymentId, setTenureEmploymentId] = useState(
+    employment?.tenureEmploymentId ?? "",
+  );
+  const linkEmployment = api.tenureSync.linkEmployment.useMutation({
+    onSuccess: async (result) => {
+      await Promise.all([
+        utils.employment.list.invalidate(),
+        utils.tenureSync.status.invalidate(),
+      ]);
+      if (result.matchedCount > 0) {
+        toast.success(`Linked employment and matched ${result.matchedCount} existing paycheque(s).`);
+      } else {
+        toast.success("Tenure employment linked.");
+      }
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
   const create = api.employment.create.useMutation({
     onSuccess: () => finish("Employment added."),
     onError: (error) => toast.error(error.message),
@@ -237,6 +258,38 @@ export function EmploymentFormSheet({
               <div className="space-y-2">
                 <Label htmlFor="employment-end-date">End date</Label>
                 <Input id="employment-end-date" type="date" min={`${year}-01-01`} max={`${year}-12-31`} value={endDate} onChange={(event) => setEndDate(event.target.value)} required />
+              </div>
+            ) : null}
+            {employment ? (
+              <div className="space-y-2">
+                <Label>Tenure employment</Label>
+                <Select
+                  value={tenureEmploymentId || "__none__"}
+                  onValueChange={(value) => {
+                    const nextValue = value === "__none__" ? null : value;
+                    setTenureEmploymentId(nextValue ?? "");
+                    linkEmployment.mutate({
+                      employmentId: employment.id,
+                      tenureEmploymentId: nextValue,
+                      reconcileExisting: true,
+                    });
+                  }}
+                >
+                  <SelectTrigger aria-label="Tenure employment">
+                    <SelectValue placeholder="Not linked" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Not linked</SelectItem>
+                    {(tenureEmployments.data?.items ?? []).map((item) => (
+                      <SelectItem key={item.id} value={item.id}>
+                        {item.personName} — {item.employerName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Link this employment to Tenure to sync paycheques automatically.
+                </p>
               </div>
             ) : null}
             <div className="space-y-2">

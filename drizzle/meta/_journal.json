@@ -113,6 +113,20 @@
       "when": 1789820354445,
       "tag": "0015_goofy_songbird",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "6",
+      "when": 1789837940549,
+      "tag": "0016_exotic_shocker",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1789838678339,
+      "tag": "0017_yummy_madripoor",
+      "breakpoints": true
     }
   ]
 }

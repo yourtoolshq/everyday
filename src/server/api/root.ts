@@ -10,6 +10,7 @@ import { filingRouter } from "~/server/api/routers/filing";
 import { taxDocumentRouter } from "~/server/api/routers/tax-document";
 import { taxYearRouter } from "~/server/api/routers/tax-year";
 import { taxEstimateRouter } from "~/server/api/routers/tax-estimate";
+import { tenureSyncRouter } from "~/server/api/routers/tenure-sync";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 export const appRouter = createTRPCRouter({
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
   craReference: craReferenceRouter,
   taxYear: taxYearRouter,
   taxEstimate: taxEstimateRouter,
+  tenureSync: tenureSyncRouter,
 });
 
 export type AppRouter = typeof appRouter;

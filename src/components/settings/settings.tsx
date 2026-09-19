@@ -35,6 +35,7 @@ import { Label } from "~/components/ui/label";
 import { Skeleton } from "~/components/ui/skeleton";
 import { api, type RouterOutputs } from "~/trpc/react";
 import { PersonRow } from "./person-row";
+import { TenureIntegrationSetting } from "./tenure-integration-setting";
 import { ThemeSetting } from "./theme-setting";
 
 type Person = RouterOutputs["settings"]["get"]["people"][number];
@@ -102,6 +103,7 @@ export function Settings() {
         <p className="mt-1 text-sm text-muted-foreground">Manage the household details used to organize tax items.</p>
       </div>
       <ThemeSetting />
+      <TenureIntegrationSetting />
       <Card>
         <CardHeader>
           <CardTitle className="text-base">Household</CardTitle>

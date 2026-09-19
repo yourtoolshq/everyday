@@ -2,6 +2,10 @@
 
 import { IconDots, IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
 
+import {
+  TenureEmploymentLink,
+  TenureEmploymentTag,
+} from "~/components/tenure/tenure-external-link";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import {
@@ -70,7 +74,18 @@ export function PaychequesTable({
             {items.length ? items.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <button className="font-medium hover:text-primary" onClick={() => onEdit(item)}>{formatPayDate(item.payDate)}</button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="font-medium hover:text-primary"
+                      onClick={() => !item.syncedFromTenure && onEdit(item)}
+                      disabled={item.syncedFromTenure}
+                    >
+                      {formatPayDate(item.payDate)}
+                    </button>
+                    {item.syncedFromTenure && item.tenureEmploymentId ? (
+                      <TenureEmploymentTag employmentId={item.tenureEmploymentId} />
+                    ) : null}
+                  </div>
                 </TableCell>
                 <TableCell>{item.personName}</TableCell>
                 <TableCell>
@@ -80,14 +95,25 @@ export function PaychequesTable({
                 <TableCell className="text-right tabular-nums">{formatCad(calculateTotalDeductions(item))}</TableCell>
                 <TableCell className="text-right font-medium tabular-nums">{formatCad(item.netPayCents)}</TableCell>
                 <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label={`Actions for paycheque on ${item.payDate}`}><IconDots /></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => onEdit(item)}><IconEdit /> Edit</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem variant="destructive" onSelect={() => onDelete(item)}><IconTrash /> Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {item.syncedFromTenure && item.tenureEmploymentId ? (
+                    <TenureEmploymentLink
+                      employmentId={item.tenureEmploymentId}
+                      className="text-xs text-muted-foreground hover:text-primary"
+                    >
+                      Open in Tenure
+                    </TenureEmploymentLink>
+                  ) : item.syncedFromTenure ? (
+                    <span className="text-xs text-muted-foreground">Read-only</span>
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" aria-label={`Actions for paycheque on ${item.payDate}`}><IconDots /></Button></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => onEdit(item)}><IconEdit /> Edit</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant="destructive" onSelect={() => onDelete(item)}><IconTrash /> Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </TableCell>
               </TableRow>
             )) : (

@@ -4,7 +4,15 @@ import { z } from "zod";
 
 import { buildOverview } from "~/domain/overview";
 import { taxItemInput, taxItemUpdateInput } from "~/domain/tax-item";
-import { businessActivities, people, records, taxDocuments, taxItems } from "~/server/db/schema";
+import {
+  businessActivities,
+  employments,
+  paycheques,
+  people,
+  records,
+  taxDocuments,
+  taxItems,
+} from "~/server/db/schema";
 import type { Database } from "../helpers";
 import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "../helpers";
 import { createTRPCRouter, publicProcedure } from "../trpc";
@@ -52,10 +60,12 @@ async function listActiveItems(db: Database) {
       createdAt: taxItems.createdAt,
       updatedAt: taxItems.updatedAt,
       businessActivityId: businessActivities.id,
+      tenureEmploymentId: employments.tenureEmploymentId,
     })
     .from(taxItems)
     .leftJoin(people, eq(taxItems.personId, people.id))
     .leftJoin(businessActivities, eq(taxItems.id, businessActivities.taxItemId))
+    .leftJoin(employments, eq(employments.taxItemId, taxItems.id))
     .where(eq(taxItems.taxYearId, year.id))
     .orderBy(desc(taxItems.updatedAt), desc(taxItems.id));
   return { household, year, items };
@@ -75,7 +85,46 @@ export const taxItemRouter = createTRPCRouter({
         .select({ recordCount: count() })
         .from(records)
         .where(eq(records.taxItemId, item.id));
-      return { year, item: { ...item, recordCount: aggregate?.recordCount ?? 0 } };
+      const [employment] = await ctx.db
+        .select({
+          id: employments.id,
+          tenureEmploymentId: employments.tenureEmploymentId,
+        })
+        .from(employments)
+        .where(eq(employments.taxItemId, item.id));
+      const tenureManaged = Boolean(employment?.tenureEmploymentId);
+      const tenurePaycheques = tenureManaged
+        ? await ctx.db
+            .select({
+              id: paycheques.id,
+              payDate: paycheques.payDate,
+              grossPayCents: paycheques.grossPayCents,
+              incomeTaxCents: paycheques.incomeTaxCents,
+              federalIncomeTaxCents: paycheques.federalIncomeTaxCents,
+              manitobaIncomeTaxCents: paycheques.manitobaIncomeTaxCents,
+              cppCents: paycheques.cppCents,
+              cpp2Cents: paycheques.cpp2Cents,
+              eiCents: paycheques.eiCents,
+              wiCents: paycheques.wiCents,
+              ltdCents: paycheques.ltdCents,
+              extendedHealthCents: paycheques.extendedHealthCents,
+              travelMedicalCents: paycheques.travelMedicalCents,
+              unionDuesCents: paycheques.unionDuesCents,
+              otherDeductionsCents: paycheques.otherDeductionsCents,
+              netPayCents: paycheques.netPayCents,
+              syncedFromTenure: paycheques.syncedFromTenure,
+            })
+            .from(paycheques)
+            .where(eq(paycheques.employmentId, employment!.id))
+            .orderBy(desc(paycheques.payDate), desc(paycheques.id))
+        : [];
+      return {
+        year,
+        item: { ...item, recordCount: aggregate?.recordCount ?? 0 },
+        tenureManaged,
+        tenureEmploymentId: employment?.tenureEmploymentId ?? null,
+        tenurePaycheques,
+      };
     }),
   overview: publicProcedure.query(async ({ ctx }) => {
     const { household, year, items } = await listActiveItems(ctx.db);
