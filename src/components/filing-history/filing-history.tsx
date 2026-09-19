@@ -480,7 +480,7 @@ export function TaxFiling() {
             ? `edit-${editingReturn.id}`
             : addingReturnForPersonId !== undefined
               ? `add-${addingReturnForPersonId}`
-              : "closed"
+              : "return-closed"
         }
         taxYearId={taxYearId}
         people={timeline.data.people}
@@ -502,7 +502,7 @@ export function TaxFiling() {
             ? `edit-${editingAdjustment.id}`
             : addingAdjustmentForPersonId !== undefined
               ? `add-${addingAdjustmentForPersonId}`
-              : "closed"
+              : "adjustment-closed"
         }
         taxYearId={taxYearId}
         people={timeline.data.people}
