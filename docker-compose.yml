@@ -1,0 +1,32 @@
+services:
+  app:
+    build:
+      context: .
+    environment:
+      DATABASE_URL: file:/data/tenure.db
+      DOCUMENTS_DIR: /data/documents
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:${TENURE_PORT:-3003}:3000"
+    restart: unless-stopped
+    volumes:
+      - tenure-data:/data
+    networks:
+      - default
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.tenure.rule=Host(`tenure.tools.local`)
+      - traefik.http.routers.tenure.entrypoints=web
+      - traefik.http.routers.tenure-secure.rule=Host(`tenure.tools.local`)
+      - traefik.http.routers.tenure-secure.entrypoints=websecure
+      - traefik.http.routers.tenure-secure.tls=true
+      - traefik.http.services.tenure.loadbalancer.server.port=3000
+
+networks:
+  web:
+    external: true
+
+volumes:
+  tenure-data:
+    name: tenure-data
