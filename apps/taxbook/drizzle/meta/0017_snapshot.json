@@ -1,0 +1,2533 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "cc6fa24c-6a89-4fa5-b3ce-4f83e335e6dd",
+  "prevId": "f60cae26-8de1-4d27-a4cd-644b2a6651f8",
+  "tables": {
+    "assessment_attachments": {
+      "name": "assessment_attachments",
+      "columns": {
+        "assessment_id": {
+          "name": "assessment_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "data": {
+          "name": "data",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "assessment_attachments_assessment_id_assessments_id_fk": {
+          "name": "assessment_attachments_assessment_id_assessments_id_fk",
+          "tableFrom": "assessment_attachments",
+          "tableTo": "assessments",
+          "columnsFrom": [
+            "assessment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "assessment_attachment_size_valid": {
+          "name": "assessment_attachment_size_valid",
+          "value": "\"assessment_attachments\".\"size_bytes\" > 0 and \"assessment_attachments\".\"size_bytes\" <= 20971520"
+        }
+      }
+    },
+    "assessments": {
+      "name": "assessments",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "filing_id": {
+          "name": "filing_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "assessment_date": {
+          "name": "assessment_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "assessed_result_cents": {
+          "name": "assessed_result_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "refund_or_payment_date": {
+          "name": "refund_or_payment_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "assessments_filing_unique": {
+          "name": "assessments_filing_unique",
+          "columns": [
+            "filing_id"
+          ],
+          "isUnique": true
+        },
+        "assessments_date_idx": {
+          "name": "assessments_date_idx",
+          "columns": [
+            "assessment_date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "assessments_filing_id_filings_id_fk": {
+          "name": "assessments_filing_id_filings_id_fk",
+          "tableFrom": "assessments",
+          "tableTo": "filings",
+          "columnsFrom": [
+            "filing_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "business_activities": {
+      "name": "business_activities",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tax_year_id": {
+          "name": "tax_year_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tax_item_id": {
+          "name": "tax_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "business_activities_year_idx": {
+          "name": "business_activities_year_idx",
+          "columns": [
+            "tax_year_id"
+          ],
+          "isUnique": false
+        },
+        "business_activities_person_idx": {
+          "name": "business_activities_person_idx",
+          "columns": [
+            "person_id"
+          ],
+          "isUnique": false
+        },
+        "business_activities_tax_item_unique": {
+          "name": "business_activities_tax_item_unique",
+          "columns": [
+            "tax_item_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "business_activities_tax_year_id_tax_years_id_fk": {
+          "name": "business_activities_tax_year_id_tax_years_id_fk",
+          "tableFrom": "business_activities",
+          "tableTo": "tax_years",
+          "columnsFrom": [
+            "tax_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "business_activities_person_id_people_id_fk": {
+          "name": "business_activities_person_id_people_id_fk",
+          "tableFrom": "business_activities",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "business_activities_tax_item_id_tax_items_id_fk": {
+          "name": "business_activities_tax_item_id_tax_items_id_fk",
+          "tableFrom": "business_activities",
+          "tableTo": "tax_items",
+          "columnsFrom": [
+            "tax_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "business_record_attachments": {
+      "name": "business_record_attachments",
+      "columns": {
+        "business_record_id": {
+          "name": "business_record_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "data": {
+          "name": "data",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "business_record_attachments_business_record_id_business_records_id_fk": {
+          "name": "business_record_attachments_business_record_id_business_records_id_fk",
+          "tableFrom": "business_record_attachments",
+          "tableTo": "business_records",
+          "columnsFrom": [
+            "business_record_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "business_record_attachment_size_valid": {
+          "name": "business_record_attachment_size_valid",
+          "value": "\"business_record_attachments\".\"size_bytes\" > 0 and \"business_record_attachments\".\"size_bytes\" <= 20971520"
+        }
+      }
+    },
+    "business_records": {
+      "name": "business_records",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "business_activity_id": {
+          "name": "business_activity_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expense_category": {
+          "name": "expense_category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount_cents": {
+          "name": "amount_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "business_records_activity_idx": {
+          "name": "business_records_activity_idx",
+          "columns": [
+            "business_activity_id"
+          ],
+          "isUnique": false
+        },
+        "business_records_date_idx": {
+          "name": "business_records_date_idx",
+          "columns": [
+            "date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "business_records_business_activity_id_business_activities_id_fk": {
+          "name": "business_records_business_activity_id_business_activities_id_fk",
+          "tableFrom": "business_records",
+          "tableTo": "business_activities",
+          "columnsFrom": [
+            "business_activity_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "business_record_amount_positive": {
+          "name": "business_record_amount_positive",
+          "value": "\"business_records\".\"amount_cents\" > 0"
+        },
+        "business_record_category_consistent": {
+          "name": "business_record_category_consistent",
+          "value": "(\"business_records\".\"kind\" = 'revenue' and \"business_records\".\"expense_category\" is null) or (\"business_records\".\"kind\" = 'expense' and \"business_records\".\"expense_category\" is not null)"
+        }
+      }
+    },
+    "cra_reference_document_attachments": {
+      "name": "cra_reference_document_attachments",
+      "columns": {
+        "cra_reference_document_id": {
+          "name": "cra_reference_document_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "data": {
+          "name": "data",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cra_reference_document_attachments_cra_reference_document_id_cra_reference_documents_id_fk": {
+          "name": "cra_reference_document_attachments_cra_reference_document_id_cra_reference_documents_id_fk",
+          "tableFrom": "cra_reference_document_attachments",
+          "tableTo": "cra_reference_documents",
+          "columnsFrom": [
+            "cra_reference_document_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "cra_reference_document_attachment_size_valid": {
+          "name": "cra_reference_document_attachment_size_valid",
+          "value": "\"cra_reference_document_attachments\".\"size_bytes\" > 0 and \"cra_reference_document_attachments\".\"size_bytes\" <= 20971520"
+        }
+      }
+    },
+    "cra_reference_documents": {
+      "name": "cra_reference_documents",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tax_year_id": {
+          "name": "tax_year_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "document_date": {
+          "name": "document_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "reporting_period_label": {
+          "name": "reporting_period_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "cra_reference_documents_year_idx": {
+          "name": "cra_reference_documents_year_idx",
+          "columns": [
+            "tax_year_id"
+          ],
+          "isUnique": false
+        },
+        "cra_reference_documents_person_idx": {
+          "name": "cra_reference_documents_person_idx",
+          "columns": [
+            "person_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "cra_reference_documents_tax_year_id_tax_years_id_fk": {
+          "name": "cra_reference_documents_tax_year_id_tax_years_id_fk",
+          "tableFrom": "cra_reference_documents",
+          "tableTo": "tax_years",
+          "columnsFrom": [
+            "tax_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "cra_reference_documents_person_id_people_id_fk": {
+          "name": "cra_reference_documents_person_id_people_id_fk",
+          "tableFrom": "cra_reference_documents",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "employments": {
+      "name": "employments",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tax_year_id": {
+          "name": "tax_year_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tax_item_id": {
+          "name": "tax_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "employer_name": {
+          "name": "employer_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pay_frequency": {
+          "name": "pay_frequency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "typical_gross_override_cents": {
+          "name": "typical_gross_override_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "income_tax_enabled": {
+          "name": "income_tax_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "federal_income_tax_enabled": {
+          "name": "federal_income_tax_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "manitoba_income_tax_enabled": {
+          "name": "manitoba_income_tax_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "deduction_field_order": {
+          "name": "deduction_field_order",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cpp_enabled": {
+          "name": "cpp_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "cpp2_enabled": {
+          "name": "cpp2_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "ei_enabled": {
+          "name": "ei_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "wi_enabled": {
+          "name": "wi_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "ltd_enabled": {
+          "name": "ltd_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "extended_health_enabled": {
+          "name": "extended_health_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "travel_medical_enabled": {
+          "name": "travel_medical_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "union_dues_enabled": {
+          "name": "union_dues_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "phsp_reported_on_t4": {
+          "name": "phsp_reported_on_t4",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "union_dues_reported_on_t4": {
+          "name": "union_dues_reported_on_t4",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "phsp_tax_item_id": {
+          "name": "phsp_tax_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "union_dues_tax_item_id": {
+          "name": "union_dues_tax_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tenure_employment_id": {
+          "name": "tenure_employment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "other_deductions_enabled": {
+          "name": "other_deductions_enabled",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "employments_year_idx": {
+          "name": "employments_year_idx",
+          "columns": [
+            "tax_year_id"
+          ],
+          "isUnique": false
+        },
+        "employments_person_idx": {
+          "name": "employments_person_idx",
+          "columns": [
+            "person_id"
+          ],
+          "isUnique": false
+        },
+        "employments_tax_item_unique": {
+          "name": "employments_tax_item_unique",
+          "columns": [
+            "tax_item_id"
+          ],
+          "isUnique": true
+        },
+        "employments_phsp_tax_item_unique": {
+          "name": "employments_phsp_tax_item_unique",
+          "columns": [
+            "phsp_tax_item_id"
+          ],
+          "isUnique": true
+        },
+        "employments_union_dues_tax_item_unique": {
+          "name": "employments_union_dues_tax_item_unique",
+          "columns": [
+            "union_dues_tax_item_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "employments_tax_year_id_tax_years_id_fk": {
+          "name": "employments_tax_year_id_tax_years_id_fk",
+          "tableFrom": "employments",
+          "tableTo": "tax_years",
+          "columnsFrom": [
+            "tax_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "employments_person_id_people_id_fk": {
+          "name": "employments_person_id_people_id_fk",
+          "tableFrom": "employments",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "employments_tax_item_id_tax_items_id_fk": {
+          "name": "employments_tax_item_id_tax_items_id_fk",
+          "tableFrom": "employments",
+          "tableTo": "tax_items",
+          "columnsFrom": [
+            "tax_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "employments_phsp_tax_item_id_tax_items_id_fk": {
+          "name": "employments_phsp_tax_item_id_tax_items_id_fk",
+          "tableFrom": "employments",
+          "tableTo": "tax_items",
+          "columnsFrom": [
+            "phsp_tax_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "employments_union_dues_tax_item_id_tax_items_id_fk": {
+          "name": "employments_union_dues_tax_item_id_tax_items_id_fk",
+          "tableFrom": "employments",
+          "tableTo": "tax_items",
+          "columnsFrom": [
+            "union_dues_tax_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "employment_status_end_date_consistent": {
+          "name": "employment_status_end_date_consistent",
+          "value": "(\"employments\".\"status\" = 'active' and \"employments\".\"end_date\" is null) or (\"employments\".\"status\" = 'ended' and \"employments\".\"end_date\" is not null)"
+        },
+        "employment_typical_gross_non_negative": {
+          "name": "employment_typical_gross_non_negative",
+          "value": "\"employments\".\"typical_gross_override_cents\" is null or \"employments\".\"typical_gross_override_cents\" >= 0"
+        }
+      }
+    },
+    "filing_affected_tax_items": {
+      "name": "filing_affected_tax_items",
+      "columns": {
+        "filing_id": {
+          "name": "filing_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tax_item_id": {
+          "name": "tax_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "filing_affected_tax_items_filing_id_filings_id_fk": {
+          "name": "filing_affected_tax_items_filing_id_filings_id_fk",
+          "tableFrom": "filing_affected_tax_items",
+          "tableTo": "filings",
+          "columnsFrom": [
+            "filing_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "filing_affected_tax_items_tax_item_id_tax_items_id_fk": {
+          "name": "filing_affected_tax_items_tax_item_id_tax_items_id_fk",
+          "tableFrom": "filing_affected_tax_items",
+          "tableTo": "tax_items",
+          "columnsFrom": [
+            "tax_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "filing_affected_tax_items_filing_id_tax_item_id_pk": {
+          "columns": [
+            "filing_id",
+            "tax_item_id"
+          ],
+          "name": "filing_affected_tax_items_filing_id_tax_item_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "filing_attachments": {
+      "name": "filing_attachments",
+      "columns": {
+        "filing_id": {
+          "name": "filing_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "data": {
+          "name": "data",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "filing_attachments_filing_id_filings_id_fk": {
+          "name": "filing_attachments_filing_id_filings_id_fk",
+          "tableFrom": "filing_attachments",
+          "tableTo": "filings",
+          "columnsFrom": [
+            "filing_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "filing_attachment_size_valid": {
+          "name": "filing_attachment_size_valid",
+          "value": "\"filing_attachments\".\"size_bytes\" > 0 and \"filing_attachments\".\"size_bytes\" <= 20971520"
+        }
+      }
+    },
+    "filing_item_values": {
+      "name": "filing_item_values",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "filing_id": {
+          "name": "filing_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tax_item_id": {
+          "name": "tax_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "item_name": {
+          "name": "item_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "owner_label": {
+          "name": "owner_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tax_line_reference": {
+          "name": "tax_line_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "amount_cents": {
+          "name": "amount_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "difference_note": {
+          "name": "difference_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "filing_item_values_filing_idx": {
+          "name": "filing_item_values_filing_idx",
+          "columns": [
+            "filing_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "filing_item_values_filing_id_filings_id_fk": {
+          "name": "filing_item_values_filing_id_filings_id_fk",
+          "tableFrom": "filing_item_values",
+          "tableTo": "filings",
+          "columnsFrom": [
+            "filing_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "filing_item_values_tax_item_id_tax_items_id_fk": {
+          "name": "filing_item_values_tax_item_id_tax_items_id_fk",
+          "tableFrom": "filing_item_values",
+          "tableTo": "tax_items",
+          "columnsFrom": [
+            "tax_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "filings": {
+      "name": "filings",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tax_year_id": {
+          "name": "tax_year_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'preparing'"
+        },
+        "submission_date": {
+          "name": "submission_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "expected_result_cents": {
+          "name": "expected_result_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "return_copy_status": {
+          "name": "return_copy_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'not_added_yet'"
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "expected_change_cents": {
+          "name": "expected_change_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "filings_original_return_unique": {
+          "name": "filings_original_return_unique",
+          "columns": [
+            "tax_year_id",
+            "person_id"
+          ],
+          "isUnique": true,
+          "where": "\"filings\".\"kind\" = 'original_return'"
+        },
+        "filings_year_person_idx": {
+          "name": "filings_year_person_idx",
+          "columns": [
+            "tax_year_id",
+            "person_id",
+            "submission_date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "filings_tax_year_id_tax_years_id_fk": {
+          "name": "filings_tax_year_id_tax_years_id_fk",
+          "tableFrom": "filings",
+          "tableTo": "tax_years",
+          "columnsFrom": [
+            "tax_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "filings_person_id_people_id_fk": {
+          "name": "filings_person_id_people_id_fk",
+          "tableFrom": "filings",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "filing_reason_consistent": {
+          "name": "filing_reason_consistent",
+          "value": "(\"filings\".\"kind\" = 'adjustment' and \"filings\".\"reason\" is not null and length(trim(\"filings\".\"reason\")) > 0) or (\"filings\".\"kind\" = 'original_return' and \"filings\".\"reason\" is null and \"filings\".\"expected_change_cents\" is null)"
+        }
+      }
+    },
+    "households": {
+      "name": "households",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tenure_base_url": {
+          "name": "tenure_base_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'http://localhost:3003'"
+        },
+        "tenure_last_sync_at": {
+          "name": "tenure_last_sync_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tenure_last_sync_error": {
+          "name": "tenure_last_sync_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tenure_person_mappings": {
+          "name": "tenure_person_mappings",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'{}'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "paycheques": {
+      "name": "paycheques",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "employment_id": {
+          "name": "employment_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pay_date": {
+          "name": "pay_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "gross_pay_cents": {
+          "name": "gross_pay_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "income_tax_cents": {
+          "name": "income_tax_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "federal_income_tax_cents": {
+          "name": "federal_income_tax_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "manitoba_income_tax_cents": {
+          "name": "manitoba_income_tax_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "cpp_cents": {
+          "name": "cpp_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cpp2_cents": {
+          "name": "cpp2_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ei_cents": {
+          "name": "ei_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "wi_cents": {
+          "name": "wi_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "ltd_cents": {
+          "name": "ltd_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "extended_health_cents": {
+          "name": "extended_health_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "travel_medical_cents": {
+          "name": "travel_medical_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "union_dues_cents": {
+          "name": "union_dues_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "other_deductions_cents": {
+          "name": "other_deductions_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "net_pay_cents": {
+          "name": "net_pay_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tenure_paycheck_id": {
+          "name": "tenure_paycheck_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "synced_from_tenure": {
+          "name": "synced_from_tenure",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "paycheques_employment_idx": {
+          "name": "paycheques_employment_idx",
+          "columns": [
+            "employment_id"
+          ],
+          "isUnique": false
+        },
+        "paycheques_date_idx": {
+          "name": "paycheques_date_idx",
+          "columns": [
+            "pay_date"
+          ],
+          "isUnique": false
+        },
+        "paycheques_tenure_paycheck_unique": {
+          "name": "paycheques_tenure_paycheck_unique",
+          "columns": [
+            "tenure_paycheck_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "paycheques_employment_id_employments_id_fk": {
+          "name": "paycheques_employment_id_employments_id_fk",
+          "tableFrom": "paycheques",
+          "tableTo": "employments",
+          "columnsFrom": [
+            "employment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "paycheque_amounts_non_negative": {
+          "name": "paycheque_amounts_non_negative",
+          "value": "\"paycheques\".\"gross_pay_cents\" >= 0 and \"paycheques\".\"income_tax_cents\" >= 0 and \"paycheques\".\"federal_income_tax_cents\" >= 0 and \"paycheques\".\"manitoba_income_tax_cents\" >= 0 and \"paycheques\".\"cpp_cents\" >= 0 and \"paycheques\".\"cpp2_cents\" >= 0 and \"paycheques\".\"ei_cents\" >= 0 and \"paycheques\".\"wi_cents\" >= 0 and \"paycheques\".\"ltd_cents\" >= 0 and \"paycheques\".\"extended_health_cents\" >= 0 and \"paycheques\".\"travel_medical_cents\" >= 0 and \"paycheques\".\"union_dues_cents\" >= 0 and \"paycheques\".\"other_deductions_cents\" >= 0 and \"paycheques\".\"net_pay_cents\" >= 0"
+        }
+      }
+    },
+    "people": {
+      "name": "people",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "household_id": {
+          "name": "household_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "people_household_idx": {
+          "name": "people_household_idx",
+          "columns": [
+            "household_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "people_household_id_households_id_fk": {
+          "name": "people_household_id_households_id_fk",
+          "tableFrom": "people",
+          "tableTo": "households",
+          "columnsFrom": [
+            "household_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "record_attachments": {
+      "name": "record_attachments",
+      "columns": {
+        "record_id": {
+          "name": "record_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "data": {
+          "name": "data",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "record_attachments_record_id_records_id_fk": {
+          "name": "record_attachments_record_id_records_id_fk",
+          "tableFrom": "record_attachments",
+          "tableTo": "records",
+          "columnsFrom": [
+            "record_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "record_attachment_size_valid": {
+          "name": "record_attachment_size_valid",
+          "value": "\"record_attachments\".\"size_bytes\" > 0 and \"record_attachments\".\"size_bytes\" <= 20971520"
+        }
+      }
+    },
+    "records": {
+      "name": "records",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tax_item_id": {
+          "name": "tax_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount_cents": {
+          "name": "amount_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "records_tax_item_idx": {
+          "name": "records_tax_item_idx",
+          "columns": [
+            "tax_item_id"
+          ],
+          "isUnique": false
+        },
+        "records_person_idx": {
+          "name": "records_person_idx",
+          "columns": [
+            "person_id"
+          ],
+          "isUnique": false
+        },
+        "records_date_idx": {
+          "name": "records_date_idx",
+          "columns": [
+            "date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "records_tax_item_id_tax_items_id_fk": {
+          "name": "records_tax_item_id_tax_items_id_fk",
+          "tableFrom": "records",
+          "tableTo": "tax_items",
+          "columnsFrom": [
+            "tax_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "records_person_id_people_id_fk": {
+          "name": "records_person_id_people_id_fk",
+          "tableFrom": "records",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "record_amount_positive": {
+          "name": "record_amount_positive",
+          "value": "\"records\".\"amount_cents\" > 0"
+        }
+      }
+    },
+    "tax_document_attachments": {
+      "name": "tax_document_attachments",
+      "columns": {
+        "tax_document_id": {
+          "name": "tax_document_id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mime_type": {
+          "name": "mime_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "size_bytes": {
+          "name": "size_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "data": {
+          "name": "data",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tax_document_attachments_tax_document_id_tax_documents_id_fk": {
+          "name": "tax_document_attachments_tax_document_id_tax_documents_id_fk",
+          "tableFrom": "tax_document_attachments",
+          "tableTo": "tax_documents",
+          "columnsFrom": [
+            "tax_document_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "tax_document_attachment_size_valid": {
+          "name": "tax_document_attachment_size_valid",
+          "value": "\"tax_document_attachments\".\"size_bytes\" > 0 and \"tax_document_attachments\".\"size_bytes\" <= 20971520"
+        }
+      }
+    },
+    "tax_documents": {
+      "name": "tax_documents",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tax_item_id": {
+          "name": "tax_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "custom_type_name": {
+          "name": "custom_type_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "issuer": {
+          "name": "issuer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'expected'"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "tax_documents_tax_item_idx": {
+          "name": "tax_documents_tax_item_idx",
+          "columns": [
+            "tax_item_id"
+          ],
+          "isUnique": false
+        },
+        "tax_documents_person_idx": {
+          "name": "tax_documents_person_idx",
+          "columns": [
+            "person_id"
+          ],
+          "isUnique": false
+        },
+        "tax_documents_status_idx": {
+          "name": "tax_documents_status_idx",
+          "columns": [
+            "status"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "tax_documents_tax_item_id_tax_items_id_fk": {
+          "name": "tax_documents_tax_item_id_tax_items_id_fk",
+          "tableFrom": "tax_documents",
+          "tableTo": "tax_items",
+          "columnsFrom": [
+            "tax_item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tax_documents_person_id_people_id_fk": {
+          "name": "tax_documents_person_id_people_id_fk",
+          "tableFrom": "tax_documents",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "tax_document_custom_type_consistent": {
+          "name": "tax_document_custom_type_consistent",
+          "value": "(\"tax_documents\".\"type\" = 'other' and \"tax_documents\".\"custom_type_name\" is not null and length(trim(\"tax_documents\".\"custom_type_name\")) > 0) or (\"tax_documents\".\"type\" <> 'other' and \"tax_documents\".\"custom_type_name\" is null)"
+        }
+      }
+    },
+    "tax_items": {
+      "name": "tax_items",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "tax_year_id": {
+          "name": "tax_year_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tax_line_reference": {
+          "name": "tax_line_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "owner_kind": {
+          "name": "owner_kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "person_id": {
+          "name": "person_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "expected_amount_cents": {
+          "name": "expected_amount_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "actual_amount_cents": {
+          "name": "actual_amount_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "value_source": {
+          "name": "value_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'manual'"
+        },
+        "tax_treatment": {
+          "name": "tax_treatment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "tax_items_year_idx": {
+          "name": "tax_items_year_idx",
+          "columns": [
+            "tax_year_id"
+          ],
+          "isUnique": false
+        },
+        "tax_items_person_idx": {
+          "name": "tax_items_person_idx",
+          "columns": [
+            "person_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "tax_items_tax_year_id_tax_years_id_fk": {
+          "name": "tax_items_tax_year_id_tax_years_id_fk",
+          "tableFrom": "tax_items",
+          "tableTo": "tax_years",
+          "columnsFrom": [
+            "tax_year_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tax_items_person_id_people_id_fk": {
+          "name": "tax_items_person_id_people_id_fk",
+          "tableFrom": "tax_items",
+          "tableTo": "people",
+          "columnsFrom": [
+            "person_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "tax_item_owner_consistent": {
+          "name": "tax_item_owner_consistent",
+          "value": "(\"tax_items\".\"owner_kind\" = 'household' and \"tax_items\".\"person_id\" is null) or (\"tax_items\".\"owner_kind\" = 'person' and \"tax_items\".\"person_id\" is not null)"
+        },
+        "tax_item_expected_non_negative": {
+          "name": "tax_item_expected_non_negative",
+          "value": "\"tax_items\".\"expected_amount_cents\" is null or \"tax_items\".\"expected_amount_cents\" >= 0"
+        },
+        "tax_item_actual_non_negative": {
+          "name": "tax_item_actual_non_negative",
+          "value": "\"tax_items\".\"actual_amount_cents\" is null or \"tax_items\".\"actual_amount_cents\" >= 0 or \"tax_items\".\"value_source\" = 'self_employment'"
+        }
+      }
+    },
+    "tax_years": {
+      "name": "tax_years",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "household_id": {
+          "name": "household_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'tracking'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch())"
+        }
+      },
+      "indexes": {
+        "tax_year_household_year_unique": {
+          "name": "tax_year_household_year_unique",
+          "columns": [
+            "household_id",
+            "year"
+          ],
+          "isUnique": true
+        },
+        "tax_year_one_active_unique": {
+          "name": "tax_year_one_active_unique",
+          "columns": [
+            "household_id"
+          ],
+          "isUnique": true,
+          "where": "\"tax_years\".\"is_active\" = 1"
+        }
+      },
+      "foreignKeys": {
+        "tax_years_household_id_households_id_fk": {
+          "name": "tax_years_household_id_households_id_fk",
+          "tableFrom": "tax_years",
+          "tableTo": "households",
+          "columnsFrom": [
+            "household_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "tax_year_range": {
+          "name": "tax_year_range",
+          "value": "\"tax_years\".\"year\" between 2000 and 2100"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

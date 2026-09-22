@@ -1,0 +1,33 @@
+services:
+  app:
+    build:
+      context: .
+    environment:
+      DATABASE_URL: file:/data/taxbook.db
+      NODE_ENV: production
+    ports:
+      - "127.0.0.1:${TAXBOOK_PORT:-3000}:3000"
+    restart: unless-stopped
+    volumes:
+      - taxbook-data:/data
+    extra_hosts:
+      - "tenure.tools.local:host-gateway"
+    networks:
+      - default
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.taxbook.rule=Host(`taxbook.tools.local`)
+      - traefik.http.routers.taxbook.entrypoints=web
+      - traefik.http.routers.taxbook-secure.rule=Host(`taxbook.tools.local`)
+      - traefik.http.routers.taxbook-secure.entrypoints=websecure
+      - traefik.http.routers.taxbook-secure.tls=true
+      - traefik.http.services.taxbook.loadbalancer.server.port=3000
+
+networks:
+  web:
+    external: true
+
+volumes:
+  taxbook-data:
+    name: taxbook-data

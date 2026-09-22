@@ -1,0 +1,1 @@
+ALTER TABLE `tax_items` ADD `tax_line_reference` text;
