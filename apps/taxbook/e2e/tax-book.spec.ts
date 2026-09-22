@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test.setTimeout(60_000);
+test.setTimeout(process.env.CI ? 180_000 : 60_000);
 
 test("sets up a household and tracks an item", async ({ page }) => {
   await page.goto("/");

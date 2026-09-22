@@ -15,6 +15,6 @@ export default defineConfig({
     env: {
       DATABASE_URL: "file:./.data/e2e.db",
     },
-    timeout: 120_000,
+    timeout: process.env.CI ? 180_000 : 120_000,
   },
 });
