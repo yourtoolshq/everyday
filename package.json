@@ -1,0 +1,35 @@
+{
+  "name": "everyday",
+  "private": true,
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "build": "turbo run build",
+    "clean": "git clean -xdf node_modules",
+    "dev": "turbo watch dev --continue",
+    "dev:taxbook": "turbo watch dev -F taxbook",
+    "dev:firstaid": "turbo watch dev -F firstaid",
+    "dev:passbook": "turbo watch dev -F passbook",
+    "dev:tenure": "turbo watch dev -F tenure",
+    "format": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,json,md}\" --ignore-path .gitignore",
+    "format:fix": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,json,md}\" --ignore-path .gitignore",
+    "gen": "turbo gen init",
+    "lint": "turbo run lint --continue",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "docker:build:taxbook": "docker build -f apps/taxbook/Dockerfile -t taxbook .",
+    "docker:build:firstaid": "docker build -f apps/firstaid/Dockerfile -t firstaid .",
+    "docker:build:passbook": "docker build -f apps/passbook/Dockerfile -t passbook .",
+    "docker:build:tenure": "docker build -f apps/tenure/Dockerfile -t tenure ."
+  },
+  "devDependencies": {
+    "@turbo/gen": "^2.5.8",
+    "@yourtoolshq/prettier-config": "workspace:*",
+    "prettier": "catalog:",
+    "turbo": "^2.5.8",
+    "typescript": "catalog:"
+  },
+  "prettier": "@yourtoolshq/prettier-config"
+}

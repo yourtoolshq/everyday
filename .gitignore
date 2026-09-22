@@ -1,0 +1,52 @@
+# dependencies
+node_modules
+.pnp
+.pnp.js
+
+# testing
+coverage
+test-results
+playwright-report
+
+# next.js
+.next/
+out/
+next-env.d.ts
+
+# production
+build
+dist
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+.env
+.env*.local
+
+# typescript
+*.tsbuildinfo
+.cache
+
+# turbo
+.turbo
+
+# local data — never commit databases, documents, or backups
+**/.data/
+**/backups/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# validation data (outside git, used for monorepo verification)
+.validation/

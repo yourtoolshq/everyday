@@ -1,0 +1,48 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "topo": {
+      "dependsOn": ["^topo"]
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".cache/tsbuildinfo.json", "dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": false
+    },
+    "format": {
+      "outputs": [".cache/.prettiercache"],
+      "outputLogs": "new-only"
+    },
+    "lint": {
+      "dependsOn": ["^topo"],
+      "outputs": [".cache/.eslintcache"]
+    },
+    "typecheck": {
+      "dependsOn": ["^topo"],
+      "outputs": [".cache/tsbuildinfo.json"]
+    },
+    "test": {
+      "dependsOn": ["^topo"],
+      "outputs": ["coverage/**"]
+    },
+    "clean": {
+      "cache": false
+    }
+  },
+  "globalPassThroughEnv": [
+    "NODE_ENV",
+    "CI",
+    "PORT",
+    "DATABASE_URL",
+    "DOCUMENTS_DIR",
+    "SKIP_ENV_VALIDATION",
+    "TAXBOOK_PORT",
+    "FIRSTAID_PORT",
+    "PASSBOOK_PORT",
+    "TENURE_PORT"
+  ]
+}
