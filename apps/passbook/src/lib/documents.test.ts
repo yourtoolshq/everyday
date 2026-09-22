@@ -1,0 +1,77 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  defaultDocumentTitle,
+  detectDocumentFile,
+  documentMetadataSchema,
+  formatFileSize,
+  maxDocumentBytes,
+  suggestDocumentTitle,
+  titleFromFilename,
+} from "~/lib/documents";
+
+describe("document files", () => {
+  it.each([
+    [new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d]), "application/pdf"],
+    [new Uint8Array([0xff, 0xd8, 0xff]), "image/jpeg"],
+    [new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), "image/png"],
+    [new TextEncoder().encode("RIFF0000WEBP"), "image/webp"],
+    [new Uint8Array([0, 0, 0, 20, ...new TextEncoder().encode("ftypheic")]), "image/heic"],
+  ])("detects allowed content signatures", (bytes, mimeType) => {
+    expect(detectDocumentFile(bytes)?.mimeType).toBe(mimeType);
+  });
+
+  it("rejects unsupported or misleading content", () => {
+    expect(detectDocumentFile(new TextEncoder().encode("not a PDF"))).toBeNull();
+    expect(detectDocumentFile(new Uint8Array())).toBeNull();
+  });
+
+  it("validates required metadata", () => {
+    expect(documentMetadataSchema.safeParse({ title: "Statement", type: "statement" }).success).toBe(
+      true,
+    );
+    expect(documentMetadataSchema.safeParse({ title: "", type: "statement" }).success).toBe(false);
+    expect(documentMetadataSchema.safeParse({ title: "Statement", type: "unknown" }).success).toBe(
+      false,
+    );
+  });
+
+  it("provides upload and display helpers", () => {
+    expect(maxDocumentBytes).toBe(25 * 1024 * 1024);
+    expect(titleFromFilename("statement.pdf")).toBe("statement");
+    expect(formatFileSize(1536)).toBe("2 KB");
+  });
+
+  it("suggests titles for statements and void cheques only", () => {
+    expect(
+      suggestDocumentTitle({
+        type: "statement",
+        accountDisplayName: "Momentum Visa",
+        periodKey: "2026-07",
+      }),
+    ).toBe("2026-07 Momentum Visa Statement");
+
+    expect(
+      suggestDocumentTitle({
+        type: "void_cheque",
+        accountDisplayName: "Chequing",
+      }),
+    ).toBe("Chequing Void cheque");
+
+    expect(
+      defaultDocumentTitle({
+        type: "agreement",
+        accountDisplayName: "Chequing",
+        filename: "welcome-letter.pdf",
+      }),
+    ).toBe("welcome-letter");
+
+    expect(
+      defaultDocumentTitle({
+        type: "card_letter",
+        accountDisplayName: "Chequing",
+        filename: "card-letter.pdf",
+      }),
+    ).toBe("card-letter");
+  });
+});
