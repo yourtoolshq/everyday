@@ -37,6 +37,7 @@ yarn-error.log*
 
 # turbo
 .turbo
+out/
 
 # local data — never commit databases, documents, or backups
 **/.data/

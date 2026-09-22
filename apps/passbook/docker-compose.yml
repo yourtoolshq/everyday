@@ -1,7 +1,8 @@
 services:
   app:
     build:
-      context: .
+      context: ../..
+      dockerfile: apps/passbook/Dockerfile
     environment:
       DATABASE_URL: file:/data/passbook.db
       DOCUMENTS_DIR: /data/documents

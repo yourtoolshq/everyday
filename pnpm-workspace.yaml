@@ -41,3 +41,6 @@ linkWorkspacePackages: true
 onlyBuiltDependencies:
   - esbuild
   - sharp
+
+overrides:
+  eslint-plugin-react-hooks: 5.2.0

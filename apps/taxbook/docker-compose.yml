@@ -1,7 +1,8 @@
 services:
   app:
     build:
-      context: .
+      context: ../..
+      dockerfile: apps/taxbook/Dockerfile
     environment:
       DATABASE_URL: file:/data/taxbook.db
       NODE_ENV: production

@@ -1,3 +1,4 @@
+// @ts-nocheck — reference config; apps retain local eslint rules in Phase 1.
 import nextPlugin from "@next/eslint-plugin-next";
 import { defineConfig } from "eslint/config";
 

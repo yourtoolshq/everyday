@@ -1,0 +1,22 @@
+# dependencies and build artifacts
+**/node_modules
+**/.next
+**/out
+**/dist
+**/.turbo
+**/.cache
+**/coverage
+**/test-results
+**/playwright-report
+
+# local data
+**/.data
+**/backups
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# environment and git
+.env*
+.git
+.validation
