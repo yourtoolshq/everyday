@@ -123,11 +123,11 @@ jobs:
 
       - name: Lint, typecheck, test, and build (affected)
         if: github.event_name == 'pull_request'
-        run: turbo run lint typecheck test build --filter=...[origin/main]
+        run: pnpm exec turbo run lint typecheck test build --filter=...[origin/main]
 
       - name: Lint, typecheck, test, and build (all)
         if: github.event_name != 'pull_request'
-        run: turbo run lint typecheck test build
+        run: pnpm exec turbo run lint typecheck test build
 
   e2e:
     name: e2e (${{ matrix.app }})
@@ -143,10 +143,10 @@ jobs:
 
       - uses: ./.github/actions/setup
 
-      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm --filter ${{ matrix.app }} exec playwright install --with-deps chromium
 
       - name: Run Playwright E2E
-        run: pnpm turbo run test:e2e -F ${{ matrix.app }}
+        run: pnpm exec turbo run test:e2e -F ${{ matrix.app }}
 
       - name: Upload Playwright report
         if: failure()
