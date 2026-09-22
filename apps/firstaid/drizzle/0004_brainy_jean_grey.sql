@@ -1,0 +1,1 @@
+ALTER TABLE `documents` ADD `claim_id` text REFERENCES claims(id);
