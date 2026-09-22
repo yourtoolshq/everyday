@@ -25,19 +25,19 @@ flowchart TD
 
 ## Core concepts
 
-| Concept | Meaning |
-| --- | --- |
-| Person | The individual whose employment records are being kept. Supports separate records for household members. |
-| Employer | An organization a person works or has worked for. |
-| Employment | A dated relationship between a person and employer, with current/former status and optional end date. |
-| Role history | Positions or titles held during an employment, with effective dates. A simple current title is sufficient initially. |
-| Compensation change | An agreed salary, hourly rate, or other compensation arrangement effective from a date. May include a reason and supporting document. |
-| Paycheck | A particular payment for a pay period (start and end dates), with itemized earnings, deductions, and derived net pay. More than one paycheck may exist for the same pay period. |
-| Pay period | The date range a paycheck covers, distinct from the pay date when funds are issued. Used for completeness tracking and grouping paychecks. |
-| Pay stub | The original file supporting a paycheck; its presence can be tracked independently from the entered amounts. |
-| Document | A retained contract, offer, employment letter, or other official record associated with an employment. |
-| Discussion | An important conversation, meeting, or email thread retained with its date, participants, and notes. May exist without an attached file. |
-| Note | A manually written explanation or observation related to an employment or its records. |
+| Concept             | Meaning                                                                                                                                                                         |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Person              | The individual whose employment records are being kept. Supports separate records for household members.                                                                        |
+| Employer            | An organization a person works or has worked for.                                                                                                                               |
+| Employment          | A dated relationship between a person and employer, with current/former status and optional end date.                                                                           |
+| Role history        | Positions or titles held during an employment, with effective dates. A simple current title is sufficient initially.                                                            |
+| Compensation change | An agreed salary, hourly rate, or other compensation arrangement effective from a date. May include a reason and supporting document.                                           |
+| Paycheck            | A particular payment for a pay period (start and end dates), with itemized earnings, deductions, and derived net pay. More than one paycheck may exist for the same pay period. |
+| Pay period          | The date range a paycheck covers, distinct from the pay date when funds are issued. Used for completeness tracking and grouping paychecks.                                      |
+| Pay stub            | The original file supporting a paycheck; its presence can be tracked independently from the entered amounts.                                                                    |
+| Document            | A retained contract, offer, employment letter, or other official record associated with an employment.                                                                          |
+| Discussion          | An important conversation, meeting, or email thread retained with its date, participants, and notes. May exist without an attached file.                                        |
+| Note                | A manually written explanation or observation related to an employment or its records.                                                                                          |
 
 ## Paychecks and compensation are different
 

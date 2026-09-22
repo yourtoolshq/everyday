@@ -32,7 +32,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/tenure/.next/static ./apps/t
 COPY --from=builder --chown=nextjs:nodejs /app/apps/tenure/public ./apps/tenure/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/tenure/drizzle ./apps/tenure/drizzle
 COPY --from=builder --chown=nextjs:nodejs /app/apps/tenure/scripts ./apps/tenure/scripts
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/apps/tenure/node_modules ./apps/tenure/node_modules
 
 WORKDIR /app/apps/tenure
 EXPOSE 3000

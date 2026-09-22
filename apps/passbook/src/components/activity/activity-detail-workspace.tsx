@@ -1,23 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ExternalLink, Mail, Pencil, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Mail,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
+import type { AccountEventType } from "~/lib/account-events";
+import type { DocumentType } from "~/lib/documents";
 import { AccountEventSheet } from "~/components/accounts/account-event-sheet";
 import { AccountTermsSnapshotDetailSheet } from "~/components/accounts/account-terms-snapshot-detail-sheet";
 import { ActivityDocumentUploadSheet } from "~/components/activity/activity-document-upload-sheet";
 import { EmlPreviewDialog } from "~/components/activity/eml-preview-dialog";
-import {
-  accountEventTypeLabels,
-  type AccountEventType,
-} from "~/lib/account-events";
-import { accountTermsFieldLabels, listAccountTermsEntries } from "~/lib/account-terms";
-import { documentTypeLabels, formatFileSize, isEmlMimeType, type DocumentType } from "~/lib/documents";
-import { formatDateLabel } from "~/lib/format-date";
-import { formatTermValue } from "~/lib/format-term-value";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,6 +34,18 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
+import { accountEventTypeLabels } from "~/lib/account-events";
+import {
+  accountTermsFieldLabels,
+  listAccountTermsEntries,
+} from "~/lib/account-terms";
+import {
+  documentTypeLabels,
+  formatFileSize,
+  isEmlMimeType,
+} from "~/lib/documents";
+import { formatDateLabel } from "~/lib/format-date";
+import { formatTermValue } from "~/lib/format-term-value";
 import { api } from "~/trpc/react";
 
 export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
@@ -47,7 +60,10 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
   const [editOpen, setEditOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [emlPreview, setEmlPreview] = useState<{ id: string; title: string } | null>(null);
+  const [emlPreview, setEmlPreview] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
   const [snapshotDetailOpen, setSnapshotDetailOpen] = useState(false);
 
   const deleteEvent = api.accountEvents.delete.useMutation({
@@ -91,7 +107,7 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
             Activity
           </Link>
         </Button>
-        <p className="text-sm text-destructive">
+        <p className="text-destructive text-sm">
           {event.error?.message ?? "Activity not found."}
         </p>
       </div>
@@ -116,19 +132,28 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-3">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-primary">{event.data.institutionName}</p>
-            <h2 className="text-3xl font-semibold tracking-tight">{event.data.title}</h2>
+            <p className="text-primary text-sm font-medium">
+              {event.data.institutionName}
+            </p>
+            <h2 className="text-3xl font-semibold tracking-tight">
+              {event.data.title}
+            </h2>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="secondary">
                 {accountEventTypeLabels[event.data.type as AccountEventType]}
               </Badge>
-              {event.data.resolvedDate ? <Badge variant="outline">Resolved</Badge> : null}
+              {event.data.resolvedDate ? (
+                <Badge variant="outline">Resolved</Badge>
+              ) : null}
             </div>
           </div>
-          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex flex-wrap gap-x-5 gap-y-2 text-sm">
             <span>
               <span className="text-foreground">Account</span>{" "}
-              <Link href={`/accounts/${event.data.accountId}`} className="text-primary hover:underline">
+              <Link
+                href={`/accounts/${event.data.accountId}`}
+                className="text-primary hover:underline"
+              >
                 {event.data.accountName}
               </Link>
             </span>
@@ -139,7 +164,8 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
             {event.data.resolvedDate ? (
               <span>
                 <span className="text-foreground">Resolved</span>{" "}
-                {formatDateLabel(event.data.resolvedDate) ?? event.data.resolvedDate}
+                {formatDateLabel(event.data.resolvedDate) ??
+                  event.data.resolvedDate}
               </span>
             ) : null}
           </div>
@@ -161,7 +187,9 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
           {event.data.notes ? (
             <div className="space-y-2">
               <h3 className="font-medium">Notes</h3>
-              <p className="text-sm whitespace-pre-wrap text-muted-foreground">{event.data.notes}</p>
+              <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+                {event.data.notes}
+              </p>
             </div>
           ) : null}
 
@@ -171,26 +199,33 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
               <div className="space-y-3">
                 <div className="space-y-1">
                   <h3 className="font-medium">Linked terms change</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Recorded when this activity was created. Edit the terms from a new activity
-                    rather than changing this snapshot separately.
+                  <p className="text-muted-foreground text-sm">
+                    Recorded when this activity was created. Edit the terms from
+                    a new activity rather than changing this snapshot
+                    separately.
                   </p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Effective {formatDateLabel(linkedSnapshot.effectiveDate) ?? linkedSnapshot.effectiveDate}
+                <p className="text-muted-foreground text-sm">
+                  Effective{" "}
+                  {formatDateLabel(linkedSnapshot.effectiveDate) ??
+                    linkedSnapshot.effectiveDate}
                 </p>
                 {linkedSnapshot.notes ? (
-                  <p className="text-sm text-muted-foreground">{linkedSnapshot.notes}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {linkedSnapshot.notes}
+                  </p>
                 ) : null}
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                  {listAccountTermsEntries(linkedSnapshot.terms).map((entry) => (
-                    <span key={entry.field}>
-                      {accountTermsFieldLabels[entry.field]}:{" "}
-                      <span className="text-foreground">
-                        {formatTermValue(entry.field, entry.value)}
+                <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                  {listAccountTermsEntries(linkedSnapshot.terms).map(
+                    (entry) => (
+                      <span key={entry.field}>
+                        {accountTermsFieldLabels[entry.field]}:{" "}
+                        <span className="text-foreground">
+                          {formatTermValue(entry.field, entry.value)}
+                        </span>
                       </span>
-                    </span>
-                  ))}
+                    ),
+                  )}
                 </div>
                 <Button
                   type="button"
@@ -209,14 +244,20 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <h3 className="font-medium">Documents</h3>
-              <Button type="button" size="sm" variant="outline" onClick={() => setUploadOpen(true)}>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setUploadOpen(true)}
+              >
                 <Plus />
                 Add document
               </Button>
             </div>
             {event.data.documents.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No documents yet. Add agreements, notices, or saved email copies.
+              <p className="text-muted-foreground text-sm">
+                No documents yet. Add agreements, notices, or saved email
+                copies.
               </p>
             ) : (
               <ul className="divide-y rounded-lg border">
@@ -232,7 +273,7 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
                           {documentTypeLabels[document.type as DocumentType]}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {formatDateLabel(document.documentDate) ?? "No date"}
                         {" · "}
                         {document.originalFilename}
@@ -240,7 +281,9 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
                         {formatFileSize(document.sizeBytes)}
                       </p>
                       {document.notes ? (
-                        <p className="text-xs text-muted-foreground">{document.notes}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {document.notes}
+                        </p>
                       ) : null}
                     </div>
                     <div className="flex shrink-0 gap-1">
@@ -251,7 +294,10 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
                           size="icon-sm"
                           aria-label={`Preview ${document.title}`}
                           onClick={() =>
-                            setEmlPreview({ id: document.id, title: document.title })
+                            setEmlPreview({
+                              id: document.id,
+                              title: document.title,
+                            })
                           }
                         >
                           <Mail />
@@ -272,7 +318,9 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
                         variant="ghost"
                         size="icon-sm"
                         aria-label={`Delete ${document.title}`}
-                        onClick={() => deleteDocument.mutate({ id: document.id })}
+                        onClick={() =>
+                          deleteDocument.mutate({ id: document.id })
+                        }
                         disabled={deleteDocument.isPending}
                       >
                         <Trash2 />
@@ -338,11 +386,14 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete activity?</AlertDialogTitle>
             <AlertDialogDescription>
-              &quot;{event.data.title}&quot; and its attachments will be removed permanently.
+              &quot;{event.data.title}&quot; and its attachments will be removed
+              permanently.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteEvent.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteEvent.isPending}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={deleteEvent.isPending}

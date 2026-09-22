@@ -95,9 +95,7 @@
       "indexes": {
         "people_household_idx": {
           "name": "people_household_idx",
-          "columns": [
-            "household_id"
-          ],
+          "columns": ["household_id"],
           "isUnique": false
         }
       },
@@ -106,12 +104,8 @@
           "name": "people_household_id_households_id_fk",
           "tableFrom": "people",
           "tableTo": "households",
-          "columnsFrom": [
-            "household_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["household_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -213,16 +207,12 @@
       "indexes": {
         "tax_items_year_idx": {
           "name": "tax_items_year_idx",
-          "columns": [
-            "tax_year_id"
-          ],
+          "columns": ["tax_year_id"],
           "isUnique": false
         },
         "tax_items_person_idx": {
           "name": "tax_items_person_idx",
-          "columns": [
-            "person_id"
-          ],
+          "columns": ["person_id"],
           "isUnique": false
         }
       },
@@ -231,12 +221,8 @@
           "name": "tax_items_tax_year_id_tax_years_id_fk",
           "tableFrom": "tax_items",
           "tableTo": "tax_years",
-          "columnsFrom": [
-            "tax_year_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tax_year_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -244,12 +230,8 @@
           "name": "tax_items_person_id_people_id_fk",
           "tableFrom": "tax_items",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -323,17 +305,12 @@
       "indexes": {
         "tax_year_household_year_unique": {
           "name": "tax_year_household_year_unique",
-          "columns": [
-            "household_id",
-            "year"
-          ],
+          "columns": ["household_id", "year"],
           "isUnique": true
         },
         "tax_year_one_active_unique": {
           "name": "tax_year_one_active_unique",
-          "columns": [
-            "household_id"
-          ],
+          "columns": ["household_id"],
           "isUnique": true,
           "where": "\"tax_years\".\"is_active\" = 1"
         }
@@ -343,12 +320,8 @@
           "name": "tax_years_household_id_households_id_fk",
           "tableFrom": "tax_years",
           "tableTo": "households",
-          "columnsFrom": [
-            "household_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["household_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

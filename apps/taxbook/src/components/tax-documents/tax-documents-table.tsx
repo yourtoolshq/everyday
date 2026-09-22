@@ -7,6 +7,7 @@ import {
   IconPlus,
 } from "@tabler/icons-react";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import {
@@ -25,7 +26,6 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { taxDocumentDisplayType } from "~/domain/tax-document";
-import type { RouterOutputs } from "~/trpc/react";
 import { TaxDocumentStatusBadge } from "./tax-document-status-badge";
 
 type TaxDocument = RouterOutputs["taxDocument"]["list"]["items"][number];
@@ -69,13 +69,13 @@ export function TaxDocumentsTable({
                 <TableRow key={document.id}>
                   <TableCell>
                     <button
-                      className="max-w-64 truncate text-left font-medium hover:text-primary"
+                      className="hover:text-primary max-w-64 truncate text-left font-medium"
                       onClick={() => onEdit(document)}
                     >
                       {taxDocumentDisplayType(document)}
                     </button>
                     {document.notes ? (
-                      <p className="max-w-64 truncate text-xs text-muted-foreground">
+                      <p className="text-muted-foreground max-w-64 truncate text-xs">
                         {document.notes}
                       </p>
                     ) : null}
@@ -86,14 +86,14 @@ export function TaxDocumentsTable({
                     {document.attachmentFileName ? (
                       <div className="flex max-w-60 items-center gap-1">
                         <a
-                          className="truncate text-sm text-primary hover:underline"
+                          className="text-primary truncate text-sm hover:underline"
                           href={`/api/tax-documents/${document.id}/attachment`}
                           target="_blank"
                           rel="noreferrer"
                         >
                           {document.attachmentFileName}
                         </a>
-                        <span className="whitespace-nowrap text-xs text-muted-foreground">
+                        <span className="text-muted-foreground text-xs whitespace-nowrap">
                           {formatSize(document.attachmentSizeBytes!)}
                         </span>
                       </div>
@@ -156,14 +156,10 @@ export function TaxDocumentsTable({
                 <TableCell colSpan={6} className="h-48 text-center">
                   <div className="flex flex-col items-center">
                     <p className="font-medium">No Tax Documents yet</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="text-muted-foreground mt-1 text-sm">
                       Add the first official document expected for this item.
                     </p>
-                    <Button
-                      className="mt-4"
-                      variant="outline"
-                      onClick={onAdd}
-                    >
+                    <Button className="mt-4" variant="outline" onClick={onAdd}>
                       <IconPlus /> Add Tax Document
                     </Button>
                   </div>

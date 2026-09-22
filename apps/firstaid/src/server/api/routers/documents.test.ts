@@ -16,7 +16,11 @@ import {
   providers,
   visits,
 } from "~/server/db/schema";
-import { documentPath, readDocument, writeDocument } from "~/server/documents/storage";
+import {
+  documentPath,
+  readDocument,
+  writeDocument,
+} from "~/server/documents/storage";
 
 async function caller() {
   return createCaller(await createTRPCContext({ headers: new Headers() }));
@@ -24,7 +28,9 @@ async function caller() {
 
 async function createVisit() {
   const api = await caller();
-  const person = await api.planning.createPerson({ displayName: "Test Person" });
+  const person = await api.planning.createPerson({
+    displayName: "Test Person",
+  });
   const organization = await api.careProviders.createOrganization({
     name: "Example Clinic",
     phoneNumbers: [],
@@ -96,17 +102,27 @@ describe("documents router", () => {
       },
     ]);
     expect(overview[0]).not.toHaveProperty("storageKey");
-    expect((await api.visits.detail({ id: visit.id }))?.visit.documentCount).toBe(1);
+    expect(
+      (await api.visits.detail({ id: visit.id }))?.visit.documentCount,
+    ).toBe(1);
 
-    await api.documents.update({ id: attached.id, title: "Paid receipt", type: "claim_record" });
+    await api.documents.update({
+      id: attached.id,
+      title: "Paid receipt",
+      type: "claim_record",
+    });
     expect((await api.documents.overview())[0]).toMatchObject({
       title: "Paid receipt",
       type: "claim_record",
     });
 
     await api.documents.delete({ id: attached.id });
-    expect(await db.select().from(documents).where(eq(documents.id, attached.id))).toEqual([]);
-    await expect(readDocument(attached.storageKey)).rejects.toMatchObject({ code: "ENOENT" });
+    expect(
+      await db.select().from(documents).where(eq(documents.id, attached.id)),
+    ).toEqual([]);
+    await expect(readDocument(attached.storageKey)).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 
   it("deletes managed document files with their visit", async () => {
@@ -114,15 +130,25 @@ describe("documents router", () => {
     const visit = await createVisit();
     const attached = await attachDocument(visit.id);
 
-    await expect(api.visits.delete({ id: visit.id })).resolves.toMatchObject({ id: visit.id });
-    expect(await db.select().from(documents).where(eq(documents.visitId, visit.id))).toEqual([]);
-    await expect(readDocument(attached.storageKey)).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(api.visits.delete({ id: visit.id })).resolves.toMatchObject({
+      id: visit.id,
+    });
+    expect(
+      await db.select().from(documents).where(eq(documents.visitId, visit.id)),
+    ).toEqual([]);
+    await expect(readDocument(attached.storageKey)).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 
   it("links claim paperwork to a visit claim", async () => {
     const api = await caller();
     const visit = await createVisit();
-    const plan = await api.benefits.createPlan({ name: "Plan", year: 2027, notes: null });
+    const plan = await api.benefits.createPlan({
+      name: "Plan",
+      year: 2027,
+      notes: null,
+    });
     const benefit = await api.benefits.createBenefit({
       insurancePlanId: plan.id,
       name: "Massage therapy",
@@ -173,6 +199,8 @@ describe("documents router", () => {
   });
 
   it("never resolves traversal outside the configured storage directory", () => {
-    expect(() => documentPath("../receipt.pdf")).toThrow("Invalid document storage key");
+    expect(() => documentPath("../receipt.pdf")).toThrow(
+      "Invalid document storage key",
+    );
   });
 });

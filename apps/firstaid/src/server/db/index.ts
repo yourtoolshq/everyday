@@ -1,8 +1,9 @@
-import { createClient, type Client } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
-import { migrate } from "drizzle-orm/libsql/migrator";
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
+import type { Client } from "@libsql/client";
+import { createClient } from "@libsql/client";
+import { drizzle } from "drizzle-orm/libsql";
+import { migrate } from "drizzle-orm/libsql/migrator";
 
 import { env } from "~/env";
 import * as schema from "~/server/db/schema";

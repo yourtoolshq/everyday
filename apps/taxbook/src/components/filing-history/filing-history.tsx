@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import {
   IconDownload,
   IconExternalLink,
@@ -8,9 +9,15 @@ import {
   IconPlus,
   IconTrash,
 } from "@tabler/icons-react";
-import { useMemo, useState } from "react";
+import { skipToken } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import type {
+  FilingKind,
+  TaxYearLifecycleWarning,
+  TaxYearStatus,
+} from "~/domain/filing";
+import type { RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,13 +51,9 @@ import {
   filingStatusLabels,
   returnCopyStatusLabels,
   taxYearStatusLabels,
-  type FilingKind,
-  type TaxYearLifecycleWarning,
-  type TaxYearStatus,
 } from "~/domain/filing";
 import { formatCad, formatSignedCad } from "~/domain/money";
-import { skipToken } from "@tanstack/react-query";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 import { AdjustmentSheet } from "./adjustment-sheet";
 import { AssessmentSheet } from "./assessment-sheet";
 import { CraReferenceSection } from "./cra-reference-section";
@@ -94,7 +97,9 @@ function TimelineEntryCard({
             </CardTitle>
             <CardDescription>
               {filing.submissionDate ??
-                (isAdjustment ? "Submission date unknown" : "Filing date unknown")}
+                (isAdjustment
+                  ? "Submission date unknown"
+                  : "Filing date unknown")}
             </CardDescription>
           </div>
           <Badge variant="outline">{filingStatusLabels[filing.status]}</Badge>
@@ -120,7 +125,9 @@ function TimelineEntryCard({
             </p>
             <p className="font-medium tabular-nums">
               {formatSignedCad(
-                isAdjustment ? filing.expectedChangeCents : filing.expectedResultCents,
+                isAdjustment
+                  ? filing.expectedChangeCents
+                  : filing.expectedResultCents,
               )}
             </p>
           </div>
@@ -136,14 +143,16 @@ function TimelineEntryCard({
         {!isAdjustment && filing.itemValues.length > 0 ? (
           <div className="space-y-2">
             <p className="text-muted-foreground">Filed tax item snapshot</p>
-            <div className="space-y-1 rounded-lg border bg-muted/20 p-3">
+            <div className="bg-muted/20 space-y-1 rounded-lg border p-3">
               {filing.itemValues.map((item) => (
                 <div
                   key={`${item.taxItemId ?? item.itemName}-${item.amountCents}`}
                   className="flex flex-wrap items-baseline justify-between gap-2"
                 >
                   <span className="font-medium">{item.itemName}</span>
-                  <span className="tabular-nums">{formatCad(item.amountCents)}</span>
+                  <span className="tabular-nums">
+                    {formatCad(item.amountCents)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -186,7 +195,7 @@ function TimelineEntryCard({
           ) : null}
         </div>
         {filing.assessmentId ? (
-          <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
+          <div className="bg-muted/30 space-y-2 rounded-lg border p-3">
             <div className="flex items-center justify-between gap-2">
               <p className="font-medium">
                 {filing.assessmentKind
@@ -263,7 +272,9 @@ function PersonSection({
   onAssessment: (filing: Filing) => void;
   onDelete: (filing: Filing) => void;
 }) {
-  const originalReturn = filings.find((filing) => filing.kind === "original_return");
+  const originalReturn = filings.find(
+    (filing) => filing.kind === "original_return",
+  );
 
   return (
     <section className="space-y-3">
@@ -283,7 +294,7 @@ function PersonSection({
       </div>
       {filings.length === 0 ? (
         <Card className="border-dashed shadow-none">
-          <CardContent className="flex items-center gap-3 py-6 text-sm text-muted-foreground">
+          <CardContent className="text-muted-foreground flex items-center gap-3 py-6 text-sm">
             <IconFileDescription />
             No filing recorded for this person in this year.
           </CardContent>
@@ -317,8 +328,12 @@ export function TaxFiling() {
   const updateStatus = api.taxYear.updateStatus.useMutation({
     onError: (error) => toast.error(error.message),
   });
-  const [pendingStatus, setPendingStatus] = useState<TaxYearStatus | null>(null);
-  const [lifecycleWarnings, setLifecycleWarnings] = useState<TaxYearLifecycleWarning[]>([]);
+  const [pendingStatus, setPendingStatus] = useState<TaxYearStatus | null>(
+    null,
+  );
+  const [lifecycleWarnings, setLifecycleWarnings] = useState<
+    TaxYearLifecycleWarning[]
+  >([]);
 
   async function applyStatusChange(
     status: TaxYearStatus,
@@ -339,7 +354,9 @@ export function TaxFiling() {
     setLifecycleWarnings([]);
     if (result.warnings.length > 0) {
       toast.message("Tax year updated with warnings acknowledged", {
-        description: result.warnings.map((warning) => warning.message).join(" "),
+        description: result.warnings
+          .map((warning) => warning.message)
+          .join(" "),
       });
     } else {
       toast.success("Tax year status updated.");
@@ -350,11 +367,12 @@ export function TaxFiling() {
   const [addingReturnForPersonId, setAddingReturnForPersonId] = useState<
     number | undefined
   >();
-  const [addingAdjustmentForPersonId, setAddingAdjustmentForPersonId] = useState<
-    number | undefined
-  >();
+  const [addingAdjustmentForPersonId, setAddingAdjustmentForPersonId] =
+    useState<number | undefined>();
   const [editingReturn, setEditingReturn] = useState<Filing | null>(null);
-  const [editingAdjustment, setEditingAdjustment] = useState<Filing | null>(null);
+  const [editingAdjustment, setEditingAdjustment] = useState<Filing | null>(
+    null,
+  );
   const [assessmentFiling, setAssessmentFiling] = useState<Filing | null>(null);
   const [deletingFiling, setDeletingFiling] = useState<Filing | null>(null);
   const [deletingPending, setDeletingPending] = useState(false);
@@ -398,7 +416,9 @@ export function TaxFiling() {
       );
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Unable to delete the filing record.",
+        error instanceof Error
+          ? error.message
+          : "Unable to delete the filing record.",
       );
     } finally {
       setDeletingPending(false);
@@ -417,7 +437,7 @@ export function TaxFiling() {
   const error = settings.error ?? timeline.error;
   if (error || !settings.data || !timeline.data || !taxYearId || !activeYear) {
     return (
-      <div className="p-6 text-sm text-destructive">
+      <div className="text-destructive p-6 text-sm">
         Unable to load tax filing. {error?.message}
       </div>
     );
@@ -427,14 +447,19 @@ export function TaxFiling() {
     <div className="flex flex-col gap-6 p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-medium text-primary">{activeYear.year} tax year</p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight">Tax Filing</h2>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Record what was filed, what changed through adjustments, and what CRA assessed for this year.
+          <p className="text-primary text-sm font-medium">
+            {activeYear.year} tax year
+          </p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+            Tax Filing
+          </h2>
+          <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
+            Record what was filed, what changed through adjustments, and what
+            CRA assessed for this year.
           </p>
         </div>
         <div className="space-y-1">
-          <p className="text-xs text-muted-foreground">Lifecycle</p>
+          <p className="text-muted-foreground text-xs">Lifecycle</p>
           <Select
             value={activeYear.status ?? "tracking"}
             onValueChange={(value) => {
@@ -471,7 +496,10 @@ export function TaxFiling() {
             onDelete={(filing) => setDeletingFiling(filing)}
           />
         ))}
-        <CraReferenceSection taxYearId={taxYearId} people={timeline.data.people} />
+        <CraReferenceSection
+          taxYearId={taxYearId}
+          people={timeline.data.people}
+        />
       </div>
 
       <OriginalReturnSheet
@@ -508,7 +536,10 @@ export function TaxFiling() {
         people={timeline.data.people}
         filing={editingAdjustment}
         defaultPersonId={addingAdjustmentForPersonId}
-        open={addingAdjustmentForPersonId !== undefined || editingAdjustment !== null}
+        open={
+          addingAdjustmentForPersonId !== undefined ||
+          editingAdjustment !== null
+        }
         onOpenChange={(open) => {
           if (!open) {
             setAddingAdjustmentForPersonId(undefined);
@@ -542,22 +573,31 @@ export function TaxFiling() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Change lifecycle to {pendingStatus ? taxYearStatusLabels[pendingStatus] : ""}?
+              Change lifecycle to{" "}
+              {pendingStatus ? taxYearStatusLabels[pendingStatus] : ""}?
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2">
-                <p>Tax Book found issues that may mean this year is not ready yet:</p>
+                <p>
+                  Tax Book found issues that may mean this year is not ready
+                  yet:
+                </p>
                 <ul className="list-disc space-y-1 pl-5">
                   {lifecycleWarnings.map((warning) => (
                     <li key={warning.code}>{warning.message}</li>
                   ))}
                 </ul>
-                <p>You can continue anyway if the history is intentionally incomplete.</p>
+                <p>
+                  You can continue anyway if the history is intentionally
+                  incomplete.
+                </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={updateStatus.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={updateStatus.isPending}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={updateStatus.isPending || pendingStatus === null}
               onClick={() => {
@@ -581,15 +621,29 @@ export function TaxFiling() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete {deletingFiling?.kind === "adjustment" ? "adjustment" : "original return"}?
+              Delete{" "}
+              {deletingFiling?.kind === "adjustment"
+                ? "adjustment"
+                : "original return"}
+              ?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the {deletingFiling?.kind === "adjustment" ? "adjustment" : "original return"} for {deletingFiling?.personName}. Remove the related assessment first.
+              This removes the{" "}
+              {deletingFiling?.kind === "adjustment"
+                ? "adjustment"
+                : "original return"}{" "}
+              for {deletingFiling?.personName}. Remove the related assessment
+              first.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction disabled={deletingPending} onClick={removeFiling}>
+            <AlertDialogCancel disabled={deletingPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deletingPending}
+              onClick={removeFiling}
+            >
               {deletingPending ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>

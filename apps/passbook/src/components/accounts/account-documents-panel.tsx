@@ -1,20 +1,25 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { EmlPreviewDialog } from "~/components/activity/eml-preview-dialog";
+import { AccountDocumentUploadSheet } from "~/components/documents/account-document-upload-sheet";
+import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
 import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
 import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
-import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
-import { AccountDocumentUploadSheet } from "~/components/documents/account-document-upload-sheet";
-import { documentTypeLabels, formatFileSize, isEmlMimeType } from "~/lib/documents";
-import { formatDateLabel } from "~/lib/format-date";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { api, type RouterOutputs } from "~/trpc/react";
+import {
+  documentTypeLabels,
+  formatFileSize,
+  isEmlMimeType,
+} from "~/lib/documents";
+import { formatDateLabel } from "~/lib/format-date";
+import { api } from "~/trpc/react";
 
 type Document = RouterOutputs["documents"]["overview"][number];
 
@@ -33,7 +38,8 @@ export function AccountDocumentsPanel({
   onUploadOpenChange,
 }: {
   accountId: string;
-  defaultUploadType?: "closure_document" | "void_cheque" | "card_letter" | "other";
+  defaultUploadType?:
+    "closure_document" | "void_cheque" | "card_letter" | "other";
   initialUploadOpen?: boolean;
   onUploadOpenChange?: (open: boolean) => void;
 }) {
@@ -50,7 +56,10 @@ export function AccountDocumentsPanel({
     onUploadOpenChange?.(open);
   }
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
-  const [emlPreview, setEmlPreview] = useState<{ id: string; title: string } | null>(null);
+  const [emlPreview, setEmlPreview] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const accountDocuments = useMemo(
     () => sortDocuments(documents.data ?? []),
@@ -68,7 +77,7 @@ export function AccountDocumentsPanel({
       </CardHeader>
       <CardContent>
         {accountDocuments.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             No documents yet. Add agreements, notices, or other records.
           </p>
         ) : (
@@ -81,9 +90,11 @@ export function AccountDocumentsPanel({
                 <div className="min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-sm font-medium">{document.title}</p>
-                    <Badge variant="secondary">{documentTypeLabels[document.type]}</Badge>
+                    <Badge variant="secondary">
+                      {documentTypeLabels[document.type]}
+                    </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {formatDateLabel(document.documentDate) ?? "No date"}
                     {" · "}
                     {formatFileSize(document.sizeBytes)}
@@ -91,7 +102,7 @@ export function AccountDocumentsPanel({
                   {document.linkedActivity ? (
                     <Link
                       href={`/activity/${document.linkedActivity.id}`}
-                      className="text-xs text-primary hover:underline"
+                      className="text-primary text-xs hover:underline"
                     >
                       Activity: {document.linkedActivity.title}
                     </Link>
@@ -103,11 +114,17 @@ export function AccountDocumentsPanel({
                   mimeType={document.mimeType}
                   onPreview={
                     isEmlMimeType(document.mimeType)
-                      ? () => setEmlPreview({ id: document.id, title: document.title })
+                      ? () =>
+                          setEmlPreview({
+                            id: document.id,
+                            title: document.title,
+                          })
                       : undefined
                   }
                   onEdit={() => setEditingDocument(document)}
-                  onDelete={() => requestDelete({ id: document.id, title: document.title })}
+                  onDelete={() =>
+                    requestDelete({ id: document.id, title: document.title })
+                  }
                 />
               </li>
             ))}
@@ -153,34 +170,46 @@ export function AccountVoidChequePanel({ accountId }: { accountId: string }) {
   const documents = api.documents.overview.useQuery({ accountId });
   const [uploadOpen, setUploadOpen] = useState(false);
   const [replaceAfterDelete, setReplaceAfterDelete] = useState(false);
-  const { requestDelete, dialog: deleteDialog } = useDeleteDocumentDialog(() => {
-    if (replaceAfterDelete) {
-      setReplaceAfterDelete(false);
-      setUploadOpen(true);
-    }
-  });
+  const { requestDelete, dialog: deleteDialog } = useDeleteDocumentDialog(
+    () => {
+      if (replaceAfterDelete) {
+        setReplaceAfterDelete(false);
+        setUploadOpen(true);
+      }
+    },
+  );
 
-  const voidCheque = (documents.data ?? []).find((document) => document.type === "void_cheque");
+  const voidCheque = (documents.data ?? []).find(
+    (document) => document.type === "void_cheque",
+  );
 
   if (documents.isLoading) return null;
 
   return (
     <>
-      <Card className={voidCheque ? "shadow-none" : "border-amber-500/30 bg-amber-50/40 shadow-none"}>
+      <Card
+        className={
+          voidCheque
+            ? "shadow-none"
+            : "border-amber-500/30 bg-amber-50/40 shadow-none"
+        }
+      >
         <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
           <div className="space-y-1">
             <p className="font-medium">Void cheque</p>
             {voidCheque ? (
               <>
-                <p className="text-sm text-muted-foreground">{voidCheque.title}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
+                  {voidCheque.title}
+                </p>
+                <p className="text-muted-foreground text-xs">
                   {formatDateLabel(voidCheque.documentDate) ?? "No date"}
                   {" · "}
                   {formatFileSize(voidCheque.sizeBytes)}
                 </p>
               </>
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Keep a void cheque on file for this chequing account.
               </p>
             )}
@@ -203,7 +232,10 @@ export function AccountVoidChequePanel({ accountId }: { accountId: string }) {
                   size="sm"
                   onClick={() => {
                     setReplaceAfterDelete(true);
-                    requestDelete({ id: voidCheque.id, title: voidCheque.title });
+                    requestDelete({
+                      id: voidCheque.id,
+                      title: voidCheque.title,
+                    });
                   }}
                 >
                   Replace
@@ -250,8 +282,9 @@ export function ClosureDocumentPrompt({
       <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
         <div className="space-y-1">
           <p className="font-medium">Closure document missing</p>
-          <p className="text-sm text-muted-foreground">
-            Upload the account closure letter or confirmation for this closed account.
+          <p className="text-muted-foreground text-sm">
+            Upload the account closure letter or confirmation for this closed
+            account.
           </p>
         </div>
         <Button variant="outline" onClick={onUpload}>

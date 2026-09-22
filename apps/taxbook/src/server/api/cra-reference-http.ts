@@ -1,13 +1,15 @@
-import { TRPCError } from "@trpc/server";
 import { Buffer } from "node:buffer";
+import { TRPCError } from "@trpc/server";
 
+import type {
+  CraReferenceAttachmentAction,
+  CraReferenceAttachmentInput,
+} from "~/domain/cra-reference";
 import {
   allowedCraReferenceAttachmentTypes,
   craReferenceInput,
   craReferenceUpdateInput,
   MAX_CRA_REFERENCE_ATTACHMENT_BYTES,
-  type CraReferenceAttachmentAction,
-  type CraReferenceAttachmentInput,
 } from "~/domain/cra-reference";
 
 function textValue(form: FormData, name: string) {
@@ -111,7 +113,10 @@ export async function parseUpdateCraReferenceDocumentForm(form: FormData) {
   }
   return {
     input,
-    attachmentAction: { type: "replace", attachment } as CraReferenceAttachmentAction,
+    attachmentAction: {
+      type: "replace",
+      attachment,
+    } as CraReferenceAttachmentAction,
   };
 }
 
@@ -128,5 +133,8 @@ export function craReferenceErrorResponse(error: unknown) {
     return Response.json({ error: error.message }, { status });
   }
   console.error(error);
-  return Response.json({ error: "Unable to save the CRA reference document." }, { status: 500 });
+  return Response.json(
+    { error: "Unable to save the CRA reference document." },
+    { status: 500 },
+  );
 }

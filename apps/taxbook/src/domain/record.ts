@@ -1,5 +1,5 @@
-import { z } from "zod";
 import type { Buffer } from "node:buffer";
+import { z } from "zod";
 
 export const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 export const allowedAttachmentTypes = [

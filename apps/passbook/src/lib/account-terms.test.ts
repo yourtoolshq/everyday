@@ -72,6 +72,8 @@ describe("account terms", () => {
       { field: "insurance", label: "Insurance", value: "Balance protection" },
     ]);
     expect(hasAccountTerms(emptyAccountTerms())).toBe(false);
-    expect(hasAccountTerms({ ...emptyAccountTerms(), annualFee: "99" })).toBe(true);
+    expect(hasAccountTerms({ ...emptyAccountTerms(), annualFee: "99" })).toBe(
+      true,
+    );
   });
 });

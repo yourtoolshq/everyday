@@ -111,7 +111,9 @@ export function PayStubUploadSheet({
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Attach pay stub</SheetTitle>
-          <SheetDescription>Upload the original PDF or image for this paycheck.</SheetDescription>
+          <SheetDescription>
+            Upload the original PDF or image for this paycheck.
+          </SheetDescription>
         </SheetHeader>
 
         <form
@@ -143,13 +145,18 @@ export function PayStubUploadSheet({
               }}
               placeholder="Pay stub"
             />
-            <p className="text-xs text-muted-foreground">
-              Suggested from the pay period and employer. You can edit it before uploading.
+            <p className="text-muted-foreground text-xs">
+              Suggested from the pay period and employer. You can edit it before
+              uploading.
             </p>
           </div>
 
           <SheetFooter className="px-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={uploading || !paycheckId}>

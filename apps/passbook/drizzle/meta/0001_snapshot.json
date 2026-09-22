@@ -25,17 +25,12 @@
       "indexes": {
         "account_ownership_unique": {
           "name": "account_ownership_unique",
-          "columns": [
-            "account_id",
-            "person_id"
-          ],
+          "columns": ["account_id", "person_id"],
           "isUnique": true
         },
         "account_ownership_person_idx": {
           "name": "account_ownership_person_idx",
-          "columns": [
-            "person_id"
-          ],
+          "columns": ["person_id"],
           "isUnique": false
         }
       },
@@ -44,12 +39,8 @@
           "name": "account_ownership_account_id_accounts_id_fk",
           "tableFrom": "account_ownership",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -57,12 +48,8 @@
           "name": "account_ownership_person_id_people_id_fk",
           "tableFrom": "account_ownership",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -158,9 +145,7 @@
       "indexes": {
         "accounts_institution_idx": {
           "name": "accounts_institution_idx",
-          "columns": [
-            "institution_id"
-          ],
+          "columns": ["institution_id"],
           "isUnique": false
         }
       },
@@ -169,12 +154,8 @@
           "name": "accounts_institution_id_institutions_id_fk",
           "tableFrom": "accounts",
           "tableTo": "institutions",
-          "columnsFrom": [
-            "institution_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["institution_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -276,16 +257,12 @@
       "indexes": {
         "documents_storage_key_unique": {
           "name": "documents_storage_key_unique",
-          "columns": [
-            "storage_key"
-          ],
+          "columns": ["storage_key"],
           "isUnique": true
         },
         "documents_account_idx": {
           "name": "documents_account_idx",
-          "columns": [
-            "account_id"
-          ],
+          "columns": ["account_id"],
           "isUnique": false
         }
       },
@@ -294,12 +271,8 @@
           "name": "documents_account_id_accounts_id_fk",
           "tableFrom": "documents",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -453,9 +426,7 @@
       "indexes": {
         "people_household_idx": {
           "name": "people_household_idx",
-          "columns": [
-            "household_id"
-          ],
+          "columns": ["household_id"],
           "isUnique": false
         }
       },
@@ -464,12 +435,8 @@
           "name": "people_household_id_households_id_fk",
           "tableFrom": "people",
           "tableTo": "households",
-          "columnsFrom": [
-            "household_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["household_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -519,12 +486,8 @@
           "name": "statement_expectations_account_id_accounts_id_fk",
           "tableFrom": "statement_expectations",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

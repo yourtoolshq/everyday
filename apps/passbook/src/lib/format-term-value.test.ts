@@ -75,7 +75,11 @@ describe("formatTermValue", () => {
     expect(formatTermValue("interestRate", "4.5")).toBe("4.5%");
     expect(formatTermValue("creditLimit", "10000")).toBe("$10,000");
     expect(formatTermValue("annualFee", "120.5")).toBe("$120.50");
-    expect(formatTermValue("insurance", "Balance protection")).toBe("Balance protection");
-    expect(formatTermValue("renewalDate", "2026-09-18")).toMatch(/Sep 18, 2026/);
+    expect(formatTermValue("insurance", "Balance protection")).toBe(
+      "Balance protection",
+    );
+    expect(formatTermValue("renewalDate", "2026-09-18")).toMatch(
+      /Sep 18, 2026/,
+    );
   });
 });

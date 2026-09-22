@@ -8,11 +8,8 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
-import {
-  employmentStatuses,
-  payFrequencies,
-  type DeductionAmountField,
-} from "~/domain/employment";
+import type { DeductionAmountField } from "~/domain/employment";
+import { employmentStatuses, payFrequencies } from "~/domain/employment";
 import { people } from "./people";
 import { timestamps } from "./shared";
 import { taxItems } from "./tax-items";
@@ -52,12 +49,24 @@ export const employments = sqliteTable(
     deductionFieldOrder: text("deduction_field_order", { mode: "json" }).$type<
       DeductionAmountField[] | null
     >(),
-    cppEnabled: integer("cpp_enabled", { mode: "boolean" }).default(true).notNull(),
-    cpp2Enabled: integer("cpp2_enabled", { mode: "boolean" }).default(true).notNull(),
-    eiEnabled: integer("ei_enabled", { mode: "boolean" }).default(true).notNull(),
-    wiEnabled: integer("wi_enabled", { mode: "boolean" }).default(false).notNull(),
-    ltdEnabled: integer("ltd_enabled", { mode: "boolean" }).default(false).notNull(),
-    extendedHealthEnabled: integer("extended_health_enabled", { mode: "boolean" })
+    cppEnabled: integer("cpp_enabled", { mode: "boolean" })
+      .default(true)
+      .notNull(),
+    cpp2Enabled: integer("cpp2_enabled", { mode: "boolean" })
+      .default(true)
+      .notNull(),
+    eiEnabled: integer("ei_enabled", { mode: "boolean" })
+      .default(true)
+      .notNull(),
+    wiEnabled: integer("wi_enabled", { mode: "boolean" })
+      .default(false)
+      .notNull(),
+    ltdEnabled: integer("ltd_enabled", { mode: "boolean" })
+      .default(false)
+      .notNull(),
+    extendedHealthEnabled: integer("extended_health_enabled", {
+      mode: "boolean",
+    })
       .default(false)
       .notNull(),
     travelMedicalEnabled: integer("travel_medical_enabled", { mode: "boolean" })
@@ -69,17 +78,24 @@ export const employments = sqliteTable(
     phspReportedOnT4: integer("phsp_reported_on_t4", { mode: "boolean" })
       .default(false)
       .notNull(),
-    unionDuesReportedOnT4: integer("union_dues_reported_on_t4", { mode: "boolean" })
+    unionDuesReportedOnT4: integer("union_dues_reported_on_t4", {
+      mode: "boolean",
+    })
       .default(false)
       .notNull(),
     phspTaxItemId: integer("phsp_tax_item_id").references(() => taxItems.id, {
       onDelete: "set null",
     }),
-    unionDuesTaxItemId: integer("union_dues_tax_item_id").references(() => taxItems.id, {
-      onDelete: "set null",
-    }),
+    unionDuesTaxItemId: integer("union_dues_tax_item_id").references(
+      () => taxItems.id,
+      {
+        onDelete: "set null",
+      },
+    ),
     tenureEmploymentId: text("tenure_employment_id"),
-    otherDeductionsEnabled: integer("other_deductions_enabled", { mode: "boolean" })
+    otherDeductionsEnabled: integer("other_deductions_enabled", {
+      mode: "boolean",
+    })
       .default(true)
       .notNull(),
     ...timestamps,
@@ -89,7 +105,9 @@ export const employments = sqliteTable(
     index("employments_person_idx").on(table.personId),
     uniqueIndex("employments_tax_item_unique").on(table.taxItemId),
     uniqueIndex("employments_phsp_tax_item_unique").on(table.phspTaxItemId),
-    uniqueIndex("employments_union_dues_tax_item_unique").on(table.unionDuesTaxItemId),
+    uniqueIndex("employments_union_dues_tax_item_unique").on(
+      table.unionDuesTaxItemId,
+    ),
     check(
       "employment_status_end_date_consistent",
       sql`(${table.status} = 'active' and ${table.endDate} is null) or (${table.status} = 'ended' and ${table.endDate} is not null)`,

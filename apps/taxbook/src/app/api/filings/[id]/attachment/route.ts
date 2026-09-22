@@ -20,7 +20,10 @@ export async function GET(
   try {
     const id = Number((await context.params).id);
     if (!Number.isSafeInteger(id) || id <= 0) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid filing ID." });
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Invalid filing ID.",
+      });
     }
     const attachment = await getFilingAttachment(db, id);
     const download = new URL(request.url).searchParams.get("download") === "1";

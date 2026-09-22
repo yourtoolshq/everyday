@@ -5,7 +5,11 @@ import { api } from "~/trpc/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function VisitDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function VisitDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
   const detail = await api.visits.detail({ id });
   if (!detail) notFound();

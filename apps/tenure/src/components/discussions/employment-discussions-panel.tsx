@@ -1,13 +1,13 @@
 "use client";
 
-import { ExternalLink, Mail, Pencil, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
+import { ExternalLink, Mail, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { DiscussionFormSheet } from "~/components/discussions/discussion-form-sheet";
 import { EmlPreviewDialog } from "~/components/documents/eml-preview-dialog";
 import { EmploymentDocumentUploadSheet } from "~/components/documents/employment-document-upload-sheet";
-import { formatDateLabel, isEmlMimeType } from "~/lib/documents";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +21,8 @@ import {
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { RichTextContent } from "~/components/ui/rich-text-editor";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { formatDateLabel, isEmlMimeType } from "~/lib/documents";
+import { api } from "~/trpc/react";
 
 type Discussion = RouterOutputs["discussions"]["listByEmployment"][number];
 type Document = RouterOutputs["documents"]["listByEmployment"][number];
@@ -34,16 +35,29 @@ function sortDiscussions(discussions: Discussion[]) {
   });
 }
 
-export function EmploymentDiscussionsPanel({ employmentId }: { employmentId: string }) {
+export function EmploymentDiscussionsPanel({
+  employmentId,
+}: {
+  employmentId: string;
+}) {
   const utils = api.useUtils();
-  const discussions = api.discussions.listByEmployment.useQuery({ employmentId });
+  const discussions = api.discussions.listByEmployment.useQuery({
+    employmentId,
+  });
   const documents = api.documents.listByEmployment.useQuery({ employmentId });
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
-  const [editingDiscussion, setEditingDiscussion] = useState<Discussion | null>(null);
+  const [editingDiscussion, setEditingDiscussion] = useState<Discussion | null>(
+    null,
+  );
   const [deleteTarget, setDeleteTarget] = useState<Discussion | null>(null);
-  const [uploadDiscussionId, setUploadDiscussionId] = useState<string | null>(null);
-  const [emlPreview, setEmlPreview] = useState<{ id: string; title: string } | null>(null);
+  const [uploadDiscussionId, setUploadDiscussionId] = useState<string | null>(
+    null,
+  );
+  const [emlPreview, setEmlPreview] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const sortedDiscussions = useMemo(
     () => sortDiscussions(discussions.data ?? []),
@@ -96,22 +110,29 @@ export function EmploymentDiscussionsPanel({ employmentId }: { employmentId: str
       </CardHeader>
       <CardContent>
         {sortedDiscussions.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
-            No discussions yet. Add notes about compensation conversations, meetings, or email
-            threads.
+          <p className="text-muted-foreground text-sm">
+            No discussions yet. Add notes about compensation conversations,
+            meetings, or email threads.
           </p>
         ) : (
           <ul className="divide-y">
             {sortedDiscussions.map((discussion) => {
-              const linkedDocuments = documentsByDiscussion.get(discussion.id) ?? [];
+              const linkedDocuments =
+                documentsByDiscussion.get(discussion.id) ?? [];
               return (
-                <li key={discussion.id} className="space-y-3 py-4 first:pt-0 last:pb-0">
+                <li
+                  key={discussion.id}
+                  className="space-y-3 py-4 first:pt-0 last:pb-0"
+                >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 space-y-1">
                       <p className="text-sm font-medium">{discussion.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDateLabel(discussion.discussionDate) ?? "No date"}
-                        {discussion.participants ? ` · ${discussion.participants}` : ""}
+                      <p className="text-muted-foreground text-xs">
+                        {formatDateLabel(discussion.discussionDate) ??
+                          "No date"}
+                        {discussion.participants
+                          ? ` · ${discussion.participants}`
+                          : ""}
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-1">
@@ -138,7 +159,9 @@ export function EmploymentDiscussionsPanel({ employmentId }: { employmentId: str
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs font-medium text-muted-foreground">Linked documents</p>
+                      <p className="text-muted-foreground text-xs font-medium">
+                        Linked documents
+                      </p>
                       <Button
                         variant="outline"
                         size="sm"
@@ -149,7 +172,9 @@ export function EmploymentDiscussionsPanel({ employmentId }: { employmentId: str
                       </Button>
                     </div>
                     {linkedDocuments.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">No linked documents yet.</p>
+                      <p className="text-muted-foreground text-xs">
+                        No linked documents yet.
+                      </p>
                     ) : (
                       <ul className="space-y-2">
                         {linkedDocuments.map((document) => (
@@ -165,7 +190,10 @@ export function EmploymentDiscussionsPanel({ employmentId }: { employmentId: str
                                   size="icon-sm"
                                   aria-label={`Preview ${document.title}`}
                                   onClick={() =>
-                                    setEmlPreview({ id: document.id, title: document.title })
+                                    setEmlPreview({
+                                      id: document.id,
+                                      title: document.title,
+                                    })
                                   }
                                 >
                                   <Mail />
@@ -240,13 +268,16 @@ export function EmploymentDiscussionsPanel({ employmentId }: { employmentId: str
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteDiscussion.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteDiscussion.isPending}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={deleteDiscussion.isPending || !deleteTarget}
               onClick={(event) => {
                 event.preventDefault();
-                if (deleteTarget) deleteDiscussion.mutate({ id: deleteTarget.id });
+                if (deleteTarget)
+                  deleteDiscussion.mutate({ id: deleteTarget.id });
               }}
             >
               {deleteDiscussion.isPending ? "Deleting…" : "Delete"}

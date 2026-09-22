@@ -1,14 +1,16 @@
-import { TRPCError } from "@trpc/server";
 import { Buffer } from "node:buffer";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import type {
+  TaxDocumentAttachmentAction,
+  TaxDocumentAttachmentInput,
+} from "~/domain/tax-document";
 import {
   allowedTaxDocumentAttachmentTypes,
   MAX_TAX_DOCUMENT_ATTACHMENT_BYTES,
   taxDocumentInput,
   taxDocumentUpdateInput,
-  type TaxDocumentAttachmentAction,
-  type TaxDocumentAttachmentInput,
 } from "~/domain/tax-document";
 
 function textValue(form: FormData, name: string) {
@@ -61,7 +63,8 @@ function commonFields(form: FormData) {
   const type = textValue(form, "type");
   return {
     type,
-    customTypeName: type === "other" ? nullableText(form, "customTypeName") : null,
+    customTypeName:
+      type === "other" ? nullableText(form, "customTypeName") : null,
     issuer: textValue(form, "issuer"),
     personId: person === null ? null : Number(person),
     notes: nullableText(form, "notes"),

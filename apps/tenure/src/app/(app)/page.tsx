@@ -1,5 +1,5 @@
-import { Briefcase, Building2, Users } from "lucide-react";
 import Link from "next/link";
+import { Briefcase, Building2, Users } from "lucide-react";
 
 import { HouseholdPaySummaryPanel } from "~/components/employment-records/household-pay-summary-panel";
 import { MissingEmploymentRecordsPanel } from "~/components/employment-records/missing-employment-records-panel";
@@ -13,8 +13,18 @@ export default async function OverviewPage() {
   const summary = await api.overview.summary();
 
   const stats = [
-    { label: "People", value: summary.peopleCount, icon: Users, href: "/people" },
-    { label: "Employers", value: summary.employerCount, icon: Building2, href: "/employers" },
+    {
+      label: "People",
+      value: summary.peopleCount,
+      icon: Users,
+      href: "/people",
+    },
+    {
+      label: "Employers",
+      value: summary.employerCount,
+      icon: Building2,
+      href: "/employers",
+    },
     {
       label: "Employments",
       value: summary.employmentCount,
@@ -26,24 +36,25 @@ export default async function OverviewPage() {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 p-4 md:p-6">
       <div className="space-y-2">
-        <p className="text-sm font-medium text-primary">Household overview</p>
+        <p className="text-primary text-sm font-medium">Household overview</p>
         <h2 className="text-3xl font-semibold tracking-tight">
           {summary.householdName ?? "Your household"}
         </h2>
-        <p className="max-w-2xl text-muted-foreground">
-          Keep employment records, documents, and pay history organized by employer.
+        <p className="text-muted-foreground max-w-2xl">
+          Keep employment records, documents, and pay history organized by
+          employer.
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         {stats.map((stat) => (
           <Link key={stat.label} href={stat.href}>
-            <Card className="shadow-none transition-colors hover:bg-muted/40">
+            <Card className="hover:bg-muted/40 shadow-none transition-colors">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-muted-foreground text-sm font-medium">
                   {stat.label}
                 </CardTitle>
-                <stat.icon className="size-4 text-primary" aria-hidden="true" />
+                <stat.icon className="text-primary size-4" aria-hidden="true" />
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-semibold">{stat.value}</p>

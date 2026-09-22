@@ -1,7 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 
-import { validateDocumentClaimLink, type DocumentType } from "~/lib/documents";
+import type { DocumentType } from "~/lib/documents";
+import { validateDocumentClaimLink } from "~/lib/documents";
 import { claims } from "~/server/db/schema";
 
 export async function resolveDocumentClaimId(

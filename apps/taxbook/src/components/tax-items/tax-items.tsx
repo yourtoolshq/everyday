@@ -1,9 +1,10 @@
 "use client";
 
-import { IconPlus } from "@tabler/icons-react";
 import { useState } from "react";
+import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
+import type { RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +17,7 @@ import {
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import { Skeleton } from "~/components/ui/skeleton";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 import { ItemFormSheet } from "./item-form-sheet";
 import { TaxItemsTable } from "./tax-items-table";
 
@@ -55,22 +56,40 @@ export function TaxItems() {
   }
 
   if (items.isLoading || settings.isLoading) {
-    return <div className="space-y-5 p-6"><Skeleton className="h-16 w-full" /><Skeleton className="h-96 w-full rounded-xl" /></div>;
+    return (
+      <div className="space-y-5 p-6">
+        <Skeleton className="h-16 w-full" />
+        <Skeleton className="h-96 w-full rounded-xl" />
+      </div>
+    );
   }
 
   if (items.error || settings.error || !items.data || !settings.data) {
-    return <div className="p-6 text-sm text-destructive">Unable to load tax items. {items.error?.message ?? settings.error?.message}</div>;
+    return (
+      <div className="text-destructive p-6 text-sm">
+        Unable to load tax items.{" "}
+        {items.error?.message ?? settings.error?.message}
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col gap-5 p-6">
       <div className="flex items-end justify-between">
         <div>
-          <p className="text-sm font-medium text-primary">{items.data.year.year} tax year</p>
-          <h2 className="mt-1 text-2xl font-semibold tracking-tight">Tax items</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Track expected and actual amounts as the year develops.</p>
+          <p className="text-primary text-sm font-medium">
+            {items.data.year.year} tax year
+          </p>
+          <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+            Tax items
+          </h2>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Track expected and actual amounts as the year develops.
+          </p>
         </div>
-        <Button onClick={addItem}><IconPlus /> Add tax item</Button>
+        <Button onClick={addItem}>
+          <IconPlus /> Add tax item
+        </Button>
       </div>
       <TaxItemsTable
         items={items.data.items}
@@ -88,18 +107,23 @@ export function TaxItems() {
           onOpenChange={setFormOpen}
         />
       ) : null}
-      <AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}>
+      <AlertDialog
+        open={Boolean(deleting)}
+        onOpenChange={(open) => !open && setDeleting(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this tax item?</AlertDialogTitle>
             <AlertDialogDescription>
-              “{deleting?.name}”, all of its supporting Records, Tax Documents, and attachments will be permanently removed from this tax year. This cannot be undone.
+              “{deleting?.name}”, all of its supporting Records, Tax Documents,
+              and attachments will be permanently removed from this tax year.
+              This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive hover:bg-destructive/90 text-white"
               disabled={deleteItem.isPending}
               onClick={() => deleting && deleteItem.mutate({ id: deleting.id })}
             >

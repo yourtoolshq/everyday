@@ -28,9 +28,9 @@ describe("expected pay periods", () => {
 
     expect(periods.some((period) => period.key === "2026-01-03")).toBe(true);
     expect(periods.some((period) => period.key === "2026-01-17")).toBe(true);
-    expect(periods.find((period) => period.key === "2026-01-03")?.periodEndDate).toBe(
-      "2026-01-16",
-    );
+    expect(
+      periods.find((period) => period.key === "2026-01-03")?.periodEndDate,
+    ).toBe("2026-01-16");
   });
 
   it("maps paycheck period keys for biweekly schedules", () => {
@@ -47,7 +47,9 @@ describe("expected pay periods", () => {
 
     expect(periods.length).toBeGreaterThan(0);
     expect(periods.every((period) => period.status !== "future")).toBe(true);
-    expect(suggestDefaultPayPeriodKey(periods, new Set(["2026-01-1"]))).toBe("2026-01-2");
+    expect(suggestDefaultPayPeriodKey(periods, new Set(["2026-01-1"]))).toBe(
+      "2026-01-2",
+    );
   });
 
   it("uses descriptive date ranges for semimonthly grid labels", () => {
@@ -66,7 +68,9 @@ describe("expected pay periods", () => {
     expect(januaryFirst?.shortLabel).toBe("Jan 1–15");
     expect(januarySecond?.shortLabel).toBe("Jan 16–31");
     expect(februarySecond?.shortLabel).toBe("Feb 16–28");
-    expect(formatCompactPeriodRange("2026-01-03", "2026-01-16")).toBe("Jan 3–16");
+    expect(formatCompactPeriodRange("2026-01-03", "2026-01-16")).toBe(
+      "Jan 3–16",
+    );
   });
 
   it("finds the expected period for a pay date after period end", () => {

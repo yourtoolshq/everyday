@@ -1,9 +1,13 @@
 "use client";
 
-import { Upload } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Upload } from "lucide-react";
 import { toast } from "sonner";
 
+import type {
+  PaycheckColumnMapping,
+  PaycheckImportPreview,
+} from "~/lib/paycheck-csv-import";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -22,13 +26,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
+import { formatCad } from "~/lib/money";
 import {
   detectPaycheckColumnMapping,
   paycheckImportFields,
-  type PaycheckColumnMapping,
-  type PaycheckImportPreview,
 } from "~/lib/paycheck-csv-import";
-import { formatCad } from "~/lib/money";
 import { api } from "~/trpc/react";
 
 const fieldLabels: Record<(typeof paycheckImportFields)[number], string> = {
@@ -156,7 +158,8 @@ export function PaycheckImportSheet({
 
   const importableCount = preview
     ? preview.rows.filter(
-        (row) => row.errors.length === 0 && (!skipDuplicates || !row.isDuplicate),
+        (row) =>
+          row.errors.length === 0 && (!skipDuplicates || !row.isDuplicate),
       ).length
     : 0;
 
@@ -166,8 +169,8 @@ export function PaycheckImportSheet({
         <SheetHeader>
           <SheetTitle>Import paychecks from CSV</SheetTitle>
           <SheetDescription>
-            Import paycheques exported from Taxbook for this employment. Pay stubs and
-            estimated pay periods can be reviewed after import.
+            Import paycheques exported from Taxbook for this employment. Pay
+            stubs and estimated pay periods can be reviewed after import.
           </SheetDescription>
         </SheetHeader>
 
@@ -183,25 +186,30 @@ export function PaycheckImportSheet({
                   onChange={handleFileChange}
                 />
                 {fileName ? (
-                  <p className="text-xs text-muted-foreground">Selected: {fileName}</p>
+                  <p className="text-muted-foreground text-xs">
+                    Selected: {fileName}
+                  </p>
                 ) : null}
               </div>
-              <p className="text-sm text-muted-foreground">
-                Taxbook exports use a preset column layout. Other CSV files can be mapped in
-                the next step.
+              <p className="text-muted-foreground text-sm">
+                Taxbook exports use a preset column layout. Other CSV files can
+                be mapped in the next step.
               </p>
             </div>
           ) : null}
 
           {step === "mapping" ? (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Match CSV columns to paycheck fields. Unmapped optional amounts default to
-                zero.
+              <p className="text-muted-foreground text-sm">
+                Match CSV columns to paycheck fields. Unmapped optional amounts
+                default to zero.
               </p>
               <div className="grid gap-3">
                 {paycheckImportFields.map((field) => (
-                  <div key={field} className="grid gap-2 sm:grid-cols-2 sm:items-center">
+                  <div
+                    key={field}
+                    className="grid gap-2 sm:grid-cols-2 sm:items-center"
+                  >
                     <Label>{fieldLabels[field]}</Label>
                     <Select
                       value={mapping[field] ?? "__none__"}
@@ -218,7 +226,9 @@ export function PaycheckImportSheet({
                       <SelectContent>
                         <SelectItem value="__none__">Not mapped</SelectItem>
                         {headers.map((header) => (
-                          <SelectItem key={header} value={header}>{header}</SelectItem>
+                          <SelectItem key={header} value={header}>
+                            {header}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -231,10 +241,22 @@ export function PaycheckImportSheet({
           {step === "preview" && preview ? (
             <div className="space-y-4">
               <div className="grid gap-2 text-sm sm:grid-cols-2">
-                <p>{preview.validCount} valid row{preview.validCount === 1 ? "" : "s"}</p>
-                <p>{preview.duplicateCount} duplicate{preview.duplicateCount === 1 ? "" : "s"}</p>
-                <p>{preview.errorCount} row{preview.errorCount === 1 ? "" : "s"} with errors</p>
-                <p>{preview.estimatedPeriodCount} estimated pay period{preview.estimatedPeriodCount === 1 ? "" : "s"}</p>
+                <p>
+                  {preview.validCount} valid row
+                  {preview.validCount === 1 ? "" : "s"}
+                </p>
+                <p>
+                  {preview.duplicateCount} duplicate
+                  {preview.duplicateCount === 1 ? "" : "s"}
+                </p>
+                <p>
+                  {preview.errorCount} row{preview.errorCount === 1 ? "" : "s"}{" "}
+                  with errors
+                </p>
+                <p>
+                  {preview.estimatedPeriodCount} estimated pay period
+                  {preview.estimatedPeriodCount === 1 ? "" : "s"}
+                </p>
               </div>
               <label className="flex items-center gap-2 text-sm">
                 <input
@@ -244,13 +266,14 @@ export function PaycheckImportSheet({
                 />
                 Skip rows that match an existing paycheck
               </label>
-              <p className="text-sm text-muted-foreground">
-                {importableCount} paycheck{importableCount === 1 ? "" : "s"} will be imported.
-                Imported paychecks will not include pay stub PDFs.
+              <p className="text-muted-foreground text-sm">
+                {importableCount} paycheck{importableCount === 1 ? "" : "s"}{" "}
+                will be imported. Imported paychecks will not include pay stub
+                PDFs.
               </p>
               <div className="max-h-80 overflow-auto rounded-md border">
                 <table className="w-full text-left text-xs">
-                  <thead className="sticky top-0 bg-muted">
+                  <thead className="bg-muted sticky top-0">
                     <tr>
                       <th className="px-2 py-2">Row</th>
                       <th className="px-2 py-2">Pay date</th>
@@ -270,7 +293,9 @@ export function PaycheckImportSheet({
                             : "—"}
                         </td>
                         <td className="px-2 py-2 tabular-nums">
-                          {row.grossPayCents ? formatCad(row.grossPayCents) : "—"}
+                          {row.grossPayCents
+                            ? formatCad(row.grossPayCents)
+                            : "—"}
                         </td>
                         <td className="px-2 py-2">
                           {row.errors.length > 0
@@ -292,22 +317,33 @@ export function PaycheckImportSheet({
 
         <SheetFooter className="border-t px-4 py-4">
           {step === "upload" ? (
-            <Button onClick={continueFromUpload} disabled={!csvText || previewImport.isPending}>
+            <Button
+              onClick={continueFromUpload}
+              disabled={!csvText || previewImport.isPending}
+            >
               <Upload />
               {previewImport.isPending ? "Previewing…" : "Continue"}
             </Button>
           ) : null}
           {step === "mapping" ? (
             <div className="flex w-full gap-2">
-              <Button variant="outline" onClick={() => setStep("upload")}>Back</Button>
-              <Button onClick={continueFromMapping} disabled={previewImport.isPending}>
+              <Button variant="outline" onClick={() => setStep("upload")}>
+                Back
+              </Button>
+              <Button
+                onClick={continueFromMapping}
+                disabled={previewImport.isPending}
+              >
                 {previewImport.isPending ? "Previewing…" : "Preview import"}
               </Button>
             </div>
           ) : null}
           {step === "preview" ? (
             <div className="flex w-full gap-2">
-              <Button variant="outline" onClick={() => setStep(needsMapping ? "mapping" : "upload")}>
+              <Button
+                variant="outline"
+                onClick={() => setStep(needsMapping ? "mapping" : "upload")}
+              >
                 Back
               </Button>
               <Button

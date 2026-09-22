@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
+import type { RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,9 +34,9 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
-import { MAX_ATTACHMENT_BYTES } from "~/domain/record";
 import { centsToDollars, dollarsToCents, formatCad } from "~/domain/money";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { MAX_ATTACHMENT_BYTES } from "~/domain/record";
+import { api } from "~/trpc/react";
 
 type TaxItem = RouterOutputs["taxItem"]["get"]["item"];
 type RecordItem = RouterOutputs["record"]["list"]["items"][number];
@@ -56,7 +58,9 @@ export function RecordFormSheet({
   const utils = api.useUtils();
   const [date, setDate] = useState(record?.date ?? "");
   const [description, setDescription] = useState(record?.description ?? "");
-  const [amount, setAmount] = useState(centsToDollars(record?.amountCents ?? null));
+  const [amount, setAmount] = useState(
+    centsToDollars(record?.amountCents ?? null),
+  );
   const [personId, setPersonId] = useState(
     String(record?.personId ?? item.personId ?? "none"),
   );
@@ -86,22 +90,36 @@ export function RecordFormSheet({
     form.set("date", date);
     form.set("description", description);
     form.set("amountCents", String(amountCents));
-    form.set("personId", item.ownerKind === "person" ? String(item.personId) : personId === "none" ? "" : personId);
+    form.set(
+      "personId",
+      item.ownerKind === "person"
+        ? String(item.personId)
+        : personId === "none"
+          ? ""
+          : personId,
+    );
     form.set("notes", notes);
     if (!record) form.set("confirmReplaceActual", String(confirmReplaceActual));
     if (file) form.set("attachment", file);
     if (record) {
-      form.set("attachmentAction", file ? "replace" : removeAttachment ? "remove" : "keep");
+      form.set(
+        "attachmentAction",
+        file ? "replace" : removeAttachment ? "remove" : "keep",
+      );
     }
 
     setPending(true);
     try {
-      const response = await fetch(record ? `/api/records/${record.id}` : "/api/records", {
-        method: record ? "PUT" : "POST",
-        body: form,
-      });
+      const response = await fetch(
+        record ? `/api/records/${record.id}` : "/api/records",
+        {
+          method: record ? "PUT" : "POST",
+          body: form,
+        },
+      );
       const result = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(result.error ?? "Unable to save the Record.");
+      if (!response.ok)
+        throw new Error(result.error ?? "Unable to save the Record.");
       await Promise.all([
         utils.record.list.invalidate({ taxItemId: item.id }),
         utils.taxItem.get.invalidate({ id: item.id }),
@@ -112,7 +130,9 @@ export function RecordFormSheet({
       toast.success(record ? "Record updated." : "Record added.");
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to save the Record.");
+      toast.error(
+        error instanceof Error ? error.message : "Unable to save the Record.",
+      );
     } finally {
       setPending(false);
       setConfirmOpen(false);
@@ -139,17 +159,48 @@ export function RecordFormSheet({
             <div className="flex-1 space-y-6 px-4 py-6">
               <div className="space-y-2">
                 <Label htmlFor="record-date">Date</Label>
-                <Input id="record-date" type="date" value={date} onChange={(event) => setDate(event.target.value)} required />
-                <p className="text-xs text-muted-foreground">The date may fall outside the selected calendar year.</p>
+                <Input
+                  id="record-date"
+                  type="date"
+                  value={date}
+                  onChange={(event) => setDate(event.target.value)}
+                  required
+                />
+                <p className="text-muted-foreground text-xs">
+                  The date may fall outside the selected calendar year.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="record-description">Description</Label>
-                <Input id="record-description" maxLength={200} placeholder="e.g. Dental appointment" value={description} onChange={(event) => setDescription(event.target.value)} required />
+                <Input
+                  id="record-description"
+                  maxLength={200}
+                  placeholder="e.g. Dental appointment"
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="record-amount">Amount counted</Label>
-                <div className="relative"><span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span><Input id="record-amount" className="pl-7 tabular-nums" inputMode="decimal" placeholder="0.00" value={amount} onChange={(event) => setAmount(event.target.value)} required /></div>
-                <p className="text-xs text-muted-foreground">Enter the amount that should be included in the Tax Item total.</p>
+                <div className="relative">
+                  <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
+                    $
+                  </span>
+                  <Input
+                    id="record-amount"
+                    className="pl-7 tabular-nums"
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                    required
+                  />
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  Enter the amount that should be included in the Tax Item
+                  total.
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Person</Label>
@@ -157,34 +208,80 @@ export function RecordFormSheet({
                   <Input value={item.personName ?? ""} disabled />
                 ) : (
                   <Select value={personId} onValueChange={setPersonId}>
-                    <SelectTrigger aria-label="Record person"><SelectValue /></SelectTrigger>
+                    <SelectTrigger aria-label="Record person">
+                      <SelectValue />
+                    </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">No specific person</SelectItem>
-                      {people.map((person) => <SelectItem key={person.id} value={String(person.id)}>{person.name}</SelectItem>)}
+                      {people.map((person) => (
+                        <SelectItem key={person.id} value={String(person.id)}>
+                          {person.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="record-notes">Notes</Label>
-                <Textarea id="record-notes" rows={5} maxLength={4000} placeholder="Optional reimbursement or eligibility context" value={notes} onChange={(event) => setNotes(event.target.value)} />
-                <p className="text-xs text-muted-foreground">{notes.length.toLocaleString()} / 4,000</p>
+                <Textarea
+                  id="record-notes"
+                  rows={5}
+                  maxLength={4000}
+                  placeholder="Optional reimbursement or eligibility context"
+                  value={notes}
+                  onChange={(event) => setNotes(event.target.value)}
+                />
+                <p className="text-muted-foreground text-xs">
+                  {notes.length.toLocaleString()} / 4,000
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="record-attachment">Attachment</Label>
                 {record?.attachmentFileName && !removeAttachment ? (
                   <div className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
-                    <span className="truncate">{record.attachmentFileName}</span>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => { setRemoveAttachment(true); setFile(null); }}>Remove</Button>
+                    <span className="truncate">
+                      {record.attachmentFileName}
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setRemoveAttachment(true);
+                        setFile(null);
+                      }}
+                    >
+                      Remove
+                    </Button>
                   </div>
                 ) : null}
-                <Input id="record-attachment" type="file" accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,.heic,.heif" onChange={(event) => { setFile(event.target.files?.[0] ?? null); setRemoveAttachment(false); }} />
-                <p className="text-xs text-muted-foreground">Optional PDF or image, up to 20 MB. Choosing a file replaces the current attachment.</p>
+                <Input
+                  id="record-attachment"
+                  type="file"
+                  accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
+                  onChange={(event) => {
+                    setFile(event.target.files?.[0] ?? null);
+                    setRemoveAttachment(false);
+                  }}
+                />
+                <p className="text-muted-foreground text-xs">
+                  Optional PDF or image, up to 20 MB. Choosing a file replaces
+                  the current attachment.
+                </p>
               </div>
             </div>
             <SheetFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button disabled={pending}>{pending ? "Saving…" : record ? "Save changes" : "Add Record"}</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button disabled={pending}>
+                {pending ? "Saving…" : record ? "Save changes" : "Add Record"}
+              </Button>
             </SheetFooter>
           </form>
         </SheetContent>
@@ -192,14 +289,23 @@ export function RecordFormSheet({
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Use Records for the actual amount?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Use Records for the actual amount?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              The current actual amount of {formatCad(item.actualAmountCents)} will be replaced. From then on, this Tax Item’s actual amount will equal the sum of its Records.
+              The current actual amount of {formatCad(item.actualAmountCents)}{" "}
+              will be replaced. From then on, this Tax Item’s actual amount will
+              equal the sum of its Records.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction disabled={pending} onClick={() => void save(true)}>{pending ? "Saving…" : "Replace and add Record"}</AlertDialogAction>
+            <AlertDialogAction
+              disabled={pending}
+              onClick={() => void save(true)}
+            >
+              {pending ? "Saving…" : "Replace and add Record"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

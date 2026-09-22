@@ -5,13 +5,17 @@ import { z } from "zod";
 import { fetchTenureEmployments, fetchTenureHealth } from "~/lib/tenure-client";
 import { employments, households } from "~/server/db/schema";
 import {
+  requireActiveYear,
+  requireEditableActiveYear,
+  requireHousehold,
+} from "../helpers";
+import {
   importEmploymentsFromTenure,
   listTenureEmploymentLinks,
   reconcileEmploymentWithTenure,
   setTenurePersonMapping,
   syncTenurePaycheques,
 } from "../tenure-sync";
-import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "../helpers";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const tenureSyncRouter = createTRPCRouter({
@@ -69,7 +73,10 @@ export const tenureSyncRouter = createTRPCRouter({
   }),
 
   importEmployments: publicProcedure.mutation(async ({ ctx }) => {
-    await requireEditableActiveYear(ctx.db, (await requireHousehold(ctx.db)).id);
+    await requireEditableActiveYear(
+      ctx.db,
+      (await requireHousehold(ctx.db)).id,
+    );
     return importEmploymentsFromTenure(ctx.db);
   }),
 
@@ -86,7 +93,10 @@ export const tenureSyncRouter = createTRPCRouter({
       } catch (error) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: error instanceof Error ? error.message : "Unable to save person mapping.",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Unable to save person mapping.",
         });
       }
     }),
@@ -125,7 +135,10 @@ export const tenureSyncRouter = createTRPCRouter({
           ),
         );
       if (!employment) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Employment not found.",
+        });
       }
 
       await ctx.db
@@ -134,7 +147,10 @@ export const tenureSyncRouter = createTRPCRouter({
         .where(eq(employments.id, input.employmentId));
 
       if (input.tenureEmploymentId && input.reconcileExisting) {
-        const result = await reconcileEmploymentWithTenure(ctx.db, input.employmentId);
+        const result = await reconcileEmploymentWithTenure(
+          ctx.db,
+          input.employmentId,
+        );
         return { success: true, matchedCount: result.matchedCount };
       }
 
@@ -144,7 +160,12 @@ export const tenureSyncRouter = createTRPCRouter({
   syncNow: publicProcedure
     .input(z.object({ fullRefresh: z.boolean().default(true) }).optional())
     .mutation(async ({ ctx, input }) => {
-      await requireEditableActiveYear(ctx.db, (await requireHousehold(ctx.db)).id);
-      return syncTenurePaycheques(ctx.db, { fullRefresh: input?.fullRefresh ?? true });
+      await requireEditableActiveYear(
+        ctx.db,
+        (await requireHousehold(ctx.db)).id,
+      );
+      return syncTenurePaycheques(ctx.db, {
+        fullRefresh: input?.fullRefresh ?? true,
+      });
     }),
 });

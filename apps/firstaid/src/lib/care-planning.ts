@@ -133,14 +133,16 @@ export const careItemFieldsSchema = z
 
     if (value.cadence === "recurring_interval") {
       if (!value.intervalCount) addIssue("intervalCount", "Enter an interval");
-      if (!value.intervalUnit) addIssue("intervalUnit", "Choose an interval unit");
+      if (!value.intervalUnit)
+        addIssue("intervalUnit", "Choose an interval unit");
     } else if (value.intervalCount !== null || value.intervalUnit !== null) {
       addIssue("cadence", "Interval details only apply to recurring care");
     }
 
     if (value.timingKind === "date") {
       if (!value.targetDate) addIssue("targetDate", "Choose a date");
-      if (!value.dateMeaning) addIssue("dateMeaning", "Choose what the date means");
+      if (!value.dateMeaning)
+        addIssue("dateMeaning", "Choose what the date means");
     } else if (value.targetDate !== null || value.dateMeaning !== null) {
       addIssue("timingKind", "Date details require exact-date timing");
     }

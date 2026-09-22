@@ -120,11 +120,10 @@ describe("benefit eligibility", () => {
 describe("validation", () => {
   it("rejects paid claims above visit cost", () => {
     expect(
-      validateClaimAllocation(
-        11000,
-        [{ status: "paid", amountCents: 8000 }],
-        { status: "paid", amountCents: 4000 },
-      ),
+      validateClaimAllocation(11000, [{ status: "paid", amountCents: 8000 }], {
+        status: "paid",
+        amountCents: 4000,
+      }),
     ).toBe("Paid claims cannot total more than the visit cost.");
   });
 

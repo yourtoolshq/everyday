@@ -1,14 +1,15 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { InstitutionFormSheet } from "~/components/institutions/institution-form-sheet";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 type Institution = RouterOutputs["institutions"]["list"][number];
 
@@ -46,7 +47,7 @@ export function InstitutionsWorkspace() {
 
   if (institutions.error) {
     return (
-      <p className="text-sm text-destructive">
+      <p className="text-destructive text-sm">
         Unable to load institutions. {institutions.error.message}
       </p>
     );
@@ -58,9 +59,13 @@ export function InstitutionsWorkspace() {
     <div className="space-y-5">
       <div className="flex items-end justify-between gap-4">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-primary">Inventory</p>
-          <h2 className="text-3xl font-semibold tracking-tight">Institutions</h2>
-          <p className="text-muted-foreground">Banks, lenders, and investment providers.</p>
+          <p className="text-primary text-sm font-medium">Inventory</p>
+          <h2 className="text-3xl font-semibold tracking-tight">
+            Institutions
+          </h2>
+          <p className="text-muted-foreground">
+            Banks, lenders, and investment providers.
+          </p>
         </div>
         <Button onClick={addInstitution}>
           <Plus /> Add institution
@@ -71,7 +76,7 @@ export function InstitutionsWorkspace() {
         <Card className="shadow-none">
           <CardContent className="flex h-64 flex-col items-center justify-center text-center">
             <p className="font-medium">No institutions yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-sm">
               Add the banks, lenders, and providers your household uses.
             </p>
             <Button className="mt-4" variant="outline" onClick={addInstitution}>
@@ -87,10 +92,14 @@ export function InstitutionsWorkspace() {
                 <div>
                   <p className="font-medium">{institution.name}</p>
                   {institution.website ? (
-                    <p className="text-sm text-muted-foreground">{institution.website}</p>
+                    <p className="text-muted-foreground text-sm">
+                      {institution.website}
+                    </p>
                   ) : null}
                   {institution.notes ? (
-                    <p className="mt-2 text-sm text-muted-foreground">{institution.notes}</p>
+                    <p className="text-muted-foreground mt-2 text-sm">
+                      {institution.notes}
+                    </p>
                   ) : null}
                 </div>
                 <div className="flex items-center gap-1">
@@ -106,7 +115,9 @@ export function InstitutionsWorkspace() {
                     variant="ghost"
                     size="icon"
                     aria-label={`Remove ${institution.name}`}
-                    onClick={() => deleteInstitution.mutate({ id: institution.id })}
+                    onClick={() =>
+                      deleteInstitution.mutate({ id: institution.id })
+                    }
                   >
                     <Trash2 />
                   </Button>

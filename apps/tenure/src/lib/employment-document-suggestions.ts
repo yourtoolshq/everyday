@@ -1,5 +1,7 @@
-import { formatCompensationRate, type CompensationChangeRecord } from "~/lib/compensation";
-import { documentTypeLabels, formatDateLabel, type DocumentType } from "~/lib/documents";
+import type { CompensationChangeRecord } from "~/lib/compensation";
+import type { DocumentType } from "~/lib/documents";
+import { formatCompensationRate } from "~/lib/compensation";
+import { documentTypeLabels, formatDateLabel } from "~/lib/documents";
 
 export type RequiredDocumentKind = "offer_letter" | "compensation_change";
 
@@ -36,10 +38,16 @@ export function suggestRequiredDocumentTitle(input: {
   compensationChange?: CompensationChangeRecord | null;
 }): string {
   const employer = input.employerName.trim() || "Employer";
-  const datePart = formatDateLabel(input.documentDate) ?? input.documentDate?.trim() ?? null;
+  const datePart =
+    formatDateLabel(input.documentDate) ?? input.documentDate?.trim() ?? null;
 
   if (input.kind === "offer_letter") {
-    return joinTitleParts(datePart, employer, input.personName, documentTypeLabels.offer_letter);
+    return joinTitleParts(
+      datePart,
+      employer,
+      input.personName,
+      documentTypeLabels.offer_letter,
+    );
   }
 
   if (input.compensationChange) {

@@ -14,7 +14,8 @@ export async function uploadAccountDocument(input: UploadAccountDocumentInput) {
   form.append("file", input.file);
   form.append("type", input.type);
   if (input.title?.trim()) form.append("title", input.title.trim());
-  if (input.documentDate?.trim()) form.append("documentDate", input.documentDate.trim());
+  if (input.documentDate?.trim())
+    form.append("documentDate", input.documentDate.trim());
   if (input.notes?.trim()) form.append("notes", input.notes.trim());
 
   const response = await fetch(`/api/accounts/${input.accountId}/documents`, {

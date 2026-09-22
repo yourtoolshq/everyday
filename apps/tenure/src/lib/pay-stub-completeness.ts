@@ -1,12 +1,14 @@
+import type {
+  EmploymentLifecycle,
+  ExpectedPayPeriod,
+} from "~/lib/expected-pay-periods";
+import type { PayFrequency } from "~/lib/pay-frequency";
 import {
   canDerivePayPeriods,
   deriveExpectedPayPeriodsForYear,
   paycheckMatchesPeriod,
   payYearRange,
-  type EmploymentLifecycle,
-  type ExpectedPayPeriod,
 } from "~/lib/expected-pay-periods";
-import type { PayFrequency } from "~/lib/pay-frequency";
 
 export type PayStubCompletenessStatus =
   | "complete"
@@ -51,7 +53,10 @@ export type YearPayCompletenessSummary = {
   waitingCount: number;
 };
 
-export const payStubCompletenessLabels: Record<PayStubCompletenessStatus, string> = {
+export const payStubCompletenessLabels: Record<
+  PayStubCompletenessStatus,
+  string
+> = {
   complete: "Complete",
   missing_paycheck: "Missing paycheck",
   missing_stub: "Missing stub",

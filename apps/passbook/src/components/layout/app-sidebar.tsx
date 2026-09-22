@@ -1,5 +1,8 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Building2,
   FileText,
@@ -9,10 +12,7 @@ import {
   Settings,
   Users,
   Wallet,
-  type LucideIcon,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 import {
   Sidebar,
@@ -57,7 +57,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="border-b p-3">
         <Link href="/" className="flex items-center gap-2 px-1.5 font-semibold">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+          <span className="bg-primary text-primary-foreground flex size-8 shrink-0 items-center justify-center rounded-lg shadow-sm">
             <Landmark aria-hidden="true" className="size-5" />
           </span>
           <span className="truncate">Passbook</span>

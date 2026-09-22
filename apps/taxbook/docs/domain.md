@@ -6,26 +6,26 @@ The goal is to keep the model understandable in normal personal-tax language and
 
 ## Ubiquitous Language
 
-| Term              | Meaning                                                               |
-| ----------------- | --------------------------------------------------------------------- |
-| **Household**     | The family unit whose taxes are being tracked                         |
-| **Person**        | One individual tax filer in the household                             |
-| **Tax Year**      | One calendar year of tax information, such as 2026                    |
-| **Income Source** | Where a person earns income from                                      |
-| **Employment**    | One person's employment with one employer during a Tax Year           |
-| **Paycheque**     | One employer payment received by a person                             |
-| **Income**        | Income recorded or projected for a person during a tax year           |
-| **Tax Item**      | Anything that matters to the tax return                               |
-| **Record**        | Supporting information or evidence the household must retain          |
-| **Tax Document**  | An official tax document such as a T4, T5, RRSP receipt, or FHSA slip |
-| **Tax Estimate**  | The current estimated refund or amount owing                          |
-| **Tax Treatment** | An explicit rule describing how a Tax Item feeds the Tax Estimate     |
-| **Business Activity** | One person's distinct sole-proprietor activity for a Tax Year     |
-| **Tax Filing**    | The record of the tax return being submitted                          |
-| **Tax Result**    | The refund received or amount owing                                   |
-| **Assessment**    | CRA's assessment of the filed return                                  |
-| **Note**          | Human context or explanation attached to a tax-related item           |
-| **Status**        | The current state of an item or tax year                              |
+| Term                  | Meaning                                                               |
+| --------------------- | --------------------------------------------------------------------- |
+| **Household**         | The family unit whose taxes are being tracked                         |
+| **Person**            | One individual tax filer in the household                             |
+| **Tax Year**          | One calendar year of tax information, such as 2026                    |
+| **Income Source**     | Where a person earns income from                                      |
+| **Employment**        | One person's employment with one employer during a Tax Year           |
+| **Paycheque**         | One employer payment received by a person                             |
+| **Income**            | Income recorded or projected for a person during a tax year           |
+| **Tax Item**          | Anything that matters to the tax return                               |
+| **Record**            | Supporting information or evidence the household must retain          |
+| **Tax Document**      | An official tax document such as a T4, T5, RRSP receipt, or FHSA slip |
+| **Tax Estimate**      | The current estimated refund or amount owing                          |
+| **Tax Treatment**     | An explicit rule describing how a Tax Item feeds the Tax Estimate     |
+| **Business Activity** | One person's distinct sole-proprietor activity for a Tax Year         |
+| **Tax Filing**        | The record of the tax return being submitted                          |
+| **Tax Result**        | The refund received or amount owing                                   |
+| **Assessment**        | CRA's assessment of the filed return                                  |
+| **Note**              | Human context or explanation attached to a tax-related item           |
+| **Status**            | The current state of an item or tax year                              |
 
 ## Important Distinctions
 
@@ -67,18 +67,18 @@ A **Record** is something the household is responsible for keeping as supporting
 
 Examples:
 
-* medical receipt
-* professional expense invoice
-* business expense receipt
+- medical receipt
+- professional expense invoice
+- business expense receipt
 
 A **Tax Document** is an official document issued for tax purposes.
 
 Examples:
 
-* T4
-* T5
-* RRSP contribution receipt
-* FHSA tax slip
+- T4
+- T5
+- RRSP contribution receipt
+- FHSA tax slip
 
 These are separate concepts because they have different roles in the tax workflow.
 
@@ -294,9 +294,9 @@ shown for context rather than presented as an early-year refund calculation.
 
 Tax information may apply to:
 
-* one Person
-* another Person
-* the Household
+- one Person
+- another Person
+- the Household
 
 Some items may also involve different roles.
 
@@ -369,9 +369,9 @@ Prefer one term per concept.
 
 Avoid introducing synonyms such as:
 
-* evidence
-* supporting record
-* receipt
+- evidence
+- supporting record
+- receipt
 
 when they all represent the same domain concept.
 

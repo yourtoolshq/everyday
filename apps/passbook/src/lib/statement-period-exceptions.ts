@@ -1,12 +1,11 @@
+import type { AccountLifecycle, ExpectedPeriod } from "~/lib/expected-periods";
+import type { StatementFrequency } from "~/lib/statement-frequency";
 import {
   canDeriveStatementPeriods,
   deriveExpectedPeriodsForYear,
   statementYearRange,
-  type AccountLifecycle,
-  type ExpectedPeriod,
 } from "~/lib/expected-periods";
 import { deriveStatementCompleteness } from "~/lib/statement-completeness";
-import type { StatementFrequency } from "~/lib/statement-frequency";
 
 export type AccountForPeriodException = AccountLifecycle & {
   statementFrequency: StatementFrequency;
@@ -46,12 +45,18 @@ export function canMarkPeriodNotApplicable(
 ): { ok: true; period: ExpectedPeriod } | { ok: false; error: string } {
   const period = findDerivedPeriod(account, periodKey, asOfDate);
   if (!period) {
-    return { ok: false, error: "Choose a valid statement period for this account." };
+    return {
+      ok: false,
+      error: "Choose a valid statement period for this account.",
+    };
   }
 
   const completeness = deriveStatementCompleteness(period, hasDocument);
   if (completeness !== "missing") {
-    return { ok: false, error: "Only missing statement periods can be marked not applicable." };
+    return {
+      ok: false,
+      error: "Only missing statement periods can be marked not applicable.",
+    };
   }
 
   return { ok: true, period };

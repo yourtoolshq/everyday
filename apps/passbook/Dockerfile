@@ -32,7 +32,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/passbook/.next/static ./apps
 COPY --from=builder --chown=nextjs:nodejs /app/apps/passbook/public ./apps/passbook/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/passbook/drizzle ./apps/passbook/drizzle
 COPY --from=builder --chown=nextjs:nodejs /app/apps/passbook/scripts ./apps/passbook/scripts
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/apps/passbook/node_modules ./apps/passbook/node_modules
 
 WORKDIR /app/apps/passbook
 EXPOSE 3000

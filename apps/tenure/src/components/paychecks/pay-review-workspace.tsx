@@ -10,7 +10,9 @@ export function PayReviewWorkspace() {
   const review = api.paychecks.listForReview.useQuery();
 
   const missing = review.data?.missing ?? [];
-  const missingPaychecks = missing.filter((item) => item.issue === "missing_paycheck");
+  const missingPaychecks = missing.filter(
+    (item) => item.issue === "missing_paycheck",
+  );
   const missingStubs = missing.filter((item) => item.issue === "missing_stub");
 
   return (
@@ -18,7 +20,7 @@ export function PayReviewWorkspace() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Missing paychecks
             </CardTitle>
           </CardHeader>
@@ -28,7 +30,7 @@ export function PayReviewWorkspace() {
         </Card>
         <Card className="shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Missing stubs
             </CardTitle>
           </CardHeader>
@@ -38,12 +40,14 @@ export function PayReviewWorkspace() {
         </Card>
         <Card className="shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Employments tracked
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{review.data?.employmentCount ?? 0}</p>
+            <p className="text-3xl font-semibold">
+              {review.data?.employmentCount ?? 0}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -54,9 +58,11 @@ export function PayReviewWorkspace() {
         </CardHeader>
         <CardContent>
           {review.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading review items…</p>
+            <p className="text-muted-foreground text-sm">
+              Loading review items…
+            </p>
           ) : missing.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               No missing paychecks or pay stubs across your employments.
             </p>
           ) : (
@@ -69,20 +75,24 @@ export function PayReviewWorkspace() {
                   <div className="min-w-0 space-y-1">
                     <p className="text-sm font-medium">
                       {item.employerName}
-                      <span className="font-normal text-muted-foreground">
+                      <span className="text-muted-foreground font-normal">
                         {" "}
                         · {item.personName}
                       </span>
                     </p>
-                    <p className="text-sm text-muted-foreground">{item.periodLabel}</p>
+                    <p className="text-muted-foreground text-sm">
+                      {item.periodLabel}
+                    </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <Badge variant="destructive">
-                      {item.issue === "missing_paycheck" ? "Missing paycheck" : "Missing stub"}
+                      {item.issue === "missing_paycheck"
+                        ? "Missing paycheck"
+                        : "Missing stub"}
                     </Badge>
                     <Link
                       href={`/employments/${item.employmentId}`}
-                      className="text-sm font-medium text-primary hover:underline"
+                      className="text-primary text-sm font-medium hover:underline"
                     >
                       View
                     </Link>

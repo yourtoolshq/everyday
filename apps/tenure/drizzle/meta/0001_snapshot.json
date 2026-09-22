@@ -69,9 +69,7 @@
       "indexes": {
         "discussions_employment_idx": {
           "name": "discussions_employment_idx",
-          "columns": [
-            "employment_id"
-          ],
+          "columns": ["employment_id"],
           "isUnique": false
         }
       },
@@ -80,12 +78,8 @@
           "name": "discussions_employment_id_employments_id_fk",
           "tableFrom": "discussions",
           "tableTo": "employments",
-          "columnsFrom": [
-            "employment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employment_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -194,23 +188,17 @@
       "indexes": {
         "documents_storage_key_unique": {
           "name": "documents_storage_key_unique",
-          "columns": [
-            "storage_key"
-          ],
+          "columns": ["storage_key"],
           "isUnique": true
         },
         "documents_employment_idx": {
           "name": "documents_employment_idx",
-          "columns": [
-            "employment_id"
-          ],
+          "columns": ["employment_id"],
           "isUnique": false
         },
         "documents_discussion_idx": {
           "name": "documents_discussion_idx",
-          "columns": [
-            "discussion_id"
-          ],
+          "columns": ["discussion_id"],
           "isUnique": false
         }
       },
@@ -219,12 +207,8 @@
           "name": "documents_employment_id_employments_id_fk",
           "tableFrom": "documents",
           "tableTo": "employments",
-          "columnsFrom": [
-            "employment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employment_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -232,12 +216,8 @@
           "name": "documents_discussion_id_discussions_id_fk",
           "tableFrom": "documents",
           "tableTo": "discussions",
-          "columnsFrom": [
-            "discussion_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["discussion_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -380,16 +360,12 @@
       "indexes": {
         "employments_employer_idx": {
           "name": "employments_employer_idx",
-          "columns": [
-            "employer_id"
-          ],
+          "columns": ["employer_id"],
           "isUnique": false
         },
         "employments_person_idx": {
           "name": "employments_person_idx",
-          "columns": [
-            "person_id"
-          ],
+          "columns": ["person_id"],
           "isUnique": false
         }
       },
@@ -398,12 +374,8 @@
           "name": "employments_employer_id_employers_id_fk",
           "tableFrom": "employments",
           "tableTo": "employers",
-          "columnsFrom": [
-            "employer_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employer_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -411,12 +383,8 @@
           "name": "employments_person_id_people_id_fk",
           "tableFrom": "employments",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -516,9 +484,7 @@
       "indexes": {
         "people_household_idx": {
           "name": "people_household_idx",
-          "columns": [
-            "household_id"
-          ],
+          "columns": ["household_id"],
           "isUnique": false
         }
       },
@@ -527,12 +493,8 @@
           "name": "people_household_id_households_id_fk",
           "tableFrom": "people",
           "tableTo": "households",
-          "columnsFrom": [
-            "household_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["household_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

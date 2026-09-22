@@ -106,14 +106,18 @@ const deductionAmountFieldSet = new Set<string>(
   deductionFields.map((field) => field.amountField),
 );
 
-export function isDeductionAmountField(value: string): value is DeductionAmountField {
+export function isDeductionAmountField(
+  value: string,
+): value is DeductionAmountField {
   return deductionAmountFieldSet.has(value);
 }
 
 export function orderedDeductionFields(
   order: readonly string[] | null | undefined,
 ): DeductionField[] {
-  const byKey = new Map(deductionFields.map((field) => [field.amountField, field]));
+  const byKey = new Map(
+    deductionFields.map((field) => [field.amountField, field]),
+  );
   const seen = new Set<DeductionAmountField>();
   const result: DeductionField[] = [];
   for (const key of order ?? []) {
@@ -139,7 +143,9 @@ export function isIncomeTaxSplit(flags: {
   federalIncomeTaxEnabled?: boolean | null;
   manitobaIncomeTaxEnabled?: boolean | null;
 }) {
-  return Boolean(flags.federalIncomeTaxEnabled || flags.manitobaIncomeTaxEnabled);
+  return Boolean(
+    flags.federalIncomeTaxEnabled || flags.manitobaIncomeTaxEnabled,
+  );
 }
 
 export function calculateIncomeTaxCents(
@@ -186,7 +192,9 @@ export function employmentDeductionSettings<
   return {
     ...input,
     incomeTaxEnabled: isIncomeTaxSplit(input) ? true : input.incomeTaxEnabled,
-    deductionFieldOrder: normalizeDeductionFieldOrder(input.deductionFieldOrder),
+    deductionFieldOrder: normalizeDeductionFieldOrder(
+      input.deductionFieldOrder,
+    ),
   };
 }
 
@@ -256,7 +264,8 @@ export const employmentInput = z
       context.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["incomeTaxEnabled"],
-        message: "Income tax withheld is required when federal or Manitoba tax is split.",
+        message:
+          "Income tax withheld is required when federal or Manitoba tax is split.",
       });
     }
   });
@@ -360,7 +369,10 @@ export function calculateEmploymentProjection({
   grossPaysCents: number[];
   latestPayDate: string | null;
 }) {
-  const actualGrossCents = grossPaysCents.reduce((total, value) => total + value, 0);
+  const actualGrossCents = grossPaysCents.reduce(
+    (total, value) => total + value,
+    0,
+  );
   const averageGrossCents = grossPaysCents.length
     ? Math.round(actualGrossCents / grossPaysCents.length)
     : null;

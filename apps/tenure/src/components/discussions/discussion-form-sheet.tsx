@@ -1,12 +1,14 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { RichTextEditor } from "~/components/ui/rich-text-editor";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { RichTextEditor } from "~/components/ui/rich-text-editor";
 import {
   Sheet,
   SheetContent,
@@ -15,7 +17,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 type Discussion = RouterOutputs["discussions"]["listByEmployment"][number];
 
@@ -100,9 +102,12 @@ export function DiscussionFormSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <form className="flex min-h-full flex-col" onSubmit={submit}>
           <SheetHeader>
-            <SheetTitle>{mode === "edit" ? "Edit discussion" : "Add discussion"}</SheetTitle>
+            <SheetTitle>
+              {mode === "edit" ? "Edit discussion" : "Add discussion"}
+            </SheetTitle>
             <SheetDescription>
-              Capture meeting notes, email context, or other employment conversations.
+              Capture meeting notes, email context, or other employment
+              conversations.
             </SheetDescription>
           </SheetHeader>
 
@@ -149,11 +154,19 @@ export function DiscussionFormSheet({
           </div>
 
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : mode === "edit" ? "Save changes" : "Save discussion"}
+              {pending
+                ? "Saving…"
+                : mode === "edit"
+                  ? "Save changes"
+                  : "Save discussion"}
             </Button>
           </SheetFooter>
         </form>

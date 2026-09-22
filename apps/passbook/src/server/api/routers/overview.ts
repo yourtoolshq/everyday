@@ -1,11 +1,12 @@
 import { and, asc, count, eq, isNotNull } from "drizzle-orm";
 
-import { defaultStatementFrequency } from "~/lib/statement-frequency";
 import {
   buildExceptionsByAccount,
   buildMissingStatements,
   buildYearCompletenessSummary,
 } from "~/lib/statement-completeness";
+import { defaultStatementFrequency } from "~/lib/statement-frequency";
+import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   accounts,
   documents,
@@ -14,16 +15,16 @@ import {
   statementExpectations,
   statementPeriodExceptions,
 } from "~/server/db/schema";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const overviewRouter = createTRPCRouter({
   summary: publicProcedure.query(async ({ ctx }) => {
     const [household] = await ctx.db.query.households.findMany({ limit: 1 });
-    const [[memberCount], [institutionCount], [accountCount]] = await Promise.all([
-      ctx.db.select({ value: count() }).from(people),
-      ctx.db.select({ value: count() }).from(institutions),
-      ctx.db.select({ value: count() }).from(accounts),
-    ]);
+    const [[memberCount], [institutionCount], [accountCount]] =
+      await Promise.all([
+        ctx.db.select({ value: count() }).from(people),
+        ctx.db.select({ value: count() }).from(institutions),
+        ctx.db.select({ value: count() }).from(accounts),
+      ]);
 
     return {
       householdName: household?.name ?? null,
@@ -46,7 +47,10 @@ export const overviewRouter = createTRPCRouter({
       })
       .from(accounts)
       .innerJoin(institutions, eq(accounts.institutionId, institutions.id))
-      .leftJoin(statementExpectations, eq(statementExpectations.accountId, accounts.id))
+      .leftJoin(
+        statementExpectations,
+        eq(statementExpectations.accountId, accounts.id),
+      )
       .orderBy(asc(institutions.name), asc(accounts.displayName));
 
     const statementRows = await ctx.db
@@ -56,9 +60,14 @@ export const overviewRouter = createTRPCRouter({
         documentId: documents.id,
       })
       .from(documents)
-      .where(and(eq(documents.type, "statement"), isNotNull(documents.periodKey)));
+      .where(
+        and(eq(documents.type, "statement"), isNotNull(documents.periodKey)),
+      );
 
-    const statementDocumentsByAccount: Record<string, Record<string, string>> = {};
+    const statementDocumentsByAccount: Record<
+      string,
+      Record<string, string>
+    > = {};
     for (const row of statementRows) {
       if (!row.periodKey) continue;
       const accountDocuments = statementDocumentsByAccount[row.accountId] ?? {};

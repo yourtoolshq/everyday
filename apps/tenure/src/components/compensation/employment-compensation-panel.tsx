@@ -1,9 +1,11 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { cn } from "cn";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { CompensationChangeFormSheet } from "~/components/compensation/compensation-change-form-sheet";
 import {
   AlertDialog,
@@ -23,11 +25,11 @@ import {
   formatCompensationRate,
   getCompensationDeltaDisplay,
 } from "~/lib/compensation";
-import { cn } from "cn";
 import { formatDateLabel } from "~/lib/documents";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
-type CompensationChange = RouterOutputs["compensationChanges"]["listByEmployment"][number];
+type CompensationChange =
+  RouterOutputs["compensationChanges"]["listByEmployment"][number];
 
 type EmploymentCompensationPanelProps = {
   employmentId: string;
@@ -39,18 +41,28 @@ export function EmploymentCompensationPanel({
   startDate,
 }: EmploymentCompensationPanelProps) {
   const utils = api.useUtils();
-  const changes = api.compensationChanges.listByEmployment.useQuery({ employmentId });
+  const changes = api.compensationChanges.listByEmployment.useQuery({
+    employmentId,
+  });
   const [formOpen, setFormOpen] = useState(false);
-  const [editingChange, setEditingChange] = useState<CompensationChange | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<CompensationChange | null>(null);
+  const [editingChange, setEditingChange] = useState<CompensationChange | null>(
+    null,
+  );
+  const [deleteTarget, setDeleteTarget] = useState<CompensationChange | null>(
+    null,
+  );
 
   const deleteChange = api.compensationChanges.delete.useMutation({
     onSuccess: async () => {
       await Promise.all([
         utils.compensationChanges.listByEmployment.invalidate({ employmentId }),
-        utils.compensationChanges.getCurrentByEmployment.invalidate({ employmentId }),
+        utils.compensationChanges.getCurrentByEmployment.invalidate({
+          employmentId,
+        }),
         utils.employments.list.invalidate(),
-        utils.employmentRecords.completenessByEmployment.invalidate({ employmentId }),
+        utils.employmentRecords.completenessByEmployment.invalidate({
+          employmentId,
+        }),
         utils.employmentRecords.listForReview.invalidate(),
       ]);
       toast.success("Compensation change removed.");
@@ -77,15 +89,16 @@ export function EmploymentCompensationPanel({
         </CardHeader>
         <CardContent>
           {changes.data?.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No compensation changes yet. Record salary, hourly, or commission updates as they are
-              agreed.
+            <p className="text-muted-foreground text-sm">
+              No compensation changes yet. Record salary, hourly, or commission
+              updates as they are agreed.
             </p>
           ) : (
             <ul className="divide-y">
               {changes.data?.map((change) => {
                 const delta = getCompensationDeltaDisplay(change);
-                const isFuture = change.effectiveDate > new Date().toISOString().slice(0, 10);
+                const isFuture =
+                  change.effectiveDate > new Date().toISOString().slice(0, 10);
 
                 return (
                   <li
@@ -94,8 +107,12 @@ export function EmploymentCompensationPanel({
                   >
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium">{formatCompensationRate(change)}</p>
-                        <Badge variant="secondary">{compensationTypeLabels[change.type]}</Badge>
+                        <p className="text-sm font-medium">
+                          {formatCompensationRate(change)}
+                        </p>
+                        <Badge variant="secondary">
+                          {compensationTypeLabels[change.type]}
+                        </Badge>
                         {delta ? (
                           <Badge
                             className={cn(
@@ -108,23 +125,27 @@ export function EmploymentCompensationPanel({
                             {delta.label}
                           </Badge>
                         ) : null}
-                        {isFuture ? <Badge variant="outline">Future</Badge> : null}
+                        {isFuture ? (
+                          <Badge variant="outline">Future</Badge>
+                        ) : null}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Effective {formatDateLabel(change.effectiveDate) ?? change.effectiveDate}
+                      <p className="text-muted-foreground text-xs">
+                        Effective{" "}
+                        {formatDateLabel(change.effectiveDate) ??
+                          change.effectiveDate}
                       </p>
                       {change.notes ? (
-                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                        <p className="text-muted-foreground text-xs whitespace-pre-wrap">
                           {change.notes}
                         </p>
                       ) : null}
                       {change.documentTitle ? (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           Document: {change.documentTitle}
                         </p>
                       ) : null}
                       {change.discussionTitle ? (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           Discussion: {change.discussionTitle}
                         </p>
                       ) : null}
@@ -180,7 +201,8 @@ export function EmploymentCompensationPanel({
           <AlertDialogHeader>
             <AlertDialogTitle>Remove compensation change?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the agreed rate record. Linked documents and discussions stay in place.
+              This removes the agreed rate record. Linked documents and
+              discussions stay in place.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

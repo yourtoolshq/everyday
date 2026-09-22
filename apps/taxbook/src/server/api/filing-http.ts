@@ -1,18 +1,20 @@
-import { TRPCError } from "@trpc/server";
 import { Buffer } from "node:buffer";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import type {
+  FilingAttachmentAction,
+  FilingAttachmentInput,
+} from "~/domain/filing";
 import {
   adjustmentInput,
   adjustmentUpdateInput,
   allowedFilingAttachmentTypes,
   assessmentInput,
-  MAX_FILING_ATTACHMENT_BYTES,
   filingItemValuesInput,
+  MAX_FILING_ATTACHMENT_BYTES,
   originalReturnInput,
   originalReturnUpdateInput,
-  type FilingAttachmentAction,
-  type FilingAttachmentInput,
 } from "~/domain/filing";
 
 function textValue(form: FormData, name: string) {

@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, sum } from "drizzle-orm";
 
+import type { Database } from "./helpers";
 import type {
   AttachmentAction,
   AttachmentInput,
@@ -13,8 +14,11 @@ import {
   records,
   taxItems,
 } from "~/server/db/schema";
-import type { Database } from "./helpers";
-import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "./helpers";
+import {
+  requireActiveYear,
+  requireEditableActiveYear,
+  requireHousehold,
+} from "./helpers";
 
 type RecordDatabase = Parameters<Parameters<Database["transaction"]>[0]>[0];
 type QueryDatabase = Database | RecordDatabase;
@@ -141,8 +145,14 @@ export async function createRecord(
   attachment: AttachmentInput | null,
 ) {
   return db.transaction(async (tx) => {
-    const { household, item } = await requireEditableActiveTaxItem(tx, input.taxItemId);
-    if (item.valueSource === "paycheques" || item.valueSource === "self_employment") {
+    const { household, item } = await requireEditableActiveTaxItem(
+      tx,
+      input.taxItemId,
+    );
+    if (
+      item.valueSource === "paycheques" ||
+      item.valueSource === "self_employment"
+    ) {
       throw new TRPCError({
         code: "CONFLICT",
         message: "Calculated Tax Items cannot have supporting Records here.",
@@ -155,7 +165,8 @@ export async function createRecord(
     ) {
       throw new TRPCError({
         code: "PRECONDITION_FAILED",
-        message: "Confirm that Records should replace the current actual amount.",
+        message:
+          "Confirm that Records should replace the current actual amount.",
       });
     }
     const personId = await normalizePerson(
@@ -194,7 +205,10 @@ async function requireActiveRecord(db: QueryDatabase, recordId: number) {
   return { household, year, ...row };
 }
 
-async function requireEditableActiveRecord(db: QueryDatabase, recordId: number) {
+async function requireEditableActiveRecord(
+  db: QueryDatabase,
+  recordId: number,
+) {
   const { household, year } = await editableContext(db);
   const [row] = await db
     .select({ record: records, item: taxItems })
@@ -214,7 +228,10 @@ export async function updateRecord(
   attachmentAction: AttachmentAction,
 ) {
   return db.transaction(async (tx) => {
-    const { household, record, item } = await requireEditableActiveRecord(tx, recordId);
+    const { household, record, item } = await requireEditableActiveRecord(
+      tx,
+      recordId,
+    );
     const personId = await normalizePerson(
       tx,
       household.id,
@@ -255,7 +272,10 @@ export async function getActiveAttachment(db: Database, recordId: number) {
     .from(recordAttachments)
     .where(eq(recordAttachments.recordId, recordId));
   if (!attachment) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Attachment not found." });
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Attachment not found.",
+    });
   }
   return attachment;
 }

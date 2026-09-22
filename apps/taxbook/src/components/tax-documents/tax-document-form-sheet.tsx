@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
+import type { TaxDocumentStatus, TaxDocumentType } from "~/domain/tax-document";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -26,12 +29,10 @@ import {
   MAX_TAX_DOCUMENT_ATTACHMENT_BYTES,
   taxDocumentStatuses,
   taxDocumentStatusLabels,
-  taxDocumentTypes,
   taxDocumentTypeLabels,
-  type TaxDocumentStatus,
-  type TaxDocumentType,
+  taxDocumentTypes,
 } from "~/domain/tax-document";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 type TaxItem = {
   id: number;
@@ -129,9 +130,7 @@ export function TaxDocumentFormSheet({
         utils.taxDocument.overview.invalidate(),
         utils.taxItem.get.invalidate({ id: item.id }),
       ]);
-      toast.success(
-        document ? "Tax Document updated." : "Tax Document added.",
-      );
+      toast.success(document ? "Tax Document updated." : "Tax Document added.");
       onOpenChange(false);
     } catch (error) {
       toast.error(
@@ -257,7 +256,7 @@ export function TaxDocumentFormSheet({
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {notes.length.toLocaleString()} / 4,000
               </p>
             </div>
@@ -290,9 +289,9 @@ export function TaxDocumentFormSheet({
                   setRemoveAttachment(false);
                 }}
               />
-              <p className="text-xs text-muted-foreground">
-                Optional PDF or image, up to 20 MB. Adding a file to an
-                Expected document marks it Received.
+              <p className="text-muted-foreground text-xs">
+                Optional PDF or image, up to 20 MB. Adding a file to an Expected
+                document marks it Received.
               </p>
             </div>
           </div>

@@ -23,7 +23,9 @@ async function caller() {
 
 async function createVisit() {
   const api = await caller();
-  const person = await api.planning.createPerson({ displayName: "Test Person" });
+  const person = await api.planning.createPerson({
+    displayName: "Test Person",
+  });
   const organization = await api.careProviders.createOrganization({
     name: "Example Clinic",
     phoneNumbers: [],
@@ -43,12 +45,18 @@ async function createVisit() {
   });
 }
 
-function uploadRequest(file: File, metadata = { title: "Receipt", type: "receipt" }) {
+function uploadRequest(
+  file: File,
+  metadata = { title: "Receipt", type: "receipt" },
+) {
   const form = new FormData();
   form.set("file", file);
   form.set("title", metadata.title);
   form.set("type", metadata.type);
-  return new Request("http://localhost/api/upload", { method: "POST", body: form });
+  return new Request("http://localhost/api/upload", {
+    method: "POST",
+    body: form,
+  });
 }
 
 describe("document upload and file routes", () => {
@@ -64,8 +72,12 @@ describe("document upload and file routes", () => {
   });
 
   afterEach(async () => {
-    const storedDocuments = await db.select({ storageKey: documents.storageKey }).from(documents);
-    await Promise.all(storedDocuments.map((document) => removeDocument(document.storageKey)));
+    const storedDocuments = await db
+      .select({ storageKey: documents.storageKey })
+      .from(documents);
+    await Promise.all(
+      storedDocuments.map((document) => removeDocument(document.storageKey)),
+    );
     await db.delete(documents);
   });
 
@@ -73,13 +85,22 @@ describe("document upload and file routes", () => {
     const visit = await createVisit();
     const bytes = new TextEncoder().encode("%PDF-1.4\nTest document");
     const response = await POST(
-      uploadRequest(new File([bytes], "../../receipt.pdf", { type: "text/plain" })),
+      uploadRequest(
+        new File([bytes], "../../receipt.pdf", { type: "text/plain" }),
+      ),
       { params: Promise.resolve({ visitId: visit.id }) },
     );
 
     expect(response.status).toBe(201);
-    const metadata = (await response.json()) as { id: string; mimeType: string; originalFilename: string };
-    expect(metadata).toMatchObject({ mimeType: "application/pdf", originalFilename: "receipt.pdf" });
+    const metadata = (await response.json()) as {
+      id: string;
+      mimeType: string;
+      originalFilename: string;
+    };
+    expect(metadata).toMatchObject({
+      mimeType: "application/pdf",
+      originalFilename: "receipt.pdf",
+    });
     expect(metadata).not.toHaveProperty("storageKey");
 
     const fileResponse = await GET(new Request("http://localhost"), {
@@ -99,15 +120,20 @@ describe("document upload and file routes", () => {
     });
     expect(empty.status).toBe(400);
 
-    const unsupported = await POST(uploadRequest(new File(["plain text"], "notes.pdf")), {
-      params: Promise.resolve({ visitId: visit.id }),
-    });
+    const unsupported = await POST(
+      uploadRequest(new File(["plain text"], "notes.pdf")),
+      {
+        params: Promise.resolve({ visitId: visit.id }),
+      },
+    );
     expect(unsupported.status).toBe(415);
 
     const oversized = await POST(
       new Request("http://localhost/api/upload", {
         method: "POST",
-        headers: { "content-length": String(maxDocumentBytes + 1024 * 1024 + 1) },
+        headers: {
+          "content-length": String(maxDocumentBytes + 1024 * 1024 + 1),
+        },
       }),
       { params: Promise.resolve({ visitId: visit.id }) },
     );

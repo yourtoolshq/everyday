@@ -1,8 +1,11 @@
 "use client";
 
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { Download, FileText, Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
 
+import type { DocumentType } from "~/lib/documents";
+import type { RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,9 +45,8 @@ import {
   formatFileSize,
   isClaimDocumentType,
   titleFromFilename,
-  type DocumentType,
 } from "~/lib/documents";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 type VisitDetail = NonNullable<RouterOutputs["visits"]["detail"]>;
 type VisitDocument = VisitDetail["documents"][number];
@@ -63,8 +65,10 @@ export function DocumentManager({
     <section aria-labelledby="visit-documents" className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="visit-documents" className="text-xl font-semibold">Documents</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 id="visit-documents" className="text-xl font-semibold">
+            Documents
+          </h2>
+          <p className="text-muted-foreground text-sm">
             Keep forms, receipts, results, and claim paperwork with this visit.
           </p>
         </div>
@@ -74,9 +78,9 @@ export function DocumentManager({
       {documents.length === 0 ? (
         <Card className="border-dashed shadow-none">
           <CardContent className="flex flex-col items-center justify-center py-10 text-center">
-            <FileText className="mb-3 size-6 text-muted-foreground" />
+            <FileText className="text-muted-foreground mb-3 size-6" />
             <p className="font-medium">No documents attached</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-sm">
               Add the first file related to this healthcare interaction.
             </p>
           </CardContent>
@@ -128,31 +132,48 @@ function DocumentCard({
   return (
     <Card className="shadow-none">
       <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
-        <FileText className="size-5 shrink-0 text-muted-foreground" />
+        <FileText className="text-muted-foreground size-5 shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-medium">{document.title}</h3>
             <Badge variant="outline">{documentTypeLabels[document.type]}</Badge>
           </div>
-          <p className="mt-1 truncate text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1 truncate text-sm">
             {document.originalFilename} · {formatFileSize(document.sizeBytes)}
           </p>
           {linkedClaim ? (
-            <p className="mt-1 text-sm text-muted-foreground">Linked to {linkedClaim}</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Linked to {linkedClaim}
+            </p>
           ) : null}
         </div>
         <div className="flex shrink-0 gap-2">
           <Button asChild size="sm" variant="outline">
-            <a href={`/api/documents/${document.id}/file`} target="_blank" rel="noreferrer">
-              <Download />Open
+            <a
+              href={`/api/documents/${document.id}/file`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Download />
+              Open
             </a>
           </Button>
-          <Button size="icon-sm" variant="ghost" aria-label={`Edit ${document.title}`} onClick={() => setEditOpen(true)}>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            aria-label={`Edit ${document.title}`}
+            onClick={() => setEditOpen(true)}
+          >
             <Pencil />
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="icon-sm" variant="ghost" aria-label={`Delete ${document.title}`} className="text-muted-foreground hover:text-destructive">
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label={`Delete ${document.title}`}
+                className="text-muted-foreground hover:text-destructive"
+              >
                 <Trash2 />
               </Button>
             </AlertDialogTrigger>
@@ -241,9 +262,14 @@ export function UploadDocumentDialog({
     }
 
     try {
-      const response = await fetch(`/api/visits/${visitId}/documents`, { method: "POST", body });
+      const response = await fetch(`/api/visits/${visitId}/documents`, {
+        method: "POST",
+        body,
+      });
       if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        const result = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         throw new Error(result?.error ?? "The document could not be uploaded.");
       }
       await Promise.all([
@@ -254,7 +280,11 @@ export function UploadDocumentDialog({
       setOpen(false);
       reset();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The document could not be uploaded.");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "The document could not be uploaded.",
+      );
     } finally {
       setPending(false);
     }
@@ -269,13 +299,19 @@ export function UploadDocumentDialog({
       }}
     >
       <DialogTrigger asChild>
-        {trigger ?? <Button><Plus />Add document</Button>}
+        {trigger ?? (
+          <Button>
+            <Plus />
+            Add document
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add document</DialogTitle>
           <DialogDescription>
-            Upload one PDF or image up to 25 MB. Claim records and EOBs can be linked to a specific claim.
+            Upload one PDF or image up to 25 MB. Claim records and EOBs can be
+            linked to a specific claim.
           </DialogDescription>
         </DialogHeader>
         <form className="space-y-5" onSubmit={submit}>
@@ -295,21 +331,34 @@ export function UploadDocumentDialog({
           </div>
           <div className="space-y-2">
             <Label htmlFor="document-title">Title</Label>
-            <Input id="document-title" value={title} onChange={(event) => setTitle(event.target.value)} maxLength={160} required />
+            <Input
+              id="document-title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              maxLength={160}
+              required
+            />
           </div>
           <DocumentTypeSelect
             value={type}
             onValueChange={(value) => {
               setType(value as DocumentType);
-              if (!isClaimDocumentType(value as DocumentType)) setClaimId("none");
+              if (!isClaimDocumentType(value as DocumentType))
+                setClaimId("none");
             }}
           />
           {type && isClaimDocumentType(type) ? (
-            <ClaimSelect claims={claims} value={claimId} onValueChange={setClaimId} />
+            <ClaimSelect
+              claims={claims}
+              value={claimId}
+              onValueChange={setClaimId}
+            />
           ) : null}
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error ? <p className="text-destructive text-sm">{error}</p> : null}
           <DialogFooter>
-            <Button type="submit" disabled={pending}>{pending ? "Uploading…" : "Add document"}</Button>
+            <Button type="submit" disabled={pending}>
+              {pending ? "Uploading…" : "Add document"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
@@ -364,18 +413,27 @@ function EditDocumentDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit document</DialogTitle>
-          <DialogDescription>The original managed file will not be changed.</DialogDescription>
+          <DialogDescription>
+            The original managed file will not be changed.
+          </DialogDescription>
         </DialogHeader>
         <form className="space-y-5" onSubmit={submit}>
           <div className="space-y-2">
             <Label htmlFor={`document-title-${document.id}`}>Title</Label>
-            <Input id={`document-title-${document.id}`} value={title} onChange={(event) => setTitle(event.target.value)} maxLength={160} required />
+            <Input
+              id={`document-title-${document.id}`}
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              maxLength={160}
+              required
+            />
           </div>
           <DocumentTypeSelect
             value={type}
             onValueChange={(value) => {
               setType(value as DocumentType);
-              if (!isClaimDocumentType(value as DocumentType)) setClaimId("none");
+              if (!isClaimDocumentType(value as DocumentType))
+                setClaimId("none");
             }}
             id={`document-type-${document.id}`}
           />
@@ -398,15 +456,27 @@ function EditDocumentDialog({
   );
 }
 
-function DocumentTypeSelect({ value, onValueChange, id = "document-type" }: { value?: string; onValueChange: (value: string) => void; id?: string }) {
+function DocumentTypeSelect({
+  value,
+  onValueChange,
+  id = "document-type",
+}: {
+  value?: string;
+  onValueChange: (value: string) => void;
+  id?: string;
+}) {
   return (
     <div className="space-y-2">
       <Label htmlFor={id}>Document type</Label>
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger id={id} className="w-full"><SelectValue placeholder="Choose a type" /></SelectTrigger>
+        <SelectTrigger id={id} className="w-full">
+          <SelectValue placeholder="Choose a type" />
+        </SelectTrigger>
         <SelectContent>
           {documentTypes.map((documentType) => (
-            <SelectItem key={documentType} value={documentType}>{documentTypeLabels[documentType]}</SelectItem>
+            <SelectItem key={documentType} value={documentType}>
+              {documentTypeLabels[documentType]}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -427,12 +497,19 @@ function ClaimSelect({
 }) {
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>Linked claim <span className="font-normal text-muted-foreground">(optional)</span></Label>
+      <Label htmlFor={id}>
+        Linked claim{" "}
+        <span className="text-muted-foreground font-normal">(optional)</span>
+      </Label>
       {claims.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Add a claim first to link claim paperwork to it.</p>
+        <p className="text-muted-foreground text-sm">
+          Add a claim first to link claim paperwork to it.
+        </p>
       ) : (
         <Select value={value} onValueChange={onValueChange}>
-          <SelectTrigger id={id} className="w-full"><SelectValue placeholder="No linked claim" /></SelectTrigger>
+          <SelectTrigger id={id} className="w-full">
+            <SelectValue placeholder="No linked claim" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">No linked claim</SelectItem>
             {claims.map((claim) => (

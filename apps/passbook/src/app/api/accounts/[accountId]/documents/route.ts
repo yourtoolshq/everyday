@@ -1,5 +1,4 @@
 import { basename } from "node:path";
-
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -12,9 +11,14 @@ import {
 } from "~/lib/documents";
 import { defaultStatementFrequency } from "~/lib/statement-frequency";
 import { databaseReady, db } from "~/server/db";
-import { accountEvents, accounts, documents, statementExpectations } from "~/server/db/schema";
-import { removeDocument, writeDocument } from "~/server/documents/storage";
+import {
+  accountEvents,
+  accounts,
+  documents,
+  statementExpectations,
+} from "~/server/db/schema";
 import { validateStatementPeriod } from "~/server/documents/statement-upload";
+import { removeDocument, writeDocument } from "~/server/documents/storage";
 
 export const runtime = "nodejs";
 
@@ -51,11 +55,15 @@ export async function POST(
   const originalFilename = safeOriginalFilename(file.name);
   const periodKeyValue = form.get("periodKey");
   const periodKey =
-    typeof periodKeyValue === "string" && periodKeyValue.trim() ? periodKeyValue.trim() : null;
+    typeof periodKeyValue === "string" && periodKeyValue.trim()
+      ? periodKeyValue.trim()
+      : null;
 
   const eventIdValue = form.get("eventId");
   const eventId =
-    typeof eventIdValue === "string" && eventIdValue.trim() ? eventIdValue.trim() : null;
+    typeof eventIdValue === "string" && eventIdValue.trim()
+      ? eventIdValue.trim()
+      : null;
   const termsSnapshotIdValue = form.get("termsSnapshotId");
   const termsSnapshotId =
     typeof termsSnapshotIdValue === "string" && termsSnapshotIdValue.trim()
@@ -69,14 +77,17 @@ export async function POST(
     typeof documentDateValue === "string" && documentDateValue.trim()
       ? documentDateValue.trim()
       : null;
-  const parsedType = z.enum(documentTypes).safeParse(
-    typeof typeValue === "string" && typeValue.trim()
-      ? typeValue
-      : eventId
-        ? "financial_correspondence"
-        : "other",
-  );
-  if (!parsedType.success) return errorResponse("Choose a type and enter a title.", 400);
+  const parsedType = z
+    .enum(documentTypes)
+    .safeParse(
+      typeof typeValue === "string" && typeValue.trim()
+        ? typeValue
+        : eventId
+          ? "financial_correspondence"
+          : "other",
+    );
+  if (!parsedType.success)
+    return errorResponse("Choose a type and enter a title.", 400);
   const type = parsedType.data;
 
   if (type === "statement" && !periodKey) {
@@ -106,7 +117,10 @@ export async function POST(
       statementFrequency: statementExpectations.frequency,
     })
     .from(accounts)
-    .leftJoin(statementExpectations, eq(statementExpectations.accountId, accounts.id))
+    .leftJoin(
+      statementExpectations,
+      eq(statementExpectations.accountId, accounts.id),
+    )
     .where(eq(accounts.id, parsedParams.data.accountId));
   if (!account) return errorResponse("Account not found.", 404);
 
@@ -125,7 +139,8 @@ export async function POST(
     documentDate,
     notes: typeof form.get("notes") === "string" ? form.get("notes") : null,
   });
-  if (!metadata.success) return errorResponse("Choose a type and enter a title.", 400);
+  if (!metadata.success)
+    return errorResponse("Choose a type and enter a title.", 400);
 
   let linkedEventId: string | null = null;
   let linkedTermsSnapshotId: string | null = termsSnapshotId;
@@ -137,7 +152,10 @@ export async function POST(
       })
       .from(accountEvents)
       .where(
-        and(eq(accountEvents.id, eventId), eq(accountEvents.accountId, parsedParams.data.accountId)),
+        and(
+          eq(accountEvents.id, eventId),
+          eq(accountEvents.accountId, parsedParams.data.accountId),
+        ),
       );
     if (!linkedEvent) return errorResponse("Activity not found.", 404);
     linkedEventId = linkedEvent.id;
@@ -148,13 +166,21 @@ export async function POST(
 
   if (metadata.data.type === "void_cheque") {
     if (account.accountType !== "chequing") {
-      return errorResponse("Void cheques belong on chequing accounts only.", 400);
+      return errorResponse(
+        "Void cheques belong on chequing accounts only.",
+        400,
+      );
     }
 
     const [existingVoidCheque] = await db
       .select({ id: documents.id })
       .from(documents)
-      .where(and(eq(documents.accountId, account.id), eq(documents.type, "void_cheque")));
+      .where(
+        and(
+          eq(documents.accountId, account.id),
+          eq(documents.type, "void_cheque"),
+        ),
+      );
     if (existingVoidCheque) {
       return errorResponse(
         "This account already has a void cheque. Delete it before uploading a new one.",
@@ -170,7 +196,8 @@ export async function POST(
         openedDate: account.openedDate,
         closedDate: account.closedDate,
         status: account.status,
-        statementFrequency: account.statementFrequency ?? defaultStatementFrequency,
+        statementFrequency:
+          account.statementFrequency ?? defaultStatementFrequency,
       },
       periodKey,
     );
@@ -188,7 +215,10 @@ export async function POST(
         ),
       );
     if (existing) {
-      return errorResponse("This account already has a statement for that period.", 409);
+      return errorResponse(
+        "This account already has a statement for that period.",
+        409,
+      );
     }
   }
 

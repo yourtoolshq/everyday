@@ -1,14 +1,11 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  accountDocumentTypes,
-  documentTypeLabels,
-  type AccountDocumentType,
-} from "~/lib/documents";
-import { deriveAllUploadablePeriods } from "~/lib/expected-periods";
+import type { AccountDocumentType } from "~/lib/documents";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -30,7 +27,9 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { accountDocumentTypes, documentTypeLabels } from "~/lib/documents";
+import { deriveAllUploadablePeriods } from "~/lib/expected-periods";
+import { api } from "~/trpc/react";
 
 type Document = RouterOutputs["documents"]["overview"][number];
 type Account = RouterOutputs["accounts"]["list"][number];
@@ -133,7 +132,9 @@ export function DocumentEditSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <form className="flex min-h-full flex-col" onSubmit={submit}>
           <SheetHeader>
-            <SheetTitle>{isStatement ? "Edit statement" : "Edit document"}</SheetTitle>
+            <SheetTitle>
+              {isStatement ? "Edit statement" : "Edit document"}
+            </SheetTitle>
             <SheetDescription>
               {isStatement
                 ? "Update the title, period, date, or notes for this statement."
@@ -147,7 +148,9 @@ export function DocumentEditSheet({
                 <Label>Document type</Label>
                 <Select
                   value={type}
-                  onValueChange={(value) => setType(value as AccountDocumentType)}
+                  onValueChange={(value) =>
+                    setType(value as AccountDocumentType)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -218,7 +221,11 @@ export function DocumentEditSheet({
           </div>
 
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={updateDocument.isPending}>

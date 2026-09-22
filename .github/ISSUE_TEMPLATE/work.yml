@@ -1,0 +1,33 @@
+name: Planned work
+description: Feature, refactor, or non-trivial improvement
+title: "[work]: "
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - app:taxbook
+        - app:firstaid
+        - app:passbook
+        - app:tenure
+        - area:platform
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What should change and why?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Links, constraints, or related issues
+    validations:
+      required: false

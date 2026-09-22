@@ -1,20 +1,22 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { useMemo, useState } from "react";
 
 import { AccountEventSheet } from "~/components/accounts/account-event-sheet";
-import { accountEventTypeLabels } from "~/lib/account-events";
-import { formatDateLabel } from "~/lib/format-date";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
+import { accountEventTypeLabels } from "~/lib/account-events";
+import { formatDateLabel } from "~/lib/format-date";
 import { api } from "~/trpc/react";
 
 function sortEvents<T extends { startDate: string }>(events: T[]) {
-  return [...events].sort((left, right) => right.startDate.localeCompare(left.startDate));
+  return [...events].sort((left, right) =>
+    right.startDate.localeCompare(left.startDate),
+  );
 }
 
 export function AccountActivityPanel({ accountId }: { accountId: string }) {
@@ -34,7 +36,7 @@ export function AccountActivityPanel({ accountId }: { accountId: string }) {
   if (events.error) {
     return (
       <Card className="shadow-none">
-        <CardContent className="p-4 text-sm text-destructive">
+        <CardContent className="text-destructive p-4 text-sm">
           {events.error.message}
         </CardContent>
       </Card>
@@ -47,12 +49,17 @@ export function AccountActivityPanel({ accountId }: { accountId: string }) {
         <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 pb-2">
           <div className="space-y-1">
             <CardTitle className="text-base">Activity</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Opening records, correspondence, calls, and account changes with supporting files.
+            <p className="text-muted-foreground text-sm">
+              Opening records, correspondence, calls, and account changes with
+              supporting files.
             </p>
           </div>
           <div className="flex shrink-0 gap-2">
-            <Button size="sm" variant="outline" onClick={() => setCreateOpeningOpen(true)}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setCreateOpeningOpen(true)}
+            >
               Record opening
             </Button>
             <Button size="sm" onClick={() => setCreateOpen(true)}>
@@ -63,8 +70,9 @@ export function AccountActivityPanel({ accountId }: { accountId: string }) {
         </CardHeader>
         <CardContent>
           {sortedEvents.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              No activity yet. Record the account opening, a bank conversation, or a terms change.
+            <p className="text-muted-foreground text-sm">
+              No activity yet. Record the account opening, a bank conversation,
+              or a terms change.
             </p>
           ) : (
             <ul className="divide-y">
@@ -77,19 +85,23 @@ export function AccountActivityPanel({ accountId }: { accountId: string }) {
                     <div className="min-w-0 space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-sm font-medium">{event.title}</p>
-                        <Badge variant="secondary">{accountEventTypeLabels[event.type]}</Badge>
+                        <Badge variant="secondary">
+                          {accountEventTypeLabels[event.type]}
+                        </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         {formatDateLabel(event.startDate) ?? event.startDate}
                         {event.resolvedDate
                           ? ` → ${formatDateLabel(event.resolvedDate) ?? event.resolvedDate}`
                           : ""}
                       </p>
                       {event.notes ? (
-                        <p className="line-clamp-2 text-sm text-muted-foreground">{event.notes}</p>
+                        <p className="text-muted-foreground line-clamp-2 text-sm">
+                          {event.notes}
+                        </p>
                       ) : null}
                     </div>
-                    <div className="shrink-0 text-xs text-muted-foreground">
+                    <div className="text-muted-foreground shrink-0 text-xs">
                       {event.documents.length > 0
                         ? `${event.documents.length} doc${event.documents.length === 1 ? "" : "s"}`
                         : event.termsSnapshotId

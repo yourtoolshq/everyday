@@ -1,8 +1,8 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
+import Link from "next/link";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { EmployerFormDrawer } from "~/components/employers/employer-form-drawer";
@@ -15,7 +15,8 @@ export function EmployersWorkspace() {
   const employers = api.employers.list.useQuery();
   const [createOpen, setCreateOpen] = useState(false);
   const [editEmployer, setEditEmployer] = useState<
-    (typeof employers.data extends (infer Item)[] | undefined ? Item : never) | null
+    | (typeof employers.data extends (infer Item)[] | undefined ? Item : never)
+    | null
   >(null);
 
   const deleteEmployer = api.employers.delete.useMutation({
@@ -39,13 +40,20 @@ export function EmployersWorkspace() {
         {employers.data?.map((employer) => (
           <Card key={employer.id} className="shadow-none">
             <CardContent className="flex items-start justify-between gap-4 p-4">
-              <Link href={`/employers/${employer.id}`} className="min-w-0 flex-1">
+              <Link
+                href={`/employers/${employer.id}`}
+                className="min-w-0 flex-1"
+              >
                 <p className="font-medium">{employer.name}</p>
                 {employer.website ? (
-                  <p className="text-sm text-muted-foreground">{employer.website}</p>
+                  <p className="text-muted-foreground text-sm">
+                    {employer.website}
+                  </p>
                 ) : null}
                 {employer.notes ? (
-                  <p className="mt-2 text-sm text-muted-foreground">{employer.notes}</p>
+                  <p className="text-muted-foreground mt-2 text-sm">
+                    {employer.notes}
+                  </p>
                 ) : null}
               </Link>
               <div className="flex shrink-0 items-center gap-1">
@@ -70,11 +78,15 @@ export function EmployersWorkspace() {
           </Card>
         ))}
         {employers.data?.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No employers yet.</p>
+          <p className="text-muted-foreground text-sm">No employers yet.</p>
         ) : null}
       </div>
 
-      <EmployerFormDrawer open={createOpen} onOpenChange={setCreateOpen} mode="create" />
+      <EmployerFormDrawer
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        mode="create"
+      />
 
       <EmployerFormDrawer
         open={Boolean(editEmployer)}

@@ -53,9 +53,14 @@ describe("visits and care providers", () => {
 
   it("derives multi-visit care goal progress from visit history", async () => {
     const api = await caller();
-    const person = await api.planning.createPerson({ displayName: "Test Person" });
+    const person = await api.planning.createPerson({
+      displayName: "Test Person",
+    });
     const plan = await api.planning.createPlan({ year: 2027 });
-    const item = await api.planning.createItem({ planId: plan.id, ...itemFields(person.id) });
+    const item = await api.planning.createItem({
+      planId: plan.id,
+      ...itemFields(person.id),
+    });
     const organization = await api.careProviders.createOrganization({
       name: "Example Wellness Clinic",
       phoneNumbers: ["555-0100"],
@@ -79,14 +84,18 @@ describe("visits and care providers", () => {
       notes: null,
     });
     expect(firstVisit.careOrganizationId).toBe(organization.id);
-    expect((await api.planning.overview({ planId: plan.id })).items[0]).toMatchObject({
+    expect(
+      (await api.planning.overview({ planId: plan.id })).items[0],
+    ).toMatchObject({
       progress: "in_progress",
       scheduledVisitCount: 1,
       completedVisitCount: 0,
     });
 
     await api.visits.setStatus({ id: firstVisit.id, status: "completed" });
-    expect((await api.planning.overview({ planId: plan.id })).items[0]).toMatchObject({
+    expect(
+      (await api.planning.overview({ planId: plan.id })).items[0],
+    ).toMatchObject({
       progress: "in_progress",
       completedVisitCount: 1,
     });
@@ -102,7 +111,9 @@ describe("visits and care providers", () => {
       costCents: null,
       notes: "Routine visit",
     });
-    expect((await api.planning.overview({ planId: plan.id })).items[0]).toMatchObject({
+    expect(
+      (await api.planning.overview({ planId: plan.id })).items[0],
+    ).toMatchObject({
       progress: "completed",
       completedVisitCount: 2,
     });
@@ -110,7 +121,9 @@ describe("visits and care providers", () => {
 
   it("records an unplanned completed visit with an organization only", async () => {
     const api = await caller();
-    const person = await api.planning.createPerson({ displayName: "Test Person" });
+    const person = await api.planning.createPerson({
+      displayName: "Test Person",
+    });
     const organization = await api.careProviders.createOrganization({
       name: "Example Lab",
       phoneNumbers: [],
@@ -130,17 +143,26 @@ describe("visits and care providers", () => {
     });
 
     expect(visit).toMatchObject({ careItemId: null, providerId: null });
-    await expect(api.careProviders.deleteOrganization({ id: organization.id })).rejects.toMatchObject({
+    await expect(
+      api.careProviders.deleteOrganization({ id: organization.id }),
+    ).rejects.toMatchObject({
       code: "CONFLICT",
     });
   });
 
   it("rejects linking a visit to another person’s care goal", async () => {
     const api = await caller();
-    const first = await api.planning.createPerson({ displayName: "First Person" });
-    const second = await api.planning.createPerson({ displayName: "Second Person" });
+    const first = await api.planning.createPerson({
+      displayName: "First Person",
+    });
+    const second = await api.planning.createPerson({
+      displayName: "Second Person",
+    });
     const plan = await api.planning.createPlan({ year: 2027 });
-    const item = await api.planning.createItem({ planId: plan.id, ...itemFields(first.id) });
+    const item = await api.planning.createItem({
+      planId: plan.id,
+      ...itemFields(first.id),
+    });
     const organization = await api.careProviders.createOrganization({
       name: "Example Clinic",
       phoneNumbers: [],
@@ -165,8 +187,14 @@ describe("visits and care providers", () => {
 
   it("tracks visit cost, claims, and financial totals", async () => {
     const api = await caller();
-    const person = await api.planning.createPerson({ displayName: "Test Person" });
-    const plan = await api.benefits.createPlan({ name: "Plan", year: 2027, notes: null });
+    const person = await api.planning.createPerson({
+      displayName: "Test Person",
+    });
+    const plan = await api.benefits.createPlan({
+      name: "Plan",
+      year: 2027,
+      notes: null,
+    });
     const personBenefit = await api.benefits.createBenefit({
       insurancePlanId: plan.id,
       name: "Massage",

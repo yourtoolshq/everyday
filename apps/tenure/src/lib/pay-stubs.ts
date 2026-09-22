@@ -1,4 +1,7 @@
-import { formatCompactPeriodRange, parseDateOnly } from "~/lib/expected-pay-periods";
+import {
+  formatCompactPeriodRange,
+  parseDateOnly,
+} from "~/lib/expected-pay-periods";
 
 const MONTH_NAMES = [
   "January",
@@ -23,7 +26,10 @@ function joinTitleParts(...parts: Array<string | null | undefined>) {
     .slice(0, 160);
 }
 
-export function formatPayPeriodTitle(periodStartDate: string, periodEndDate: string): string {
+export function formatPayPeriodTitle(
+  periodStartDate: string,
+  periodEndDate: string,
+): string {
   const start = parseDateOnly(periodStartDate);
   const end = parseDateOnly(periodEndDate);
   if (!start) return periodStartDate;
@@ -51,7 +57,10 @@ export function suggestPayStubTitle(input: {
   personName?: string | null;
 }) {
   const employer = input.employerName.trim() || "Employer";
-  const period = formatPayPeriodTitle(input.periodStartDate, input.periodEndDate);
+  const period = formatPayPeriodTitle(
+    input.periodStartDate,
+    input.periodEndDate,
+  );
 
   return joinTitleParts(period, employer, input.personName, "Pay stub");
 }

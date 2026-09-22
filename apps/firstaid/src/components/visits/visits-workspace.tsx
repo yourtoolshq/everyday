@@ -1,9 +1,19 @@
 "use client";
 
-import { CalendarCheck2, Check, FileText, Pencil, Plus, Trash2, X } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
+import Link from "next/link";
+import {
+  CalendarCheck2,
+  Check,
+  FileText,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 
+import type { VisitStatus } from "~/lib/visits";
+import type { RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,9 +38,9 @@ import {
 } from "~/components/ui/select";
 import { VisitDialog } from "~/components/visits/visit-dialog";
 import { formatDateTime } from "~/lib/date-time";
-import { visitStatusLabels, type VisitStatus } from "~/lib/visits";
 import { cn } from "~/lib/utils";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { visitStatusLabels } from "~/lib/visits";
+import { api } from "~/trpc/react";
 
 type Overview = RouterOutputs["visits"]["overview"];
 type Visit = Overview["visits"][number];
@@ -41,15 +51,24 @@ const statusStyles: Record<VisitStatus, string> = {
   cancelled: "border-stone-200 bg-stone-50 text-stone-700",
 };
 
-export function VisitsWorkspace({ initialOverview }: { initialOverview: Overview }) {
-  const overview = api.visits.overview.useQuery(undefined, { initialData: initialOverview });
+export function VisitsWorkspace({
+  initialOverview,
+}: {
+  initialOverview: Overview;
+}) {
+  const overview = api.visits.overview.useQuery(undefined, {
+    initialData: initialOverview,
+  });
   const data = overview.data;
   const [personFilter, setPersonFilter] = useState("all");
   const [providerFilter, setProviderFilter] = useState("all");
 
   const filtered = data.visits.filter((visit) => {
     if (personFilter !== "all" && visit.personId !== personFilter) return false;
-    if (providerFilter.startsWith("provider:") && visit.providerId !== providerFilter.slice(9)) {
+    if (
+      providerFilter.startsWith("provider:") &&
+      visit.providerId !== providerFilter.slice(9)
+    ) {
       return false;
     }
     if (
@@ -72,18 +91,33 @@ export function VisitsWorkspace({ initialOverview }: { initialOverview: Overview
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-primary">Household care</p>
-            <h2 className="mt-1 text-3xl font-semibold tracking-tight">Visits</h2>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Keep upcoming appointments and a lightweight history of the care that happened.
+            <p className="text-primary text-sm font-medium">Household care</p>
+            <h2 className="mt-1 text-3xl font-semibold tracking-tight">
+              Visits
+            </h2>
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
+              Keep upcoming appointments and a lightweight history of the care
+              that happened.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <VisitDialog
               defaultStatus="completed"
-              trigger={<Button variant="outline"><Check />Record past visit</Button>}
+              trigger={
+                <Button variant="outline">
+                  <Check />
+                  Record past visit
+                </Button>
+              }
             />
-            <VisitDialog trigger={<Button><Plus />Schedule visit</Button>} />
+            <VisitDialog
+              trigger={
+                <Button>
+                  <Plus />
+                  Schedule visit
+                </Button>
+              }
+            />
           </div>
         </div>
 
@@ -95,7 +129,10 @@ export function VisitsWorkspace({ initialOverview }: { initialOverview: Overview
               onValueChange={setPersonFilter}
               options={[
                 { value: "all", label: "Everyone" },
-                ...data.people.map((person) => ({ value: person.id, label: person.displayName })),
+                ...data.people.map((person) => ({
+                  value: person.id,
+                  label: person.displayName,
+                })),
               ]}
             />
             <FilterSelect
@@ -152,18 +189,23 @@ function VisitSection({
   return (
     <section aria-labelledby={`visits-${title.toLowerCase()}`}>
       <div className="mb-3">
-        <h3 id={`visits-${title.toLowerCase()}`} className="font-semibold">{title}</h3>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <h3 id={`visits-${title.toLowerCase()}`} className="font-semibold">
+          {title}
+        </h3>
+        <p className="text-muted-foreground text-sm">{description}</p>
       </div>
       {visits.length === 0 ? (
         <Card className="border-dashed shadow-none">
-          <CardContent className="flex items-center justify-center gap-3 py-8 text-sm text-muted-foreground">
-            <CalendarCheck2 className="size-5" />{empty}
+          <CardContent className="text-muted-foreground flex items-center justify-center gap-3 py-8 text-sm">
+            <CalendarCheck2 className="size-5" />
+            {empty}
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-3">
-          {visits.map((visit) => <VisitCard key={visit.id} visit={visit} overview={overview} />)}
+          {visits.map((visit) => (
+            <VisitCard key={visit.id} visit={visit} overview={overview} />
+          ))}
         </div>
       )}
     </section>
@@ -175,12 +217,18 @@ function VisitCard({ visit, overview }: { visit: Visit; overview: Overview }) {
   const setStatus = api.visits.setStatus.useMutation();
   const deleteVisit = api.visits.delete.useMutation();
   const [editOpen, setEditOpen] = useState(false);
-  const person = overview.people.find((candidate) => candidate.id === visit.personId);
-  const provider = overview.providers.find((candidate) => candidate.id === visit.providerId);
+  const person = overview.people.find(
+    (candidate) => candidate.id === visit.personId,
+  );
+  const provider = overview.providers.find(
+    (candidate) => candidate.id === visit.providerId,
+  );
   const organization = overview.organizations.find(
     (candidate) => candidate.id === visit.careOrganizationId,
   );
-  const careItem = overview.careItems.find((candidate) => candidate.id === visit.careItemId);
+  const careItem = overview.careItems.find(
+    (candidate) => candidate.id === visit.careItemId,
+  );
 
   async function changeStatus(status: VisitStatus) {
     await setStatus.mutateAsync({ id: visit.id, status });
@@ -197,24 +245,31 @@ function VisitCard({ visit, overview }: { visit: Visit; overview: Overview }) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="font-semibold">
-              <Link href={`/visits/${visit.id}`} className="hover:underline">{visit.title}</Link>
+              <Link href={`/visits/${visit.id}`} className="hover:underline">
+                {visit.title}
+              </Link>
             </h4>
             <Badge variant="outline" className={cn(statusStyles[visit.status])}>
               {visitStatusLabels[visit.status]}
             </Badge>
           </div>
-          <p className="mt-2 text-sm font-medium">{formatDateTime(visit.startsAt)}</p>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          <p className="mt-2 text-sm font-medium">
+            {formatDateTime(visit.startsAt)}
+          </p>
+          <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm">
             <span>{person?.displayName ?? "Unknown household member"}</span>
             {provider ? <span>{provider.name}</span> : null}
             {organization ? <span>{organization.name}</span> : null}
             {careItem ? <span>Goal: {careItem.title}</span> : null}
           </div>
-          {visit.notes ? <p className="mt-3 whitespace-pre-wrap text-sm">{visit.notes}</p> : null}
+          {visit.notes ? (
+            <p className="mt-3 text-sm whitespace-pre-wrap">{visit.notes}</p>
+          ) : null}
           {visit.documentCount > 0 ? (
-            <p className="mt-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-3 flex items-center gap-1.5 text-sm">
               <FileText className="size-4" />
-              {visit.documentCount} {visit.documentCount === 1 ? "document" : "documents"}
+              {visit.documentCount}{" "}
+              {visit.documentCount === 1 ? "document" : "documents"}
             </p>
           ) : null}
         </div>
@@ -224,20 +279,40 @@ function VisitCard({ visit, overview }: { visit: Visit; overview: Overview }) {
           </Button>
           {visit.status === "scheduled" ? (
             <>
-              <Button size="sm" variant="outline" onClick={() => changeStatus("completed")}>
-                <Check />Complete
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => changeStatus("completed")}
+              >
+                <Check />
+                Complete
               </Button>
-              <Button size="sm" variant="ghost" onClick={() => changeStatus("cancelled")}>
-                <X />Cancel
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => changeStatus("cancelled")}
+              >
+                <X />
+                Cancel
               </Button>
             </>
           ) : null}
-          <Button size="icon-sm" variant="ghost" aria-label={`Edit ${visit.title}`} onClick={() => setEditOpen(true)}>
+          <Button
+            size="icon-sm"
+            variant="ghost"
+            aria-label={`Edit ${visit.title}`}
+            onClick={() => setEditOpen(true)}
+          >
             <Pencil />
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button size="icon-sm" variant="ghost" aria-label={`Delete ${visit.title}`} className="text-muted-foreground hover:text-destructive">
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label={`Delete ${visit.title}`}
+                className="text-muted-foreground hover:text-destructive"
+              >
                 <Trash2 />
               </Button>
             </AlertDialogTrigger>
@@ -272,7 +347,12 @@ function VisitCard({ visit, overview }: { visit: Visit; overview: Overview }) {
           </AlertDialog>
         </div>
       </CardContent>
-      <VisitDialog visit={visit} open={editOpen} onOpenChange={setEditOpen} hideTrigger />
+      <VisitDialog
+        visit={visit}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        hideTrigger
+      />
     </Card>
   );
 }
@@ -293,9 +373,15 @@ function FilterSelect({
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger id={id} className="w-full"><SelectValue /></SelectTrigger>
+        <SelectTrigger id={id} className="w-full">
+          <SelectValue />
+        </SelectTrigger>
         <SelectContent>
-          {options.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
+          {options.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
     </div>

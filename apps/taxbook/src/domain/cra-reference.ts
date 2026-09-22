@@ -1,5 +1,5 @@
-import { z } from "zod";
 import type { Buffer } from "node:buffer";
+import { z } from "zod";
 
 export const craReferenceCategories = [
   "gst_hst_return",
@@ -9,11 +9,12 @@ export const craReferenceCategories = [
 
 export type CraReferenceCategory = (typeof craReferenceCategories)[number];
 
-export const craReferenceCategoryLabels: Record<CraReferenceCategory, string> = {
-  gst_hst_return: "GST/HST Return",
-  canada_carbon_rebate: "Canada Carbon Rebate",
-  other_cra_document: "Other CRA Document",
-};
+export const craReferenceCategoryLabels: Record<CraReferenceCategory, string> =
+  {
+    gst_hst_return: "GST/HST Return",
+    canada_carbon_rebate: "Canada Carbon Rebate",
+    other_cra_document: "Other CRA Document",
+  };
 
 export const allowedCraReferenceAttachmentTypes = [
   "application/pdf",
@@ -47,7 +48,9 @@ export const craReferenceInput = z.object({
   notes: z.string().trim().nullable(),
 });
 
-export const craReferenceUpdateInput = craReferenceInput.omit({ taxYearId: true });
+export const craReferenceUpdateInput = craReferenceInput.omit({
+  taxYearId: true,
+});
 
 export type CraReferenceInput = z.infer<typeof craReferenceInput>;
 export type CraReferenceUpdateInput = z.infer<typeof craReferenceUpdateInput>;

@@ -1,15 +1,10 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  documentTypes,
-  documentTypeLabels,
-  titleFromFilename,
-  type DocumentType,
-} from "~/lib/documents";
-import { uploadEmploymentDocument } from "~/lib/upload-employment-document";
+import type { DocumentType } from "~/lib/documents";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -29,6 +24,12 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
+import {
+  documentTypeLabels,
+  documentTypes,
+  titleFromFilename,
+} from "~/lib/documents";
+import { uploadEmploymentDocument } from "~/lib/upload-employment-document";
 import { api } from "~/trpc/react";
 
 type EmploymentDocumentUploadSheetProps = {
@@ -49,7 +50,10 @@ export function EmploymentDocumentUploadSheet({
   onUploaded,
 }: EmploymentDocumentUploadSheetProps) {
   const utils = api.useUtils();
-  const discussions = api.discussions.listByEmployment.useQuery({ employmentId }, { enabled: open });
+  const discussions = api.discussions.listByEmployment.useQuery(
+    { employmentId },
+    { enabled: open },
+  );
   const [type, setType] = useState<DocumentType>("other");
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -96,7 +100,9 @@ export function EmploymentDocumentUploadSheet({
       await Promise.all([
         utils.documents.listByEmployment.invalidate({ employmentId }),
         utils.discussions.listByEmployment.invalidate({ employmentId }),
-        utils.employmentRecords.completenessByEmployment.invalidate({ employmentId }),
+        utils.employmentRecords.completenessByEmployment.invalidate({
+          employmentId,
+        }),
         utils.employmentRecords.listForReview.invalidate(),
       ]);
       await onUploaded?.();
@@ -116,7 +122,8 @@ export function EmploymentDocumentUploadSheet({
           <SheetHeader>
             <SheetTitle>Upload document</SheetTitle>
             <SheetDescription>
-              Add a contract, offer letter, exported email, or other employment record.
+              Add a contract, offer letter, exported email, or other employment
+              record.
             </SheetDescription>
           </SheetHeader>
 
@@ -130,14 +137,17 @@ export function EmploymentDocumentUploadSheet({
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
                 required
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 PDF, JPEG, PNG, WebP, HEIC, or EML up to 25 MB.
               </p>
             </div>
 
             <div className="space-y-2">
               <Label>Document type</Label>
-              <Select value={type} onValueChange={(value) => setType(value as DocumentType)}>
+              <Select
+                value={type}
+                onValueChange={(value) => setType(value as DocumentType)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -203,7 +213,11 @@ export function EmploymentDocumentUploadSheet({
           </div>
 
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={uploading}>

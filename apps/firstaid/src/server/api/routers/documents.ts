@@ -4,7 +4,13 @@ import { z } from "zod";
 
 import { documentMetadataSchema } from "~/lib/documents";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import { benefits, claims, documents, people, visits } from "~/server/db/schema";
+import {
+  benefits,
+  claims,
+  documents,
+  people,
+  visits,
+} from "~/server/db/schema";
 import { resolveDocumentClaimId } from "~/server/documents/claim-link";
 import {
   discardStagedDocuments,
@@ -54,7 +60,11 @@ export const documentsRouter = createTRPCRouter({
         .select({ visitId: documents.visitId })
         .from(documents)
         .where(eq(documents.id, input.id));
-      if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Document not found" });
+      if (!existing)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Document not found",
+        });
 
       const claimId = await resolveDocumentClaimId(
         ctx.db,
@@ -65,10 +75,19 @@ export const documentsRouter = createTRPCRouter({
 
       const [document] = await ctx.db
         .update(documents)
-        .set({ title: input.title, type: input.type, claimId, updatedAt: now() })
+        .set({
+          title: input.title,
+          type: input.type,
+          claimId,
+          updatedAt: now(),
+        })
         .where(eq(documents.id, input.id))
         .returning(publicDocumentFields);
-      if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "Document not found" });
+      if (!document)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Document not found",
+        });
       return document;
     }),
 
@@ -77,7 +96,8 @@ export const documentsRouter = createTRPCRouter({
       .select({ id: documents.id, storageKey: documents.storageKey })
       .from(documents)
       .where(eq(documents.id, input.id));
-    if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "Document not found" });
+    if (!document)
+      throw new TRPCError({ code: "NOT_FOUND", message: "Document not found" });
 
     const staged = await stageDocumentsForDeletion([document.storageKey]);
     try {

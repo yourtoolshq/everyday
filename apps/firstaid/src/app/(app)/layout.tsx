@@ -5,4 +5,3 @@ export default function ApplicationLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return <AppShell>{children}</AppShell>;
 }
-

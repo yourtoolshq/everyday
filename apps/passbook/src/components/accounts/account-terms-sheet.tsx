@@ -1,10 +1,10 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { AccountTermsFormFields } from "~/components/accounts/account-terms-form-fields";
-import { type AccountTerms } from "~/lib/account-terms";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -17,6 +17,7 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
+import { type AccountTerms } from "~/lib/account-terms";
 import { api } from "~/trpc/react";
 
 function todayInputValue() {
@@ -52,7 +53,9 @@ export function AccountTermsSheet({
   const saveTerms = api.accountTerms.saveTerms.useMutation({
     onSuccess: async (result) => {
       await utils.accountTerms.invalidate();
-      toast.success(result.changed ? "Terms updated." : "No term changes to save.");
+      toast.success(
+        result.changed ? "Terms updated." : "No term changes to save.",
+      );
       onOpenChange(false);
     },
     onError: (error) => toast.error(error.message),
@@ -75,8 +78,8 @@ export function AccountTermsSheet({
           <SheetHeader>
             <SheetTitle>Edit terms</SheetTitle>
             <SheetDescription>
-              Update the current relationship terms for this account. A snapshot is saved when
-              something changes.
+              Update the current relationship terms for this account. A snapshot
+              is saved when something changes.
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 px-4 py-6">
@@ -105,7 +108,11 @@ export function AccountTermsSheet({
             </div>
           </div>
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={saveTerms.isPending}>

@@ -1,7 +1,16 @@
 import { sql } from "drizzle-orm";
-import { index, integer, primaryKey, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  primaryKey,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 
-import type { CompensationCurrency, CompensationType } from "~/lib/compensation";
+import type {
+  CompensationCurrency,
+  CompensationType,
+} from "~/lib/compensation";
 import type { DocumentType } from "~/lib/documents";
 import type { EmploymentStatus } from "~/lib/employment-status";
 import type { PayFrequency } from "~/lib/pay-frequency";
@@ -63,11 +72,17 @@ export const employments = sqliteTable(
       .notNull()
       .references(() => people.id, { onDelete: "cascade" }),
     jobTitle: text("job_title"),
-    status: text("status").$type<EmploymentStatus>().notNull().default("current"),
+    status: text("status")
+      .$type<EmploymentStatus>()
+      .notNull()
+      .default("current"),
     startDate: text("start_date"),
     endDate: text("end_date"),
     notes: text("notes"),
-    payFrequency: text("pay_frequency").$type<PayFrequency>().notNull().default("irregular"),
+    payFrequency: text("pay_frequency")
+      .$type<PayFrequency>()
+      .notNull()
+      .default("irregular"),
     biweeklyAnchorDate: text("biweekly_anchor_date"),
     deductionSettings: text("deduction_settings").notNull().default("{}"),
     createdAt: createdAt(),
@@ -103,7 +118,9 @@ export const documents = sqliteTable(
     employmentId: text("employment_id")
       .notNull()
       .references(() => employments.id, { onDelete: "cascade" }),
-    discussionId: text("discussion_id").references(() => discussions.id, { onDelete: "set null" }),
+    discussionId: text("discussion_id").references(() => discussions.id, {
+      onDelete: "set null",
+    }),
     type: text("type").$type<DocumentType>().notNull(),
     title: text("title").notNull(),
     documentDate: text("document_date"),
@@ -133,8 +150,12 @@ export const paychecks = sqliteTable(
     periodEndDate: text("period_end_date").notNull(),
     grossPayCents: integer("gross_pay_cents").notNull(),
     incomeTaxCents: integer("income_tax_cents").notNull(),
-    federalIncomeTaxCents: integer("federal_income_tax_cents").notNull().default(0),
-    manitobaIncomeTaxCents: integer("manitoba_income_tax_cents").notNull().default(0),
+    federalIncomeTaxCents: integer("federal_income_tax_cents")
+      .notNull()
+      .default(0),
+    manitobaIncomeTaxCents: integer("manitoba_income_tax_cents")
+      .notNull()
+      .default(0),
     cppCents: integer("cpp_cents").notNull(),
     cpp2Cents: integer("cpp2_cents").notNull(),
     eiCents: integer("ei_cents").notNull(),
@@ -145,7 +166,9 @@ export const paychecks = sqliteTable(
     unionDuesCents: integer("union_dues_cents").notNull().default(0),
     otherDeductionsCents: integer("other_deductions_cents").notNull(),
     netPayCents: integer("net_pay_cents").notNull(),
-    documentId: text("document_id").references(() => documents.id, { onDelete: "set null" }),
+    documentId: text("document_id").references(() => documents.id, {
+      onDelete: "set null",
+    }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -163,13 +186,20 @@ export const compensationChanges = sqliteTable(
       .notNull()
       .references(() => employments.id, { onDelete: "cascade" }),
     type: text("type").$type<CompensationType>().notNull(),
-    currency: text("currency").$type<CompensationCurrency>().notNull().default("CAD"),
+    currency: text("currency")
+      .$type<CompensationCurrency>()
+      .notNull()
+      .default("CAD"),
     effectiveDate: text("effective_date").notNull(),
     amountCents: integer("amount_cents"),
     commissionBasisPoints: integer("commission_basis_points"),
     notes: text("notes"),
-    documentId: text("document_id").references(() => documents.id, { onDelete: "set null" }),
-    discussionId: text("discussion_id").references(() => discussions.id, { onDelete: "set null" }),
+    documentId: text("document_id").references(() => documents.id, {
+      onDelete: "set null",
+    }),
+    discussionId: text("discussion_id").references(() => discussions.id, {
+      onDelete: "set null",
+    }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },

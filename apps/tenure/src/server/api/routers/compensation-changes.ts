@@ -72,9 +72,12 @@ function mapCompensationValues(input: z.infer<typeof compensationInputSchema>) {
     type: input.type,
     currency: input.currency,
     effectiveDate: input.effectiveDate,
-    amountCents: input.type === "commission" ? null : input.amountCents ?? null,
+    amountCents:
+      input.type === "commission" ? null : (input.amountCents ?? null),
     commissionBasisPoints:
-      input.type === "commission" ? input.commissionBasisPoints ?? null : null,
+      input.type === "commission"
+        ? (input.commissionBasisPoints ?? null)
+        : null,
     notes: input.notes ?? null,
     documentId: input.documentId ?? null,
     discussionId: input.discussionId ?? null,
@@ -89,10 +92,17 @@ async function listEnrichedByEmployment(
     .select(publicCompensationFields)
     .from(compensationChanges)
     .where(eq(compensationChanges.employmentId, employmentId))
-    .orderBy(desc(compensationChanges.effectiveDate), desc(compensationChanges.createdAt));
+    .orderBy(
+      desc(compensationChanges.effectiveDate),
+      desc(compensationChanges.createdAt),
+    );
 
-  const documentIds = rows.map((row) => row.documentId).filter(Boolean) as string[];
-  const discussionIds = rows.map((row) => row.discussionId).filter(Boolean) as string[];
+  const documentIds = rows
+    .map((row) => row.documentId)
+    .filter(Boolean) as string[];
+  const discussionIds = rows
+    .map((row) => row.discussionId)
+    .filter(Boolean) as string[];
 
   const linkedDocuments =
     documentIds.length > 0
@@ -110,15 +120,21 @@ async function listEnrichedByEmployment(
       : [];
 
   return enrichCompensationChanges(rows, {
-    documentTitleById: new Map(linkedDocuments.map((item) => [item.id, item.title])),
-    discussionTitleById: new Map(linkedDiscussions.map((item) => [item.id, item.title])),
+    documentTitleById: new Map(
+      linkedDocuments.map((item) => [item.id, item.title]),
+    ),
+    discussionTitleById: new Map(
+      linkedDiscussions.map((item) => [item.id, item.title]),
+    ),
   });
 }
 
 export const compensationChangesRouter = createTRPCRouter({
-  listByEmployment: publicProcedure.input(employmentIdInput).query(async ({ ctx, input }) => {
-    return listEnrichedByEmployment(ctx, input.employmentId);
-  }),
+  listByEmployment: publicProcedure
+    .input(employmentIdInput)
+    .query(async ({ ctx, input }) => {
+      return listEnrichedByEmployment(ctx, input.employmentId);
+    }),
 
   getCurrentByEmployment: publicProcedure
     .input(employmentIdInput)
@@ -140,7 +156,10 @@ export const compensationChangesRouter = createTRPCRouter({
         .from(employments)
         .where(eq(employments.id, input.employmentId));
       if (!employment) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Employment not found.",
+        });
       }
 
       await assertEmploymentLinks(
@@ -170,7 +189,10 @@ export const compensationChangesRouter = createTRPCRouter({
         .from(compensationChanges)
         .where(eq(compensationChanges.id, input.id));
       if (!existing) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Compensation change not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Compensation change not found.",
+        });
       }
 
       await assertEmploymentLinks(
@@ -190,7 +212,10 @@ export const compensationChangesRouter = createTRPCRouter({
         .returning(publicCompensationFields);
 
       if (!change) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Compensation change not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Compensation change not found.",
+        });
       }
       return change;
     }),
@@ -201,7 +226,10 @@ export const compensationChangesRouter = createTRPCRouter({
       .where(eq(compensationChanges.id, input.id))
       .returning({ id: compensationChanges.id });
     if (!change) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Compensation change not found." });
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Compensation change not found.",
+      });
     }
     return change;
   }),

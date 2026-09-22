@@ -25,17 +25,12 @@
       "indexes": {
         "account_ownership_unique": {
           "name": "account_ownership_unique",
-          "columns": [
-            "account_id",
-            "person_id"
-          ],
+          "columns": ["account_id", "person_id"],
           "isUnique": true
         },
         "account_ownership_person_idx": {
           "name": "account_ownership_person_idx",
-          "columns": [
-            "person_id"
-          ],
+          "columns": ["person_id"],
           "isUnique": false
         }
       },
@@ -44,12 +39,8 @@
           "name": "account_ownership_account_id_accounts_id_fk",
           "tableFrom": "account_ownership",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -57,12 +48,8 @@
           "name": "account_ownership_person_id_people_id_fk",
           "tableFrom": "account_ownership",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -171,9 +158,7 @@
       "indexes": {
         "account_terms_snapshots_account_idx": {
           "name": "account_terms_snapshots_account_idx",
-          "columns": [
-            "account_id"
-          ],
+          "columns": ["account_id"],
           "isUnique": false
         }
       },
@@ -182,12 +167,8 @@
           "name": "account_terms_snapshots_account_id_accounts_id_fk",
           "tableFrom": "account_terms_snapshots",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -332,9 +313,7 @@
       "indexes": {
         "accounts_institution_idx": {
           "name": "accounts_institution_idx",
-          "columns": [
-            "institution_id"
-          ],
+          "columns": ["institution_id"],
           "isUnique": false
         }
       },
@@ -343,12 +322,8 @@
           "name": "accounts_institution_id_institutions_id_fk",
           "tableFrom": "accounts",
           "tableTo": "institutions",
-          "columnsFrom": [
-            "institution_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["institution_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -457,24 +432,17 @@
       "indexes": {
         "documents_storage_key_unique": {
           "name": "documents_storage_key_unique",
-          "columns": [
-            "storage_key"
-          ],
+          "columns": ["storage_key"],
           "isUnique": true
         },
         "documents_account_idx": {
           "name": "documents_account_idx",
-          "columns": [
-            "account_id"
-          ],
+          "columns": ["account_id"],
           "isUnique": false
         },
         "documents_account_period_unique": {
           "name": "documents_account_period_unique",
-          "columns": [
-            "account_id",
-            "period_key"
-          ],
+          "columns": ["account_id", "period_key"],
           "isUnique": true
         }
       },
@@ -483,12 +451,8 @@
           "name": "documents_account_id_accounts_id_fk",
           "tableFrom": "documents",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -642,9 +606,7 @@
       "indexes": {
         "people_household_idx": {
           "name": "people_household_idx",
-          "columns": [
-            "household_id"
-          ],
+          "columns": ["household_id"],
           "isUnique": false
         }
       },
@@ -653,12 +615,8 @@
           "name": "people_household_id_households_id_fk",
           "tableFrom": "people",
           "tableTo": "households",
-          "columnsFrom": [
-            "household_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["household_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -708,12 +666,8 @@
           "name": "statement_expectations_account_id_accounts_id_fk",
           "tableFrom": "statement_expectations",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -801,9 +755,7 @@
       "indexes": {
         "account_events_account_idx": {
           "name": "account_events_account_idx",
-          "columns": [
-            "account_id"
-          ],
+          "columns": ["account_id"],
           "isUnique": false
         }
       },
@@ -812,12 +764,8 @@
           "name": "account_events_account_id_accounts_id_fk",
           "tableFrom": "account_events",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -825,12 +773,8 @@
           "name": "account_events_terms_snapshot_id_account_terms_snapshots_id_fk",
           "tableFrom": "account_events",
           "tableTo": "account_terms_snapshots",
-          "columnsFrom": [
-            "terms_snapshot_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["terms_snapshot_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -911,16 +855,12 @@
       "indexes": {
         "account_event_attachments_storage_key_unique": {
           "name": "account_event_attachments_storage_key_unique",
-          "columns": [
-            "storage_key"
-          ],
+          "columns": ["storage_key"],
           "isUnique": true
         },
         "account_event_attachments_event_idx": {
           "name": "account_event_attachments_event_idx",
-          "columns": [
-            "event_id"
-          ],
+          "columns": ["event_id"],
           "isUnique": false
         }
       },
@@ -929,12 +869,8 @@
           "name": "account_event_attachments_event_id_account_events_id_fk",
           "tableFrom": "account_event_attachments",
           "tableTo": "account_events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["event_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

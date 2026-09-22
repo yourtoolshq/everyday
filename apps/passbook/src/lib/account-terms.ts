@@ -37,7 +37,12 @@ export const accountTermsFieldKinds = {
 export const accountTermsSchema = z.object({
   interestRate: z.string().trim().max(40).nullable().optional(),
   promotionalInterestRate: z.string().trim().max(40).nullable().optional(),
-  promotionalInterestRateExpires: z.string().trim().max(10).nullable().optional(),
+  promotionalInterestRateExpires: z
+    .string()
+    .trim()
+    .max(10)
+    .nullable()
+    .optional(),
   creditLimit: z.string().trim().max(40).nullable().optional(),
   annualFee: z.string().trim().max(40).nullable().optional(),
   renewalDate: z.string().trim().max(10).nullable().optional(),
@@ -60,7 +65,8 @@ export function normalizeAccountTerms(input: AccountTerms): AccountTerms {
   return {
     interestRate: parseRateValue(input.interestRate),
     promotionalInterestRate: parseRateValue(input.promotionalInterestRate),
-    promotionalInterestRateExpires: input.promotionalInterestRateExpires?.trim() || null,
+    promotionalInterestRateExpires:
+      input.promotionalInterestRateExpires?.trim() || null,
     creditLimit: parseMoneyValue(input.creditLimit),
     annualFee: parseMoneyValue(input.annualFee),
     renewalDate: input.renewalDate?.trim() || null,

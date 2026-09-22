@@ -1,23 +1,24 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, ChevronRight, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
 
+import type { StatementFrequency } from "~/lib/statement-frequency";
 import { AccountFormSheet } from "~/components/accounts/account-form-sheet";
-import { accountStatusLabels } from "~/lib/account-status";
-import { accountTypeLabels } from "~/lib/account-types";
-import { canDeriveStatementPeriods } from "~/lib/expected-periods";
-import { formatDateLabel } from "~/lib/format-date";
-import { buildExceptionsByAccount, buildMissingStatements } from "~/lib/statement-completeness";
-import {
-  statementFrequencyLabels,
-  type StatementFrequency,
-} from "~/lib/statement-frequency";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
+import { accountStatusLabels } from "~/lib/account-status";
+import { accountTypeLabels } from "~/lib/account-types";
+import { canDeriveStatementPeriods } from "~/lib/expected-periods";
+import { formatDateLabel } from "~/lib/format-date";
+import {
+  buildExceptionsByAccount,
+  buildMissingStatements,
+} from "~/lib/statement-completeness";
+import { statementFrequencyLabels } from "~/lib/statement-frequency";
 import { api } from "~/trpc/react";
 
 function needsOpenedDateWarning(account: {
@@ -41,7 +42,8 @@ function needsOpenedDateWarning(account: {
 
 export function AccountsWorkspace() {
   const accounts = api.accounts.list.useQuery();
-  const statementDocuments = api.documents.statementDocumentsByAccount.useQuery();
+  const statementDocuments =
+    api.documents.statementDocumentsByAccount.useQuery();
   const periodExceptions = api.statementPeriodExceptions.listAll.useQuery();
   const [formOpen, setFormOpen] = useState(false);
 
@@ -75,7 +77,7 @@ export function AccountsWorkspace() {
 
   if (accounts.error) {
     return (
-      <p className="text-sm text-destructive">
+      <p className="text-destructive text-sm">
         Unable to load accounts. {accounts.error.message}
       </p>
     );
@@ -87,7 +89,7 @@ export function AccountsWorkspace() {
     <div className="space-y-5">
       <div className="flex items-end justify-between gap-4">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-primary">Inventory</p>
+          <p className="text-primary text-sm font-medium">Inventory</p>
           <h2 className="text-3xl font-semibold tracking-tight">Accounts</h2>
           <p className="text-muted-foreground">
             Financial relationships held with institutions.
@@ -102,10 +104,15 @@ export function AccountsWorkspace() {
         <Card className="shadow-none">
           <CardContent className="flex h-64 flex-col items-center justify-center text-center">
             <p className="font-medium">No accounts yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Add your first financial account to start building the household inventory.
+            <p className="text-muted-foreground mt-1 text-sm">
+              Add your first financial account to start building the household
+              inventory.
             </p>
-            <Button className="mt-4" variant="outline" onClick={() => setFormOpen(true)}>
+            <Button
+              className="mt-4"
+              variant="outline"
+              onClick={() => setFormOpen(true)}
+            >
               <Plus /> Add account
             </Button>
           </CardContent>
@@ -119,8 +126,12 @@ export function AccountsWorkspace() {
             const missingCount = missingCountByAccount[account.id] ?? 0;
 
             return (
-              <Link key={account.id} href={`/accounts/${account.id}`} className="block">
-                <Card className="shadow-none transition-colors hover:bg-muted/30">
+              <Link
+                key={account.id}
+                href={`/accounts/${account.id}`}
+                className="block"
+              >
+                <Card className="hover:bg-muted/30 shadow-none transition-colors">
                   <CardContent className="flex items-center justify-between gap-4 p-4">
                     <div className="min-w-0 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
@@ -129,30 +140,41 @@ export function AccountsWorkspace() {
                           {statementFrequencyLabels[account.statementFrequency]}
                         </Badge>
                         {missingCount > 0 ? (
-                          <Badge variant="outline" className="border-red-500/40 text-red-700">
+                          <Badge
+                            variant="outline"
+                            className="border-red-500/40 text-red-700"
+                          >
                             {missingCount} missing
                           </Badge>
                         ) : null}
                         {showOpenedDateWarning ? (
-                          <Badge variant="outline" className="border-amber-500/40 text-amber-800">
+                          <Badge
+                            variant="outline"
+                            className="border-amber-500/40 text-amber-800"
+                          >
                             <AlertTriangle />
                             Missing opened date
                           </Badge>
                         ) : null}
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {account.institutionName} · {accountTypeLabels[account.accountType]}
-                        {account.identifierSuffix ? ` · …${account.identifierSuffix}` : ""}
+                      <p className="text-muted-foreground text-sm">
+                        {account.institutionName} ·{" "}
+                        {accountTypeLabels[account.accountType]}
+                        {account.identifierSuffix
+                          ? ` · …${account.identifierSuffix}`
+                          : ""}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {accountStatusLabels[account.status]} ·{" "}
-                        {account.owners.map((owner) => owner.displayName).join(", ")}
+                        {account.owners
+                          .map((owner) => owner.displayName)
+                          .join(", ")}
                         {openedLabel || closedLabel
                           ? ` · ${openedLabel ? `Opened ${openedLabel}` : ""}${openedLabel && closedLabel ? " · " : ""}${closedLabel ? `Closed ${closedLabel}` : ""}`
                           : ""}
                       </p>
                     </div>
-                    <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                    <ChevronRight className="text-muted-foreground size-4 shrink-0" />
                   </CardContent>
                 </Card>
               </Link>

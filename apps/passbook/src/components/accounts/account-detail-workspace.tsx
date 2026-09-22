@@ -1,33 +1,43 @@
 "use client";
 
-import Link from "next/link";
-import { AlertTriangle, ArrowLeft, Pencil, Settings, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Pencil,
+  Settings,
+  Upload,
+} from "lucide-react";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { AccountActivityPanel } from "~/components/accounts/account-activity-panel";
 import {
   AccountDocumentsPanel,
   AccountVoidChequePanel,
   ClosureDocumentPrompt,
 } from "~/components/accounts/account-documents-panel";
-import { AccountTermsPanel } from "~/components/accounts/account-terms-panel";
 import { AccountFormSheet } from "~/components/accounts/account-form-sheet";
 import { AccountSettingsSheet } from "~/components/accounts/account-settings-sheet";
 import { AccountStatementPeriods } from "~/components/accounts/account-statement-periods";
+import { AccountTermsPanel } from "~/components/accounts/account-terms-panel";
 import { StatementUploadSheet } from "~/components/documents/statement-upload-sheet";
-import { accountStatusLabels } from "~/lib/account-status";
-import { accountTypeLabels } from "~/lib/account-types";
-import { canDeriveStatementPeriods } from "~/lib/expected-periods";
-import { formatDateLabel } from "~/lib/format-date";
-import { buildExceptionsByAccount, buildMissingStatements } from "~/lib/statement-completeness";
-import { statementFrequencyLabels } from "~/lib/statement-frequency";
-import { cn } from "~/lib/utils";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { Separator } from "~/components/ui/separator";
 import { Skeleton } from "~/components/ui/skeleton";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { accountStatusLabels } from "~/lib/account-status";
+import { accountTypeLabels } from "~/lib/account-types";
+import { canDeriveStatementPeriods } from "~/lib/expected-periods";
+import { formatDateLabel } from "~/lib/format-date";
+import {
+  buildExceptionsByAccount,
+  buildMissingStatements,
+} from "~/lib/statement-completeness";
+import { statementFrequencyLabels } from "~/lib/statement-frequency";
+import { cn } from "~/lib/utils";
+import { api } from "~/trpc/react";
 
 type AccountDocument = RouterOutputs["documents"]["overview"][number];
 
@@ -39,25 +49,33 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
   const utils = api.useUtils();
   const account = api.accounts.get.useQuery({ id: accountId });
   const accountDocuments = api.documents.overview.useQuery({ accountId });
-  const periodExceptions = api.statementPeriodExceptions.listByAccount.useQuery({ accountId });
-  const createPeriodException = api.statementPeriodExceptions.create.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.statementPeriodExceptions.listByAccount.invalidate({ accountId }),
-        utils.statementPeriodExceptions.listAll.invalidate(),
-        utils.overview.statementStatus.invalidate(),
-      ]);
-    },
-  });
-  const deletePeriodException = api.statementPeriodExceptions.delete.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.statementPeriodExceptions.listByAccount.invalidate({ accountId }),
-        utils.statementPeriodExceptions.listAll.invalidate(),
-        utils.overview.statementStatus.invalidate(),
-      ]);
-    },
-  });
+  const periodExceptions = api.statementPeriodExceptions.listByAccount.useQuery(
+    { accountId },
+  );
+  const createPeriodException =
+    api.statementPeriodExceptions.create.useMutation({
+      onSuccess: async () => {
+        await Promise.all([
+          utils.statementPeriodExceptions.listByAccount.invalidate({
+            accountId,
+          }),
+          utils.statementPeriodExceptions.listAll.invalidate(),
+          utils.overview.statementStatus.invalidate(),
+        ]);
+      },
+    });
+  const deletePeriodException =
+    api.statementPeriodExceptions.delete.useMutation({
+      onSuccess: async () => {
+        await Promise.all([
+          utils.statementPeriodExceptions.listByAccount.invalidate({
+            accountId,
+          }),
+          utils.statementPeriodExceptions.listAll.invalidate(),
+          utils.overview.statementStatus.invalidate(),
+        ]);
+      },
+    });
   const [formOpen, setFormOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uploadTarget, setUploadTarget] = useState<UploadTarget | null>(null);
@@ -75,7 +93,9 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
 
   const statementDocumentsForCompleteness = useMemo(() => {
     const byPeriod: Record<string, string> = {};
-    for (const [periodKey, document] of Object.entries(statementDocumentsByPeriod)) {
+    for (const [periodKey, document] of Object.entries(
+      statementDocumentsByPeriod,
+    )) {
       byPeriod[periodKey] = document.id;
     }
     return { [accountId]: byPeriod };
@@ -101,7 +121,11 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
       statementDocumentsForCompleteness,
       exceptionsForCompleteness,
     );
-  }, [account.data, exceptionsForCompleteness, statementDocumentsForCompleteness]);
+  }, [
+    account.data,
+    exceptionsForCompleteness,
+    statementDocumentsForCompleteness,
+  ]);
 
   const hasStatements = account.data?.statementFrequency !== "none";
 
@@ -124,7 +148,7 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
             Back to accounts
           </Link>
         </Button>
-        <p className="text-sm text-destructive">
+        <p className="text-destructive text-sm">
           {account.error?.message ?? "Account not found."}
         </p>
       </div>
@@ -158,16 +182,27 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-3">
           <div className="space-y-2">
-            <p className="text-sm font-medium text-primary">{account.data.institutionName}</p>
-            <h2 className="text-3xl font-semibold tracking-tight">{account.data.displayName}</h2>
+            <p className="text-primary text-sm font-medium">
+              {account.data.institutionName}
+            </p>
+            <h2 className="text-3xl font-semibold tracking-tight">
+              {account.data.displayName}
+            </h2>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="secondary">{accountTypeLabels[account.data.accountType]}</Badge>
-              <Badge variant="outline">{accountStatusLabels[account.data.status]}</Badge>
+              <Badge variant="secondary">
+                {accountTypeLabels[account.data.accountType]}
+              </Badge>
+              <Badge variant="outline">
+                {accountStatusLabels[account.data.status]}
+              </Badge>
               <Badge variant="secondary">
                 {statementFrequencyLabels[account.data.statementFrequency]}
               </Badge>
               {showOpenedDateWarning ? (
-                <Badge variant="outline" className="border-amber-500/40 text-amber-800">
+                <Badge
+                  variant="outline"
+                  className="border-amber-500/40 text-amber-800"
+                >
                   <AlertTriangle />
                   Missing opened date
                 </Badge>
@@ -175,14 +210,15 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+          <div className="text-muted-foreground flex flex-wrap gap-x-5 gap-y-2 text-sm">
             <span>
               <span className="text-foreground">Owners</span>{" "}
               {account.data.owners.map((owner) => owner.displayName).join(", ")}
             </span>
             {account.data.identifierSuffix ? (
               <span>
-                <span className="text-foreground">Identifier</span> …{account.data.identifierSuffix}
+                <span className="text-foreground">Identifier</span> …
+                {account.data.identifierSuffix}
               </span>
             ) : null}
             {openedLabel ? (
@@ -198,7 +234,9 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
           </div>
 
           {account.data.notes ? (
-            <p className="max-w-3xl text-sm text-muted-foreground">{account.data.notes}</p>
+            <p className="text-muted-foreground max-w-3xl text-sm">
+              {account.data.notes}
+            </p>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -235,7 +273,7 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
           <CardContent className="space-y-4 p-4">
             <div>
               <h3 className="font-medium">Statements</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 Track completeness by period for this account.
               </p>
             </div>
@@ -278,7 +316,7 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
             </CardHeader>
             <CardContent>
               {missingStatements.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   No missing statements for this account.
                 </p>
               ) : (
@@ -294,7 +332,9 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
                           type="button"
                           size="sm"
                           variant="ghost"
-                          onClick={() => setUploadTarget({ periodKey: item.periodKey })}
+                          onClick={() =>
+                            setUploadTarget({ periodKey: item.periodKey })
+                          }
                         >
                           Upload
                         </Button>

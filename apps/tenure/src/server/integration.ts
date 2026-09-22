@@ -1,7 +1,7 @@
 import { and, asc, eq, gte } from "drizzle-orm";
 
 import { db } from "~/server/db";
-import { employments, employers, paychecks, people } from "~/server/db/schema";
+import { employers, employments, paychecks, people } from "~/server/db/schema";
 
 export async function listIntegrationEmployments() {
   return db

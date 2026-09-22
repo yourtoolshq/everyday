@@ -149,12 +149,8 @@
           "name": "care_items_plan_id_care_plans_id_fk",
           "tableFrom": "care_items",
           "tableTo": "care_plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -162,12 +158,8 @@
           "name": "care_items_person_id_people_id_fk",
           "tableFrom": "care_items",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -213,9 +205,7 @@
       "indexes": {
         "care_plans_year_unique": {
           "name": "care_plans_year_unique",
-          "columns": [
-            "year"
-          ],
+          "columns": ["year"],
           "isUnique": true
         }
       },

@@ -13,7 +13,7 @@ export function HouseholdPaySummaryPanel() {
     return (
       <Card className="shadow-none">
         <CardContent className="py-6">
-          <p className="text-sm text-muted-foreground">Loading pay totals…</p>
+          <p className="text-muted-foreground text-sm">Loading pay totals…</p>
         </CardContent>
       </Card>
     );
@@ -30,28 +30,34 @@ export function HouseholdPaySummaryPanel() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card className="shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Lifetime pay recorded
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
-            <p className="text-2xl font-semibold">{formatCad(lifetime.grossCents)} gross</p>
-            <p className="text-sm text-muted-foreground">
-              {formatCad(lifetime.netCents)} net · {lifetime.paycheckCount} paycheck
+            <p className="text-2xl font-semibold">
+              {formatCad(lifetime.grossCents)} gross
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {formatCad(lifetime.netCents)} net · {lifetime.paycheckCount}{" "}
+              paycheck
               {lifetime.paycheckCount === 1 ? "" : "s"}
             </p>
           </CardContent>
         </Card>
         <Card className="shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               {year} pay recorded
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1">
-            <p className="text-2xl font-semibold">{formatCad(thisYear.grossCents)} gross</p>
-            <p className="text-sm text-muted-foreground">
-              {formatCad(thisYear.netCents)} net · {thisYear.paycheckCount} paycheck
+            <p className="text-2xl font-semibold">
+              {formatCad(thisYear.grossCents)} gross
+            </p>
+            <p className="text-muted-foreground text-sm">
+              {formatCad(thisYear.netCents)} net · {thisYear.paycheckCount}{" "}
+              paycheck
               {thisYear.paycheckCount === 1 ? "" : "s"}
             </p>
           </CardContent>
@@ -73,14 +79,18 @@ export function HouseholdPaySummaryPanel() {
                   <div className="min-w-0">
                     <Link
                       href={`/employments/${employment.employmentId}`}
-                      className="text-sm font-medium text-primary hover:underline"
+                      className="text-primary text-sm font-medium hover:underline"
                     >
                       {employment.employerName}
                     </Link>
-                    <p className="text-xs text-muted-foreground">{employment.personName}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {employment.personName}
+                    </p>
                   </div>
                   <div className="text-right text-sm">
-                    <p>{formatCad(employment.thisYear.grossCents)} gross ({year})</p>
+                    <p>
+                      {formatCad(employment.thisYear.grossCents)} gross ({year})
+                    </p>
                     <p className="text-muted-foreground">
                       {formatCad(employment.lifetime.grossCents)} lifetime
                     </p>

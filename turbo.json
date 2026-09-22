@@ -29,6 +29,10 @@
       "dependsOn": ["^topo"],
       "outputs": ["coverage/**"]
     },
+    "test:e2e": {
+      "cache": false,
+      "dependsOn": ["^topo"]
+    },
     "clean": {
       "cache": false
     }

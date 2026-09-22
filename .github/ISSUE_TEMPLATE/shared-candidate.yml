@@ -1,0 +1,36 @@
+name: Shared candidate
+description: Reusable pattern worth tracking before extraction
+title: "[shared-candidate]: "
+labels: ["shared-candidate"]
+body:
+  - type: textarea
+    id: location
+    attributes:
+      label: Current location
+      description: File paths or app where this exists today
+    validations:
+      required: true
+
+  - type: textarea
+    id: need
+    attributes:
+      label: Demonstrated need
+      description: What problem does this solve in its current app?
+    validations:
+      required: true
+
+  - type: textarea
+    id: consumers
+    attributes:
+      label: Possible consumers
+      description: Which other apps might benefit?
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation state
+      description: Has this been proven in real use? What remains to validate?
+    validations:
+      required: true

@@ -90,23 +90,17 @@
       "indexes": {
         "employments_year_idx": {
           "name": "employments_year_idx",
-          "columns": [
-            "tax_year_id"
-          ],
+          "columns": ["tax_year_id"],
           "isUnique": false
         },
         "employments_person_idx": {
           "name": "employments_person_idx",
-          "columns": [
-            "person_id"
-          ],
+          "columns": ["person_id"],
           "isUnique": false
         },
         "employments_tax_item_unique": {
           "name": "employments_tax_item_unique",
-          "columns": [
-            "tax_item_id"
-          ],
+          "columns": ["tax_item_id"],
           "isUnique": true
         }
       },
@@ -115,12 +109,8 @@
           "name": "employments_tax_year_id_tax_years_id_fk",
           "tableFrom": "employments",
           "tableTo": "tax_years",
-          "columnsFrom": [
-            "tax_year_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tax_year_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -128,12 +118,8 @@
           "name": "employments_person_id_people_id_fk",
           "tableFrom": "employments",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -141,12 +127,8 @@
           "name": "employments_tax_item_id_tax_items_id_fk",
           "tableFrom": "employments",
           "tableTo": "tax_items",
-          "columnsFrom": [
-            "tax_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tax_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -297,16 +279,12 @@
       "indexes": {
         "paycheques_employment_idx": {
           "name": "paycheques_employment_idx",
-          "columns": [
-            "employment_id"
-          ],
+          "columns": ["employment_id"],
           "isUnique": false
         },
         "paycheques_date_idx": {
           "name": "paycheques_date_idx",
-          "columns": [
-            "pay_date"
-          ],
+          "columns": ["pay_date"],
           "isUnique": false
         }
       },
@@ -315,12 +293,8 @@
           "name": "paycheques_employment_id_employments_id_fk",
           "tableFrom": "paycheques",
           "tableTo": "employments",
-          "columnsFrom": [
-            "employment_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employment_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -385,9 +359,7 @@
       "indexes": {
         "people_household_idx": {
           "name": "people_household_idx",
-          "columns": [
-            "household_id"
-          ],
+          "columns": ["household_id"],
           "isUnique": false
         }
       },
@@ -396,12 +368,8 @@
           "name": "people_household_id_households_id_fk",
           "tableFrom": "people",
           "tableTo": "households",
-          "columnsFrom": [
-            "household_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["household_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -471,12 +439,8 @@
           "name": "record_attachments_record_id_records_id_fk",
           "tableFrom": "record_attachments",
           "tableTo": "records",
-          "columnsFrom": [
-            "record_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["record_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -562,23 +526,17 @@
       "indexes": {
         "records_tax_item_idx": {
           "name": "records_tax_item_idx",
-          "columns": [
-            "tax_item_id"
-          ],
+          "columns": ["tax_item_id"],
           "isUnique": false
         },
         "records_person_idx": {
           "name": "records_person_idx",
-          "columns": [
-            "person_id"
-          ],
+          "columns": ["person_id"],
           "isUnique": false
         },
         "records_date_idx": {
           "name": "records_date_idx",
-          "columns": [
-            "date"
-          ],
+          "columns": ["date"],
           "isUnique": false
         }
       },
@@ -587,12 +545,8 @@
           "name": "records_tax_item_id_tax_items_id_fk",
           "tableFrom": "records",
           "tableTo": "tax_items",
-          "columnsFrom": [
-            "tax_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tax_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -600,12 +554,8 @@
           "name": "records_person_id_people_id_fk",
           "tableFrom": "records",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -727,16 +677,12 @@
       "indexes": {
         "tax_items_year_idx": {
           "name": "tax_items_year_idx",
-          "columns": [
-            "tax_year_id"
-          ],
+          "columns": ["tax_year_id"],
           "isUnique": false
         },
         "tax_items_person_idx": {
           "name": "tax_items_person_idx",
-          "columns": [
-            "person_id"
-          ],
+          "columns": ["person_id"],
           "isUnique": false
         }
       },
@@ -745,12 +691,8 @@
           "name": "tax_items_tax_year_id_tax_years_id_fk",
           "tableFrom": "tax_items",
           "tableTo": "tax_years",
-          "columnsFrom": [
-            "tax_year_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tax_year_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -758,12 +700,8 @@
           "name": "tax_items_person_id_people_id_fk",
           "tableFrom": "tax_items",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -837,17 +775,12 @@
       "indexes": {
         "tax_year_household_year_unique": {
           "name": "tax_year_household_year_unique",
-          "columns": [
-            "household_id",
-            "year"
-          ],
+          "columns": ["household_id", "year"],
           "isUnique": true
         },
         "tax_year_one_active_unique": {
           "name": "tax_year_one_active_unique",
-          "columns": [
-            "household_id"
-          ],
+          "columns": ["household_id"],
           "isUnique": true,
           "where": "\"tax_years\".\"is_active\" = 1"
         }
@@ -857,12 +790,8 @@
           "name": "tax_years_household_id_households_id_fk",
           "tableFrom": "tax_years",
           "tableTo": "households",
-          "columnsFrom": [
-            "household_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["household_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

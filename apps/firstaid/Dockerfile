@@ -32,7 +32,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/firstaid/scripts ./apps/firs
 COPY --from=builder --chown=nextjs:nodejs /app/apps/firstaid/drizzle ./apps/firstaid/drizzle
 # libSQL selects a native package at runtime; standalone tracing does not
 # include every platform-specific optional dependency.
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/apps/firstaid/node_modules ./apps/firstaid/node_modules
 
 WORKDIR /app/apps/firstaid
 EXPOSE 3000

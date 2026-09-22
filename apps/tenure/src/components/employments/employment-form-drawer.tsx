@@ -3,16 +3,10 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  commissionPercentToBasisPoints,
-  compensationCurrencies,
-  compensationCurrencyLabels,
-  compensationTypeLabels,
-  compensationTypes,
-  type CompensationCurrency,
-  type CompensationType,
+import type {
+  CompensationCurrency,
+  CompensationType,
 } from "~/lib/compensation";
-import { employmentStatusLabels, employmentStatuses } from "~/lib/employment-status";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -32,6 +26,17 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
+import {
+  commissionPercentToBasisPoints,
+  compensationCurrencies,
+  compensationCurrencyLabels,
+  compensationTypeLabels,
+  compensationTypes,
+} from "~/lib/compensation";
+import {
+  employmentStatuses,
+  employmentStatusLabels,
+} from "~/lib/employment-status";
 import { api } from "~/trpc/react";
 
 type EmploymentFormValues = {
@@ -71,16 +76,21 @@ export function EmploymentFormDrawer({
   const [employerId, setEmployerId] = useState("");
   const [personId, setPersonId] = useState("");
   const [jobTitle, setJobTitle] = useState("");
-  const [status, setStatus] = useState<(typeof employmentStatuses)[number]>("current");
+  const [status, setStatus] =
+    useState<(typeof employmentStatuses)[number]>("current");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [notes, setNotes] = useState("");
-  const [includeStartingCompensation, setIncludeStartingCompensation] = useState(false);
-  const [compensationType, setCompensationType] = useState<CompensationType>("annual_salary");
-  const [compensationCurrency, setCompensationCurrency] = useState<CompensationCurrency>("CAD");
+  const [includeStartingCompensation, setIncludeStartingCompensation] =
+    useState(false);
+  const [compensationType, setCompensationType] =
+    useState<CompensationType>("annual_salary");
+  const [compensationCurrency, setCompensationCurrency] =
+    useState<CompensationCurrency>("CAD");
   const [compensationAmount, setCompensationAmount] = useState("");
   const [compensationPercent, setCompensationPercent] = useState("");
-  const [compensationEffectiveDate, setCompensationEffectiveDate] = useState("");
+  const [compensationEffectiveDate, setCompensationEffectiveDate] =
+    useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -111,7 +121,10 @@ export function EmploymentFormDrawer({
     setCompensationEffectiveDate("");
   }, [open, mode, employment, defaultEmployerId, defaultPersonId]);
 
-  const invalidateEmploymentQueries = async (employmentId: string, employerIdValue: string) => {
+  const invalidateEmploymentQueries = async (
+    employmentId: string,
+    employerIdValue: string,
+  ) => {
     await Promise.all([
       utils.employments.list.invalidate(),
       utils.employments.getById.invalidate({ id: employmentId }),
@@ -133,7 +146,9 @@ export function EmploymentFormDrawer({
   });
 
   const isPending =
-    createEmployment.isPending || updateEmployment.isPending || createCompensationChange.isPending;
+    createEmployment.isPending ||
+    updateEmployment.isPending ||
+    createCompensationChange.isPending;
 
   function buildStartingCompensation() {
     if (!includeStartingCompensation) return null;
@@ -213,7 +228,9 @@ export function EmploymentFormDrawer({
         onOpenChange(false);
         onSuccess?.(created.id);
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Could not add employment.");
+        toast.error(
+          error instanceof Error ? error.message : "Could not add employment.",
+        );
       }
       return;
     }
@@ -225,7 +242,9 @@ export function EmploymentFormDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>{mode === "create" ? "Add employment" : "Edit employment"}</SheetTitle>
+          <SheetTitle>
+            {mode === "create" ? "Add employment" : "Edit employment"}
+          </SheetTitle>
           <SheetDescription>
             {mode === "create"
               ? "Record an employment period for someone in your household."
@@ -342,7 +361,9 @@ export function EmploymentFormDrawer({
                 <input
                   type="checkbox"
                   checked={includeStartingCompensation}
-                  onChange={(event) => setIncludeStartingCompensation(event.target.checked)}
+                  onChange={(event) =>
+                    setIncludeStartingCompensation(event.target.checked)
+                  }
                 />
                 Record starting compensation
               </label>
@@ -393,36 +414,50 @@ export function EmploymentFormDrawer({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="starting-compensation-effective-date">Effective date</Label>
+                    <Label htmlFor="starting-compensation-effective-date">
+                      Effective date
+                    </Label>
                     <Input
                       id="starting-compensation-effective-date"
                       type="date"
                       value={compensationEffectiveDate}
-                      onChange={(event) => setCompensationEffectiveDate(event.target.value)}
-                      placeholder={startDate ? `Defaults to ${startDate}` : undefined}
+                      onChange={(event) =>
+                        setCompensationEffectiveDate(event.target.value)
+                      }
+                      placeholder={
+                        startDate ? `Defaults to ${startDate}` : undefined
+                      }
                     />
                   </div>
 
                   {compensationType === "commission" ? (
                     <div className="space-y-2">
-                      <Label htmlFor="starting-compensation-percent">Commission percentage</Label>
+                      <Label htmlFor="starting-compensation-percent">
+                        Commission percentage
+                      </Label>
                       <Input
                         id="starting-compensation-percent"
                         inputMode="decimal"
                         value={compensationPercent}
-                        onChange={(event) => setCompensationPercent(event.target.value)}
+                        onChange={(event) =>
+                          setCompensationPercent(event.target.value)
+                        }
                       />
                     </div>
                   ) : (
                     <div className="space-y-2">
                       <Label htmlFor="starting-compensation-amount">
-                        {compensationType === "annual_salary" ? "Annual salary" : "Hourly rate"}
+                        {compensationType === "annual_salary"
+                          ? "Annual salary"
+                          : "Hourly rate"}
                       </Label>
                       <Input
                         id="starting-compensation-amount"
                         inputMode="decimal"
                         value={compensationAmount}
-                        onChange={(event) => setCompensationAmount(event.target.value)}
+                        onChange={(event) =>
+                          setCompensationAmount(event.target.value)
+                        }
                       />
                     </div>
                   )}
@@ -432,7 +467,11 @@ export function EmploymentFormDrawer({
           ) : null}
 
           <SheetFooter className="px-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>

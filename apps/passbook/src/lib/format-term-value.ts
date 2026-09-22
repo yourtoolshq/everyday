@@ -13,7 +13,9 @@ function parseNumericInput(input: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export function parseRateValue(input: string | null | undefined): string | null {
+export function parseRateValue(
+  input: string | null | undefined,
+): string | null {
   const trimmed = input?.trim();
   if (!trimmed) return null;
 
@@ -23,7 +25,9 @@ export function parseRateValue(input: string | null | undefined): string | null 
   return toCanonicalNumber(parsed);
 }
 
-export function parseMoneyValue(input: string | null | undefined): string | null {
+export function parseMoneyValue(
+  input: string | null | undefined,
+): string | null {
   const trimmed = input?.trim();
   if (!trimmed) return null;
 
@@ -65,7 +69,10 @@ export function formatMoneyValue(
   }).format(parsed);
 }
 
-export function formatTermValue(field: AccountTermsField, value: string): string {
+export function formatTermValue(
+  field: AccountTermsField,
+  value: string,
+): string {
   if (field === "renewalDate" || field === "promotionalInterestRateExpires") {
     return formatDateLabel(value) ?? value;
   }

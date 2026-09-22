@@ -35,7 +35,9 @@ describe("benefits router", () => {
 
   it("creates plans and benefits with usage totals", async () => {
     const api = await caller();
-    const person = await api.planning.createPerson({ displayName: "Test Person" });
+    const person = await api.planning.createPerson({
+      displayName: "Test Person",
+    });
     const plan = await api.benefits.createPlan({
       name: "Employer plan",
       year: 2027,
@@ -63,7 +65,11 @@ describe("benefits router", () => {
 
   it("rejects invalid person scope combinations", async () => {
     const api = await caller();
-    const plan = await api.benefits.createPlan({ name: "Plan", year: 2027, notes: null });
+    const plan = await api.benefits.createPlan({
+      name: "Plan",
+      year: 2027,
+      notes: null,
+    });
 
     await expect(
       api.benefits.createBenefit({
@@ -80,8 +86,14 @@ describe("benefits router", () => {
 
   it("prevents deleting benefits or plans referenced by claims", async () => {
     const api = await caller();
-    const person = await api.planning.createPerson({ displayName: "Test Person" });
-    const plan = await api.benefits.createPlan({ name: "Plan", year: 2027, notes: null });
+    const person = await api.planning.createPerson({
+      displayName: "Test Person",
+    });
+    const plan = await api.benefits.createPlan({
+      name: "Plan",
+      year: 2027,
+      notes: null,
+    });
     const benefit = await api.benefits.createBenefit({
       insurancePlanId: plan.id,
       name: "Massage",
@@ -116,10 +128,14 @@ describe("benefits router", () => {
       notes: null,
     });
 
-    await expect(api.benefits.deleteBenefit({ id: benefit.id })).rejects.toMatchObject({
+    await expect(
+      api.benefits.deleteBenefit({ id: benefit.id }),
+    ).rejects.toMatchObject({
       code: "CONFLICT",
     });
-    await expect(api.benefits.deletePlan({ id: plan.id })).rejects.toMatchObject({
+    await expect(
+      api.benefits.deletePlan({ id: plan.id }),
+    ).rejects.toMatchObject({
       code: "CONFLICT",
     });
   });

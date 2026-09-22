@@ -78,7 +78,8 @@ export function resolveTenurePersonId(input: {
 
   const byName = input.householdPeople.find(
     (person) =>
-      normalizePersonName(person.name) === normalizePersonName(input.tenurePersonName),
+      normalizePersonName(person.name) ===
+      normalizePersonName(input.tenurePersonName),
   );
   if (byName) return { personId: byName.id, matchKind: "name" };
 
@@ -86,7 +87,10 @@ export function resolveTenurePersonId(input: {
 }
 
 export function employmentOverlapsTaxYear(
-  employment: Pick<TenureIntegrationEmployment, "status" | "startDate" | "endDate">,
+  employment: Pick<
+    TenureIntegrationEmployment,
+    "status" | "startDate" | "endDate"
+  >,
   taxYear: number,
 ): boolean {
   const yearStart = `${taxYear}-01-01`;

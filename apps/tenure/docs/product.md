@@ -16,13 +16,13 @@ Employment records end up scattered across payroll portals, inboxes, downloads, 
 
 ## MVP
 
-| Area | What the user can do |
-| --- | --- |
-| Employment | Create an employer and record a person's employment period, status, and current role. Return to that employer for all related records. |
-| Paychecks | Record pay date and pay period (start/end); enter gross pay and itemized earnings and deductions (including tax, CPP, and EI) with per-employment line configuration; support multiple paychecks for the same pay period; net pay is calculated for reconciliation; attach the original pay stub; review missing paychecks and stubs per employment and across employments. |
-| Compensation | Record effective-dated salary or hourly-rate changes; view a timeline and dollar/percentage changes between comparable rates. |
-| Documents | Upload and organize contracts, offer letters, employment letters, and other official records under an employment. |
-| Discussions | Record important conversations, meetings, and email context with dates, participants, and notes. |
+| Area         | What the user can do                                                                                                                                                                                                                                                                                                                                                        |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Employment   | Create an employer and record a person's employment period, status, and current role. Return to that employer for all related records.                                                                                                                                                                                                                                      |
+| Paychecks    | Record pay date and pay period (start/end); enter gross pay and itemized earnings and deductions (including tax, CPP, and EI) with per-employment line configuration; support multiple paychecks for the same pay period; net pay is calculated for reconciliation; attach the original pay stub; review missing paychecks and stubs per employment and across employments. |
+| Compensation | Record effective-dated salary or hourly-rate changes; view a timeline and dollar/percentage changes between comparable rates.                                                                                                                                                                                                                                               |
+| Documents    | Upload and organize contracts, offer letters, employment letters, and other official records under an employment.                                                                                                                                                                                                                                                           |
+| Discussions  | Record important conversations, meetings, and email context with dates, participants, and notes.                                                                                                                                                                                                                                                                            |
 
 ## Main workflow
 

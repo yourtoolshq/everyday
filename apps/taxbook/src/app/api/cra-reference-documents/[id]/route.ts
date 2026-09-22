@@ -22,9 +22,8 @@ export async function PUT(
         message: "Invalid document ID.",
       });
     }
-    const { input, attachmentAction } = await parseUpdateCraReferenceDocumentForm(
-      await request.formData(),
-    );
+    const { input, attachmentAction } =
+      await parseUpdateCraReferenceDocumentForm(await request.formData());
     const document = await updateCraReferenceDocument(
       db,
       id,

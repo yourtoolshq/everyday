@@ -2,8 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { people } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { people } from "~/server/db/schema";
 
 const personInput = z.object({
   displayName: z.string().trim().min(1).max(120),
@@ -19,27 +19,32 @@ export const peopleRouter = createTRPCRouter({
     });
   }),
 
-  create: publicProcedure.input(personInput).mutation(async ({ ctx, input }) => {
-    const household = await ctx.db.query.households.findFirst();
-    if (!household) {
-      throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Set up Tenure first." });
-    }
+  create: publicProcedure
+    .input(personInput)
+    .mutation(async ({ ctx, input }) => {
+      const household = await ctx.db.query.households.findFirst();
+      if (!household) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: "Set up Tenure first.",
+        });
+      }
 
-    const existing = await ctx.db.query.people.findMany({
-      where: eq(people.householdId, household.id),
-    });
+      const existing = await ctx.db.query.people.findMany({
+        where: eq(people.householdId, household.id),
+      });
 
-    const [person] = await ctx.db
-      .insert(people)
-      .values({
-        householdId: household.id,
-        displayName: input.displayName,
-        sortOrder: existing.length,
-      })
-      .returning();
+      const [person] = await ctx.db
+        .insert(people)
+        .values({
+          householdId: household.id,
+          displayName: input.displayName,
+          sortOrder: existing.length,
+        })
+        .returning();
 
-    return person;
-  }),
+      return person;
+    }),
 
   update: publicProcedure
     .input(idInput.and(personInput))
@@ -49,7 +54,11 @@ export const peopleRouter = createTRPCRouter({
         .set({ displayName: input.displayName, updatedAt: now() })
         .where(eq(people.id, input.id))
         .returning();
-      if (!person) throw new TRPCError({ code: "NOT_FOUND", message: "Person not found." });
+      if (!person)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Person not found.",
+        });
       return person;
     }),
 
@@ -58,7 +67,8 @@ export const peopleRouter = createTRPCRouter({
       .delete(people)
       .where(eq(people.id, input.id))
       .returning({ id: people.id });
-    if (!person) throw new TRPCError({ code: "NOT_FOUND", message: "Person not found." });
+    if (!person)
+      throw new TRPCError({ code: "NOT_FOUND", message: "Person not found." });
     return person;
   }),
 });

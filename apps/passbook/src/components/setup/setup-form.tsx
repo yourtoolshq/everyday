@@ -1,12 +1,18 @@
 "use client";
 
-import { Landmark, Plus, Trash2 } from "lucide-react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { Landmark, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader } from "~/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+} from "~/components/ui/card";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { api } from "~/trpc/react";
@@ -37,15 +43,18 @@ export function SetupForm() {
   }
 
   return (
-    <Card className="w-full max-w-xl border-border/80 shadow-xl shadow-primary/5">
+    <Card className="border-border/80 shadow-primary/5 w-full max-w-xl shadow-xl">
       <CardHeader className="space-y-4">
-        <div className="flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+        <div className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-xl">
           <Landmark className="size-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Set up Passbook</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Set up Passbook
+          </h1>
           <CardDescription className="mt-2">
-            Start with your household name and members. You can add institutions and accounts next.
+            Start with your household name and members. You can add institutions
+            and accounts next.
           </CardDescription>
         </div>
       </CardHeader>
@@ -93,7 +102,9 @@ export function SetupForm() {
                     size="icon"
                     aria-label={`Remove member ${index + 1}`}
                     onClick={() =>
-                      setMembers((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                      setMembers((current) =>
+                        current.filter((_, itemIndex) => itemIndex !== index),
+                      )
                     }
                   >
                     <Trash2 />

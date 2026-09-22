@@ -2,8 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { employers, employments, people } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { employers, employments, people } from "~/server/db/schema";
 
 const employerInput = z.object({
   name: z.string().trim().min(1).max(160),
@@ -21,7 +21,10 @@ export const employersRouter = createTRPCRouter({
       .from(employers)
       .where(eq(employers.id, input.id));
     if (!employer) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Employer not found." });
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Employer not found.",
+      });
     }
 
     const relatedEmployments = await ctx.db
@@ -48,17 +51,19 @@ export const employersRouter = createTRPCRouter({
     });
   }),
 
-  create: publicProcedure.input(employerInput).mutation(async ({ ctx, input }) => {
-    const [employer] = await ctx.db
-      .insert(employers)
-      .values({
-        name: input.name,
-        website: input.website ?? null,
-        notes: input.notes ?? null,
-      })
-      .returning();
-    return employer;
-  }),
+  create: publicProcedure
+    .input(employerInput)
+    .mutation(async ({ ctx, input }) => {
+      const [employer] = await ctx.db
+        .insert(employers)
+        .values({
+          name: input.name,
+          website: input.website ?? null,
+          notes: input.notes ?? null,
+        })
+        .returning();
+      return employer;
+    }),
 
   update: publicProcedure
     .input(idInput.and(employerInput))
@@ -74,7 +79,10 @@ export const employersRouter = createTRPCRouter({
         .where(eq(employers.id, input.id))
         .returning();
       if (!employer) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Employer not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Employer not found.",
+        });
       }
       return employer;
     }),
@@ -85,7 +93,10 @@ export const employersRouter = createTRPCRouter({
       .where(eq(employers.id, input.id))
       .returning({ id: employers.id });
     if (!employer) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Employer not found." });
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Employer not found.",
+      });
     }
     return employer;
   }),

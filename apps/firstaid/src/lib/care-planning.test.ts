@@ -53,13 +53,35 @@ describe("care planning values", () => {
 
   it("sorts structured timing chronologically and leaves untimed care last", () => {
     const items = [
-      { timingKind: "none" as const, targetDate: null, targetMonth: null, targetSeason: null },
-      { timingKind: "date" as const, targetDate: "2027-09-15", targetMonth: null, targetSeason: null },
-      { timingKind: "season" as const, targetDate: null, targetMonth: null, targetSeason: "spring" as const },
-      { timingKind: "month" as const, targetDate: null, targetMonth: 6, targetSeason: null },
+      {
+        timingKind: "none" as const,
+        targetDate: null,
+        targetMonth: null,
+        targetSeason: null,
+      },
+      {
+        timingKind: "date" as const,
+        targetDate: "2027-09-15",
+        targetMonth: null,
+        targetSeason: null,
+      },
+      {
+        timingKind: "season" as const,
+        targetDate: null,
+        targetMonth: null,
+        targetSeason: "spring" as const,
+      },
+      {
+        timingKind: "month" as const,
+        targetDate: null,
+        targetMonth: 6,
+        targetSeason: null,
+      },
     ];
 
-    expect(items.sort((a, b) => careItemSortKey(a) - careItemSortKey(b))).toEqual([
+    expect(
+      items.sort((a, b) => careItemSortKey(a) - careItemSortKey(b)),
+    ).toEqual([
       items.find((item) => item.targetSeason === "spring"),
       items.find((item) => item.targetMonth === 6),
       items.find((item) => item.targetDate === "2027-09-15"),

@@ -1,9 +1,11 @@
 "use client";
 
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { IconCalendar, IconChevronDown, IconPlus } from "@tabler/icons-react";
-import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -30,8 +32,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "~/components/ui/sidebar";
-import { api, type RouterOutputs } from "~/trpc/react";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "~/components/ui/sidebar";
+import { api } from "~/trpc/react";
 
 type TaxYear = RouterOutputs["taxYear"]["list"][number];
 type CreateMode = "track" | "past";
@@ -61,7 +67,9 @@ export function YearSwitcher({ years }: { years: TaxYear[] }) {
   const createPast = api.taxYear.createPast.useMutation({
     onSuccess: async () => {
       setOpen(false);
-      toast.success("Past tax year added. Switch to it in the tax year menu when you are ready.");
+      toast.success(
+        "Past tax year added. Switch to it in the tax year menu when you are ready.",
+      );
       await utils.invalidate();
     },
     onError: (error) => toast.error(error.message),
@@ -85,11 +93,19 @@ export function YearSwitcher({ years }: { years: TaxYear[] }) {
         <SidebarMenuItem>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <SidebarMenuButton size="lg" className="border bg-background" aria-label="Tax year">
+              <SidebarMenuButton
+                size="lg"
+                className="bg-background border"
+                aria-label="Tax year"
+              >
                 <IconCalendar />
                 <div className="grid flex-1 text-left leading-tight">
-                  <span className="text-xs text-muted-foreground">Tax year</span>
-                  <span className="font-medium">{active?.year ?? "Choose year"}</span>
+                  <span className="text-muted-foreground text-xs">
+                    Tax year
+                  </span>
+                  <span className="font-medium">
+                    {active?.year ?? "Choose year"}
+                  </span>
                 </div>
                 <IconChevronDown className="ml-auto" />
               </SidebarMenuButton>
@@ -103,7 +119,11 @@ export function YearSwitcher({ years }: { years: TaxYear[] }) {
                   onSelect={() => setActive.mutate({ id: item.id })}
                 >
                   {item.year}
-                  {item.isActive ? <span className="ml-auto text-xs text-muted-foreground">Active</span> : null}
+                  {item.isActive ? (
+                    <span className="text-muted-foreground ml-auto text-xs">
+                      Active
+                    </span>
+                  ) : null}
                 </DropdownMenuItem>
               ))}
               <DropdownMenuSeparator />
@@ -128,12 +148,17 @@ export function YearSwitcher({ years }: { years: TaxYear[] }) {
             <div className="space-y-4 py-6">
               <div className="space-y-2">
                 <Label htmlFor="new-tax-year-mode">Purpose</Label>
-                <Select value={mode} onValueChange={(value) => setMode(value as CreateMode)}>
+                <Select
+                  value={mode}
+                  onValueChange={(value) => setMode(value as CreateMode)}
+                >
                   <SelectTrigger id="new-tax-year-mode">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="track">Start tracking this year</SelectItem>
+                    <SelectItem value="track">
+                      Start tracking this year
+                    </SelectItem>
                     <SelectItem value="past">Add a past year</SelectItem>
                   </SelectContent>
                 </Select>
@@ -152,11 +177,19 @@ export function YearSwitcher({ years }: { years: TaxYear[] }) {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
                 Cancel
               </Button>
               <Button disabled={pending}>
-                {pending ? "Creating…" : mode === "past" ? "Add past year" : "Create year"}
+                {pending
+                  ? "Creating…"
+                  : mode === "past"
+                    ? "Add past year"
+                    : "Create year"}
               </Button>
             </DialogFooter>
           </form>

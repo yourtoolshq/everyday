@@ -44,12 +44,22 @@ export function DocumentActionButtons({
         </a>
       </Button>
       {onEdit ? (
-        <Button variant="ghost" size={size} aria-label={`Edit ${title}`} onClick={onEdit}>
+        <Button
+          variant="ghost"
+          size={size}
+          aria-label={`Edit ${title}`}
+          onClick={onEdit}
+        >
           <Pencil />
         </Button>
       ) : null}
       {onDelete ? (
-        <Button variant="ghost" size={size} aria-label={`Delete ${title}`} onClick={onDelete}>
+        <Button
+          variant="ghost"
+          size={size}
+          aria-label={`Delete ${title}`}
+          onClick={onDelete}
+        >
           <Trash2 />
         </Button>
       ) : null}

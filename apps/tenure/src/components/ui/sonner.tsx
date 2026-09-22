@@ -1,5 +1,6 @@
 "use client";
 
+import type { ToasterProps } from "sonner";
 import {
   CircleCheckIcon,
   InfoIcon,
@@ -7,7 +8,7 @@ import {
   OctagonXIcon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { Toaster as Sonner, type ToasterProps } from "sonner";
+import { Toaster as Sonner } from "sonner";
 
 const Toaster = ({ ...props }: ToasterProps) => {
   return (

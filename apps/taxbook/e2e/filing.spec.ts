@@ -10,10 +10,14 @@ async function setupHousehold(page: import("@playwright/test").Page) {
   await page.getByLabel("Person 2 name").fill("Person B");
   await page.getByLabel("Starting tax year").fill("2026");
   await page.getByRole("button", { name: "Open Tax Book" }).click();
-  await expect(page.getByRole("heading", { name: "Example household" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Example household" }),
+  ).toBeVisible();
 }
 
-test("backfills a past year with NOA and protects archived tracked data", async ({ page }) => {
+test("backfills a past year with NOA and protects archived tracked data", async ({
+  page,
+}) => {
   await setupHousehold(page);
 
   await page.getByRole("button", { name: "Tax year" }).click();
@@ -57,7 +61,9 @@ test("backfills a past year with NOA and protects archived tracked data", async 
   await expect(page.getByText("archived", { exact: false })).toBeVisible();
 });
 
-test("confirms lifecycle warnings before marking a year filed", async ({ page }) => {
+test("confirms lifecycle warnings before marking a year filed", async ({
+  page,
+}) => {
   await setupHousehold(page);
 
   await page.getByRole("link", { name: "Tax Filing", exact: true }).click();
@@ -69,10 +75,14 @@ test("confirms lifecycle warnings before marking a year filed", async ({ page })
 
   await page.getByText("Lifecycle").locator("..").getByRole("combobox").click();
   await page.getByRole("option", { name: "Filed" }).click();
-  await expect(page.getByRole("heading", { name: "Change lifecycle to Filed?" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Change lifecycle to Filed?" }),
+  ).toBeVisible();
   await expect(page.getByText("still being prepared")).toBeVisible();
   await page.getByRole("button", { name: "Cancel" }).click();
-  await expect(page.getByRole("heading", { name: "Change lifecycle to Filed?" })).toHaveCount(0);
+  await expect(
+    page.getByRole("heading", { name: "Change lifecycle to Filed?" }),
+  ).toHaveCount(0);
 
   await page.getByText("Lifecycle").locator("..").getByRole("combobox").click();
   await page.getByRole("option", { name: "Filed" }).click();

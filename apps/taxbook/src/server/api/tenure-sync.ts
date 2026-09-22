@@ -1,24 +1,32 @@
 import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 
+import type { Database } from "./helpers";
+import type {
+  TenureIntegrationEmployment,
+  TenureIntegrationPaycheck,
+} from "~/lib/tenure-client";
 import { employmentDeductionSettings } from "~/domain/employment";
+import {
+  fetchTenureEmployments,
+  fetchTenureHealth,
+  fetchTenurePaychecks,
+} from "~/lib/tenure-client";
 import {
   employmentOverlapsTaxYear,
   mapTenureEmploymentInput,
   resolveTenurePersonId,
 } from "~/lib/tenure-employment";
 import {
-  fetchTenureEmployments,
-  fetchTenureHealth,
-  fetchTenurePaychecks,
-  type TenureIntegrationEmployment,
-  type TenureIntegrationPaycheck,
-} from "~/lib/tenure-client";
-import { employments, households, paycheques, people, taxItems } from "~/server/db/schema";
+  employments,
+  households,
+  paycheques,
+  people,
+  taxItems,
+} from "~/server/db/schema";
 import {
   reconcileEmploymentLinkedTaxItems,
   syncEmploymentTaxItem,
 } from "./employment-values";
-import type { Database } from "./helpers";
 
 function paycheckBelongsToTaxYear(payDate: string, taxYear: number) {
   return Number(payDate.slice(0, 4)) === taxYear;
@@ -201,7 +209,9 @@ export async function setTenurePersonMapping(
   if (input.taxbookPersonId === null) {
     delete mappings[input.tenurePersonId];
   } else {
-    const valid = householdPeople.some((person) => person.id === input.taxbookPersonId);
+    const valid = householdPeople.some(
+      (person) => person.id === input.taxbookPersonId,
+    );
     if (!valid) {
       throw new Error("Choose a valid household member.");
     }
@@ -227,10 +237,9 @@ export async function importEmploymentsFromTenure(db: Database) {
 
   let createdCount = 0;
   const tenureById = new Map(
-    (await fetchTenureEmployments(household.tenureBaseUrl)).map((employment) => [
-      employment.id,
-      employment,
-    ]),
+    (await fetchTenureEmployments(household.tenureBaseUrl)).map(
+      (employment) => [employment.id, employment],
+    ),
   );
 
   for (const item of importable) {
@@ -375,10 +384,15 @@ export async function syncTenurePaycheques(
     if (!year) continue;
 
     const fullRefresh = input.fullRefresh ?? !household.tenureLastSyncAt;
-    const remotePaychecks = await fetchTenurePaychecks(household.tenureBaseUrl, {
-      employmentId: employment.tenureEmploymentId,
-      updatedSince: fullRefresh ? undefined : household.tenureLastSyncAt ?? undefined,
-    });
+    const remotePaychecks = await fetchTenurePaychecks(
+      household.tenureBaseUrl,
+      {
+        employmentId: employment.tenureEmploymentId,
+        updatedSince: fullRefresh
+          ? undefined
+          : (household.tenureLastSyncAt ?? undefined),
+      },
+    );
 
     const yearPaychecks = remotePaychecks.filter((paycheck) =>
       paycheckBelongsToTaxYear(paycheck.payDate, year.year),
@@ -393,7 +407,10 @@ export async function syncTenurePaycheques(
           .where(eq(paycheques.tenurePaycheckId, remote.id));
 
         if (existing) {
-          await tx.update(paycheques).set(values).where(eq(paycheques.id, existing.id));
+          await tx
+            .update(paycheques)
+            .set(values)
+            .where(eq(paycheques.id, existing.id));
         } else {
           await tx.insert(paycheques).values({
             employmentId: employment.id,
@@ -406,7 +423,10 @@ export async function syncTenurePaycheques(
       if (fullRefresh) {
         const remoteIds = new Set(yearPaychecks.map((paycheck) => paycheck.id));
         const localSynced = await tx
-          .select({ id: paycheques.id, tenurePaycheckId: paycheques.tenurePaycheckId })
+          .select({
+            id: paycheques.id,
+            tenurePaycheckId: paycheques.tenurePaycheckId,
+          })
           .from(paycheques)
           .where(
             and(
@@ -416,7 +436,10 @@ export async function syncTenurePaycheques(
           );
 
         const staleIds = localSynced
-          .filter((row) => row.tenurePaycheckId && !remoteIds.has(row.tenurePaycheckId))
+          .filter(
+            (row) =>
+              row.tenurePaycheckId && !remoteIds.has(row.tenurePaycheckId),
+          )
           .map((row) => row.id);
 
         if (staleIds.length > 0) {

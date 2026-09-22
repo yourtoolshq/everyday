@@ -1,5 +1,6 @@
-import { findUploadablePeriod, type AccountLifecycle } from "~/lib/expected-periods";
+import type { AccountLifecycle } from "~/lib/expected-periods";
 import type { StatementFrequency } from "~/lib/statement-frequency";
+import { findUploadablePeriod } from "~/lib/expected-periods";
 
 export type StatementUploadAccount = AccountLifecycle & {
   statementFrequency: StatementFrequency;
@@ -11,7 +12,10 @@ export function validateStatementPeriod(
   asOfDate: Date = new Date(),
 ) {
   if (account.statementFrequency === "none") {
-    return { ok: false as const, error: "This account does not expect statements." };
+    return {
+      ok: false as const,
+      error: "This account does not expect statements.",
+    };
   }
 
   const period = findUploadablePeriod(
@@ -21,7 +25,10 @@ export function validateStatementPeriod(
     asOfDate,
   );
   if (!period) {
-    return { ok: false as const, error: "Choose a valid statement period for this account." };
+    return {
+      ok: false as const,
+      error: "Choose a valid statement period for this account.",
+    };
   }
 
   return { ok: true as const, period };

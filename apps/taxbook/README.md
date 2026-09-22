@@ -16,18 +16,18 @@ The initial focus is Canadian personal income tax for my household.
 
 That includes things like:
 
-* income for each household member
-* individual paycheques
-* gross pay, tax withheld, CPP, EI, and net pay
-* expected vs actual vs projected annual income
-* deductions, credits, contributions, and other tax-relevant items
-* expenses where I need to retain supporting records
-* official tax documents such as T4s and RRSP/FHSA slips
-* estimated refund or amount owing
-* final tax filing information
-* refunds or payments
-* CRA assessment / Notice of Assessment
-* completed tax years that can be confidently referenced later
+- income for each household member
+- individual paycheques
+- gross pay, tax withheld, CPP, EI, and net pay
+- expected vs actual vs projected annual income
+- deductions, credits, contributions, and other tax-relevant items
+- expenses where I need to retain supporting records
+- official tax documents such as T4s and RRSP/FHSA slips
+- estimated refund or amount owing
+- final tax filing information
+- refunds or payments
+- CRA assessment / Notice of Assessment
+- completed tax years that can be confidently referenced later
 
 ## Current approach
 
@@ -56,18 +56,18 @@ I may also share parts of the process through blog posts, YouTube videos, or liv
 
 ## Project docs
 
-* [`PRODUCT.md`](./docs/product.md) — what the app is trying to solve
-* [`DOMAIN.md`](./docs/domain.md) — domain language and relationships
-* [`ROADMAP.md`](./docs/roadmap.md) — delivery phases
-* [`intentional-exclusions.md`](./docs/intentional-exclusions.md) — features deliberately not built
-* [`AGENTS.md`](./AGENTS.md) — guidance for AI agents working in this repository
+- [`PRODUCT.md`](./docs/product.md) — what the app is trying to solve
+- [`DOMAIN.md`](./docs/domain.md) — domain language and relationships
+- [`ROADMAP.md`](./docs/roadmap.md) — delivery phases
+- [`intentional-exclusions.md`](./docs/intentional-exclusions.md) — features deliberately not built
+- [`AGENTS.md`](./AGENTS.md) — guidance for AI agents working in this repository
 
 ## Contributing
 
 Ideas and bug reports are welcome.
 
-* For feature ideas, questions, or bugs, create an **Issue**.
-* For code or documentation contributions, open a **Pull Request**.
+- For feature ideas, questions, or bugs, create an **Issue**.
+- For code or documentation contributions, open a **Pull Request**.
 
 Because this project is primarily driven by a real personal workflow, proposed features may be kept small, deferred, or declined if they push the app away from that focus.
 

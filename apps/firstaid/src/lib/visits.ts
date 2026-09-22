@@ -76,8 +76,10 @@ export function deriveCareProgress(input: {
 
   let progress: CareProgressState = "planned";
   if (input.notPursuingAt) progress = "not_pursuing";
-  else if (completedVisitCount >= input.targetVisitCount) progress = "completed";
-  else if (completedVisitCount > 0 || scheduledVisitCount > 0) progress = "in_progress";
+  else if (completedVisitCount >= input.targetVisitCount)
+    progress = "completed";
+  else if (completedVisitCount > 0 || scheduledVisitCount > 0)
+    progress = "in_progress";
 
   return { progress, completedVisitCount, scheduledVisitCount };
 }

@@ -1,5 +1,4 @@
 import { basename } from "node:path";
-
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -42,17 +41,21 @@ export async function POST(
     title: form.get("title"),
     type: form.get("type"),
     claimId:
-      typeof claimIdValue === "string" && claimIdValue.trim() && claimIdValue !== "none"
+      typeof claimIdValue === "string" &&
+      claimIdValue.trim() &&
+      claimIdValue !== "none"
         ? claimIdValue
         : null,
   });
-  if (!metadata.success) return errorResponse("Choose a type and enter a title.", 400);
+  if (!metadata.success)
+    return errorResponse("Choose a type and enter a title.", 400);
 
   const file = form.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return errorResponse("Choose a non-empty file.", 400);
   }
-  if (file.size > maxDocumentBytes) return errorResponse("The file must be 25 MB or smaller.", 413);
+  if (file.size > maxDocumentBytes)
+    return errorResponse("The file must be 25 MB or smaller.", 413);
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const detected = detectDocumentFile(bytes);

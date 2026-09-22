@@ -69,7 +69,9 @@ export function PersonFormDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>{mode === "create" ? "Add person" : "Edit person"}</SheetTitle>
+          <SheetTitle>
+            {mode === "create" ? "Add person" : "Edit person"}
+          </SheetTitle>
           <SheetDescription>
             {mode === "create"
               ? "Add a household member whose employment records you want to keep."
@@ -106,7 +108,11 @@ export function PersonFormDrawer({
           </div>
 
           <SheetFooter className="px-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>

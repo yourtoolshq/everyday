@@ -3,8 +3,8 @@ import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { discussionMetadataSchema } from "~/lib/discussions";
-import { discussions } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { discussions } from "~/server/db/schema";
 
 const idInput = z.object({ id: z.string().uuid() });
 const employmentFilter = z.object({ employmentId: z.string().uuid() });
@@ -22,13 +22,15 @@ const publicDiscussionFields = {
 };
 
 export const discussionsRouter = createTRPCRouter({
-  listByEmployment: publicProcedure.input(employmentFilter).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select(publicDiscussionFields)
-      .from(discussions)
-      .where(eq(discussions.employmentId, input.employmentId))
-      .orderBy(desc(discussions.discussionDate), desc(discussions.createdAt));
-  }),
+  listByEmployment: publicProcedure
+    .input(employmentFilter)
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select(publicDiscussionFields)
+        .from(discussions)
+        .where(eq(discussions.employmentId, input.employmentId))
+        .orderBy(desc(discussions.discussionDate), desc(discussions.createdAt));
+    }),
 
   create: publicProcedure
     .input(employmentFilter.and(discussionMetadataSchema))
@@ -60,7 +62,11 @@ export const discussionsRouter = createTRPCRouter({
         })
         .where(eq(discussions.id, input.id))
         .returning(publicDiscussionFields);
-      if (!discussion) throw new TRPCError({ code: "NOT_FOUND", message: "Discussion not found." });
+      if (!discussion)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Discussion not found.",
+        });
       return discussion;
     }),
 
@@ -69,7 +75,11 @@ export const discussionsRouter = createTRPCRouter({
       .delete(discussions)
       .where(eq(discussions.id, input.id))
       .returning({ id: discussions.id });
-    if (!discussion) throw new TRPCError({ code: "NOT_FOUND", message: "Discussion not found." });
+    if (!discussion)
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Discussion not found.",
+      });
     return discussion;
   }),
 });

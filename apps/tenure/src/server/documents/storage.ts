@@ -6,12 +6,16 @@ import { env } from "~/env";
 const storageKeyPattern = /^[0-9a-f-]{36}\.(pdf|jpg|png|webp|heic|eml)$/;
 
 export function documentPath(storageKey: string) {
-  if (!storageKeyPattern.test(storageKey) || basename(storageKey) !== storageKey) {
+  if (
+    !storageKeyPattern.test(storageKey) ||
+    basename(storageKey) !== storageKey
+  ) {
     throw new Error("Invalid document storage key");
   }
   const root = resolve(env.DOCUMENTS_DIR);
   const path = resolve(root, storageKey);
-  if (!path.startsWith(`${root}/`)) throw new Error("Invalid document storage path");
+  if (!path.startsWith(`${root}/`))
+    throw new Error("Invalid document storage path");
   return path;
 }
 
@@ -41,7 +45,10 @@ export async function stageDocumentsForDeletion(storageKeys: string[]) {
 
   try {
     for (const storageKey of storageKeys) {
-      const stagedPath = resolve(trashDirectory, `${crypto.randomUUID()}.deleted`);
+      const stagedPath = resolve(
+        trashDirectory,
+        `${crypto.randomUUID()}.deleted`,
+      );
       try {
         await rename(documentPath(storageKey), stagedPath);
         staged.push({ storageKey, stagedPath });
@@ -69,6 +76,8 @@ export async function restoreStagedDocuments(staged: StagedDocument[]) {
 
 export async function discardStagedDocuments(staged: StagedDocument[]) {
   await Promise.allSettled(
-    staged.map((item) => (item.stagedPath ? unlink(item.stagedPath) : Promise.resolve())),
+    staged.map((item) =>
+      item.stagedPath ? unlink(item.stagedPath) : Promise.resolve(),
+    ),
   );
 }

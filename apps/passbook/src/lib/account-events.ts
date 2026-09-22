@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { accountTermsSchema } from "~/lib/account-terms";
 import type { AccountDocumentType } from "~/lib/documents";
+import { accountTermsSchema } from "~/lib/account-terms";
 
 export const accountEventTypes = [
   "opening",
@@ -37,7 +37,9 @@ export function activityAttachmentDocumentType(
   return "financial_correspondence";
 }
 
-export function defaultActivityDocumentType(activityType: AccountEventType): AccountDocumentType {
+export function defaultActivityDocumentType(
+  activityType: AccountEventType,
+): AccountDocumentType {
   if (activityType === "opening") return "opening_document";
   return "financial_correspondence";
 }

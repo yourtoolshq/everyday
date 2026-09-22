@@ -11,7 +11,11 @@ import {
 } from "~/domain/employment";
 import { employments, paycheques, people } from "~/server/db/schema";
 import { syncEmploymentTaxItem } from "../employment-values";
-import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "../helpers";
+import {
+  requireActiveYear,
+  requireEditableActiveYear,
+  requireHousehold,
+} from "../helpers";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 async function requireEmployment(
@@ -106,7 +110,11 @@ export const paychequeRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const household = await requireHousehold(ctx.db);
       const year = await requireEditableActiveYear(ctx.db, household.id);
-      const employment = await requireEmployment(ctx.db, input.employmentId, year.id);
+      const employment = await requireEmployment(
+        ctx.db,
+        input.employmentId,
+        year.id,
+      );
       validatePayDate(input.payDate, year.year);
       return ctx.db.transaction(async (tx) => {
         const [paycheque] = await tx
@@ -122,7 +130,11 @@ export const paychequeRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const household = await requireHousehold(ctx.db);
       const year = await requireEditableActiveYear(ctx.db, household.id);
-      const employment = await requireEmployment(ctx.db, input.employmentId, year.id);
+      const employment = await requireEmployment(
+        ctx.db,
+        input.employmentId,
+        year.id,
+      );
       validatePayDate(input.payDate, year.year);
       const { id, ...values } = input;
       return ctx.db.transaction(async (tx) => {
@@ -145,7 +157,8 @@ export const paychequeRouter = createTRPCRouter({
         if (existing.syncedFromTenure) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "Synced paycheques are read-only in Tax Book. Edit them in Tenure.",
+            message:
+              "Synced paycheques are read-only in Tax Book. Edit them in Tenure.",
           });
         }
         const [paycheque] = await tx
@@ -188,7 +201,8 @@ export const paychequeRouter = createTRPCRouter({
         if (existing.syncedFromTenure) {
           throw new TRPCError({
             code: "BAD_REQUEST",
-            message: "Synced paycheques are read-only in Tax Book. Delete them in Tenure.",
+            message:
+              "Synced paycheques are read-only in Tax Book. Delete them in Tenure.",
           });
         }
         await tx.delete(paycheques).where(eq(paycheques.id, input.id));

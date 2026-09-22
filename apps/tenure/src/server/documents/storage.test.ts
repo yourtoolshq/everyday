@@ -12,10 +12,13 @@ describe("document storage paths", () => {
     );
   });
 
-  it.each(["../private.pdf", "receipt.pdf", "123e4567-e89b-12d3-a456-426614174000.exe"])(
-    "rejects unsafe or non-generated keys",
-    (storageKey) => {
-      expect(() => documentPath(storageKey)).toThrow("Invalid document storage key");
-    },
-  );
+  it.each([
+    "../private.pdf",
+    "receipt.pdf",
+    "123e4567-e89b-12d3-a456-426614174000.exe",
+  ])("rejects unsafe or non-generated keys", (storageKey) => {
+    expect(() => documentPath(storageKey)).toThrow(
+      "Invalid document storage key",
+    );
+  });
 });

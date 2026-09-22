@@ -1,5 +1,7 @@
-import { getActiveAttachment } from "~/server/api/record-values";
+import { TRPCError } from "@trpc/server";
+
 import { recordErrorResponse } from "~/server/api/record-http";
+import { getActiveAttachment } from "~/server/api/record-values";
 import { db } from "~/server/db";
 
 function contentDisposition(fileName: string, download: boolean) {
@@ -18,7 +20,10 @@ export async function GET(
   try {
     const id = Number((await context.params).id);
     if (!Number.isSafeInteger(id) || id <= 0) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid Record ID." });
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Invalid Record ID.",
+      });
     }
     const attachment = await getActiveAttachment(db, id);
     const download = new URL(request.url).searchParams.get("download") === "1";
@@ -26,7 +31,10 @@ export async function GET(
       headers: {
         "Content-Type": attachment.mimeType,
         "Content-Length": String(attachment.sizeBytes),
-        "Content-Disposition": contentDisposition(attachment.fileName, download),
+        "Content-Disposition": contentDisposition(
+          attachment.fileName,
+          download,
+        ),
         "X-Content-Type-Options": "nosniff",
         "Cache-Control": "private, no-store",
       },
@@ -35,4 +43,3 @@ export async function GET(
     return recordErrorResponse(error);
   }
 }
-import { TRPCError } from "@trpc/server";

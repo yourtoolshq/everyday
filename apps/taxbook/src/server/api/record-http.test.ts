@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { MAX_ATTACHMENT_BYTES } from "~/domain/record";
-import {
-  parseCreateRecordForm,
-  parseUpdateRecordForm,
-} from "./record-http";
+import { parseCreateRecordForm, parseUpdateRecordForm } from "./record-http";
 
 function validForm() {
   const form = new FormData();

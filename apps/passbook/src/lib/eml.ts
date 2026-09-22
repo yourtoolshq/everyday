@@ -20,14 +20,21 @@ type PostalAddress = {
 function formatAddress(address?: PostalAddress) {
   if (!address) return null;
   if (address.address) {
-    return address.name ? `${address.name} <${address.address}>` : address.address;
+    return address.name
+      ? `${address.name} <${address.address}>`
+      : address.address;
   }
   return address.name || null;
 }
 
 function formatAddresses(addresses?: PostalAddress[]) {
   if (!addresses?.length) return null;
-  return addresses.map((address) => formatAddress(address)).filter(Boolean).join(", ") || null;
+  return (
+    addresses
+      .map((address) => formatAddress(address))
+      .filter(Boolean)
+      .join(", ") || null
+  );
 }
 
 export async function parseEml(raw: string | Uint8Array): Promise<ParsedEml> {
@@ -57,5 +64,7 @@ export function listParsedEmlAddressFields(email: ParsedEml) {
     { label: "Cc", value: email.cc },
     { label: "Bcc", value: email.bcc },
     { label: "Reply-To", value: email.replyTo },
-  ].filter((field): field is { label: string; value: string } => Boolean(field.value));
+  ].filter((field): field is { label: string; value: string } =>
+    Boolean(field.value),
+  );
 }

@@ -1,15 +1,10 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  canDeriveStatementPeriods,
-  deriveAllUploadablePeriods,
-  suggestDefaultPeriodKey,
-} from "~/lib/expected-periods";
-import { suggestDocumentTitle } from "~/lib/documents";
-import { uploadStatement } from "~/lib/upload-statement";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -31,7 +26,14 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { suggestDocumentTitle } from "~/lib/documents";
+import {
+  canDeriveStatementPeriods,
+  deriveAllUploadablePeriods,
+  suggestDefaultPeriodKey,
+} from "~/lib/expected-periods";
+import { uploadStatement } from "~/lib/upload-statement";
+import { api } from "~/trpc/react";
 
 type Account = RouterOutputs["accounts"]["list"][number];
 
@@ -64,7 +66,8 @@ export function StatementUploadSheet({
 }: StatementUploadSheetProps) {
   const utils = api.useUtils();
   const accounts = api.accounts.list.useQuery();
-  const statementDocuments = api.documents.statementDocumentsByAccount.useQuery();
+  const statementDocuments =
+    api.documents.statementDocumentsByAccount.useQuery();
 
   const uploadableAccounts = useMemo(
     () => (accounts.data ?? []).filter(accountSupportsStatements),
@@ -79,7 +82,9 @@ export function StatementUploadSheet({
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  const selectedAccount = uploadableAccounts.find((account) => account.id === accountId);
+  const selectedAccount = uploadableAccounts.find(
+    (account) => account.id === accountId,
+  );
   const uploadedPeriodKeys = useMemo(() => {
     return new Set(Object.keys(statementDocuments.data?.[accountId] ?? {}));
   }, [accountId, statementDocuments.data]);
@@ -125,11 +130,17 @@ export function StatementUploadSheet({
 
   useEffect(() => {
     if (!open || !selectedAccount) return;
-    if (initialPeriodKey && uploadablePeriods.some((period) => period.key === initialPeriodKey)) {
+    if (
+      initialPeriodKey &&
+      uploadablePeriods.some((period) => period.key === initialPeriodKey)
+    ) {
       setPeriodKey(initialPeriodKey);
       return;
     }
-    const suggested = suggestDefaultPeriodKey(uploadablePeriods, uploadedPeriodKeys);
+    const suggested = suggestDefaultPeriodKey(
+      uploadablePeriods,
+      uploadedPeriodKeys,
+    );
     setPeriodKey(suggested ?? "");
   }, [
     initialPeriodKey,
@@ -200,7 +211,8 @@ export function StatementUploadSheet({
           <SheetHeader>
             <SheetTitle>Upload statement</SheetTitle>
             <SheetDescription>
-              Link a PDF or image to an expected statement period for an account.
+              Link a PDF or image to an expected statement period for an
+              account.
             </SheetDescription>
           </SheetHeader>
 
@@ -214,7 +226,9 @@ export function StatementUploadSheet({
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
                 required
               />
-              <p className="text-xs text-muted-foreground">PDF, JPEG, PNG, WebP, or HEIC up to 25 MB.</p>
+              <p className="text-muted-foreground text-xs">
+                PDF, JPEG, PNG, WebP, or HEIC up to 25 MB.
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -236,8 +250,9 @@ export function StatementUploadSheet({
                 </SelectContent>
               </Select>
               {uploadableAccounts.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Add an account with an opened date and statement schedule before uploading.
+                <p className="text-muted-foreground text-sm">
+                  Add an account with an opened date and statement schedule
+                  before uploading.
                 </p>
               ) : null}
             </div>
@@ -263,7 +278,9 @@ export function StatementUploadSheet({
                           disabled={uploadedPeriodKeys.has(period.key)}
                         >
                           {period.label}
-                          {uploadedPeriodKeys.has(period.key) ? " · Uploaded" : ""}
+                          {uploadedPeriodKeys.has(period.key)
+                            ? " · Uploaded"
+                            : ""}
                         </SelectItem>
                       ))}
                     </SelectGroup>
@@ -297,12 +314,18 @@ export function StatementUploadSheet({
           </div>
 
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={uploading || uploadableAccounts.length === 0 || !selectedAccount}
+              disabled={
+                uploading || uploadableAccounts.length === 0 || !selectedAccount
+              }
             >
               {uploading ? "Uploading…" : "Save statement"}
             </Button>

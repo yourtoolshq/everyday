@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { sumCents } from "~/lib/money";
 import { planYearSchema } from "~/lib/care-planning";
+import { sumCents } from "~/lib/money";
 
 export const benefitCoverageScopes = ["person", "household"] as const;
 export const claimStatuses = ["submitted", "paid", "denied"] as const;
@@ -91,7 +91,10 @@ export function visitCalendarYear(startsAt: string): number {
   return new Date(startsAt).getFullYear();
 }
 
-export function benefitUsedCents(openingUsedCents: number, paidClaimAmounts: number[]): number {
+export function benefitUsedCents(
+  openingUsedCents: number,
+  paidClaimAmounts: number[],
+): number {
   return openingUsedCents + sumCents(paidClaimAmounts);
 }
 
@@ -107,7 +110,9 @@ export function benefitRemainingCents(
 
 export function benefitPendingCents(claims: ClaimLike[]): number {
   return sumCents(
-    claims.filter((claim) => claim.status === "submitted").map((claim) => claim.amountCents),
+    claims
+      .filter((claim) => claim.status === "submitted")
+      .map((claim) => claim.amountCents),
   );
 }
 
@@ -122,7 +127,9 @@ export function visitFinancials(
   if (costCents === null) return null;
 
   const reimbursedCents = sumCents(
-    claims.filter((claim) => claim.status === "paid").map((claim) => claim.amountCents),
+    claims
+      .filter((claim) => claim.status === "paid")
+      .map((claim) => claim.amountCents),
   );
   const pendingCents = benefitPendingCents(claims);
 
@@ -158,7 +165,9 @@ export function careItemFinancials(
     if (visit.costCents === null) continue;
     const claims = claimsByVisit.get(visit.id) ?? [];
     reimbursedCents += sumCents(
-      claims.filter((claim) => claim.status === "paid").map((claim) => claim.amountCents),
+      claims
+        .filter((claim) => claim.status === "paid")
+        .map((claim) => claim.amountCents),
     );
   }
 
@@ -170,7 +179,10 @@ export function careItemFinancials(
   };
 }
 
-export function isBenefitEligible(benefit: BenefitEligibility, visit: VisitEligibility): boolean {
+export function isBenefitEligible(
+  benefit: BenefitEligibility,
+  visit: VisitEligibility,
+): boolean {
   if (benefit.planYear !== visitCalendarYear(visit.startsAt)) return false;
   if (benefit.coverageScope === "household") return true;
   return benefit.personId === visit.personId;
@@ -178,7 +190,9 @@ export function isBenefitEligible(benefit: BenefitEligibility, visit: VisitEligi
 
 export function paidClaimsTotal(claims: ClaimLike[]): number {
   return sumCents(
-    claims.filter((claim) => claim.status === "paid").map((claim) => claim.amountCents),
+    claims
+      .filter((claim) => claim.status === "paid")
+      .map((claim) => claim.amountCents),
   );
 }
 
@@ -188,7 +202,9 @@ export function validateClaimAllocation(
   nextClaim: ClaimLike,
   excludeIndex?: number,
 ): string | null {
-  const otherClaims = existingClaims.filter((_, index) => index !== excludeIndex);
+  const otherClaims = existingClaims.filter(
+    (_, index) => index !== excludeIndex,
+  );
   const hypothetical = [...otherClaims, nextClaim];
   const paidTotal = paidClaimsTotal(hypothetical);
   if (paidTotal > visitCostCents) {

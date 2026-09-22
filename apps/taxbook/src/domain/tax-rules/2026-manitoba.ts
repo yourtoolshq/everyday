@@ -9,7 +9,13 @@ export const rules2026Manitoba = {
     "https://www.gov.mb.ca/finance/personal/pcredits.html",
   ],
   federal: {
-    brackets: [[5_852_300, 1400], [11_704_500, 2050], [18_144_000, 2600], [25_848_200, 2900], [Number.MAX_SAFE_INTEGER, 3300]] as const,
+    brackets: [
+      [5_852_300, 1400],
+      [11_704_500, 2050],
+      [18_144_000, 2600],
+      [25_848_200, 2900],
+      [Number.MAX_SAFE_INTEGER, 3300],
+    ] as const,
     basicPersonalMaximumCents: 1_645_200,
     basicPersonalMinimumCents: 1_482_900,
     basicPersonalPhaseStartCents: 18_144_000,
@@ -19,7 +25,11 @@ export const rules2026Manitoba = {
     creditRateBps: 1400,
   },
   manitoba: {
-    brackets: [[4_700_000, 1080], [10_000_000, 1275], [Number.MAX_SAFE_INTEGER, 1740]] as const,
+    brackets: [
+      [4_700_000, 1080],
+      [10_000_000, 1275],
+      [Number.MAX_SAFE_INTEGER, 1740],
+    ] as const,
     basicPersonalMaximumCents: 1_578_000,
     basicPersonalPhaseStartCents: 20_000_000,
     basicPersonalPhaseEndCents: 40_000_000,
@@ -42,5 +52,9 @@ export const rules2026Manitoba = {
     selfEmployedFirstAdditionalRateBps: 200,
     selfEmployedSecondAdditionalRateBps: 800,
   },
-  ei: { maximumInsurableCents: 6_890_000, rateBps: 163, maximumPremiumCents: 112_307 },
+  ei: {
+    maximumInsurableCents: 6_890_000,
+    rateBps: 163,
+    maximumPremiumCents: 112_307,
+  },
 } as const;

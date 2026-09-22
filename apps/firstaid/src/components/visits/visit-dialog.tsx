@@ -1,9 +1,12 @@
 "use client";
 
-import { CalendarPlus, Plus } from "lucide-react";
+import type { FormEvent, ReactNode } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { CalendarPlus, Plus } from "lucide-react";
 
+import type { VisitStatus } from "~/lib/visits";
+import type { RouterInputs, RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -26,8 +29,8 @@ import {
 import { Textarea } from "~/components/ui/textarea";
 import { toDateTimeLocalValue } from "~/lib/date-time";
 import { formatCents, parseDollarsToCents } from "~/lib/money";
-import { visitStatusLabels, visitStatuses, type VisitStatus } from "~/lib/visits";
-import { api, type RouterInputs, type RouterOutputs } from "~/trpc/react";
+import { visitStatuses, visitStatusLabels } from "~/lib/visits";
+import { api } from "~/trpc/react";
 
 type VisitsOverview = RouterOutputs["visits"]["overview"];
 type Visit = VisitsOverview["visits"][number];
@@ -42,7 +45,9 @@ function nullableText(value: FormDataEntryValue | null) {
 }
 
 function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong. Please try again.";
+  return error instanceof Error
+    ? error.message
+    : "Something went wrong. Please try again.";
 }
 
 function defaultAppointmentTime() {
@@ -83,14 +88,19 @@ export function VisitDialog({
   const setOpen = controlledOnOpenChange ?? setInternalOpen;
   const overview = api.visits.overview.useQuery(undefined, { enabled: open });
   const data = overview.data;
-  const initialPersonId = visit?.personId ?? defaultPersonId ?? data?.people[0]?.id ?? "";
+  const initialPersonId =
+    visit?.personId ?? defaultPersonId ?? data?.people[0]?.id ?? "";
   const [personId, setPersonId] = useState(initialPersonId);
-  const [careItemId, setCareItemId] = useState(visit?.careItemId ?? defaultCareItemId ?? "none");
+  const [careItemId, setCareItemId] = useState(
+    visit?.careItemId ?? defaultCareItemId ?? "none",
+  );
   const [providerId, setProviderId] = useState(visit?.providerId ?? "none");
   const [organizationId, setOrganizationId] = useState(
     visit?.careOrganizationId ?? "none",
   );
-  const [status, setStatus] = useState<VisitStatus>(visit?.status ?? defaultStatus);
+  const [status, setStatus] = useState<VisitStatus>(
+    visit?.status ?? defaultStatus,
+  );
   const [error, setError] = useState<string>();
 
   const effectivePersonId = personId || data?.people[0]?.id || "";
@@ -140,13 +150,18 @@ export function VisitDialog({
 
   function selectProvider(value: string) {
     setProviderId(value);
-    const provider = data?.providers.find((candidate) => candidate.id === value);
-    if (provider?.careOrganizationId) setOrganizationId(provider.careOrganizationId);
+    const provider = data?.providers.find(
+      (candidate) => candidate.id === value,
+    );
+    if (provider?.careOrganizationId)
+      setOrganizationId(provider.careOrganizationId);
   }
 
   function selectPerson(value: string) {
     setPersonId(value);
-    if (data?.careItems.find((item) => item.id === careItemId)?.personId !== value) {
+    if (
+      data?.careItems.find((item) => item.id === careItemId)?.personId !== value
+    ) {
       setCareItemId("none");
     }
   }
@@ -171,20 +186,31 @@ export function VisitDialog({
       )}
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{visit ? "Edit visit" : defaultStatus === "completed" ? "Record visit" : "Schedule visit"}</DialogTitle>
+          <DialogTitle>
+            {visit
+              ? "Edit visit"
+              : defaultStatus === "completed"
+                ? "Record visit"
+                : "Schedule visit"}
+          </DialogTitle>
           <DialogDescription>
-            Record the actual healthcare interaction. Link it to a care goal when it contributes to one.
+            Record the actual healthcare interaction. Link it to a care goal
+            when it contributes to one.
           </DialogDescription>
         </DialogHeader>
         {!data ? (
-          <p className="py-6 text-sm text-muted-foreground">Loading visit details…</p>
+          <p className="text-muted-foreground py-6 text-sm">
+            Loading visit details…
+          </p>
         ) : data.people.length === 0 ? (
-          <p className="py-6 text-sm text-muted-foreground">Add a household member before recording visits.</p>
+          <p className="text-muted-foreground py-6 text-sm">
+            Add a household member before recording visits.
+          </p>
         ) : data.providers.length === 0 && data.organizations.length === 0 ? (
           <div className="rounded-lg border border-dashed p-6 text-center">
-            <CalendarPlus className="mx-auto mb-3 size-6 text-muted-foreground" />
+            <CalendarPlus className="text-muted-foreground mx-auto mb-3 size-6" />
             <p className="font-medium">Add a care provider first</p>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-sm">
               A visit needs a provider or care organization for its history.
             </p>
             <Button asChild className="mt-4" variant="outline">
@@ -195,7 +221,9 @@ export function VisitDialog({
           <form className="space-y-5" onSubmit={submit}>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor={`visit-title-${visit?.id ?? "new"}`}>Visit title or purpose</Label>
+                <Label htmlFor={`visit-title-${visit?.id ?? "new"}`}>
+                  Visit title or purpose
+                </Label>
                 <Input
                   id={`visit-title-${visit?.id ?? "new"}`}
                   name="title"
@@ -210,21 +238,33 @@ export function VisitDialog({
                 label="Household member"
                 value={effectivePersonId}
                 onValueChange={selectPerson}
-                options={data.people.map((person) => ({ value: person.id, label: person.displayName }))}
+                options={data.people.map((person) => ({
+                  value: person.id,
+                  label: person.displayName,
+                }))}
               />
               <VisitSelect
                 label="Status"
                 value={status}
                 onValueChange={(value) => setStatus(value as VisitStatus)}
-                options={visitStatuses.map((value) => ({ value, label: visitStatusLabels[value] }))}
+                options={visitStatuses.map((value) => ({
+                  value,
+                  label: visitStatusLabels[value],
+                }))}
               />
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor={`visit-start-${visit?.id ?? "new"}`}>Appointment date and time</Label>
+                <Label htmlFor={`visit-start-${visit?.id ?? "new"}`}>
+                  Appointment date and time
+                </Label>
                 <Input
                   id={`visit-start-${visit?.id ?? "new"}`}
                   name="startsAt"
                   type="datetime-local"
-                  defaultValue={visit ? toDateTimeLocalValue(visit.startsAt) : defaultAppointmentTime()}
+                  defaultValue={
+                    visit
+                      ? toDateTimeLocalValue(visit.startsAt)
+                      : defaultAppointmentTime()
+                  }
                   required
                 />
               </div>
@@ -246,26 +286,39 @@ export function VisitDialog({
                 onValueChange={selectProvider}
                 options={[
                   { value: "none", label: "No named provider" },
-                  ...data.providers.map((provider) => ({ value: provider.id, label: provider.name })),
+                  ...data.providers.map((provider) => ({
+                    value: provider.id,
+                    label: provider.name,
+                  })),
                 ]}
               />
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor={`visit-care-item-${visit?.id ?? "new"}`}>Care goal</Label>
+                <Label htmlFor={`visit-care-item-${visit?.id ?? "new"}`}>
+                  Care goal
+                </Label>
                 <Select value={careItemId} onValueChange={setCareItemId}>
-                  <SelectTrigger id={`visit-care-item-${visit?.id ?? "new"}`} className="w-full">
+                  <SelectTrigger
+                    id={`visit-care-item-${visit?.id ?? "new"}`}
+                    className="w-full"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No linked care goal</SelectItem>
                     {availableItems.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>{item.title}</SelectItem>
+                      <SelectItem key={item.id} value={item.id}>
+                        {item.title}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor={`visit-cost-${visit?.id ?? "new"}`}>
-                  Total cost <span className="font-normal text-muted-foreground">(optional)</span>
+                  Total cost{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (optional)
+                  </span>
                 </Label>
                 <Input
                   id={`visit-cost-${visit?.id ?? "new"}`}
@@ -273,12 +326,19 @@ export function VisitDialog({
                   inputMode="decimal"
                   placeholder="e.g. 110.00"
                   defaultValue={
-                    visit?.costCents != null ? formatCents(visit.costCents).replace("$", "") : ""
+                    visit?.costCents != null
+                      ? formatCents(visit.costCents).replace("$", "")
+                      : ""
                   }
                 />
               </div>
               <div className="space-y-2 sm:col-span-2">
-                <Label htmlFor={`visit-notes-${visit?.id ?? "new"}`}>Notes <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                <Label htmlFor={`visit-notes-${visit?.id ?? "new"}`}>
+                  Notes{" "}
+                  <span className="text-muted-foreground font-normal">
+                    (optional)
+                  </span>
+                </Label>
                 <Textarea
                   id={`visit-notes-${visit?.id ?? "new"}`}
                   name="notes"
@@ -289,9 +349,12 @@ export function VisitDialog({
                 />
               </div>
             </div>
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
+            {error ? <p className="text-destructive text-sm">{error}</p> : null}
             <DialogFooter>
-              <Button type="submit" disabled={createVisit.isPending || updateVisit.isPending}>
+              <Button
+                type="submit"
+                disabled={createVisit.isPending || updateVisit.isPending}
+              >
                 {createVisit.isPending || updateVisit.isPending
                   ? "Saving…"
                   : visit
@@ -324,10 +387,14 @@ function VisitSelect({
     <div className="space-y-2">
       <Label htmlFor={id}>{label}</Label>
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger id={id} className="w-full"><SelectValue /></SelectTrigger>
+        <SelectTrigger id={id} className="w-full">
+          <SelectValue />
+        </SelectTrigger>
         <SelectContent>
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>

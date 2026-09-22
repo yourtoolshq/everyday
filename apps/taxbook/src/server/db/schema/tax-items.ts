@@ -11,8 +11,8 @@ import {
   itemStatuses,
   itemTypes,
   ownerKinds,
-  valueSources,
   taxTreatments,
+  valueSources,
 } from "~/domain/tax-item";
 import { people } from "./people";
 import { timestamps } from "./shared";

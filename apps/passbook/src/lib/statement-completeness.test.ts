@@ -36,7 +36,12 @@ describe("deriveStatementCompleteness", () => {
     closedDate: null,
     status: "active" as const,
   };
-  const periods = deriveExpectedPeriodsForYear(lifecycle, "monthly", 2026, asOf);
+  const periods = deriveExpectedPeriodsForYear(
+    lifecycle,
+    "monthly",
+    2026,
+    asOf,
+  );
 
   it("maps timing and uploads to completeness states", () => {
     expect(deriveStatementCompleteness(periods[0]!, true)).toBe("complete");
@@ -46,16 +51,24 @@ describe("deriveStatementCompleteness", () => {
   });
 
   it("marks missing periods as not applicable when an exception exists", () => {
-    expect(deriveStatementCompleteness(periods[2]!, false, true)).toBe("not_applicable");
+    expect(deriveStatementCompleteness(periods[2]!, false, true)).toBe(
+      "not_applicable",
+    );
   });
 
   it("prefers uploaded statements over exceptions", () => {
-    expect(deriveStatementCompleteness(periods[2]!, true, true)).toBe("complete");
+    expect(deriveStatementCompleteness(periods[2]!, true, true)).toBe(
+      "complete",
+    );
   });
 
   it("ignores exceptions on waiting or future periods", () => {
-    expect(deriveStatementCompleteness(periods[8]!, false, true)).toBe("waiting");
-    expect(deriveStatementCompleteness(periods[9]!, false, true)).toBe("future");
+    expect(deriveStatementCompleteness(periods[8]!, false, true)).toBe(
+      "waiting",
+    );
+    expect(deriveStatementCompleteness(periods[9]!, false, true)).toBe(
+      "future",
+    );
   });
 });
 
@@ -161,10 +174,16 @@ describe("buildMissingStatements", () => {
     );
 
     expect(
-      missing.some((item) => item.accountId === "account-1" && item.periodKey === "2026-03"),
+      missing.some(
+        (item) =>
+          item.accountId === "account-1" && item.periodKey === "2026-03",
+      ),
     ).toBe(false);
     expect(
-      missing.some((item) => item.accountId === "account-1" && item.periodKey === "2026-07"),
+      missing.some(
+        (item) =>
+          item.accountId === "account-1" && item.periodKey === "2026-07",
+      ),
     ).toBe(true);
   });
 });
