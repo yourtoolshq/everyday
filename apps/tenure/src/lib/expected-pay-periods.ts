@@ -1,10 +1,7 @@
 import type { PayFrequency } from "~/lib/pay-frequency";
 
 export type PeriodDisplayStatus =
-  | "not_expected"
-  | "future"
-  | "current"
-  | "past_expected";
+  "not_expected" | "future" | "current" | "past_expected";
 
 export type ExpectedPayPeriod = {
   key: string;
@@ -52,7 +49,9 @@ const MONTH_SHORT = [
   "Dec",
 ] as const;
 
-export function parseDateOnly(value: string): { year: number; month: number; day: number } | null {
+export function parseDateOnly(
+  value: string,
+): { year: number; month: number; day: number } | null {
   const [year, month, day] = value.split("-");
   if (!year || !month) return null;
 
@@ -122,7 +121,9 @@ export function payYearRange(
   lifecycle: EmploymentLifecycle,
   asOfDate: Date = new Date(),
 ): { minYear: number; maxYear: number } | null {
-  const started = lifecycle.startDate ? parseDateOnly(lifecycle.startDate) : null;
+  const started = lifecycle.startDate
+    ? parseDateOnly(lifecycle.startDate)
+    : null;
   if (!started) return null;
 
   const asOfYear = asOfDate.getFullYear();
@@ -143,13 +144,20 @@ function periodOverlapsEmployment(
 ): boolean {
   if (!lifecycle.startDate) return false;
   if (compareIsoDates(periodEnd, lifecycle.startDate) < 0) return false;
-  if (lifecycle.endDate && compareIsoDates(periodStart, lifecycle.endDate) > 0) {
+  if (
+    lifecycle.endDate &&
+    compareIsoDates(periodStart, lifecycle.endDate) > 0
+  ) {
     return false;
   }
   return true;
 }
 
-function alignPeriodStart(date: string, anchor: string, intervalDays: number): string {
+function alignPeriodStart(
+  date: string,
+  anchor: string,
+  intervalDays: number,
+): string {
   const dayMs = 86_400_000;
   const anchorMs = utcDate(anchor).getTime();
   const dateMs = utcDate(date).getTime();
@@ -171,7 +179,10 @@ function deriveWeeklyPeriodsForYear(
   const yearStart = formatIsoDate(year, 1, 1);
   const yearEnd = formatIsoDate(year, 12, 31);
   const employmentStart = lifecycle.startDate ?? yearStart;
-  const rangeStart = compareIsoDates(employmentStart, yearStart) > 0 ? employmentStart : yearStart;
+  const rangeStart =
+    compareIsoDates(employmentStart, yearStart) > 0
+      ? employmentStart
+      : yearStart;
 
   let periodStart = alignPeriodStart(rangeStart, anchor, 7);
   if (compareIsoDates(periodStart, rangeStart) > 0) {
@@ -181,7 +192,11 @@ function deriveWeeklyPeriodsForYear(
   const periods: ExpectedPayPeriod[] = [];
   while (compareIsoDates(periodStart, yearEnd) <= 0) {
     const periodEnd = addDays(periodStart, 6);
-    const expected = periodOverlapsEmployment(periodStart, periodEnd, lifecycle);
+    const expected = periodOverlapsEmployment(
+      periodStart,
+      periodEnd,
+      lifecycle,
+    );
     periods.push({
       key: periodStart,
       label: `${formatShortDate(periodStart)} – ${formatShortDate(periodEnd)}`,
@@ -211,14 +226,21 @@ function deriveBiweeklyPeriodsForYear(
   const yearStart = formatIsoDate(year, 1, 1);
   const yearEnd = formatIsoDate(year, 12, 31);
   const employmentStart = lifecycle.startDate ?? yearStart;
-  const rangeStart = compareIsoDates(employmentStart, yearStart) > 0 ? employmentStart : yearStart;
+  const rangeStart =
+    compareIsoDates(employmentStart, yearStart) > 0
+      ? employmentStart
+      : yearStart;
 
   let periodStart = alignPeriodStart(rangeStart, anchor, 14);
 
   const periods: ExpectedPayPeriod[] = [];
   while (compareIsoDates(periodStart, yearEnd) <= 0) {
     const periodEnd = addDays(periodStart, 13);
-    const expected = periodOverlapsEmployment(periodStart, periodEnd, lifecycle);
+    const expected = periodOverlapsEmployment(
+      periodStart,
+      periodEnd,
+      lifecycle,
+    );
     periods.push({
       key: periodStart,
       label: `${formatShortDate(periodStart)} – ${formatShortDate(periodEnd)}`,
@@ -235,7 +257,10 @@ function deriveBiweeklyPeriodsForYear(
 
   return periods.filter((period) => {
     const parsed = parseDateOnly(period.periodStartDate);
-    return parsed?.year === year || parseDateOnly(period.periodEndDate)?.year === year;
+    return (
+      parsed?.year === year ||
+      parseDateOnly(period.periodEndDate)?.year === year
+    );
   });
 }
 
@@ -247,8 +272,16 @@ function deriveMonthlyPeriodsForYear(
   return MONTH_NAMES.map((name, index) => {
     const month = index + 1;
     const periodStart = formatIsoDate(year, month, 1);
-    const periodEnd = formatIsoDate(year, month, new Date(year, month, 0).getDate());
-    const expected = periodOverlapsEmployment(periodStart, periodEnd, lifecycle);
+    const periodEnd = formatIsoDate(
+      year,
+      month,
+      new Date(year, month, 0).getDate(),
+    );
+    const expected = periodOverlapsEmployment(
+      periodStart,
+      periodEnd,
+      lifecycle,
+    );
 
     return {
       key: `${year}-${String(month).padStart(2, "0")}`,
@@ -275,13 +308,21 @@ function deriveSemimonthlyPeriodsForYear(
     const firstStart = formatIsoDate(year, month, 1);
     const firstEnd = formatIsoDate(year, month, 15);
     const secondStart = formatIsoDate(year, month, 16);
-    const secondEnd = formatIsoDate(year, month, new Date(year, month, 0).getDate());
+    const secondEnd = formatIsoDate(
+      year,
+      month,
+      new Date(year, month, 0).getDate(),
+    );
 
     for (const [half, periodStart, periodEnd] of [
       ["1", firstStart, firstEnd],
       ["2", secondStart, secondEnd],
     ] as const) {
-      const expected = periodOverlapsEmployment(periodStart, periodEnd, lifecycle);
+      const expected = periodOverlapsEmployment(
+        periodStart,
+        periodEnd,
+        lifecycle,
+      );
       periods.push({
         key: `${year}-${String(month).padStart(2, "0")}-${half}`,
         label: `${MONTH_NAMES[month - 1]} ${half === "1" ? "1–15" : `16–${new Date(year, month, 0).getDate()}`}, ${year}`,
@@ -370,7 +411,10 @@ function formatShortDate(value: string): string {
 }
 
 /** Compact range for grid cells, e.g. "Jan 1–15" or "Jan 3–16". */
-export function formatCompactPeriodRange(periodStart: string, periodEnd: string): string {
+export function formatCompactPeriodRange(
+  periodStart: string,
+  periodEnd: string,
+): string {
   const start = parseDateOnly(periodStart);
   const end = parseDateOnly(periodEnd);
   if (!start || !end) return periodStart;
@@ -386,7 +430,10 @@ export function formatCompactPeriodRange(periodStart: string, periodEnd: string)
   return `${startMonth} ${start.day} – ${endMonth} ${end.day}`;
 }
 
-function comparePeriodsDesc(left: ExpectedPayPeriod, right: ExpectedPayPeriod): number {
+function comparePeriodsDesc(
+  left: ExpectedPayPeriod,
+  right: ExpectedPayPeriod,
+): number {
   return right.periodStartDate.localeCompare(left.periodStartDate);
 }
 
@@ -409,7 +456,8 @@ export function deriveAllSelectablePayPeriods(
         anchorDate,
         asOfDate,
       ).filter(
-        (period) => period.status !== "not_expected" && period.status !== "future",
+        (period) =>
+          period.status !== "not_expected" && period.status !== "future",
       ),
     );
   }

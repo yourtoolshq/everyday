@@ -5,8 +5,16 @@ import { deriveCareProgress } from "~/lib/visits";
 describe("care goal progress", () => {
   it("derives progress from non-cancelled visits and the target", () => {
     expect(
-      deriveCareProgress({ targetVisitCount: 2, notPursuingAt: null, visits: [] }),
-    ).toMatchObject({ progress: "planned", completedVisitCount: 0, scheduledVisitCount: 0 });
+      deriveCareProgress({
+        targetVisitCount: 2,
+        notPursuingAt: null,
+        visits: [],
+      }),
+    ).toMatchObject({
+      progress: "planned",
+      completedVisitCount: 0,
+      scheduledVisitCount: 0,
+    });
 
     expect(
       deriveCareProgress({
@@ -14,7 +22,11 @@ describe("care goal progress", () => {
         notPursuingAt: null,
         visits: [{ status: "scheduled" }, { status: "cancelled" }],
       }),
-    ).toMatchObject({ progress: "in_progress", completedVisitCount: 0, scheduledVisitCount: 1 });
+    ).toMatchObject({
+      progress: "in_progress",
+      completedVisitCount: 0,
+      scheduledVisitCount: 1,
+    });
 
     expect(
       deriveCareProgress({

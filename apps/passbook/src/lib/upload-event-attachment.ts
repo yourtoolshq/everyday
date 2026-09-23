@@ -17,9 +17,11 @@ export async function uploadEventAttachment(input: UploadEventAttachmentInput) {
   form.append("type", input.type ?? "financial_correspondence");
   form.append("eventId", input.eventId);
   if (input.title?.trim()) form.append("title", input.title.trim());
-  if (input.documentDate?.trim()) form.append("documentDate", input.documentDate.trim());
+  if (input.documentDate?.trim())
+    form.append("documentDate", input.documentDate.trim());
   if (input.notes?.trim()) form.append("notes", input.notes.trim());
-  if (input.termsSnapshotId) form.append("termsSnapshotId", input.termsSnapshotId);
+  if (input.termsSnapshotId)
+    form.append("termsSnapshotId", input.termsSnapshotId);
 
   const response = await fetch(`/api/accounts/${input.accountId}/documents`, {
     method: "POST",

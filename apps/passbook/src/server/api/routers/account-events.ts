@@ -2,21 +2,21 @@ import { TRPCError } from "@trpc/server";
 import { desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
-import {
-  accountTermsChanged,
-  normalizeAccountTerms,
-  type AccountTerms,
-} from "~/lib/account-terms";
+import type { AccountTerms } from "~/lib/account-terms";
 import {
   createAccountEventInputSchema,
   updateAccountEventInputSchema,
 } from "~/lib/account-events";
+import {
+  accountTermsChanged,
+  normalizeAccountTerms,
+} from "~/lib/account-terms";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { db } from "~/server/db";
 import {
   accountEvents,
-  accountTermsSnapshots,
   accounts,
+  accountTermsSnapshots,
   documents,
   institutions,
 } from "~/server/db/schema";
@@ -74,7 +74,11 @@ function termsFromAccount(row: {
   });
 }
 
-function snapshotValues(terms: AccountTerms, effectiveDate: string, notes: string | null) {
+function snapshotValues(
+  terms: AccountTerms,
+  effectiveDate: string,
+  notes: string | null,
+) {
   return {
     effectiveDate,
     interestRate: terms.interestRate,
@@ -156,51 +160,61 @@ function withDocuments<T extends { id: string }>(
 }
 
 export const accountEventsRouter = createTRPCRouter({
-  overview: publicProcedure.input(overviewFilter.optional()).query(async ({ ctx, input }) => {
-    const baseQuery = ctx.db
-      .select({
-        ...publicEventFields,
-        accountName: accounts.displayName,
-        institutionName: institutions.name,
-      })
-      .from(accountEvents)
-      .innerJoin(accounts, eq(accountEvents.accountId, accounts.id))
-      .innerJoin(institutions, eq(accounts.institutionId, institutions.id));
+  overview: publicProcedure
+    .input(overviewFilter.optional())
+    .query(async ({ ctx, input }) => {
+      const baseQuery = ctx.db
+        .select({
+          ...publicEventFields,
+          accountName: accounts.displayName,
+          institutionName: institutions.name,
+        })
+        .from(accountEvents)
+        .innerJoin(accounts, eq(accountEvents.accountId, accounts.id))
+        .innerJoin(institutions, eq(accounts.institutionId, institutions.id));
 
-    const events = input?.accountId
-      ? await baseQuery
-          .where(eq(accountEvents.accountId, input.accountId))
-          .orderBy(desc(accountEvents.startDate), desc(accountEvents.createdAt))
-      : await baseQuery.orderBy(desc(accountEvents.startDate), desc(accountEvents.createdAt));
+      const events = input?.accountId
+        ? await baseQuery
+            .where(eq(accountEvents.accountId, input.accountId))
+            .orderBy(
+              desc(accountEvents.startDate),
+              desc(accountEvents.createdAt),
+            )
+        : await baseQuery.orderBy(
+            desc(accountEvents.startDate),
+            desc(accountEvents.createdAt),
+          );
 
-    const documentsByEvent = await documentsByEventIds(
-      ctx.db,
-      events.map((event) => event.id),
-    );
-    return withDocuments(events, documentsByEvent);
-  }),
+      const documentsByEvent = await documentsByEventIds(
+        ctx.db,
+        events.map((event) => event.id),
+      );
+      return withDocuments(events, documentsByEvent);
+    }),
 
-  listByAccount: publicProcedure.input(accountIdInput).query(async ({ ctx, input }) => {
-    await requireAccount(ctx.db, input.accountId);
+  listByAccount: publicProcedure
+    .input(accountIdInput)
+    .query(async ({ ctx, input }) => {
+      await requireAccount(ctx.db, input.accountId);
 
-    const events = await ctx.db
-      .select({
-        ...publicEventFields,
-        accountName: accounts.displayName,
-        institutionName: institutions.name,
-      })
-      .from(accountEvents)
-      .innerJoin(accounts, eq(accountEvents.accountId, accounts.id))
-      .innerJoin(institutions, eq(accounts.institutionId, institutions.id))
-      .where(eq(accountEvents.accountId, input.accountId))
-      .orderBy(desc(accountEvents.startDate), desc(accountEvents.createdAt));
+      const events = await ctx.db
+        .select({
+          ...publicEventFields,
+          accountName: accounts.displayName,
+          institutionName: institutions.name,
+        })
+        .from(accountEvents)
+        .innerJoin(accounts, eq(accountEvents.accountId, accounts.id))
+        .innerJoin(institutions, eq(accounts.institutionId, institutions.id))
+        .where(eq(accountEvents.accountId, input.accountId))
+        .orderBy(desc(accountEvents.startDate), desc(accountEvents.createdAt));
 
-    const documentsByEvent = await documentsByEventIds(
-      ctx.db,
-      events.map((event) => event.id),
-    );
-    return withDocuments(events, documentsByEvent);
-  }),
+      const documentsByEvent = await documentsByEventIds(
+        ctx.db,
+        events.map((event) => event.id),
+      );
+      return withDocuments(events, documentsByEvent);
+    }),
 
   get: publicProcedure.input(idInput).query(async ({ ctx, input }) => {
     const [event] = await ctx.db
@@ -222,112 +236,131 @@ export const accountEventsRouter = createTRPCRouter({
     return withDocuments([event], documentsByEvent)[0]!;
   }),
 
-  create: publicProcedure.input(createAccountEventInputSchema).mutation(async ({ ctx, input }) => {
-    await requireAccount(ctx.db, input.accountId);
+  create: publicProcedure
+    .input(createAccountEventInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      await requireAccount(ctx.db, input.accountId);
 
-    const termsChange = input.termsChange;
-    if (termsChange?.recordTermsChange && !termsChange.effectiveDate?.trim()) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Choose an effective date for the terms change.",
-      });
-    }
-
-    const event = await ctx.db.transaction(async (tx) => {
-      let termsSnapshotId: string | null = null;
-
-      if (termsChange?.recordTermsChange && termsChange.terms && termsChange.effectiveDate) {
-        const terms = normalizeAccountTerms(termsChange.terms);
-        const [existing] = await tx
-          .select({
-            id: accounts.id,
-            interestRate: accounts.interestRate,
-            promotionalInterestRate: accounts.promotionalInterestRate,
-            promotionalInterestRateExpires: accounts.promotionalInterestRateExpires,
-            creditLimit: accounts.creditLimit,
-            annualFee: accounts.annualFee,
-            renewalDate: accounts.renewalDate,
-            insurance: accounts.insurance,
-          })
-          .from(accounts)
-          .where(eq(accounts.id, input.accountId));
-        if (!existing) {
-          throw new TRPCError({ code: "NOT_FOUND", message: "Account not found." });
-        }
-
-        const changed = accountTermsChanged(termsFromAccount(existing), terms);
-        await tx
-          .update(accounts)
-          .set({
-            interestRate: terms.interestRate,
-            promotionalInterestRate: terms.promotionalInterestRate,
-            promotionalInterestRateExpires: terms.promotionalInterestRateExpires,
-            creditLimit: terms.creditLimit,
-            annualFee: terms.annualFee,
-            renewalDate: terms.renewalDate,
-            insurance: terms.insurance,
-            updatedAt: now(),
-          })
-          .where(eq(accounts.id, input.accountId));
-
-        if (changed) {
-          const [snapshot] = await tx
-            .insert(accountTermsSnapshots)
-            .values({
-              accountId: input.accountId,
-              ...snapshotValues(
-                terms,
-                termsChange.effectiveDate,
-                termsChange.snapshotNotes ?? null,
-              ),
-            })
-            .returning({ id: accountTermsSnapshots.id });
-          termsSnapshotId = snapshot?.id ?? null;
-        }
+      const termsChange = input.termsChange;
+      if (
+        termsChange?.recordTermsChange &&
+        !termsChange.effectiveDate?.trim()
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Choose an effective date for the terms change.",
+        });
       }
 
-      const [created] = await tx
-        .insert(accountEvents)
-        .values({
-          accountId: input.accountId,
+      const event = await ctx.db.transaction(async (tx) => {
+        let termsSnapshotId: string | null = null;
+
+        if (
+          termsChange?.recordTermsChange &&
+          termsChange.terms &&
+          termsChange.effectiveDate
+        ) {
+          const terms = normalizeAccountTerms(termsChange.terms);
+          const [existing] = await tx
+            .select({
+              id: accounts.id,
+              interestRate: accounts.interestRate,
+              promotionalInterestRate: accounts.promotionalInterestRate,
+              promotionalInterestRateExpires:
+                accounts.promotionalInterestRateExpires,
+              creditLimit: accounts.creditLimit,
+              annualFee: accounts.annualFee,
+              renewalDate: accounts.renewalDate,
+              insurance: accounts.insurance,
+            })
+            .from(accounts)
+            .where(eq(accounts.id, input.accountId));
+          if (!existing) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Account not found.",
+            });
+          }
+
+          const changed = accountTermsChanged(
+            termsFromAccount(existing),
+            terms,
+          );
+          await tx
+            .update(accounts)
+            .set({
+              interestRate: terms.interestRate,
+              promotionalInterestRate: terms.promotionalInterestRate,
+              promotionalInterestRateExpires:
+                terms.promotionalInterestRateExpires,
+              creditLimit: terms.creditLimit,
+              annualFee: terms.annualFee,
+              renewalDate: terms.renewalDate,
+              insurance: terms.insurance,
+              updatedAt: now(),
+            })
+            .where(eq(accounts.id, input.accountId));
+
+          if (changed) {
+            const [snapshot] = await tx
+              .insert(accountTermsSnapshots)
+              .values({
+                accountId: input.accountId,
+                ...snapshotValues(
+                  terms,
+                  termsChange.effectiveDate,
+                  termsChange.snapshotNotes ?? null,
+                ),
+              })
+              .returning({ id: accountTermsSnapshots.id });
+            termsSnapshotId = snapshot?.id ?? null;
+          }
+        }
+
+        const [created] = await tx
+          .insert(accountEvents)
+          .values({
+            accountId: input.accountId,
+            type: input.type,
+            title: input.title,
+            notes: input.notes ?? null,
+            startDate: input.startDate,
+            resolvedDate: input.resolvedDate ?? null,
+            termsSnapshotId,
+          })
+          .returning(publicEventFields);
+
+        if (!created) throw new Error("Event creation failed.");
+        return created;
+      });
+
+      return event;
+    }),
+
+  update: publicProcedure
+    .input(updateAccountEventInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      await requireEvent(ctx.db, input.id);
+
+      const [event] = await ctx.db
+        .update(accountEvents)
+        .set({
           type: input.type,
           title: input.title,
           notes: input.notes ?? null,
           startDate: input.startDate,
           resolvedDate: input.resolvedDate ?? null,
-          termsSnapshotId,
+          updatedAt: now(),
         })
+        .where(eq(accountEvents.id, input.id))
         .returning(publicEventFields);
 
-      if (!created) throw new Error("Event creation failed.");
-      return created;
-    });
+      if (!event) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+      }
 
-    return event;
-  }),
-
-  update: publicProcedure.input(updateAccountEventInputSchema).mutation(async ({ ctx, input }) => {
-    await requireEvent(ctx.db, input.id);
-
-    const [event] = await ctx.db
-      .update(accountEvents)
-      .set({
-        type: input.type,
-        title: input.title,
-        notes: input.notes ?? null,
-        startDate: input.startDate,
-        resolvedDate: input.resolvedDate ?? null,
-        updatedAt: now(),
-      })
-      .where(eq(accountEvents.id, input.id))
-      .returning(publicEventFields);
-
-    if (!event) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
-    }
-
-    return event;
-  }),
+      return event;
+    }),
 
   delete: publicProcedure.input(idInput).mutation(async ({ ctx, input }) => {
     await requireEvent(ctx.db, input.id);

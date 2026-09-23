@@ -1,8 +1,8 @@
-import { IconAlertTriangle, IconChevronRight } from "@tabler/icons-react";
 import Link from "next/link";
+import { IconAlertTriangle, IconChevronRight } from "@tabler/icons-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { EstimateData } from "./types";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
 export function EstimateWarnings({ data }: { data: EstimateData }) {
   return (
@@ -19,7 +19,7 @@ export function EstimateWarnings({ data }: { data: EstimateData }) {
             <p>{warning.message}</p>
             {warning.itemId ? (
               <Link
-                className="inline-flex items-center text-xs text-primary hover:underline"
+                className="text-primary inline-flex items-center text-xs hover:underline"
                 href={`/items/${warning.itemId}`}
               >
                 Review Tax Item

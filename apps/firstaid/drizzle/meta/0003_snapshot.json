@@ -84,9 +84,7 @@
       "indexes": {
         "benefits_insurance_plan_id_idx": {
           "name": "benefits_insurance_plan_id_idx",
-          "columns": [
-            "insurance_plan_id"
-          ],
+          "columns": ["insurance_plan_id"],
           "isUnique": false
         }
       },
@@ -95,12 +93,8 @@
           "name": "benefits_insurance_plan_id_insurance_plans_id_fk",
           "tableFrom": "benefits",
           "tableTo": "insurance_plans",
-          "columnsFrom": [
-            "insurance_plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["insurance_plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -108,12 +102,8 @@
           "name": "benefits_person_id_people_id_fk",
           "tableFrom": "benefits",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -275,12 +265,8 @@
           "name": "care_items_plan_id_care_plans_id_fk",
           "tableFrom": "care_items",
           "tableTo": "care_plans",
-          "columnsFrom": [
-            "plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["plan_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -288,12 +274,8 @@
           "name": "care_items_person_id_people_id_fk",
           "tableFrom": "care_items",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -401,9 +383,7 @@
       "indexes": {
         "care_plans_year_unique": {
           "name": "care_plans_year_unique",
-          "columns": [
-            "year"
-          ],
+          "columns": ["year"],
           "isUnique": true
         }
       },
@@ -477,23 +457,17 @@
       "indexes": {
         "claims_visit_id_idx": {
           "name": "claims_visit_id_idx",
-          "columns": [
-            "visit_id"
-          ],
+          "columns": ["visit_id"],
           "isUnique": false
         },
         "claims_benefit_id_idx": {
           "name": "claims_benefit_id_idx",
-          "columns": [
-            "benefit_id"
-          ],
+          "columns": ["benefit_id"],
           "isUnique": false
         },
         "claims_status_idx": {
           "name": "claims_status_idx",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         }
       },
@@ -502,12 +476,8 @@
           "name": "claims_visit_id_visits_id_fk",
           "tableFrom": "claims",
           "tableTo": "visits",
-          "columnsFrom": [
-            "visit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["visit_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -515,12 +485,8 @@
           "name": "claims_benefit_id_benefits_id_fk",
           "tableFrom": "claims",
           "tableTo": "benefits",
-          "columnsFrom": [
-            "benefit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["benefit_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -608,9 +574,7 @@
       "indexes": {
         "documents_storage_key_unique": {
           "name": "documents_storage_key_unique",
-          "columns": [
-            "storage_key"
-          ],
+          "columns": ["storage_key"],
           "isUnique": true
         }
       },
@@ -619,12 +583,8 @@
           "name": "documents_visit_id_visits_id_fk",
           "tableFrom": "documents",
           "tableTo": "visits",
-          "columnsFrom": [
-            "visit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["visit_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -774,12 +734,8 @@
           "name": "providers_care_organization_id_care_organizations_id_fk",
           "tableFrom": "providers",
           "tableTo": "care_organizations",
-          "columnsFrom": [
-            "care_organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["care_organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }
@@ -884,12 +840,8 @@
           "name": "visits_person_id_people_id_fk",
           "tableFrom": "visits",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -897,12 +849,8 @@
           "name": "visits_care_item_id_care_items_id_fk",
           "tableFrom": "visits",
           "tableTo": "care_items",
-          "columnsFrom": [
-            "care_item_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["care_item_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -910,12 +858,8 @@
           "name": "visits_provider_id_providers_id_fk",
           "tableFrom": "visits",
           "tableTo": "providers",
-          "columnsFrom": [
-            "provider_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["provider_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         },
@@ -923,12 +867,8 @@
           "name": "visits_care_organization_id_care_organizations_id_fk",
           "tableFrom": "visits",
           "tableTo": "care_organizations",
-          "columnsFrom": [
-            "care_organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["care_organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "restrict",
           "onUpdate": "no action"
         }

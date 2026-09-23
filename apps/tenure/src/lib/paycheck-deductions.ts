@@ -115,7 +115,9 @@ const deductionAmountFieldSet = new Set<string>(
   deductionFields.map((field) => field.amountField),
 );
 
-export function isDeductionAmountField(value: string): value is DeductionAmountField {
+export function isDeductionAmountField(
+  value: string,
+): value is DeductionAmountField {
   return deductionAmountFieldSet.has(value);
 }
 
@@ -130,7 +132,9 @@ export function defaultDeductionSettings(): DeductionSettings {
   };
 }
 
-export function parseDeductionSettings(value: string | null | undefined): DeductionSettings {
+export function parseDeductionSettings(
+  value: string | null | undefined,
+): DeductionSettings {
   if (!value?.trim()) return defaultDeductionSettings();
 
   try {
@@ -144,14 +148,18 @@ export function parseDeductionSettings(value: string | null | undefined): Deduct
   }
 }
 
-export function serializeDeductionSettings(settings: DeductionSettings): string {
+export function serializeDeductionSettings(
+  settings: DeductionSettings,
+): string {
   return JSON.stringify(normalizeDeductionSettings(settings));
 }
 
 export function orderedDeductionFields(
   order: readonly string[] | null | undefined,
 ): DeductionField[] {
-  const byKey = new Map(deductionFields.map((field) => [field.amountField, field]));
+  const byKey = new Map(
+    deductionFields.map((field) => [field.amountField, field]),
+  );
   const seen = new Set<DeductionAmountField>();
   const result: DeductionField[] = [];
 
@@ -176,12 +184,16 @@ export function normalizeDeductionFieldOrder(
   return orderedDeductionFields(order).map((field) => field.amountField);
 }
 
-export function normalizeDeductionSettings(settings: DeductionSettings): DeductionSettings {
+export function normalizeDeductionSettings(
+  settings: DeductionSettings,
+): DeductionSettings {
   const split = isIncomeTaxSplit(settings);
   return {
     ...settings,
     incomeTaxEnabled: split ? true : settings.incomeTaxEnabled,
-    deductionFieldOrder: normalizeDeductionFieldOrder(settings.deductionFieldOrder),
+    deductionFieldOrder: normalizeDeductionFieldOrder(
+      settings.deductionFieldOrder,
+    ),
   };
 }
 
@@ -189,7 +201,9 @@ export function isIncomeTaxSplit(flags: {
   federalIncomeTaxEnabled?: boolean | null;
   manitobaIncomeTaxEnabled?: boolean | null;
 }) {
-  return Boolean(flags.federalIncomeTaxEnabled || flags.manitobaIncomeTaxEnabled);
+  return Boolean(
+    flags.federalIncomeTaxEnabled || flags.manitobaIncomeTaxEnabled,
+  );
 }
 
 export function calculateIncomeTaxCents(
@@ -221,7 +235,9 @@ export function applyPaycheckIncomeTax<T extends PaycheckAmounts>(
   };
 }
 
-export function calculateTotalDeductions(amounts: Record<DeductionAmountField, number>) {
+export function calculateTotalDeductions(
+  amounts: Record<DeductionAmountField, number>,
+) {
   return deductionFields.reduce(
     (total, field) =>
       field.countsTowardNet ? total + amounts[field.amountField] : total,

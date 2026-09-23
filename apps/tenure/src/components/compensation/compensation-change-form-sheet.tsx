@@ -1,8 +1,14 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import type {
+  CompensationCurrency,
+  CompensationType,
+} from "~/lib/compensation";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -29,15 +35,18 @@ import {
   compensationCurrencyLabels,
   compensationTypeLabels,
   compensationTypes,
-  type CompensationCurrency,
-  type CompensationType,
 } from "~/lib/compensation";
-import { documentTypes, documentTypeLabels, titleFromFilename } from "~/lib/documents";
+import {
+  documentTypeLabels,
+  documentTypes,
+  titleFromFilename,
+} from "~/lib/documents";
 import { centsToDollars, dollarsToCents } from "~/lib/money";
 import { uploadEmploymentDocument } from "~/lib/upload-employment-document";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
-type CompensationChange = RouterOutputs["compensationChanges"]["listByEmployment"][number];
+type CompensationChange =
+  RouterOutputs["compensationChanges"]["listByEmployment"][number];
 type Document = RouterOutputs["documents"]["listByEmployment"][number];
 
 type CompensationChangeFormSheetProps = {
@@ -58,8 +67,14 @@ export function CompensationChangeFormSheet({
   defaultEffectiveDate,
 }: CompensationChangeFormSheetProps) {
   const utils = api.useUtils();
-  const documents = api.documents.listByEmployment.useQuery({ employmentId }, { enabled: open });
-  const discussions = api.discussions.listByEmployment.useQuery({ employmentId }, { enabled: open });
+  const documents = api.documents.listByEmployment.useQuery(
+    { employmentId },
+    { enabled: open },
+  );
+  const discussions = api.discussions.listByEmployment.useQuery(
+    { employmentId },
+    { enabled: open },
+  );
 
   const [type, setType] = useState<CompensationType>("annual_salary");
   const [currency, setCurrency] = useState<CompensationCurrency>("CAD");
@@ -68,16 +83,25 @@ export function CompensationChangeFormSheet({
   const [commissionPercent, setCommissionPercent] = useState("");
   const [notes, setNotes] = useState("");
   const [discussionId, setDiscussionId] = useState("none");
-  const [documentMode, setDocumentMode] = useState<"none" | "existing" | "upload">("none");
+  const [documentMode, setDocumentMode] = useState<
+    "none" | "existing" | "upload"
+  >("none");
   const [existingDocumentId, setExistingDocumentId] = useState("none");
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [documentTitle, setDocumentTitle] = useState("");
   const [documentTitleTouched, setDocumentTitleTouched] = useState(false);
-  const [documentType, setDocumentType] = useState<"salary_letter" | "promotion_letter" | "offer_letter" | "employment_letter" | "other">("salary_letter");
+  const [documentType, setDocumentType] = useState<
+    | "salary_letter"
+    | "promotion_letter"
+    | "offer_letter"
+    | "employment_letter"
+    | "other"
+  >("salary_letter");
   const [submitting, setSubmitting] = useState(false);
 
   const supportingDocuments = useMemo(
-    () => (documents.data ?? []).filter((document) => document.type !== "pay_stub"),
+    () =>
+      (documents.data ?? []).filter((document) => document.type !== "pay_stub"),
     [documents.data],
   );
 
@@ -88,7 +112,9 @@ export function CompensationChangeFormSheet({
       setType(change.type);
       setCurrency(change.currency);
       setEffectiveDate(change.effectiveDate);
-      setAmount(change.amountCents !== null ? centsToDollars(change.amountCents) : "");
+      setAmount(
+        change.amountCents !== null ? centsToDollars(change.amountCents) : "",
+      );
       setCommissionPercent(
         change.commissionBasisPoints !== null
           ? basisPointsToCommissionPercent(change.commissionBasisPoints)
@@ -138,7 +164,9 @@ export function CompensationChangeFormSheet({
 
     const amountCents = type === "commission" ? null : dollarsToCents(amount);
     const commissionBasisPoints =
-      type === "commission" ? commissionPercentToBasisPoints(commissionPercent) : null;
+      type === "commission"
+        ? commissionPercentToBasisPoints(commissionPercent)
+        : null;
 
     if (type === "commission" && commissionBasisPoints === null) {
       toast.error("Enter a commission percentage between 0 and 100.");
@@ -190,23 +218,36 @@ export function CompensationChangeFormSheet({
 
       await Promise.all([
         utils.compensationChanges.listByEmployment.invalidate({ employmentId }),
-        utils.compensationChanges.getCurrentByEmployment.invalidate({ employmentId }),
+        utils.compensationChanges.getCurrentByEmployment.invalidate({
+          employmentId,
+        }),
         utils.employments.list.invalidate(),
         utils.documents.listByEmployment.invalidate({ employmentId }),
-        utils.employmentRecords.completenessByEmployment.invalidate({ employmentId }),
+        utils.employmentRecords.completenessByEmployment.invalidate({
+          employmentId,
+        }),
         utils.employmentRecords.listForReview.invalidate(),
       ]);
 
-      toast.success(mode === "edit" ? "Compensation change updated." : "Compensation change added.");
+      toast.success(
+        mode === "edit"
+          ? "Compensation change updated."
+          : "Compensation change added.",
+      );
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save compensation change.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not save compensation change.",
+      );
     } finally {
       setSubmitting(false);
     }
   }
 
-  const pending = submitting || createChange.isPending || updateChange.isPending;
+  const pending =
+    submitting || createChange.isPending || updateChange.isPending;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -214,11 +255,13 @@ export function CompensationChangeFormSheet({
         <form className="flex min-h-full flex-col" onSubmit={submit}>
           <SheetHeader>
             <SheetTitle>
-              {mode === "edit" ? "Edit compensation change" : "Add compensation change"}
+              {mode === "edit"
+                ? "Edit compensation change"
+                : "Add compensation change"}
             </SheetTitle>
             <SheetDescription>
-              Record the agreed rate that took effect on a date. This is separate from paycheck
-              amounts.
+              Record the agreed rate that took effect on a date. This is
+              separate from paycheck amounts.
             </SheetDescription>
           </SheetHeader>
 
@@ -226,7 +269,10 @@ export function CompensationChangeFormSheet({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Compensation type</Label>
-                <Select value={type} onValueChange={(value) => setType(value as CompensationType)}>
+                <Select
+                  value={type}
+                  onValueChange={(value) => setType(value as CompensationType)}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -244,7 +290,9 @@ export function CompensationChangeFormSheet({
                 <Label>Currency</Label>
                 <Select
                   value={currency}
-                  onValueChange={(value) => setCurrency(value as CompensationCurrency)}
+                  onValueChange={(value) =>
+                    setCurrency(value as CompensationCurrency)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -261,7 +309,9 @@ export function CompensationChangeFormSheet({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="compensation-effective-date">Effective date</Label>
+              <Label htmlFor="compensation-effective-date">
+                Effective date
+              </Label>
               <Input
                 id="compensation-effective-date"
                 type="date"
@@ -273,7 +323,9 @@ export function CompensationChangeFormSheet({
 
             {type === "commission" ? (
               <div className="space-y-2">
-                <Label htmlFor="compensation-commission">Commission percentage</Label>
+                <Label htmlFor="compensation-commission">
+                  Commission percentage
+                </Label>
                 <Input
                   id="compensation-commission"
                   inputMode="decimal"
@@ -330,14 +382,18 @@ export function CompensationChangeFormSheet({
                 <Label>Supporting document</Label>
                 <Select
                   value={documentMode}
-                  onValueChange={(value) => setDocumentMode(value as typeof documentMode)}
+                  onValueChange={(value) =>
+                    setDocumentMode(value as typeof documentMode)
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No document</SelectItem>
-                    <SelectItem value="existing">Link existing document</SelectItem>
+                    <SelectItem value="existing">
+                      Link existing document
+                    </SelectItem>
                     <SelectItem value="upload">Upload new document</SelectItem>
                   </SelectContent>
                 </Select>
@@ -346,7 +402,10 @@ export function CompensationChangeFormSheet({
               {documentMode === "existing" ? (
                 <div className="space-y-2">
                   <Label>Document</Label>
-                  <Select value={existingDocumentId} onValueChange={setExistingDocumentId}>
+                  <Select
+                    value={existingDocumentId}
+                    onValueChange={setExistingDocumentId}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Choose document" />
                     </SelectTrigger>
@@ -369,14 +428,18 @@ export function CompensationChangeFormSheet({
                       id="compensation-document-file"
                       type="file"
                       accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.eml"
-                      onChange={(event) => setDocumentFile(event.target.files?.[0] ?? null)}
+                      onChange={(event) =>
+                        setDocumentFile(event.target.files?.[0] ?? null)
+                      }
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Document type</Label>
                     <Select
                       value={documentType}
-                      onValueChange={(value) => setDocumentType(value as typeof documentType)}
+                      onValueChange={(value) =>
+                        setDocumentType(value as typeof documentType)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -409,11 +472,19 @@ export function CompensationChangeFormSheet({
           </div>
 
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : mode === "edit" ? "Save changes" : "Add change"}
+              {pending
+                ? "Saving…"
+                : mode === "edit"
+                  ? "Save changes"
+                  : "Add change"}
             </Button>
           </SheetFooter>
         </form>

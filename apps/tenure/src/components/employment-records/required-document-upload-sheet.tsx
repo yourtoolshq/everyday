@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import type { RequiredDocumentKind } from "~/lib/employment-document-suggestions";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -14,18 +16,18 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
+import { documentTypeLabels } from "~/lib/documents";
 import {
   canSuggestRequiredDocumentTitle,
   suggestRequiredDocumentDate,
   suggestRequiredDocumentTitle,
   suggestRequiredDocumentType,
-  type RequiredDocumentKind,
 } from "~/lib/employment-document-suggestions";
-import { documentTypeLabels } from "~/lib/documents";
 import { uploadEmploymentDocument } from "~/lib/upload-employment-document";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
-type CompensationChange = RouterOutputs["compensationChanges"]["listByEmployment"][number];
+type CompensationChange =
+  RouterOutputs["compensationChanges"]["listByEmployment"][number];
 
 type RequiredDocumentUploadSheetProps = {
   open: boolean;
@@ -73,7 +75,8 @@ export function RequiredDocumentUploadSheet({
   const documentType = kind ? suggestRequiredDocumentType(kind) : "other";
 
   const suggestedTitle = useMemo(() => {
-    if (!kind || !canSuggestRequiredDocumentTitle({ file, documentDate })) return "";
+    if (!kind || !canSuggestRequiredDocumentTitle({ file, documentDate }))
+      return "";
     return suggestRequiredDocumentTitle({
       kind,
       employerName,
@@ -135,10 +138,14 @@ export function RequiredDocumentUploadSheet({
 
       await Promise.all([
         utils.documents.listByEmployment.invalidate({ employmentId }),
-        utils.employmentRecords.completenessByEmployment.invalidate({ employmentId }),
+        utils.employmentRecords.completenessByEmployment.invalidate({
+          employmentId,
+        }),
         utils.employmentRecords.listForReview.invalidate(),
         utils.compensationChanges.listByEmployment.invalidate({ employmentId }),
-        utils.compensationChanges.getCurrentByEmployment.invalidate({ employmentId }),
+        utils.compensationChanges.getCurrentByEmployment.invalidate({
+          employmentId,
+        }),
         utils.employments.list.invalidate(),
       ]);
 
@@ -207,20 +214,24 @@ export function RequiredDocumentUploadSheet({
               }
               required
             />
-            <p className="text-xs text-muted-foreground">
-              Suggested from the date, employer, and record type once a file and date are set. You
-              can edit it before uploading.
+            <p className="text-muted-foreground text-xs">
+              Suggested from the date, employer, and record type once a file and
+              date are set. You can edit it before uploading.
             </p>
           </div>
 
           {kind ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Will save as {documentTypeLabels[documentType]}
             </p>
           ) : null}
 
           <SheetFooter className="px-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={uploading || !kind}>

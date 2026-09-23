@@ -1,10 +1,12 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
-import { accountStatusLabels, accountStatuses, type AccountStatus } from "~/lib/account-status";
-import { accountTypeLabels, accountTypes, type AccountType } from "~/lib/account-types";
+import type { AccountStatus } from "~/lib/account-status";
+import type { AccountType } from "~/lib/account-types";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -24,7 +26,9 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { accountStatuses, accountStatusLabels } from "~/lib/account-status";
+import { accountTypeLabels, accountTypes } from "~/lib/account-types";
+import { api } from "~/trpc/react";
 
 type Account = RouterOutputs["accounts"]["list"][number];
 
@@ -69,7 +73,11 @@ function accountToFormState(account: Account): AccountFormState {
 }
 
 function validateAccountForm(form: AccountFormState): string | null {
-  if (!form.institutionId || !form.displayName.trim() || form.ownerIds.length === 0) {
+  if (
+    !form.institutionId ||
+    !form.displayName.trim() ||
+    form.ownerIds.length === 0
+  ) {
     return "Choose an institution, account name, and at least one owner.";
   }
   if (form.status === "closed" && !form.closedDate) {
@@ -123,7 +131,8 @@ export function AccountFormSheet({
   });
   const updateAccount = api.accounts.update.useMutation({
     onSuccess: () => {
-      const closedJustNow = account?.status !== "closed" && form.status === "closed";
+      const closedJustNow =
+        account?.status !== "closed" && form.status === "closed";
       finish("Account updated.", closedJustNow);
     },
     onError: (error) => toast.error(error.message),
@@ -171,7 +180,9 @@ export function AccountFormSheet({
                 <Label>Institution</Label>
                 <Select
                   value={form.institutionId}
-                  onValueChange={(value) => setForm({ ...form, institutionId: value })}
+                  onValueChange={(value) =>
+                    setForm({ ...form, institutionId: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Choose institution" />
@@ -190,7 +201,9 @@ export function AccountFormSheet({
                 <Input
                   id="account-name"
                   value={form.displayName}
-                  onChange={(event) => setForm({ ...form, displayName: event.target.value })}
+                  onChange={(event) =>
+                    setForm({ ...form, displayName: event.target.value })
+                  }
                   required
                   autoFocus
                 />
@@ -220,7 +233,9 @@ export function AccountFormSheet({
                 <Input
                   id="identifier-suffix"
                   value={form.identifierSuffix}
-                  onChange={(event) => setForm({ ...form, identifierSuffix: event.target.value })}
+                  onChange={(event) =>
+                    setForm({ ...form, identifierSuffix: event.target.value })
+                  }
                   placeholder="Last 4 digits"
                 />
               </div>
@@ -255,7 +270,9 @@ export function AccountFormSheet({
                   id="opened-date"
                   type="date"
                   value={form.openedDate}
-                  onChange={(event) => setForm({ ...form, openedDate: event.target.value })}
+                  onChange={(event) =>
+                    setForm({ ...form, openedDate: event.target.value })
+                  }
                 />
               </div>
               {form.status === "closed" ? (
@@ -265,7 +282,9 @@ export function AccountFormSheet({
                     id="closed-date"
                     type="date"
                     value={form.closedDate}
-                    onChange={(event) => setForm({ ...form, closedDate: event.target.value })}
+                    onChange={(event) =>
+                      setForm({ ...form, closedDate: event.target.value })
+                    }
                     required
                   />
                 </div>
@@ -295,13 +314,19 @@ export function AccountFormSheet({
               <Textarea
                 id="account-notes"
                 value={form.notes}
-                onChange={(event) => setForm({ ...form, notes: event.target.value })}
+                onChange={(event) =>
+                  setForm({ ...form, notes: event.target.value })
+                }
                 rows={4}
               />
             </div>
           </div>
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>

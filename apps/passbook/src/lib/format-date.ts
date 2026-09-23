@@ -1,4 +1,6 @@
-export function formatDateLabel(value: string | null | undefined): string | null {
+export function formatDateLabel(
+  value: string | null | undefined,
+): string | null {
   if (!value) return null;
 
   const [year, month, day] = value.split("-");

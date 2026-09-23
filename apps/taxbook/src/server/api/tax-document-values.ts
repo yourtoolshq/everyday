@@ -1,23 +1,29 @@
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq } from "drizzle-orm";
 
-import {
-  buildTaxDocumentReadiness,
-  type TaxDocumentAttachmentAction,
-  type TaxDocumentAttachmentInput,
-  type TaxDocumentInput,
-  type TaxDocumentUpdateInput,
+import type { Database } from "./helpers";
+import type {
+  TaxDocumentAttachmentAction,
+  TaxDocumentAttachmentInput,
+  TaxDocumentInput,
+  TaxDocumentUpdateInput,
 } from "~/domain/tax-document";
+import { buildTaxDocumentReadiness } from "~/domain/tax-document";
 import {
   people,
   taxDocumentAttachments,
   taxDocuments,
   taxItems,
 } from "~/server/db/schema";
-import type { Database } from "./helpers";
-import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "./helpers";
+import {
+  requireActiveYear,
+  requireEditableActiveYear,
+  requireHousehold,
+} from "./helpers";
 
-type TransactionDatabase = Parameters<Parameters<Database["transaction"]>[0]>[0];
+type TransactionDatabase = Parameters<
+  Parameters<Database["transaction"]>[0]
+>[0];
 type QueryDatabase = Database | TransactionDatabase;
 
 async function activeContext(db: QueryDatabase) {
@@ -44,7 +50,10 @@ async function requireActiveTaxItem(db: QueryDatabase, taxItemId: number) {
   return { household, year, item };
 }
 
-async function requireEditableActiveTaxItem(db: QueryDatabase, taxItemId: number) {
+async function requireEditableActiveTaxItem(
+  db: QueryDatabase,
+  taxItemId: number,
+) {
   const { household, year } = await editableContext(db);
   const [item] = await db
     .select()
@@ -87,15 +96,16 @@ async function insertAttachment(
     .values({ taxDocumentId, ...attachment });
 }
 
-export async function listActiveTaxDocuments(
-  db: Database,
-  taxItemId?: number,
-) {
+export async function listActiveTaxDocuments(db: Database, taxItemId?: number) {
   const { year } = await activeContext(db);
   if (taxItemId !== undefined) await requireActiveTaxItem(db, taxItemId);
-  const where = taxItemId === undefined
-    ? eq(taxItems.taxYearId, year.id)
-    : and(eq(taxItems.taxYearId, year.id), eq(taxDocuments.taxItemId, taxItemId));
+  const where =
+    taxItemId === undefined
+      ? eq(taxItems.taxYearId, year.id)
+      : and(
+          eq(taxItems.taxYearId, year.id),
+          eq(taxDocuments.taxItemId, taxItemId),
+        );
   const items = await db
     .select({
       id: taxDocuments.id,
@@ -138,7 +148,10 @@ export async function createTaxDocument(
   attachment: TaxDocumentAttachmentInput | null,
 ) {
   return db.transaction(async (tx) => {
-    const { household, item } = await requireEditableActiveTaxItem(tx, input.taxItemId);
+    const { household, item } = await requireEditableActiveTaxItem(
+      tx,
+      input.taxItemId,
+    );
     const personId = await normalizePerson(
       tx,
       household.id,
@@ -172,10 +185,7 @@ async function requireActiveTaxDocument(
     .from(taxDocuments)
     .innerJoin(taxItems, eq(taxDocuments.taxItemId, taxItems.id))
     .where(
-      and(
-        eq(taxDocuments.id, taxDocumentId),
-        eq(taxItems.taxYearId, year.id),
-      ),
+      and(eq(taxDocuments.id, taxDocumentId), eq(taxItems.taxYearId, year.id)),
     );
   if (!row) {
     throw new TRPCError({
@@ -196,10 +206,7 @@ async function requireEditableActiveTaxDocument(
     .from(taxDocuments)
     .innerJoin(taxItems, eq(taxDocuments.taxItemId, taxItems.id))
     .where(
-      and(
-        eq(taxDocuments.id, taxDocumentId),
-        eq(taxItems.taxYearId, year.id),
-      ),
+      and(eq(taxDocuments.id, taxDocumentId), eq(taxItems.taxYearId, year.id)),
     );
   if (!row) {
     throw new TRPCError({
@@ -217,10 +224,8 @@ export async function updateTaxDocument(
   attachmentAction: TaxDocumentAttachmentAction,
 ) {
   return db.transaction(async (tx) => {
-    const { household, document, item } = await requireEditableActiveTaxDocument(
-      tx,
-      taxDocumentId,
-    );
+    const { household, document, item } =
+      await requireEditableActiveTaxDocument(tx, taxDocumentId);
     const personId = await normalizePerson(
       tx,
       household.id,
@@ -248,12 +253,12 @@ export async function updateTaxDocument(
   });
 }
 
-export async function deleteTaxDocument(
-  db: Database,
-  taxDocumentId: number,
-) {
+export async function deleteTaxDocument(db: Database, taxDocumentId: number) {
   return db.transaction(async (tx) => {
-    const { document } = await requireEditableActiveTaxDocument(tx, taxDocumentId);
+    const { document } = await requireEditableActiveTaxDocument(
+      tx,
+      taxDocumentId,
+    );
     await tx.delete(taxDocuments).where(eq(taxDocuments.id, document.id));
     return { success: true };
   });
@@ -269,7 +274,10 @@ export async function getActiveTaxDocumentAttachment(
     .from(taxDocumentAttachments)
     .where(eq(taxDocumentAttachments.taxDocumentId, taxDocumentId));
   if (!attachment) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Attachment not found." });
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Attachment not found.",
+    });
   }
   return attachment;
 }

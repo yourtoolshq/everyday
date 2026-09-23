@@ -1,20 +1,22 @@
-import { and, asc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { and, asc, eq } from "drizzle-orm";
 
 import {
   serializePaychequesForTenure,
   tenurePaychequeExportFilename,
 } from "~/lib/paycheque-export";
+import { requireActiveYear, requireHousehold } from "~/server/api/helpers";
 import { db } from "~/server/db";
 import { employments, paycheques, people } from "~/server/db/schema";
-import { requireActiveYear, requireHousehold } from "~/server/api/helpers";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const household = await requireHousehold(db);
   const year = await requireActiveYear(db, household.id);
-  const employmentIdParam = new URL(request.url).searchParams.get("employmentId");
+  const employmentIdParam = new URL(request.url).searchParams.get(
+    "employmentId",
+  );
 
   if (!employmentIdParam) {
     return NextResponse.json(
@@ -44,7 +46,10 @@ export async function GET(request: Request) {
     );
 
   if (!employment) {
-    return NextResponse.json({ error: "Employment not found." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Employment not found." },
+      { status: 404 },
+    );
   }
 
   const rows = await db

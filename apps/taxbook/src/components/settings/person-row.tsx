@@ -1,7 +1,8 @@
 "use client";
 
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { IconTrash } from "@tabler/icons-react";
-import { useState, type FormEvent } from "react";
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -32,9 +33,24 @@ export function PersonRow({
 
   return (
     <form className="flex items-center gap-2" onSubmit={submit}>
-      <Input aria-label={`Name for ${person.name}`} value={name} onChange={(event) => setName(event.target.value)} required />
-      <Button type="submit" variant="outline" disabled={!changed || pending}>Save</Button>
-      <Button type="button" variant="ghost" size="icon" disabled={!canDelete || pending} aria-label={`Remove ${person.name}`} title={canDelete ? "Remove person" : "At least one person is required"} onClick={() => onDelete(person)}>
+      <Input
+        aria-label={`Name for ${person.name}`}
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        required
+      />
+      <Button type="submit" variant="outline" disabled={!changed || pending}>
+        Save
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        disabled={!canDelete || pending}
+        aria-label={`Remove ${person.name}`}
+        title={canDelete ? "Remove person" : "At least one person is required"}
+        onClick={() => onDelete(person)}
+      >
         <IconTrash />
       </Button>
     </form>

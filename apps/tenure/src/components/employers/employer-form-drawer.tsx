@@ -85,7 +85,9 @@ export function EmployerFormDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md">
         <SheetHeader>
-          <SheetTitle>{mode === "create" ? "Add employer" : "Edit employer"}</SheetTitle>
+          <SheetTitle>
+            {mode === "create" ? "Add employer" : "Edit employer"}
+          </SheetTitle>
           <SheetDescription>
             {mode === "create"
               ? "Add an organization where someone in your household works or worked."
@@ -144,7 +146,11 @@ export function EmployerFormDrawer({
           </div>
 
           <SheetFooter className="px-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isPending}>

@@ -6,4 +6,3 @@ export const systemRouter = createTRPCRouter({
     return { status: "ok" as const };
   }),
 });
-

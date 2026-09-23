@@ -1,9 +1,9 @@
 "use client";
 
+import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { SiteHeader } from "./site-header";
 import { TenureConnectionBanner } from "./tenure-connection-banner";
-import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (

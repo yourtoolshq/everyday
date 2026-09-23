@@ -11,4 +11,3 @@ describe("system.status", () => {
     await expect(caller.system.status()).resolves.toEqual({ status: "ok" });
   });
 });
-

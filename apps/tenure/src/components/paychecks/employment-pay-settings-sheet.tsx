@@ -1,9 +1,10 @@
 "use client";
 
-import { ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
+import type { DeductionSettings } from "~/lib/paycheck-deductions";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -22,11 +23,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
-import { payFrequencyLabels, payFrequencies } from "~/lib/pay-frequency";
+import { payFrequencies, payFrequencyLabels } from "~/lib/pay-frequency";
 import {
   deductionFields,
   normalizeDeductionFieldOrder,
-  type DeductionSettings,
 } from "~/lib/paycheck-deductions";
 import { api } from "~/trpc/react";
 
@@ -55,14 +55,21 @@ export function EmploymentPaySettingsSheet({
   const [biweeklyAnchorDate, setBiweeklyAnchorDate] = useState(
     initialBiweeklyAnchorDate ?? "",
   );
-  const [settings, setSettings] = useState<DeductionSettings>(initialDeductionSettings);
+  const [settings, setSettings] = useState<DeductionSettings>(
+    initialDeductionSettings,
+  );
 
   useEffect(() => {
     if (!open) return;
     setPayFrequency(initialPayFrequency);
     setBiweeklyAnchorDate(initialBiweeklyAnchorDate ?? "");
     setSettings(initialDeductionSettings);
-  }, [open, initialPayFrequency, initialBiweeklyAnchorDate, initialDeductionSettings]);
+  }, [
+    open,
+    initialPayFrequency,
+    initialBiweeklyAnchorDate,
+    initialDeductionSettings,
+  ]);
 
   const updatePaySettings = api.employments.updatePaySettings.useMutation({
     onSuccess: async () => {
@@ -78,8 +85,10 @@ export function EmploymentPaySettingsSheet({
     onError: (error) => toast.error(error.message),
   });
 
-  const orderedFields = normalizeDeductionFieldOrder(settings.deductionFieldOrder).map(
-    (amountField) => deductionFields.find((field) => field.amountField === amountField)!,
+  const orderedFields = normalizeDeductionFieldOrder(
+    settings.deductionFieldOrder,
+  ).map((amountField) =>
+    deductionFields.find((field) => field.amountField === amountField)!,
   );
 
   function moveField(amountField: string, direction: -1 | 1) {
@@ -99,7 +108,8 @@ export function EmploymentPaySettingsSheet({
         <SheetHeader>
           <SheetTitle>Pay settings</SheetTitle>
           <SheetDescription>
-            Configure pay frequency and which deduction lines appear on paycheck entry.
+            Configure pay frequency and which deduction lines appear on paycheck
+            entry.
           </SheetDescription>
         </SheetHeader>
 
@@ -148,9 +158,9 @@ export function EmploymentPaySettingsSheet({
                 value={biweeklyAnchorDate}
                 onChange={(event) => setBiweeklyAnchorDate(event.target.value)}
               />
-              <p className="text-xs text-muted-foreground">
-                First day of a pay period on this schedule. Defaults to employment start date
-                when left blank.
+              <p className="text-muted-foreground text-xs">
+                First day of a pay period on this schedule. Defaults to
+                employment start date when left blank.
               </p>
             </div>
           ) : null}
@@ -202,7 +212,11 @@ export function EmploymentPaySettingsSheet({
           </div>
 
           <SheetFooter className="px-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={updatePaySettings.isPending}>

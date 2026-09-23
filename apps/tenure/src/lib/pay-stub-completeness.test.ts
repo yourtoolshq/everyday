@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import type { ExpectedPayPeriod } from "~/lib/expected-pay-periods";
 import {
-  derivePayStubCompleteness,
   buildMissingPayStubItems,
+  derivePayStubCompleteness,
 } from "~/lib/pay-stub-completeness";
 
 describe("pay stub completeness", () => {
@@ -21,8 +21,18 @@ describe("pay stub completeness", () => {
     const status = derivePayStubCompleteness(
       period,
       [
-        { id: "a", periodStartDate: "2026-01-03", periodEndDate: "2026-01-16", hasStub: true },
-        { id: "b", periodStartDate: "2026-01-03", periodEndDate: "2026-01-16", hasStub: true },
+        {
+          id: "a",
+          periodStartDate: "2026-01-03",
+          periodEndDate: "2026-01-16",
+          hasStub: true,
+        },
+        {
+          id: "b",
+          periodStartDate: "2026-01-03",
+          periodEndDate: "2026-01-16",
+          hasStub: true,
+        },
       ],
       "biweekly",
     );
@@ -34,8 +44,18 @@ describe("pay stub completeness", () => {
     const status = derivePayStubCompleteness(
       period,
       [
-        { id: "a", periodStartDate: "2026-01-03", periodEndDate: "2026-01-16", hasStub: true },
-        { id: "b", periodStartDate: "2026-01-03", periodEndDate: "2026-01-16", hasStub: false },
+        {
+          id: "a",
+          periodStartDate: "2026-01-03",
+          periodEndDate: "2026-01-16",
+          hasStub: true,
+        },
+        {
+          id: "b",
+          periodStartDate: "2026-01-03",
+          periodEndDate: "2026-01-16",
+          hasStub: false,
+        },
       ],
       "biweekly",
     );

@@ -1,21 +1,11 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  activityAttachmentDocumentType,
-  defaultActivityDocumentType,
-  type AccountEventType,
-} from "~/lib/account-events";
-import {
-  accountDocumentTypes,
-  defaultDocumentTitle,
-  documentTypeLabels,
-  usesSuggestedDocumentTitle,
-  type AccountDocumentType,
-} from "~/lib/documents";
-import { uploadEventAttachment } from "~/lib/upload-event-attachment";
+import type { AccountEventType } from "~/lib/account-events";
+import type { AccountDocumentType } from "~/lib/documents";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -35,6 +25,17 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
+import {
+  activityAttachmentDocumentType,
+  defaultActivityDocumentType,
+} from "~/lib/account-events";
+import {
+  accountDocumentTypes,
+  defaultDocumentTitle,
+  documentTypeLabels,
+  usesSuggestedDocumentTitle,
+} from "~/lib/documents";
+import { uploadEventAttachment } from "~/lib/upload-event-attachment";
 import { api } from "~/trpc/react";
 
 type ActivityDocumentUploadSheetProps = {
@@ -55,8 +56,13 @@ export function ActivityDocumentUploadSheet({
   defaultDocumentDate = "",
 }: ActivityDocumentUploadSheetProps) {
   const utils = api.useUtils();
-  const account = api.accounts.get.useQuery({ id: accountId }, { enabled: open });
-  const [type, setType] = useState<AccountDocumentType>(defaultActivityDocumentType(activityType));
+  const account = api.accounts.get.useQuery(
+    { id: accountId },
+    { enabled: open },
+  );
+  const [type, setType] = useState<AccountDocumentType>(
+    defaultActivityDocumentType(activityType),
+  );
   const [typeTouched, setTypeTouched] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -82,7 +88,13 @@ export function ActivityDocumentUploadSheet({
   }, [activityType, file, typeTouched]);
 
   useEffect(() => {
-    if (!open || titleTouched || !account.data || !usesSuggestedDocumentTitle(type)) return;
+    if (
+      !open ||
+      titleTouched ||
+      !account.data ||
+      !usesSuggestedDocumentTitle(type)
+    )
+      return;
     setTitle(
       defaultDocumentTitle({
         type,
@@ -157,7 +169,7 @@ export function ActivityDocumentUploadSheet({
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
                 required
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 PDF, images, .eml, or common audio files up to 25 MB.
               </p>
             </div>
@@ -219,7 +231,11 @@ export function ActivityDocumentUploadSheet({
           </div>
 
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={uploading}>

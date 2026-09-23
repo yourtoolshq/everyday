@@ -58,7 +58,9 @@ export function DeleteDocumentDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleteDocument.isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleteDocument.isPending}>
+            Cancel
+          </AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={deleteDocument.isPending || !target}

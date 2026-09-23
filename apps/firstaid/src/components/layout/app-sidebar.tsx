@@ -1,5 +1,8 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Building2,
   CalendarRange,
@@ -9,10 +12,7 @@ import {
   Settings,
   ShieldCheck,
   Stethoscope,
-  type LucideIcon,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 import {
   Sidebar,
@@ -51,11 +51,8 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="border-b p-3">
-        <Link
-          href="/"
-          className="flex items-center gap-2 px-1.5 font-semibold"
-        >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+        <Link href="/" className="flex items-center gap-2 px-1.5 font-semibold">
+          <span className="bg-primary text-primary-foreground flex size-8 shrink-0 items-center justify-center rounded-lg shadow-sm">
             <HeartPulse aria-hidden="true" className="size-5" />
           </span>
           <span className="truncate">First Aid</span>

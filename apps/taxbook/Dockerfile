@@ -30,7 +30,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/apps/taxbook/.next/static ./apps/
 COPY --from=builder --chown=nextjs:nodejs /app/apps/taxbook/public ./apps/taxbook/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/taxbook/drizzle ./apps/taxbook/drizzle
 COPY --from=builder --chown=nextjs:nodejs /app/apps/taxbook/scripts ./apps/taxbook/scripts
-COPY --from=deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/apps/taxbook/node_modules ./apps/taxbook/node_modules
 
 WORKDIR /app/apps/taxbook
 EXPOSE 3000

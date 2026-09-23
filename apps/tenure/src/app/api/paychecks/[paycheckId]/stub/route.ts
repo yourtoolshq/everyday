@@ -1,12 +1,17 @@
 import { basename } from "node:path";
-
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { detectDocumentFile, maxDocumentBytes } from "~/lib/documents";
 import { suggestPayStubTitle } from "~/lib/pay-stubs";
 import { databaseReady, db } from "~/server/db";
-import { documents, employers, employments, paychecks, people } from "~/server/db/schema";
+import {
+  documents,
+  employers,
+  employments,
+  paychecks,
+  people,
+} from "~/server/db/schema";
 import { removeDocument, writeDocument } from "~/server/documents/storage";
 
 export const runtime = "nodejs";

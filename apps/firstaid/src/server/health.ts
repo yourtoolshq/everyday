@@ -12,4 +12,3 @@ export async function createHealthResponse(
     return Response.json({ status: "error" as const }, { status: 503 });
   }
 }
-

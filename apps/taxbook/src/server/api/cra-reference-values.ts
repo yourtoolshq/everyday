@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq } from "drizzle-orm";
 
+import type { Database } from "./helpers";
 import type {
   CraReferenceAttachmentAction,
   CraReferenceAttachmentInput,
@@ -13,10 +14,11 @@ import {
   people,
   taxYears,
 } from "~/server/db/schema";
-import type { Database } from "./helpers";
 import { requireHousehold } from "./helpers";
 
-type TransactionDatabase = Parameters<Parameters<Database["transaction"]>[0]>[0];
+type TransactionDatabase = Parameters<
+  Parameters<Database["transaction"]>[0]
+>[0];
 type QueryDatabase = Database | TransactionDatabase;
 
 async function requireTaxYear(db: QueryDatabase, taxYearId: number) {
@@ -192,7 +194,10 @@ export async function updateCraReferenceDocument(
   });
 }
 
-export async function deleteCraReferenceDocument(db: Database, documentId: number) {
+export async function deleteCraReferenceDocument(
+  db: Database,
+  documentId: number,
+) {
   return db.transaction(async (tx) => {
     const { document } = await requireCraReferenceDocument(tx, documentId);
     await tx
@@ -211,13 +216,13 @@ export async function getCraReferenceDocumentAttachment(
     .select()
     .from(craReferenceDocumentAttachments)
     .where(
-      eq(
-        craReferenceDocumentAttachments.craReferenceDocumentId,
-        documentId,
-      ),
+      eq(craReferenceDocumentAttachments.craReferenceDocumentId, documentId),
     );
   if (!attachment) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Attachment not found." });
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Attachment not found.",
+    });
   }
   return attachment;
 }

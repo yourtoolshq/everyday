@@ -1,17 +1,14 @@
 "use client";
 
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import type { AccountEventType } from "~/lib/account-events";
+import type { AccountTerms } from "~/lib/account-terms";
+import type { RouterOutputs } from "~/trpc/react";
 import { AccountTermsFormFields } from "~/components/accounts/account-terms-form-fields";
-import {
-  accountEventTypeLabels,
-  accountEventTypes,
-  suggestedAccountEventTitle,
-  type AccountEventType,
-} from "~/lib/account-events";
-import { emptyAccountTerms, type AccountTerms } from "~/lib/account-terms";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -31,7 +28,13 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
-import { api, type RouterOutputs } from "~/trpc/react";
+import {
+  accountEventTypeLabels,
+  accountEventTypes,
+  suggestedAccountEventTitle,
+} from "~/lib/account-events";
+import { emptyAccountTerms } from "~/lib/account-terms";
+import { api } from "~/trpc/react";
 
 type AccountEvent = RouterOutputs["accountEvents"]["listByAccount"][number];
 
@@ -59,7 +62,10 @@ export function AccountEventSheet({
 }) {
   const router = useRouter();
   const utils = api.useUtils();
-  const currentTerms = api.accountTerms.getCurrent.useQuery({ accountId }, { enabled: open });
+  const currentTerms = api.accountTerms.getCurrent.useQuery(
+    { accountId },
+    { enabled: open },
+  );
 
   const [type, setType] = useState<AccountEventType>(defaultType);
   const [title, setTitle] = useState("");
@@ -69,7 +75,8 @@ export function AccountEventSheet({
   const [resolvedDate, setResolvedDate] = useState("");
   const [recordTermsChange, setRecordTermsChange] = useState(false);
   const [terms, setTerms] = useState<AccountTerms>(emptyAccountTerms());
-  const [termsEffectiveDate, setTermsEffectiveDate] = useState(todayInputValue());
+  const [termsEffectiveDate, setTermsEffectiveDate] =
+    useState(todayInputValue());
   const [termsNotes, setTermsNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -173,7 +180,9 @@ export function AccountEventSheet({
       ]);
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to save activity.");
+      toast.error(
+        error instanceof Error ? error.message : "Unable to save activity.",
+      );
     } finally {
       setSaving(false);
     }
@@ -184,7 +193,9 @@ export function AccountEventSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <form className="flex min-h-full flex-col" onSubmit={submit}>
           <SheetHeader>
-            <SheetTitle>{isEditing ? "Edit activity" : "Add activity"}</SheetTitle>
+            <SheetTitle>
+              {isEditing ? "Edit activity" : "Add activity"}
+            </SheetTitle>
             <SheetDescription>
               {isEditing
                 ? "Update the activity details."
@@ -224,7 +235,9 @@ export function AccountEventSheet({
                   setTitle(inputEvent.target.value);
                 }}
                 placeholder={
-                  type === "opening" ? "Account opening" : "Credit limit increase request"
+                  type === "opening"
+                    ? "Account opening"
+                    : "Credit limit increase request"
                 }
                 required
               />
@@ -237,7 +250,9 @@ export function AccountEventSheet({
                   id="event-start-date"
                   type="date"
                   value={startDate}
-                  onChange={(inputEvent) => setStartDate(inputEvent.target.value)}
+                  onChange={(inputEvent) =>
+                    setStartDate(inputEvent.target.value)
+                  }
                   required
                 />
               </div>
@@ -247,7 +262,9 @@ export function AccountEventSheet({
                   id="event-resolved-date"
                   type="date"
                   value={resolvedDate}
-                  onChange={(inputEvent) => setResolvedDate(inputEvent.target.value)}
+                  onChange={(inputEvent) =>
+                    setResolvedDate(inputEvent.target.value)
+                  }
                 />
               </div>
             </div>
@@ -274,12 +291,15 @@ export function AccountEventSheet({
                     type="checkbox"
                     className="mt-1"
                     checked={recordTermsChange}
-                    onChange={(inputEvent) => setRecordTermsChange(inputEvent.target.checked)}
+                    onChange={(inputEvent) =>
+                      setRecordTermsChange(inputEvent.target.checked)
+                    }
                   />
                   <span>
                     <span className="font-medium">Record terms change</span>
-                    <span className="mt-1 block text-muted-foreground">
-                      Save updated account terms and create a snapshot linked to this activity.
+                    <span className="text-muted-foreground mt-1 block">
+                      Save updated account terms and create a snapshot linked to
+                      this activity.
                     </span>
                   </span>
                 </label>
@@ -287,12 +307,16 @@ export function AccountEventSheet({
                 {recordTermsChange ? (
                   <div className="space-y-4 border-t pt-4">
                     <div className="space-y-2">
-                      <Label htmlFor="event-terms-effective-date">Terms effective date</Label>
+                      <Label htmlFor="event-terms-effective-date">
+                        Terms effective date
+                      </Label>
                       <Input
                         id="event-terms-effective-date"
                         type="date"
                         value={termsEffectiveDate}
-                        onChange={(inputEvent) => setTermsEffectiveDate(inputEvent.target.value)}
+                        onChange={(inputEvent) =>
+                          setTermsEffectiveDate(inputEvent.target.value)
+                        }
                         required
                       />
                     </div>
@@ -302,7 +326,9 @@ export function AccountEventSheet({
                       <Textarea
                         id="event-terms-notes"
                         value={termsNotes}
-                        onChange={(inputEvent) => setTermsNotes(inputEvent.target.value)}
+                        onChange={(inputEvent) =>
+                          setTermsNotes(inputEvent.target.value)
+                        }
                         placeholder="Optional context for the terms snapshot"
                         rows={2}
                       />
@@ -314,11 +340,24 @@ export function AccountEventSheet({
           </div>
 
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={saving || createEvent.isPending || updateEvent.isPending}>
-              {saving ? "Saving…" : isEditing ? "Save changes" : "Save activity"}
+            <Button
+              type="submit"
+              disabled={
+                saving || createEvent.isPending || updateEvent.isPending
+              }
+            >
+              {saving
+                ? "Saving…"
+                : isEditing
+                  ? "Save changes"
+                  : "Save activity"}
             </Button>
           </SheetFooter>
         </form>

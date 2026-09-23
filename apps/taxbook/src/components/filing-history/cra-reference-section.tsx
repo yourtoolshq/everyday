@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   IconDownload,
   IconExternalLink,
@@ -7,9 +8,9 @@ import {
   IconPlus,
   IconTrash,
 } from "@tabler/icons-react";
-import { useState } from "react";
 import { toast } from "sonner";
 
+import type { RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,7 +31,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { craReferenceCategoryLabels } from "~/domain/cra-reference";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 import { CraReferenceSheet } from "./cra-reference-sheet";
 
 type Person = RouterOutputs["settings"]["get"]["people"][number];
@@ -59,12 +60,17 @@ export function CraReferenceSection({
     if (!deleting) return;
     setDeletingPending(true);
     try {
-      const response = await fetch(`/api/cra-reference-documents/${deleting.id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/cra-reference-documents/${deleting.id}`,
+        {
+          method: "DELETE",
+        },
+      );
       const result = (await response.json()) as { error?: string };
       if (!response.ok) {
-        throw new Error(result.error ?? "Unable to delete the CRA reference document.");
+        throw new Error(
+          result.error ?? "Unable to delete the CRA reference document.",
+        );
       }
       setDeleting(null);
       await refresh();
@@ -87,8 +93,9 @@ export function CraReferenceSection({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-lg font-semibold">CRA reference documents</h3>
-          <p className="text-sm text-muted-foreground">
-            GST/HST returns, Canada Carbon Rebate notices, and other CRA material for this year.
+          <p className="text-muted-foreground text-sm">
+            GST/HST returns, Canada Carbon Rebate notices, and other CRA
+            material for this year.
           </p>
         </div>
         <Button size="sm" onClick={() => setAdding(true)}>
@@ -97,9 +104,11 @@ export function CraReferenceSection({
       </div>
 
       {documents.isLoading ? (
-        <p className="text-sm text-muted-foreground">Loading CRA reference documents…</p>
+        <p className="text-muted-foreground text-sm">
+          Loading CRA reference documents…
+        </p>
       ) : items.length === 0 ? (
-        <p className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+        <p className="text-muted-foreground rounded-lg border border-dashed px-4 py-6 text-sm">
           No CRA reference documents recorded for this year yet.
         </p>
       ) : (
@@ -117,12 +126,16 @@ export function CraReferenceSection({
             <TableBody>
               {items.map((document) => (
                 <TableRow key={document.id}>
-                  <TableCell>{craReferenceCategoryLabels[document.category]}</TableCell>
+                  <TableCell>
+                    {craReferenceCategoryLabels[document.category]}
+                  </TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <p className="font-medium">{document.title}</p>
                       {document.documentDate ? (
-                        <p className="text-xs text-muted-foreground">{document.documentDate}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {document.documentDate}
+                        </p>
                       ) : null}
                     </div>
                   </TableCell>
@@ -198,12 +211,18 @@ export function CraReferenceSection({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete CRA reference document?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes {deleting?.title} from the retained CRA material for this tax year.
+              This removes {deleting?.title} from the retained CRA material for
+              this tax year.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingPending}>Cancel</AlertDialogCancel>
-            <AlertDialogAction disabled={deletingPending} onClick={removeDocument}>
+            <AlertDialogCancel disabled={deletingPending}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deletingPending}
+              onClick={removeDocument}
+            >
               {deletingPending ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>

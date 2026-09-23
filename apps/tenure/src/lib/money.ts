@@ -1,4 +1,6 @@
-export function dollarsToCents(value: string | null | undefined): number | null {
+export function dollarsToCents(
+  value: string | null | undefined,
+): number | null {
   if (value === null || value === undefined) return null;
   const normalized = value.trim().replaceAll(",", "");
   if (normalized === "") return null;

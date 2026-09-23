@@ -2,8 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { institutions } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { institutions } from "~/server/db/schema";
 
 const institutionInput = z.object({
   name: z.string().trim().min(1).max(160),
@@ -21,17 +21,19 @@ export const institutionsRouter = createTRPCRouter({
     });
   }),
 
-  create: publicProcedure.input(institutionInput).mutation(async ({ ctx, input }) => {
-    const [institution] = await ctx.db
-      .insert(institutions)
-      .values({
-        name: input.name,
-        website: input.website ?? null,
-        notes: input.notes ?? null,
-      })
-      .returning();
-    return institution;
-  }),
+  create: publicProcedure
+    .input(institutionInput)
+    .mutation(async ({ ctx, input }) => {
+      const [institution] = await ctx.db
+        .insert(institutions)
+        .values({
+          name: input.name,
+          website: input.website ?? null,
+          notes: input.notes ?? null,
+        })
+        .returning();
+      return institution;
+    }),
 
   update: publicProcedure
     .input(idInput.and(institutionInput))
@@ -47,7 +49,10 @@ export const institutionsRouter = createTRPCRouter({
         .where(eq(institutions.id, input.id))
         .returning();
       if (!institution) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Institution not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Institution not found.",
+        });
       }
       return institution;
     }),
@@ -58,7 +63,10 @@ export const institutionsRouter = createTRPCRouter({
       .where(eq(institutions.id, input.id))
       .returning({ id: institutions.id });
     if (!institution) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Institution not found." });
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Institution not found.",
+      });
     }
     return institution;
   }),

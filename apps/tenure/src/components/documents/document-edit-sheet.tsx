@@ -1,13 +1,11 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  documentTypes,
-  documentTypeLabels,
-  type DocumentType,
-} from "~/lib/documents";
+import type { DocumentType } from "~/lib/documents";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -27,7 +25,8 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { documentTypeLabels, documentTypes } from "~/lib/documents";
+import { api } from "~/trpc/react";
 
 type Document = RouterOutputs["documents"]["listByEmployment"][number];
 
@@ -45,12 +44,17 @@ export function DocumentEditSheet({
   onOpenChange,
 }: DocumentEditSheetProps) {
   const utils = api.useUtils();
-  const discussions = api.discussions.listByEmployment.useQuery({ employmentId }, { enabled: open });
+  const discussions = api.discussions.listByEmployment.useQuery(
+    { employmentId },
+    { enabled: open },
+  );
   const [type, setType] = useState<DocumentType>(document.type);
   const [title, setTitle] = useState(document.title);
   const [documentDate, setDocumentDate] = useState(document.documentDate ?? "");
   const [notes, setNotes] = useState(document.notes ?? "");
-  const [discussionId, setDiscussionId] = useState<string>(document.discussionId ?? "none");
+  const [discussionId, setDiscussionId] = useState<string>(
+    document.discussionId ?? "none",
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -92,14 +96,18 @@ export function DocumentEditSheet({
           <SheetHeader>
             <SheetTitle>Edit document</SheetTitle>
             <SheetDescription>
-              Update the title, type, date, linked discussion, or notes for this record.
+              Update the title, type, date, linked discussion, or notes for this
+              record.
             </SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 space-y-6 px-4 py-6">
             <div className="space-y-2">
               <Label>Document type</Label>
-              <Select value={type} onValueChange={(value) => setType(value as DocumentType)}>
+              <Select
+                value={type}
+                onValueChange={(value) => setType(value as DocumentType)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -162,7 +170,11 @@ export function DocumentEditSheet({
           </div>
 
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={updateDocument.isPending}>

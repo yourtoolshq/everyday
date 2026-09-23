@@ -1,5 +1,5 @@
-import { z } from "zod";
 import type { Buffer } from "node:buffer";
+import { z } from "zod";
 
 export const taxDocumentTypes = [
   "t4",

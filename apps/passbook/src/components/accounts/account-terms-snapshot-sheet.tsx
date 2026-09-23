@@ -1,10 +1,12 @@
 "use client";
 
-import { type FormEvent, useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import type { AccountTerms } from "~/lib/account-terms";
+import type { RouterOutputs } from "~/trpc/react";
 import { AccountTermsFormFields } from "~/components/accounts/account-terms-form-fields";
-import { emptyAccountTerms, type AccountTerms } from "~/lib/account-terms";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -17,7 +19,8 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { emptyAccountTerms } from "~/lib/account-terms";
+import { api } from "~/trpc/react";
 
 type Snapshot = RouterOutputs["accountTerms"]["listSnapshots"][number];
 
@@ -103,12 +106,15 @@ export function AccountTermsSnapshotSheet({
           <SheetHeader>
             <SheetTitle>Snapshot linked to activity</SheetTitle>
             <SheetDescription>
-              This snapshot was recorded from &quot;{snapshot.linkedActivity?.title}&quot;. Edit the
-              terms change from that activity instead.
+              This snapshot was recorded from &quot;
+              {snapshot.linkedActivity?.title}&quot;. Edit the terms change from
+              that activity instead.
             </SheetDescription>
           </SheetHeader>
           <SheetFooter>
-            <Button type="button" onClick={() => onOpenChange(false)}>Close</Button>
+            <Button type="button" onClick={() => onOpenChange(false)}>
+              Close
+            </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
@@ -120,7 +126,9 @@ export function AccountTermsSnapshotSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <form className="flex min-h-full flex-col" onSubmit={submit}>
           <SheetHeader>
-            <SheetTitle>{snapshot ? "Edit snapshot" : "Add historical snapshot"}</SheetTitle>
+            <SheetTitle>
+              {snapshot ? "Edit snapshot" : "Add historical snapshot"}
+            </SheetTitle>
             <SheetDescription>
               {snapshot
                 ? "Correct a past snapshot without changing the account’s current terms."
@@ -153,11 +161,19 @@ export function AccountTermsSnapshotSheet({
             </div>
           </div>
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : snapshot ? "Save snapshot" : "Add snapshot"}
+              {pending
+                ? "Saving…"
+                : snapshot
+                  ? "Save snapshot"
+                  : "Add snapshot"}
             </Button>
           </SheetFooter>
         </form>

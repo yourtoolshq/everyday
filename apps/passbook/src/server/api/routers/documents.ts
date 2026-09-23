@@ -4,15 +4,15 @@ import { z } from "zod";
 
 import { documentTypes } from "~/lib/documents";
 import { defaultStatementFrequency } from "~/lib/statement-frequency";
+import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   accountEvents,
-  accountTermsSnapshots,
   accounts,
+  accountTermsSnapshots,
   documents,
   institutions,
   statementExpectations,
 } from "~/server/db/schema";
-import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { validateStatementPeriod } from "~/server/documents/statement-upload";
 import {
   discardStagedDocuments,
@@ -72,74 +72,79 @@ const updateDocumentInput = z
   });
 
 export const documentsRouter = createTRPCRouter({
-  overview: publicProcedure.input(overviewFilter.optional()).query(async ({ ctx, input }) => {
-    const conditions = [];
-    if (input?.accountId) {
-      conditions.push(eq(documents.accountId, input.accountId));
-    }
-    if (input?.excludeStatements) {
-      conditions.push(not(eq(documents.type, "statement")));
-    }
-    if (input?.excludeVoidCheques) {
-      conditions.push(not(eq(documents.type, "void_cheque")));
-    }
+  overview: publicProcedure
+    .input(overviewFilter.optional())
+    .query(async ({ ctx, input }) => {
+      const conditions = [];
+      if (input?.accountId) {
+        conditions.push(eq(documents.accountId, input.accountId));
+      }
+      if (input?.excludeStatements) {
+        conditions.push(not(eq(documents.type, "statement")));
+      }
+      if (input?.excludeVoidCheques) {
+        conditions.push(not(eq(documents.type, "void_cheque")));
+      }
 
-    const baseQuery = ctx.db
-      .select({
-        ...publicDocumentFields,
-        accountName: accounts.displayName,
-        institutionName: institutions.name,
-        linkedActivityTitle: accountEvents.title,
-        linkedActivityType: accountEvents.type,
-        linkedActivityStartDate: accountEvents.startDate,
-        linkedTermsEffectiveDate: accountTermsSnapshots.effectiveDate,
-      })
-      .from(documents)
-      .innerJoin(accounts, eq(documents.accountId, accounts.id))
-      .innerJoin(institutions, eq(accounts.institutionId, institutions.id))
-      .leftJoin(accountEvents, eq(documents.eventId, accountEvents.id))
-      .leftJoin(accountTermsSnapshots, eq(documents.termsSnapshotId, accountTermsSnapshots.id));
+      const baseQuery = ctx.db
+        .select({
+          ...publicDocumentFields,
+          accountName: accounts.displayName,
+          institutionName: institutions.name,
+          linkedActivityTitle: accountEvents.title,
+          linkedActivityType: accountEvents.type,
+          linkedActivityStartDate: accountEvents.startDate,
+          linkedTermsEffectiveDate: accountTermsSnapshots.effectiveDate,
+        })
+        .from(documents)
+        .innerJoin(accounts, eq(documents.accountId, accounts.id))
+        .innerJoin(institutions, eq(accounts.institutionId, institutions.id))
+        .leftJoin(accountEvents, eq(documents.eventId, accountEvents.id))
+        .leftJoin(
+          accountTermsSnapshots,
+          eq(documents.termsSnapshotId, accountTermsSnapshots.id),
+        );
 
-    const rows =
-      conditions.length > 0
-        ? await baseQuery
-            .where(and(...conditions))
-            .orderBy(desc(documents.createdAt))
-        : await baseQuery.orderBy(desc(documents.createdAt));
+      const rows =
+        conditions.length > 0
+          ? await baseQuery
+              .where(and(...conditions))
+              .orderBy(desc(documents.createdAt))
+          : await baseQuery.orderBy(desc(documents.createdAt));
 
-    return rows.map((row) => ({
-      id: row.id,
-      accountId: row.accountId,
-      type: row.type,
-      periodKey: row.periodKey,
-      title: row.title,
-      documentDate: row.documentDate,
-      notes: row.notes,
-      eventId: row.eventId,
-      termsSnapshotId: row.termsSnapshotId,
-      originalFilename: row.originalFilename,
-      mimeType: row.mimeType,
-      sizeBytes: row.sizeBytes,
-      createdAt: row.createdAt,
-      updatedAt: row.updatedAt,
-      accountName: row.accountName,
-      institutionName: row.institutionName,
-      linkedActivity: row.eventId
-        ? {
-            id: row.eventId,
-            title: row.linkedActivityTitle!,
-            type: row.linkedActivityType!,
-            startDate: row.linkedActivityStartDate!,
-          }
-        : null,
-      linkedTermsSnapshot: row.termsSnapshotId
-        ? {
-            id: row.termsSnapshotId,
-            effectiveDate: row.linkedTermsEffectiveDate!,
-          }
-        : null,
-    }));
-  }),
+      return rows.map((row) => ({
+        id: row.id,
+        accountId: row.accountId,
+        type: row.type,
+        periodKey: row.periodKey,
+        title: row.title,
+        documentDate: row.documentDate,
+        notes: row.notes,
+        eventId: row.eventId,
+        termsSnapshotId: row.termsSnapshotId,
+        originalFilename: row.originalFilename,
+        mimeType: row.mimeType,
+        sizeBytes: row.sizeBytes,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        accountName: row.accountName,
+        institutionName: row.institutionName,
+        linkedActivity: row.eventId
+          ? {
+              id: row.eventId,
+              title: row.linkedActivityTitle!,
+              type: row.linkedActivityType!,
+              startDate: row.linkedActivityStartDate!,
+            }
+          : null,
+        linkedTermsSnapshot: row.termsSnapshotId
+          ? {
+              id: row.termsSnapshotId,
+              effectiveDate: row.linkedTermsEffectiveDate!,
+            }
+          : null,
+      }));
+    }),
 
   statementDocumentsByAccount: publicProcedure.query(async ({ ctx }) => {
     const rows = await ctx.db
@@ -149,7 +154,9 @@ export const documentsRouter = createTRPCRouter({
         documentId: documents.id,
       })
       .from(documents)
-      .where(and(eq(documents.type, "statement"), isNotNull(documents.periodKey)));
+      .where(
+        and(eq(documents.type, "statement"), isNotNull(documents.periodKey)),
+      );
 
     const byAccount: Record<string, Record<string, string>> = {};
     for (const row of rows) {
@@ -162,70 +169,101 @@ export const documentsRouter = createTRPCRouter({
     return byAccount;
   }),
 
-  update: publicProcedure.input(updateDocumentInput).mutation(async ({ ctx, input }) => {
-    const [existing] = await ctx.db
-      .select({
-        id: documents.id,
-        accountId: documents.accountId,
-        type: documents.type,
-        periodKey: documents.periodKey,
-      })
-      .from(documents)
-      .where(eq(documents.id, input.id));
-    if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Document not found." });
-
-    if (input.type === "statement" && input.periodKey) {
-      const [account] = await ctx.db
+  update: publicProcedure
+    .input(updateDocumentInput)
+    .mutation(async ({ ctx, input }) => {
+      const [existing] = await ctx.db
         .select({
-          openedDate: accounts.openedDate,
-          closedDate: accounts.closedDate,
-          status: accounts.status,
-          statementFrequency: statementExpectations.frequency,
+          id: documents.id,
+          accountId: documents.accountId,
+          type: documents.type,
+          periodKey: documents.periodKey,
         })
-        .from(accounts)
-        .leftJoin(statementExpectations, eq(statementExpectations.accountId, accounts.id))
-        .where(eq(accounts.id, existing.accountId));
-      if (!account) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Account not found." });
-      }
-
-      const validation = validateStatementPeriod(
-        {
-          openedDate: account.openedDate,
-          closedDate: account.closedDate,
-          status: account.status,
-          statementFrequency: account.statementFrequency ?? defaultStatementFrequency,
-        },
-        input.periodKey,
-      );
-      if (!validation.ok) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: validation.error });
-      }
-
-      const [duplicate] = await ctx.db
-        .select({ id: documents.id })
         .from(documents)
-        .where(
-          and(
-            eq(documents.accountId, existing.accountId),
-            eq(documents.type, "statement"),
-            eq(documents.periodKey, validation.period.key),
-            ne(documents.id, existing.id),
-          ),
-        );
-      if (duplicate) {
+        .where(eq(documents.id, input.id));
+      if (!existing)
         throw new TRPCError({
-          code: "CONFLICT",
-          message: "This account already has a statement for that period.",
+          code: "NOT_FOUND",
+          message: "Document not found.",
         });
+
+      if (input.type === "statement" && input.periodKey) {
+        const [account] = await ctx.db
+          .select({
+            openedDate: accounts.openedDate,
+            closedDate: accounts.closedDate,
+            status: accounts.status,
+            statementFrequency: statementExpectations.frequency,
+          })
+          .from(accounts)
+          .leftJoin(
+            statementExpectations,
+            eq(statementExpectations.accountId, accounts.id),
+          )
+          .where(eq(accounts.id, existing.accountId));
+        if (!account) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Account not found.",
+          });
+        }
+
+        const validation = validateStatementPeriod(
+          {
+            openedDate: account.openedDate,
+            closedDate: account.closedDate,
+            status: account.status,
+            statementFrequency:
+              account.statementFrequency ?? defaultStatementFrequency,
+          },
+          input.periodKey,
+        );
+        if (!validation.ok) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: validation.error,
+          });
+        }
+
+        const [duplicate] = await ctx.db
+          .select({ id: documents.id })
+          .from(documents)
+          .where(
+            and(
+              eq(documents.accountId, existing.accountId),
+              eq(documents.type, "statement"),
+              eq(documents.periodKey, validation.period.key),
+              ne(documents.id, existing.id),
+            ),
+          );
+        if (duplicate) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "This account already has a statement for that period.",
+          });
+        }
+
+        const [document] = await ctx.db
+          .update(documents)
+          .set({
+            title: input.title,
+            type: "statement",
+            periodKey: validation.period.key,
+            documentDate: input.documentDate ?? null,
+            notes: input.notes ?? null,
+            updatedAt: now(),
+          })
+          .where(eq(documents.id, input.id))
+          .returning(publicDocumentFields);
+        return document;
       }
 
       const [document] = await ctx.db
         .update(documents)
         .set({
           title: input.title,
-          type: "statement",
-          periodKey: validation.period.key,
+          type: input.type,
+          periodKey: null,
           documentDate: input.documentDate ?? null,
           notes: input.notes ?? null,
           updatedAt: now(),
@@ -233,29 +271,18 @@ export const documentsRouter = createTRPCRouter({
         .where(eq(documents.id, input.id))
         .returning(publicDocumentFields);
       return document;
-    }
-
-    const [document] = await ctx.db
-      .update(documents)
-      .set({
-        title: input.title,
-        type: input.type,
-        periodKey: null,
-        documentDate: input.documentDate ?? null,
-        notes: input.notes ?? null,
-        updatedAt: now(),
-      })
-      .where(eq(documents.id, input.id))
-      .returning(publicDocumentFields);
-    return document;
-  }),
+    }),
 
   delete: publicProcedure.input(idInput).mutation(async ({ ctx, input }) => {
     const [document] = await ctx.db
       .select({ id: documents.id, storageKey: documents.storageKey })
       .from(documents)
       .where(eq(documents.id, input.id));
-    if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "Document not found." });
+    if (!document)
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Document not found.",
+      });
 
     const staged = await stageDocumentsForDeletion([document.storageKey]);
     try {

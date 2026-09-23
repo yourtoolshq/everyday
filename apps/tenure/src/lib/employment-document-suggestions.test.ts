@@ -35,7 +35,9 @@ describe("employment document suggestions", () => {
       discussionId: null,
     };
 
-    expect(suggestRequiredDocumentType("compensation_change")).toBe("salary_letter");
+    expect(suggestRequiredDocumentType("compensation_change")).toBe(
+      "salary_letter",
+    );
     expect(
       suggestRequiredDocumentDate({
         kind: "compensation_change",

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -22,9 +24,11 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
-import { assessmentKindLabels, MAX_FILING_ATTACHMENT_BYTES } from "~/domain/filing";
+import {
+  assessmentKindLabels,
+  MAX_FILING_ATTACHMENT_BYTES,
+} from "~/domain/filing";
 import { signedDollarsToCents } from "~/domain/money";
-import type { RouterOutputs } from "~/trpc/react";
 
 type Filing = RouterOutputs["filing"]["timeline"]["filings"][number];
 
@@ -37,7 +41,8 @@ function resultCents(direction: string, amount: string) {
 
 function resultFields(cents: number | null) {
   if (cents === null) return { direction: "none", amount: "" };
-  if (cents < 0) return { direction: "owing", amount: (Math.abs(cents) / 100).toFixed(2) };
+  if (cents < 0)
+    return { direction: "owing", amount: (Math.abs(cents) / 100).toFixed(2) };
   return { direction: "refund", amount: (cents / 100).toFixed(2) };
 }
 
@@ -54,8 +59,12 @@ export function AssessmentSheet({
 }) {
   const editing = filing.assessmentId !== null;
   const initialResult = resultFields(filing.assessedResultCents ?? null);
-  const [assessmentDate, setAssessmentDate] = useState(filing.assessmentDate ?? "");
-  const [resultDirection, setResultDirection] = useState(initialResult.direction);
+  const [assessmentDate, setAssessmentDate] = useState(
+    filing.assessmentDate ?? "",
+  );
+  const [resultDirection, setResultDirection] = useState(
+    initialResult.direction,
+  );
   const [resultAmount, setResultAmount] = useState(initialResult.amount);
   const [refundOrPaymentDate, setRefundOrPaymentDate] = useState(
     filing.refundOrPaymentDate ?? "",
@@ -76,7 +85,9 @@ export function AssessmentSheet({
       return;
     }
     if (resultDirection !== "none" && resultAmount.trim() === "") {
-      toast.error("Enter an assessed refund or amount owing, or choose Unknown.");
+      toast.error(
+        "Enter an assessed refund or amount owing, or choose Unknown.",
+      );
       return;
     }
     if (
@@ -112,7 +123,9 @@ export function AssessmentSheet({
     setPending(true);
     try {
       const response = await fetch(
-        editing ? `/api/assessments/${filing.assessmentId}` : "/api/assessments",
+        editing
+          ? `/api/assessments/${filing.assessmentId}`
+          : "/api/assessments",
         { method: editing ? "PUT" : "POST", body: form },
       );
       const result = (await response.json()) as { error?: string };
@@ -124,7 +137,9 @@ export function AssessmentSheet({
       await onSaved();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Unable to save the assessment.",
+        error instanceof Error
+          ? error.message
+          : "Unable to save the assessment.",
       );
     } finally {
       setPending(false);
@@ -165,8 +180,13 @@ export function AssessmentSheet({
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="assessment-result-direction">Assessed result</Label>
-                <Select value={resultDirection} onValueChange={setResultDirection}>
+                <Label htmlFor="assessment-result-direction">
+                  Assessed result
+                </Label>
+                <Select
+                  value={resultDirection}
+                  onValueChange={setResultDirection}
+                >
                   <SelectTrigger id="assessment-result-direction">
                     <SelectValue />
                   </SelectTrigger>
@@ -190,7 +210,9 @@ export function AssessmentSheet({
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="assessment-payment-date">Refund or payment date</Label>
+              <Label htmlFor="assessment-payment-date">
+                Refund or payment date
+              </Label>
               <Input
                 id="assessment-payment-date"
                 type="date"
@@ -200,7 +222,9 @@ export function AssessmentSheet({
             </div>
             <div className="space-y-2">
               <Label htmlFor="assessment-attachment">
-                {filing.kind === "adjustment" ? "NOR attachment" : "NOA attachment"}
+                {filing.kind === "adjustment"
+                  ? "NOR attachment"
+                  : "NOA attachment"}
               </Label>
               <Input
                 id="assessment-attachment"
@@ -209,11 +233,13 @@ export function AssessmentSheet({
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               />
               {filing.assessmentAttachmentFileName ? (
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <label className="text-muted-foreground flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
                     checked={removeAttachment}
-                    onChange={(event) => setRemoveAttachment(event.target.checked)}
+                    onChange={(event) =>
+                      setRemoveAttachment(event.target.checked)
+                    }
                   />
                   Remove {filing.assessmentAttachmentFileName}
                 </label>
@@ -230,7 +256,11 @@ export function AssessmentSheet({
             </div>
           </div>
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button disabled={pending}>{pending ? "Saving…" : "Save"}</Button>

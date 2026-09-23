@@ -29,7 +29,10 @@ export function sumPaychecks(
       : paychecks.filter((paycheck) => paycheckInYear(paycheck.payDate, year));
 
   return {
-    grossCents: filtered.reduce((sum, paycheck) => sum + paycheck.grossPayCents, 0),
+    grossCents: filtered.reduce(
+      (sum, paycheck) => sum + paycheck.grossPayCents,
+      0,
+    ),
     netCents: filtered.reduce((sum, paycheck) => sum + paycheck.netPayCents, 0),
     paycheckCount: filtered.length,
   };

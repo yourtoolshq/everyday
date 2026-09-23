@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { buildOverview, type OverviewItem } from "./overview";
+import type { OverviewItem } from "./overview";
+import { buildOverview } from "./overview";
 
 const base: OverviewItem = {
   id: 1,

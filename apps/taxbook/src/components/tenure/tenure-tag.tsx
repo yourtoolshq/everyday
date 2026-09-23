@@ -4,7 +4,7 @@ export function TenureTag({ href }: { href?: string }) {
   const badge = (
     <Badge
       variant="outline"
-      className="px-1.5 py-0 text-[10px] font-medium uppercase tracking-wide"
+      className="px-1.5 py-0 text-[10px] font-medium tracking-wide uppercase"
     >
       Tenure
     </Badge>

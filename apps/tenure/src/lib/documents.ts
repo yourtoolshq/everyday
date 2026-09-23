@@ -36,7 +36,10 @@ type DetectedFile = { mimeType: string; extension: string };
 
 const heicBrands = new Set(["heic", "heix", "hevc", "hevx", "heim", "heis"]);
 
-export function detectDocumentFile(bytes: Uint8Array, filename?: string): DetectedFile | null {
+export function detectDocumentFile(
+  bytes: Uint8Array,
+  filename?: string,
+): DetectedFile | null {
   if (
     bytes.length >= 5 &&
     bytes[0] === 0x25 &&
@@ -47,7 +50,12 @@ export function detectDocumentFile(bytes: Uint8Array, filename?: string): Detect
   ) {
     return { mimeType: "application/pdf", extension: "pdf" };
   }
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+  if (
+    bytes.length >= 3 &&
+    bytes[0] === 0xff &&
+    bytes[1] === 0xd8 &&
+    bytes[2] === 0xff
+  ) {
     return { mimeType: "image/jpeg", extension: "jpg" };
   }
   if (
@@ -92,8 +100,12 @@ export function detectDocumentFile(bytes: Uint8Array, filename?: string): Detect
 function looksLikeEml(bytes: Uint8Array, filename?: string) {
   if (filename?.toLowerCase().endsWith(".eml")) return true;
   const limit = Math.min(bytes.length, 4096);
-  const sample = new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(0, limit));
-  return /^(from|received|return-path|message-id|date|subject|mime-version):/im.test(sample);
+  const sample = new TextDecoder("utf-8", { fatal: false }).decode(
+    bytes.subarray(0, limit),
+  );
+  return /^(from|received|return-path|message-id|date|subject|mime-version):/im.test(
+    sample,
+  );
 }
 
 export function isEmlMimeType(mimeType: string) {

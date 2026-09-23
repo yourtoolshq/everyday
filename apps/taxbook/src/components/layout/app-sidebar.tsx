@@ -1,18 +1,18 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   IconBook2,
-  IconFileDescription,
+  IconBriefcase,
+  IconCalculator,
   IconFileCheck,
+  IconFileDescription,
   IconLayoutDashboard,
   IconListDetails,
   IconReceiptDollar,
-  IconCalculator,
   IconSettings,
-  IconBriefcase,
 } from "@tabler/icons-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 import {
   Sidebar,
@@ -44,7 +44,8 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const settings = api.settings.get.useQuery();
   const employments = api.employment.list.useQuery();
-  const showPaychequesWorkspace = employments.data?.showPaychequesWorkspace ?? true;
+  const showPaychequesWorkspace =
+    employments.data?.showPaychequesWorkspace ?? true;
   const visibleNavigation = navigation.filter(
     (item) => item.href !== "/paycheques" || showPaychequesWorkspace,
   );
@@ -53,7 +54,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="gap-3 border-b p-3">
         <Link href="/" className="flex items-center gap-2 px-1.5 font-semibold">
-          <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <span className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg">
             <IconBook2 className="size-5" />
           </span>
           <span className="truncate">Tax Book</span>
@@ -62,7 +63,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>{settings.data?.household.name ?? "Household"}</SidebarGroupLabel>
+          <SidebarGroupLabel>
+            {settings.data?.household.name ?? "Household"}
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {visibleNavigation.map((item) => (
@@ -72,7 +75,10 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                     isActive={pathname === item.href}
                     tooltip={item.title}
                   >
-                    <Link href={item.href} prefetch={item.href === "/estimate" ? false : undefined}>
+                    <Link
+                      href={item.href}
+                      prefetch={item.href === "/estimate" ? false : undefined}
+                    >
                       <item.icon />
                       <span>{item.title}</span>
                     </Link>

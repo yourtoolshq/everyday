@@ -16,16 +16,16 @@ export function MissingEmploymentRecordsPanel() {
         <CardTitle className="text-base">Employment record review</CardTitle>
         <Link
           href="/review/employment-records"
-          className="text-sm font-medium text-primary hover:underline"
+          className="text-primary text-sm font-medium hover:underline"
         >
           View all
         </Link>
       </CardHeader>
       <CardContent>
         {review.isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-muted-foreground text-sm">Loading…</p>
         ) : missing.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             No missing employment records right now.
           </p>
         ) : (
@@ -37,7 +37,7 @@ export function MissingEmploymentRecordsPanel() {
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium">{item.employerName}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {item.label} · {item.personName}
                   </p>
                 </div>

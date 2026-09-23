@@ -1,5 +1,4 @@
 import { basename } from "node:path";
-
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
@@ -55,19 +54,25 @@ export async function POST(
         : titleFromFilename(originalFilename),
     type: form.get("type"),
     documentDate:
-      typeof form.get("documentDate") === "string" ? form.get("documentDate") : null,
+      typeof form.get("documentDate") === "string"
+        ? form.get("documentDate")
+        : null,
     notes: typeof form.get("notes") === "string" ? form.get("notes") : null,
     discussionId:
       typeof discussionIdValue === "string" && discussionIdValue.trim()
         ? discussionIdValue
         : null,
   });
-  if (!metadata.success) return errorResponse("Choose a type and enter a title.", 400);
+  if (!metadata.success)
+    return errorResponse("Choose a type and enter a title.", 400);
 
   const bytes = new Uint8Array(await file.arrayBuffer());
   const detected = detectDocumentFile(bytes, originalFilename);
   if (!detected) {
-    return errorResponse("Upload a PDF, JPEG, PNG, WebP, HEIC, or EML file.", 415);
+    return errorResponse(
+      "Upload a PDF, JPEG, PNG, WebP, HEIC, or EML file.",
+      415,
+    );
   }
 
   const [employment] = await db

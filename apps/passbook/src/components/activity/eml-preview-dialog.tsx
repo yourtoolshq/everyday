@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { listParsedEmlAddressFields, type ParsedEml } from "~/lib/eml";
+import type { ParsedEml } from "~/lib/eml";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "~/components/ui/dialog";
 import { Skeleton } from "~/components/ui/skeleton";
+import { listParsedEmlAddressFields } from "~/lib/eml";
 
 function formatEmailDate(value: string) {
   const date = new Date(value);
@@ -33,10 +34,10 @@ function EmailAddressFields({ email }: { email: ParsedEml }) {
   return (
     <div className="flex shrink-0 items-start justify-between gap-4 text-sm">
       {fields.length > 0 ? (
-        <dl className="min-w-0 grid flex-1 gap-1 [grid-template-columns:auto_minmax(0,1fr)]">
+        <dl className="grid min-w-0 flex-1 [grid-template-columns:auto_minmax(0,1fr)] gap-1">
           {fields.map((field) => (
             <div key={field.label} className="contents">
-              <dt className="pr-3 text-muted-foreground">{field.label}</dt>
+              <dt className="text-muted-foreground pr-3">{field.label}</dt>
               <dd className="min-w-0 break-words">{field.value}</dd>
             </div>
           ))}
@@ -46,7 +47,7 @@ function EmailAddressFields({ email }: { email: ParsedEml }) {
       )}
       {email.date ? (
         <time
-          className="shrink-0 text-right text-muted-foreground"
+          className="text-muted-foreground shrink-0 text-right"
           dateTime={email.date}
         >
           {formatEmailDate(email.date)}
@@ -82,7 +83,9 @@ export function EmlPreviewDialog({
     void fetch(`/api/documents/${documentId}/eml`)
       .then(async (response) => {
         if (!response.ok) {
-          const data = (await response.json().catch(() => null)) as { error?: string } | null;
+          const data = (await response.json().catch(() => null)) as {
+            error?: string;
+          } | null;
           throw new Error(data?.error ?? "Unable to load email preview.");
         }
         return response.json() as Promise<ParsedEml>;
@@ -92,7 +95,11 @@ export function EmlPreviewDialog({
       })
       .catch((fetchError: unknown) => {
         if (!cancelled) {
-          setError(fetchError instanceof Error ? fetchError.message : "Unable to load email preview.");
+          setError(
+            fetchError instanceof Error
+              ? fetchError.message
+              : "Unable to load email preview.",
+          );
         }
       })
       .finally(() => {
@@ -108,7 +115,9 @@ export function EmlPreviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[min(90vh,800px)] max-h-[min(90vh,800px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <DialogHeader className="shrink-0 border-b px-4 py-3">
-          <DialogTitle className="leading-snug">{parsed?.subject ?? title}</DialogTitle>
+          <DialogTitle className="leading-snug">
+            {parsed?.subject ?? title}
+          </DialogTitle>
           <DialogDescription>Email preview</DialogDescription>
         </DialogHeader>
 
@@ -120,7 +129,7 @@ export function EmlPreviewDialog({
               <Skeleton className="min-h-0 flex-1" />
             </div>
           ) : error ? (
-            <p className="text-sm text-destructive">{error}</p>
+            <p className="text-destructive text-sm">{error}</p>
           ) : parsed ? (
             <>
               <EmailAddressFields email={parsed} />
@@ -133,7 +142,7 @@ export function EmlPreviewDialog({
                     srcDoc={parsed.body}
                   />
                 ) : (
-                  <pre className="h-full overflow-y-auto whitespace-pre-wrap p-4 font-sans">
+                  <pre className="h-full overflow-y-auto p-4 font-sans whitespace-pre-wrap">
                     {parsed.body}
                   </pre>
                 )}
@@ -144,11 +153,17 @@ export function EmlPreviewDialog({
 
         <DialogFooter className="mx-0 mb-0 shrink-0 border-t">
           <Button type="button" variant="outline" asChild>
-            <a href={`/api/documents/${documentId}/file`} target="_blank" rel="noreferrer">
+            <a
+              href={`/api/documents/${documentId}/file`}
+              target="_blank"
+              rel="noreferrer"
+            >
               Open original
             </a>
           </Button>
-          <Button type="button" onClick={() => onOpenChange(false)}>Close</Button>
+          <Button type="button" onClick={() => onOpenChange(false)}>
+            Close
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,14 +1,13 @@
-import { TRPCError } from "@trpc/server";
 import { Buffer } from "node:buffer";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import type { AttachmentAction, AttachmentInput } from "~/domain/record";
 import {
   allowedAttachmentTypes,
   MAX_ATTACHMENT_BYTES,
   recordInput,
   recordUpdateInput,
-  type AttachmentAction,
-  type AttachmentInput,
 } from "~/domain/record";
 
 function textValue(form: FormData, name: string) {
@@ -86,11 +85,17 @@ export async function parseUpdateRecordForm(form: FormData) {
     return { input, attachmentAction: { type: "remove" } as AttachmentAction };
   }
   if (action !== "replace") {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid attachment action." });
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Invalid attachment action.",
+    });
   }
   const attachment = await attachmentFromForm(form);
   if (!attachment) {
-    throw new TRPCError({ code: "BAD_REQUEST", message: "Choose an attachment to upload." });
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Choose an attachment to upload.",
+    });
   }
   return {
     input,
@@ -120,5 +125,8 @@ export function recordErrorResponse(error: unknown) {
     );
   }
   console.error("Record request failed", error);
-  return Response.json({ error: "Unable to save the Record." }, { status: 500 });
+  return Response.json(
+    { error: "Unable to save the Record." },
+    { status: 500 },
+  );
 }

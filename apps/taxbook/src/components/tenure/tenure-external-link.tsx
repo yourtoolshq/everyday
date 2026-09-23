@@ -5,7 +5,6 @@ import { IconExternalLink } from "@tabler/icons-react";
 import { Button } from "~/components/ui/button";
 import { tenureEmploymentUrl, tenureHomeUrl } from "~/lib/tenure-url";
 import { api } from "~/trpc/react";
-
 import { TenureTag } from "./tenure-tag";
 
 function useTenureUrls() {
@@ -114,7 +113,11 @@ export function TenureHomeLink({
   );
 }
 
-export function TenureEmploymentTag({ employmentId }: { employmentId: string }) {
+export function TenureEmploymentTag({
+  employmentId,
+}: {
+  employmentId: string;
+}) {
   const { employmentUrl } = useTenureUrls();
   return <TenureTag href={employmentUrl(employmentId) ?? undefined} />;
 }

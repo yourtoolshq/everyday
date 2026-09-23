@@ -48,15 +48,22 @@ describe("employment record completeness", () => {
   });
 
   it("requires a supporting document for each compensation change", () => {
-    const requirements = buildEmploymentRecordRequirements([compensationChange]);
+    const requirements = buildEmploymentRecordRequirements([
+      compensationChange,
+    ]);
     expect(requirements).toHaveLength(2);
-    expect(requirements[1]?.key).toBe(compensationChangeRequirementKey("change-1"));
+    expect(requirements[1]?.key).toBe(
+      compensationChangeRequirementKey("change-1"),
+    );
 
-    const missingDocument = deriveEmploymentRecordCompleteness([compensationChange], {
-      documents: [{ type: "offer_letter" }],
-      documentsById: new Map([["doc-1", { type: "offer_letter" }]]),
-      exceptions: {},
-    });
+    const missingDocument = deriveEmploymentRecordCompleteness(
+      [compensationChange],
+      {
+        documents: [{ type: "offer_letter" }],
+        documentsById: new Map([["doc-1", { type: "offer_letter" }]]),
+        exceptions: {},
+      },
+    );
     expect(missingDocument.summary.missingCount).toBe(1);
 
     const withSalaryLetter = deriveEmploymentRecordCompleteness(
@@ -120,6 +127,9 @@ describe("employment record completeness", () => {
     );
 
     expect(missing).toHaveLength(2);
-    expect(missing.map((item) => item.kind).sort()).toEqual(["compensation_change", "offer_letter"]);
+    expect(missing.map((item) => item.kind).sort()).toEqual([
+      "compensation_change",
+      "offer_letter",
+    ]);
   });
 });

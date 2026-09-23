@@ -1,5 +1,5 @@
-import { z } from "zod";
 import type { Buffer } from "node:buffer";
+import { z } from "zod";
 
 export const filingKinds = ["original_return", "adjustment"] as const;
 export const filingStatuses = ["preparing", "submitted", "assessed"] as const;
@@ -125,7 +125,11 @@ export const originalReturnUpdateInput = z.object({
 });
 
 const adjustmentFields = {
-  reason: z.string().trim().min(1, "Enter a reason for the adjustment.").max(500),
+  reason: z
+    .string()
+    .trim()
+    .min(1, "Enter a reason for the adjustment.")
+    .max(500),
   submissionDate: isoDate.nullable(),
   expectedChangeCents: signedResultCents,
   returnCopyStatus: z.enum(returnCopyStatuses, {
@@ -237,8 +241,7 @@ export function buildTaxYearLifecycleWarnings(input: {
       if (filing.status === "preparing") {
         warnings.push({
           code: "original_return_incomplete",
-          message:
-            "At least one original return is still being prepared.",
+          message: "At least one original return is still being prepared.",
         });
         break;
       }

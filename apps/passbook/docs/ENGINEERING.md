@@ -19,12 +19,12 @@ Healthy state: `pnpm db:generate` reports no changes when `schema.ts` is up to d
 
 Pages are thin. They render a `*-workspace` component that fetches data and composes `*-panel` sections.
 
-| Suffix | Use for |
-|--------|---------|
-| `*-workspace` | Page-level data + state |
-| `*-panel` | Section inside a workspace |
-| `*-sheet` | Create, edit, upload |
-| `*-dialog` | Delete confirmation or read-only preview |
+| Suffix        | Use for                                  |
+| ------------- | ---------------------------------------- |
+| `*-workspace` | Page-level data + state                  |
+| `*-panel`     | Section inside a workspace               |
+| `*-sheet`     | Create, edit, upload                     |
+| `*-dialog`    | Delete confirmation or read-only preview |
 
 - **Forms:** `useState` + `validate*()` + `toast`. Zod validation lives in tRPC routers.
 - **Sheets** for forms/uploads. **AlertDialog** for deletes. Mount sheets with `key={entityId}` to reset state.

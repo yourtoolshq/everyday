@@ -2,10 +2,22 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
+import type { PaycheckColumnMapping } from "~/lib/paycheck-csv-import";
 import {
   deriveExpectedPayPeriodsForYear,
   paycheckMatchesPeriod,
 } from "~/lib/expected-pay-periods";
+import {
+  buildExceptionsByEmployment,
+  buildMissingPayStubItems,
+  countPayCompletenessForYear,
+  derivePayStubCompleteness,
+} from "~/lib/pay-stub-completeness";
+import {
+  buildPaycheckImportPreview,
+  detectPaycheckColumnMapping,
+  paycheckImportRowToInput,
+} from "~/lib/paycheck-csv-import";
 import {
   applyPaycheckIncomeTax,
   calculateNetPay,
@@ -13,25 +25,13 @@ import {
   parseDeductionSettings,
   paycheckInput,
 } from "~/lib/paycheck-deductions";
-import {
-  buildPaycheckImportPreview,
-  detectPaycheckColumnMapping,
-  paycheckImportRowToInput,
-  type PaycheckColumnMapping,
-} from "~/lib/paycheck-csv-import";
-import {
-  buildExceptionsByEmployment,
-  buildMissingPayStubItems,
-  countPayCompletenessForYear,
-  derivePayStubCompleteness,
-} from "~/lib/pay-stub-completeness";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   documents,
-  employments,
   employers,
-  payPeriodExceptions,
+  employments,
   paychecks,
+  payPeriodExceptions,
   people,
 } from "~/server/db/schema";
 
@@ -72,7 +72,10 @@ function buildPaycheckValues(
   };
 }
 
-async function getEmploymentPaySettings(ctx: { db: typeof import("~/server/db").db }, employmentId: string) {
+async function getEmploymentPaySettings(
+  ctx: { db: typeof import("~/server/db").db },
+  employmentId: string,
+) {
   const [employment] = await ctx.db
     .select({
       id: employments.id,
@@ -82,46 +85,51 @@ async function getEmploymentPaySettings(ctx: { db: typeof import("~/server/db").
     .where(eq(employments.id, employmentId));
 
   if (!employment) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Employment not found.",
+    });
   }
 
   return parseDeductionSettings(employment.deductionSettings);
 }
 
 export const paychecksRouter = createTRPCRouter({
-  listByEmployment: publicProcedure.input(employmentIdInput).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select({
-        id: paychecks.id,
-        employmentId: paychecks.employmentId,
-        payDate: paychecks.payDate,
-        periodStartDate: paychecks.periodStartDate,
-        periodEndDate: paychecks.periodEndDate,
-        grossPayCents: paychecks.grossPayCents,
-        incomeTaxCents: paychecks.incomeTaxCents,
-        federalIncomeTaxCents: paychecks.federalIncomeTaxCents,
-        manitobaIncomeTaxCents: paychecks.manitobaIncomeTaxCents,
-        cppCents: paychecks.cppCents,
-        cpp2Cents: paychecks.cpp2Cents,
-        eiCents: paychecks.eiCents,
-        wiCents: paychecks.wiCents,
-        ltdCents: paychecks.ltdCents,
-        extendedHealthCents: paychecks.extendedHealthCents,
-        travelMedicalCents: paychecks.travelMedicalCents,
-        unionDuesCents: paychecks.unionDuesCents,
-        otherDeductionsCents: paychecks.otherDeductionsCents,
-        netPayCents: paychecks.netPayCents,
-        documentId: paychecks.documentId,
-        documentTitle: documents.title,
-        documentFilename: documents.originalFilename,
-        createdAt: paychecks.createdAt,
-        updatedAt: paychecks.updatedAt,
-      })
-      .from(paychecks)
-      .leftJoin(documents, eq(paychecks.documentId, documents.id))
-      .where(eq(paychecks.employmentId, input.employmentId))
-      .orderBy(desc(paychecks.payDate), desc(paychecks.createdAt));
-  }),
+  listByEmployment: publicProcedure
+    .input(employmentIdInput)
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select({
+          id: paychecks.id,
+          employmentId: paychecks.employmentId,
+          payDate: paychecks.payDate,
+          periodStartDate: paychecks.periodStartDate,
+          periodEndDate: paychecks.periodEndDate,
+          grossPayCents: paychecks.grossPayCents,
+          incomeTaxCents: paychecks.incomeTaxCents,
+          federalIncomeTaxCents: paychecks.federalIncomeTaxCents,
+          manitobaIncomeTaxCents: paychecks.manitobaIncomeTaxCents,
+          cppCents: paychecks.cppCents,
+          cpp2Cents: paychecks.cpp2Cents,
+          eiCents: paychecks.eiCents,
+          wiCents: paychecks.wiCents,
+          ltdCents: paychecks.ltdCents,
+          extendedHealthCents: paychecks.extendedHealthCents,
+          travelMedicalCents: paychecks.travelMedicalCents,
+          unionDuesCents: paychecks.unionDuesCents,
+          otherDeductionsCents: paychecks.otherDeductionsCents,
+          netPayCents: paychecks.netPayCents,
+          documentId: paychecks.documentId,
+          documentTitle: documents.title,
+          documentFilename: documents.originalFilename,
+          createdAt: paychecks.createdAt,
+          updatedAt: paychecks.updatedAt,
+        })
+        .from(paychecks)
+        .leftJoin(documents, eq(paychecks.documentId, documents.id))
+        .where(eq(paychecks.employmentId, input.employmentId))
+        .orderBy(desc(paychecks.payDate), desc(paychecks.createdAt));
+    }),
 
   previewImport: publicProcedure
     .input(
@@ -145,7 +153,10 @@ export const paychecksRouter = createTRPCRouter({
         .where(eq(employments.id, input.employmentId));
 
       if (!employment) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Employment not found.",
+        });
       }
 
       const existingPaychecks = await ctx.db
@@ -156,9 +167,10 @@ export const paychecksRouter = createTRPCRouter({
         .from(paychecks)
         .where(eq(paychecks.employmentId, input.employmentId));
 
-      const mapping = (input.mapping ?? detectPaycheckColumnMapping(
-        input.csvText.trim().split(/\r?\n/)[0]?.split(",") ?? [],
-      )) as PaycheckColumnMapping;
+      const mapping = (input.mapping ??
+        detectPaycheckColumnMapping(
+          input.csvText.trim().split(/\r?\n/)[0]?.split(",") ?? [],
+        )) as PaycheckColumnMapping;
 
       return buildPaycheckImportPreview({
         csvText: input.csvText,
@@ -194,7 +206,10 @@ export const paychecksRouter = createTRPCRouter({
         .where(eq(employments.id, input.employmentId));
 
       if (!employment) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Employment not found.",
+        });
       }
 
       const existingPaychecks = await ctx.db
@@ -205,9 +220,10 @@ export const paychecksRouter = createTRPCRouter({
         .from(paychecks)
         .where(eq(paychecks.employmentId, input.employmentId));
 
-      const mapping = (input.mapping ?? detectPaycheckColumnMapping(
-        input.csvText.trim().split(/\r?\n/)[0]?.split(",") ?? [],
-      )) as PaycheckColumnMapping;
+      const mapping = (input.mapping ??
+        detectPaycheckColumnMapping(
+          input.csvText.trim().split(/\r?\n/)[0]?.split(",") ?? [],
+        )) as PaycheckColumnMapping;
 
       const preview = buildPaycheckImportPreview({
         csvText: input.csvText,
@@ -244,27 +260,30 @@ export const paychecksRouter = createTRPCRouter({
 
       return {
         importedCount: created.length,
-        skippedDuplicateCount: preview.rows.filter((row) => row.isDuplicate).length,
+        skippedDuplicateCount: preview.rows.filter((row) => row.isDuplicate)
+          .length,
         skippedErrorCount: preview.errorCount,
         estimatedPeriodCount: preview.estimatedPeriodCount,
       };
     }),
 
-  create: publicProcedure.input(paycheckInput).mutation(async ({ ctx, input }) => {
-    const settings = await getEmploymentPaySettings(ctx, input.employmentId);
-    const values = buildPaycheckValues(input, settings);
+  create: publicProcedure
+    .input(paycheckInput)
+    .mutation(async ({ ctx, input }) => {
+      const settings = await getEmploymentPaySettings(ctx, input.employmentId);
+      const values = buildPaycheckValues(input, settings);
 
-    const [paycheck] = await ctx.db
-      .insert(paychecks)
-      .values({
-        employmentId: input.employmentId,
-        ...values,
-      })
-      .returning();
+      const [paycheck] = await ctx.db
+        .insert(paychecks)
+        .values({
+          employmentId: input.employmentId,
+          ...values,
+        })
+        .returning();
 
-    if (!paycheck) throw new Error("Paycheck creation failed.");
-    return paycheck;
-  }),
+      if (!paycheck) throw new Error("Paycheck creation failed.");
+      return paycheck;
+    }),
 
   update: publicProcedure
     .input(idInput.and(paycheckInput))
@@ -275,7 +294,10 @@ export const paychecksRouter = createTRPCRouter({
         .where(eq(paychecks.id, input.id));
 
       if (!existing) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Paycheck not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Paycheck not found.",
+        });
       }
       if (existing.employmentId !== input.employmentId) {
         throw new TRPCError({
@@ -297,7 +319,10 @@ export const paychecksRouter = createTRPCRouter({
         .returning();
 
       if (!paycheck) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Paycheck not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Paycheck not found.",
+        });
       }
       return paycheck;
     }),
@@ -308,7 +333,10 @@ export const paychecksRouter = createTRPCRouter({
       .where(eq(paychecks.id, input.id))
       .returning({ id: paychecks.id });
     if (!paycheck) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Paycheck not found." });
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Paycheck not found.",
+      });
     }
     return paycheck;
   }),
@@ -334,7 +362,10 @@ export const paychecksRouter = createTRPCRouter({
         .where(eq(employments.id, input.employmentId));
 
       if (!employment) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Employment not found.",
+        });
       }
 
       const paycheckRows = await ctx.db
@@ -355,7 +386,8 @@ export const paychecksRouter = createTRPCRouter({
         .from(payPeriodExceptions)
         .where(eq(payPeriodExceptions.employmentId, input.employmentId));
 
-      const exceptions = buildExceptionsByEmployment(exceptionRows)[employment.id] ?? {};
+      const exceptions =
+        buildExceptionsByEmployment(exceptionRows)[employment.id] ?? {};
       const paychecksForCompleteness = paycheckRows.map((row) => ({
         id: row.id,
         periodStartDate: row.periodStartDate,
@@ -423,7 +455,10 @@ export const paychecksRouter = createTRPCRouter({
         .from(employments)
         .where(eq(employments.id, input.employmentId));
       if (!employment) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Employment not found.",
+        });
       }
 
       await ctx.db

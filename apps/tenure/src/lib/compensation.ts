@@ -2,7 +2,11 @@ import { z } from "zod";
 
 import { formatMoney } from "~/lib/money";
 
-export const compensationTypes = ["annual_salary", "hourly_rate", "commission"] as const;
+export const compensationTypes = [
+  "annual_salary",
+  "hourly_rate",
+  "commission",
+] as const;
 export type CompensationType = (typeof compensationTypes)[number];
 
 export const compensationCurrencies = ["CAD", "INR"] as const;
@@ -52,14 +56,23 @@ export const compensationInputSchema = z
     currency: z.enum(compensationCurrencies).default("CAD"),
     effectiveDate: z.string().trim().min(1).max(10),
     amountCents: z.number().int().nonnegative().nullable().optional(),
-    commissionBasisPoints: z.number().int().min(0).max(100_00).nullable().optional(),
+    commissionBasisPoints: z
+      .number()
+      .int()
+      .min(0)
+      .max(100_00)
+      .nullable()
+      .optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     documentId: z.string().uuid().nullable().optional(),
     discussionId: z.string().uuid().nullable().optional(),
   })
   .superRefine((value, ctx) => {
     if (value.type === "commission") {
-      if (value.commissionBasisPoints === null || value.commissionBasisPoints === undefined) {
+      if (
+        value.commissionBasisPoints === null ||
+        value.commissionBasisPoints === undefined
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Enter a commission percentage.",
@@ -78,7 +91,9 @@ export const compensationInputSchema = z
     }
   });
 
-export function commissionPercentToBasisPoints(value: string | null | undefined): number | null {
+export function commissionPercentToBasisPoints(
+  value: string | null | undefined,
+): number | null {
   if (value === null || value === undefined) return null;
   const normalized = value.trim().replaceAll(",", "");
   if (normalized === "") return null;
@@ -90,12 +105,14 @@ export function commissionPercentToBasisPoints(value: string | null | undefined)
 
 export function basisPointsToCommissionPercent(basisPoints: number): string {
   const percent = basisPoints / 100;
-  return Number.isInteger(percent) ? String(percent) : percent.toFixed(2).replace(/\.?0+$/, "");
+  return Number.isInteger(percent)
+    ? String(percent)
+    : percent.toFixed(2).replace(/\.?0+$/, "");
 }
 
-export function sortCompensationChanges<T extends { effectiveDate: string; createdAt?: string }>(
-  changes: T[],
-) {
+export function sortCompensationChanges<
+  T extends { effectiveDate: string; createdAt?: string },
+>(changes: T[]) {
   return [...changes].sort((left, right) => {
     const byDate = right.effectiveDate.localeCompare(left.effectiveDate);
     if (byDate !== 0) return byDate;
@@ -106,13 +123,14 @@ export function sortCompensationChanges<T extends { effectiveDate: string; creat
   });
 }
 
-export function getCurrentCompensationChange<T extends CompensationChangeRecord>(
-  changes: T[],
-  asOfDate = new Date().toISOString().slice(0, 10),
-) {
+export function getCurrentCompensationChange<
+  T extends CompensationChangeRecord,
+>(changes: T[], asOfDate = new Date().toISOString().slice(0, 10)) {
   const eligible = changes
     .filter((change) => change.effectiveDate <= asOfDate)
-    .sort((left, right) => right.effectiveDate.localeCompare(left.effectiveDate));
+    .sort((left, right) =>
+      right.effectiveDate.localeCompare(left.effectiveDate),
+    );
 
   return eligible[0] ?? null;
 }
@@ -141,10 +159,10 @@ export function enrichCompensationChanges(
     ...change,
     delta: deltas.get(change.id) ?? null,
     documentTitle: change.documentId
-      ? links.documentTitleById.get(change.documentId) ?? null
+      ? (links.documentTitleById.get(change.documentId) ?? null)
       : null,
     discussionTitle: change.discussionId
-      ? links.discussionTitleById.get(change.discussionId) ?? null
+      ? (links.discussionTitleById.get(change.discussionId) ?? null)
       : null,
   }));
 }
@@ -191,7 +209,9 @@ function buildDelta(
   };
 }
 
-export function formatCompensationRate(change: CompensationChangeRecord): string {
+export function formatCompensationRate(
+  change: CompensationChangeRecord,
+): string {
   if (change.type === "commission") {
     if (change.commissionBasisPoints === null) return "Commission not set";
     return `${basisPointsToCommissionPercent(change.commissionBasisPoints)}% commission`;
@@ -218,7 +238,10 @@ export function getCompensationDeltaDisplay(
   if (!delta) return null;
 
   if (change.type === "commission") {
-    if (delta.commissionChangeBasisPoints === null || delta.commissionChangeBasisPoints === 0) {
+    if (
+      delta.commissionChangeBasisPoints === null ||
+      delta.commissionChangeBasisPoints === 0
+    ) {
       return null;
     }
 
@@ -230,10 +253,14 @@ export function getCompensationDeltaDisplay(
     };
   }
 
-  if (delta.amountChangeCents === null || delta.amountChangeCents === 0) return null;
+  if (delta.amountChangeCents === null || delta.amountChangeCents === 0)
+    return null;
 
   const sign = delta.amountChangeCents > 0 ? "+" : "−";
-  const amount = formatMoney(Math.abs(delta.amountChangeCents), change.currency);
+  const amount = formatMoney(
+    Math.abs(delta.amountChangeCents),
+    change.currency,
+  );
   const percent =
     delta.percentChange === null
       ? null
@@ -245,6 +272,8 @@ export function getCompensationDeltaDisplay(
   };
 }
 
-export function formatCompensationDelta(change: CompensationChangeWithDelta): string | null {
+export function formatCompensationDelta(
+  change: CompensationChangeWithDelta,
+): string | null {
   return getCompensationDeltaDisplay(change)?.label ?? null;
 }

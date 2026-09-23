@@ -1,8 +1,10 @@
+import { mkdir, rm } from "node:fs/promises";
+import path from "node:path";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
-import { rm } from "node:fs/promises";
-import path from "node:path";
+
+await mkdir(".data", { recursive: true });
 
 const databasePath = path.resolve(".data/e2e.db");
 await Promise.all([

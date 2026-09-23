@@ -1,16 +1,10 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  accountDocumentTypes,
-  defaultDocumentTitle,
-  documentTypeLabels,
-  usesSuggestedDocumentTitle,
-  type AccountDocumentType,
-} from "~/lib/documents";
-import { uploadAccountDocument } from "~/lib/upload-account-document";
+import type { AccountDocumentType } from "~/lib/documents";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -30,6 +24,13 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
+import {
+  accountDocumentTypes,
+  defaultDocumentTitle,
+  documentTypeLabels,
+  usesSuggestedDocumentTitle,
+} from "~/lib/documents";
+import { uploadAccountDocument } from "~/lib/upload-account-document";
 import { api } from "~/trpc/react";
 
 type AccountDocumentUploadSheetProps = {
@@ -73,7 +74,13 @@ export function AccountDocumentUploadSheet({
   }, [defaultType, open]);
 
   useEffect(() => {
-    if (!open || titleTouched || !account.data || !usesSuggestedDocumentTitle(type)) return;
+    if (
+      !open ||
+      titleTouched ||
+      !account.data ||
+      !usesSuggestedDocumentTitle(type)
+    )
+      return;
     setTitle(
       defaultDocumentTitle({
         type,
@@ -144,14 +151,17 @@ export function AccountDocumentUploadSheet({
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
                 required
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 PDF, JPEG, PNG, WebP, or HEIC up to 25 MB.
               </p>
             </div>
 
             <div className="space-y-2">
               <Label>Document type</Label>
-              <Select value={type} onValueChange={(value) => setType(value as AccountDocumentType)}>
+              <Select
+                value={type}
+                onValueChange={(value) => setType(value as AccountDocumentType)}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -200,7 +210,11 @@ export function AccountDocumentUploadSheet({
           </div>
 
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={uploading}>

@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { check, index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  check,
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 import { employments } from "./employments";
 import { timestamps } from "./shared";
@@ -14,7 +21,9 @@ export const paycheques = sqliteTable(
     payDate: text("pay_date").notNull(),
     grossPayCents: integer("gross_pay_cents").notNull(),
     incomeTaxCents: integer("income_tax_cents").notNull(),
-    federalIncomeTaxCents: integer("federal_income_tax_cents").default(0).notNull(),
+    federalIncomeTaxCents: integer("federal_income_tax_cents")
+      .default(0)
+      .notNull(),
     manitobaIncomeTaxCents: integer("manitoba_income_tax_cents")
       .default(0)
       .notNull(),

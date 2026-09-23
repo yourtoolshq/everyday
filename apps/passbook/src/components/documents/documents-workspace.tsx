@@ -1,16 +1,21 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
+import Link from "next/link";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { EmlPreviewDialog } from "~/components/activity/eml-preview-dialog";
-import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
+import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
 import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
-import { documentTypeLabels, formatFileSize, isEmlMimeType } from "~/lib/documents";
-import { formatDateLabel } from "~/lib/format-date";
 import { Badge } from "~/components/ui/badge";
-import { api, type RouterOutputs } from "~/trpc/react";
+import {
+  documentTypeLabels,
+  formatFileSize,
+  isEmlMimeType,
+} from "~/lib/documents";
+import { formatDateLabel } from "~/lib/format-date";
+import { api } from "~/trpc/react";
 
 type Document = RouterOutputs["documents"]["overview"][number];
 
@@ -23,11 +28,16 @@ function sortDocuments(documents: Document[]) {
 }
 
 export function DocumentsWorkspace() {
-  const documents = api.documents.overview.useQuery({ excludeStatements: true });
+  const documents = api.documents.overview.useQuery({
+    excludeStatements: true,
+  });
   const accounts = api.accounts.list.useQuery();
   const { requestDelete, dialog: deleteDialog } = useDeleteDocumentDialog();
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
-  const [emlPreview, setEmlPreview] = useState<{ id: string; title: string } | null>(null);
+  const [emlPreview, setEmlPreview] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   const sortedDocuments = useMemo(
     () => sortDocuments(documents.data ?? []),
@@ -43,13 +53,14 @@ export function DocumentsWorkspace() {
   }, [accounts.data]);
 
   if (documents.isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading documents…</p>;
+    return <p className="text-muted-foreground text-sm">Loading documents…</p>;
   }
 
   if (sortedDocuments.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No documents yet. Upload records from an account page or attach files to activity.
+      <p className="text-muted-foreground text-sm">
+        No documents yet. Upload records from an account page or attach files to
+        activity.
       </p>
     );
   }
@@ -59,14 +70,14 @@ export function DocumentsWorkspace() {
       <div className="overflow-x-auto rounded-xl border">
         <table className="w-full min-w-[900px] text-sm">
           <thead>
-            <tr className="border-b bg-muted/40 text-left text-muted-foreground">
+            <tr className="bg-muted/40 text-muted-foreground border-b text-left">
               <th className="px-4 py-3 font-medium">Title</th>
               <th className="px-4 py-3 font-medium">Type</th>
               <th className="px-4 py-3 font-medium">Account</th>
               <th className="px-4 py-3 font-medium">Date</th>
               <th className="px-4 py-3 font-medium">Linked to</th>
               <th className="px-4 py-3 font-medium">File</th>
-              <th className="px-4 py-3 font-medium text-right">Actions</th>
+              <th className="px-4 py-3 text-right font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -74,7 +85,9 @@ export function DocumentsWorkspace() {
               <tr key={document.id} className="border-b last:border-b-0">
                 <td className="px-4 py-3 font-medium">{document.title}</td>
                 <td className="px-4 py-3">
-                  <Badge variant="secondary">{documentTypeLabels[document.type]}</Badge>
+                  <Badge variant="secondary">
+                    {documentTypeLabels[document.type]}
+                  </Badge>
                 </td>
                 <td className="px-4 py-3">
                   <Link
@@ -84,15 +97,15 @@ export function DocumentsWorkspace() {
                     {document.institutionName} · {document.accountName}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-muted-foreground">
+                <td className="text-muted-foreground px-4 py-3">
                   {formatDateLabel(document.documentDate) ?? "—"}
                 </td>
-                <td className="px-4 py-3 text-muted-foreground">
+                <td className="text-muted-foreground px-4 py-3">
                   <div className="space-y-1">
                     {document.linkedActivity ? (
                       <Link
                         href={`/activity/${document.linkedActivity.id}`}
-                        className="block text-primary hover:underline"
+                        className="text-primary block hover:underline"
                       >
                         Activity: {document.linkedActivity.title}
                       </Link>
@@ -100,16 +113,22 @@ export function DocumentsWorkspace() {
                     {document.linkedTermsSnapshot ? (
                       <p>
                         Terms:{" "}
-                        {formatDateLabel(document.linkedTermsSnapshot.effectiveDate) ??
-                          document.linkedTermsSnapshot.effectiveDate}
+                        {formatDateLabel(
+                          document.linkedTermsSnapshot.effectiveDate,
+                        ) ?? document.linkedTermsSnapshot.effectiveDate}
                       </p>
                     ) : null}
-                    {!document.linkedActivity && !document.linkedTermsSnapshot ? "—" : null}
+                    {!document.linkedActivity && !document.linkedTermsSnapshot
+                      ? "—"
+                      : null}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-muted-foreground">
+                <td className="text-muted-foreground px-4 py-3">
                   {document.originalFilename}
-                  <span className="text-xs"> · {formatFileSize(document.sizeBytes)}</span>
+                  <span className="text-xs">
+                    {" "}
+                    · {formatFileSize(document.sizeBytes)}
+                  </span>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex justify-end">
@@ -119,11 +138,20 @@ export function DocumentsWorkspace() {
                       mimeType={document.mimeType}
                       onPreview={
                         isEmlMimeType(document.mimeType)
-                          ? () => setEmlPreview({ id: document.id, title: document.title })
+                          ? () =>
+                              setEmlPreview({
+                                id: document.id,
+                                title: document.title,
+                              })
                           : undefined
                       }
                       onEdit={() => setEditingDocument(document)}
-                      onDelete={() => requestDelete({ id: document.id, title: document.title })}
+                      onDelete={() =>
+                        requestDelete({
+                          id: document.id,
+                          title: document.title,
+                        })
+                      }
                     />
                   </div>
                 </td>

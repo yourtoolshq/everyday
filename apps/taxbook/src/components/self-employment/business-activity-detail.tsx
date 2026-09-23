@@ -1,19 +1,314 @@
 "use client";
-import { IconArrowLeft, IconPlus } from "@tabler/icons-react"; import Link from "next/link"; import { useState } from "react"; import { toast } from "sonner";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "~/components/ui/alert-dialog"; import { Badge } from "~/components/ui/badge"; import { Button } from "~/components/ui/button"; import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"; import { Skeleton } from "~/components/ui/skeleton"; import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "~/components/ui/table";
-import { formatCad } from "~/domain/money"; import { businessExpenseCategoryDetails } from "~/domain/self-employment"; import { api, type RouterOutputs } from "~/trpc/react"; import { BusinessRecordFormSheet } from "./business-record-form-sheet";
+
+import { useState } from "react";
+import Link from "next/link";
+import { IconArrowLeft, IconPlus } from "@tabler/icons-react";
+import { toast } from "sonner";
+
+import type { RouterOutputs } from "~/trpc/react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { Skeleton } from "~/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table";
+import { formatCad } from "~/domain/money";
+import { businessExpenseCategoryDetails } from "~/domain/self-employment";
+import { api } from "~/trpc/react";
+import { BusinessRecordFormSheet } from "./business-record-form-sheet";
+
 type RecordItem = RouterOutputs["business"]["records"]["items"][number];
 export function BusinessActivityDetail({ id }: { id: number }) {
-  const utils = api.useUtils(); const activities = api.business.list.useQuery(); const records = api.business.records.useQuery({ businessActivityId: id }); const [formOpen, setFormOpen] = useState(false); const [editing, setEditing] = useState<RecordItem | null>(null); const [kind, setKind] = useState<"revenue" | "expense">("revenue"); const [deleting, setDeleting] = useState<RecordItem | null>(null); const [deletePending, setDeletePending] = useState(false);
-  if (activities.isLoading || records.isLoading) return <div className="space-y-5 p-6"><Skeleton className="h-20" /><Skeleton className="h-80" /></div>;
-  const activity = activities.data?.items.find((item) => item.id === id); if (!activity || !records.data || activities.error || records.error) return <div className="p-6 text-sm text-destructive">Unable to load this self-employment business.</div>;
-  const openNew = (value: typeof kind) => { setEditing(null); setKind(value); setFormOpen(true); }; const edit = (record: RecordItem) => { setEditing(record); setKind(record.kind); setFormOpen(true); };
-  async function remove() { if (!deleting) return; setDeletePending(true); try { const response = await fetch(`/api/business-records/${deleting.id}`, { method: "DELETE" }); const result = await response.json() as { error?: string }; if (!response.ok) throw new Error(result.error ?? "Unable to delete the Record."); setDeleting(null); await Promise.all([utils.business.records.invalidate({ businessActivityId: id }), utils.business.list.invalidate(), utils.taxItem.list.invalidate(), utils.taxItem.overview.invalidate(), utils.taxEstimate.get.invalidate()]); toast.success("Record deleted."); } catch (error) { toast.error(error instanceof Error ? error.message : "Unable to delete the Record."); } finally { setDeletePending(false); } }
-  return <div className="flex flex-col gap-5 p-6"><div><Button asChild variant="ghost" className="-ml-3 mb-2"><Link href="/self-employment"><IconArrowLeft /> Self-employment</Link></Button><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-sm font-medium text-primary">{records.data.year.year} · {activity.personName}</p><h2 className="mt-1 text-2xl font-semibold">{activity.name}</h2><p className="mt-1 text-sm text-muted-foreground">Recorded amounts for this T2125 business.</p></div><div className="flex gap-2"><Button variant="outline" onClick={() => openNew("revenue")}><IconPlus /> Revenue</Button><Button onClick={() => openNew("expense")}><IconPlus /> Expense</Button></div></div></div>
-    <div className="grid gap-4 sm:grid-cols-3"><Summary label="Gross business income · 8299 / 13499" value={activity.totals.revenue} /><Summary label="Eligible expenses · 9368" value={activity.totals.expenses} /><Summary label="Net income (loss) · 9946 / 13500" value={activity.totals.net} highlight={activity.totals.net < 0} /></div>
-    <Card className="overflow-hidden py-0"><CardContent className="p-0"><Table><TableHeader><TableRow><TableHead>Date</TableHead><TableHead>Description</TableHead><TableHead>Kind / category</TableHead><TableHead>Attachment</TableHead><TableHead className="text-right">Amount</TableHead><TableHead /></TableRow></TableHeader><TableBody>{records.data.items.length ? records.data.items.map((record) => <TableRow key={record.id}><TableCell className="whitespace-nowrap">{record.date}</TableCell><TableCell><button className="font-medium hover:text-primary" onClick={() => edit(record)}>{record.description}</button>{record.notes ? <p className="max-w-72 truncate text-xs text-muted-foreground">{record.notes}</p> : null}</TableCell><TableCell>{record.kind === "revenue" ? <Badge variant="secondary">Revenue</Badge> : <><Badge variant="outline">Expense</Badge><p className="mt-1 text-xs text-muted-foreground">{businessExpenseCategoryDetails[record.expenseCategory!].line} · {businessExpenseCategoryDetails[record.expenseCategory!].label}</p></>}</TableCell><TableCell>{record.attachmentFileName ? <a className="text-primary hover:underline" href={`/api/business-records/${record.id}/attachment`} target="_blank" rel="noreferrer">{record.attachmentFileName}</a> : "—"}</TableCell><TableCell className="text-right font-medium tabular-nums">{formatCad(record.amountCents)}</TableCell><TableCell><Button variant="ghost" size="sm" className="text-destructive" onClick={() => setDeleting(record)}>Delete</Button></TableCell></TableRow>) : <TableRow><TableCell colSpan={6} className="h-48 text-center text-muted-foreground">No revenue or expense Records yet.</TableCell></TableRow>}</TableBody></Table></CardContent></Card>
-    <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground"><p className="font-medium text-foreground">Planning and organization only</p><p className="mt-1">Enter only amounts you have determined are business income or deductible ordinary expenses. CCA, vehicles, inventory, payroll, GST/HST, and business-use-of-home calculations are not supported.</p></div>
-    {formOpen ? <BusinessRecordFormSheet key={editing?.id ?? `new-${kind}`} activityId={id} record={editing} initialKind={kind} open={formOpen} onOpenChange={setFormOpen} /> : null}<AlertDialog open={Boolean(deleting)} onOpenChange={(open) => !open && setDeleting(null)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Delete this Record?</AlertDialogTitle><AlertDialogDescription>“{deleting?.description}” and its attachment will be permanently removed and the net result recalculated.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive text-white" disabled={deletePending} onClick={() => void remove()}>{deletePending ? "Deleting…" : "Delete Record"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-  </div>;
+  const utils = api.useUtils();
+  const activities = api.business.list.useQuery();
+  const records = api.business.records.useQuery({ businessActivityId: id });
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<RecordItem | null>(null);
+  const [kind, setKind] = useState<"revenue" | "expense">("revenue");
+  const [deleting, setDeleting] = useState<RecordItem | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
+  if (activities.isLoading || records.isLoading)
+    return (
+      <div className="space-y-5 p-6">
+        <Skeleton className="h-20" />
+        <Skeleton className="h-80" />
+      </div>
+    );
+  const activity = activities.data?.items.find((item) => item.id === id);
+  if (!activity || !records.data || activities.error || records.error)
+    return (
+      <div className="text-destructive p-6 text-sm">
+        Unable to load this self-employment business.
+      </div>
+    );
+  const openNew = (value: typeof kind) => {
+    setEditing(null);
+    setKind(value);
+    setFormOpen(true);
+  };
+  const edit = (record: RecordItem) => {
+    setEditing(record);
+    setKind(record.kind);
+    setFormOpen(true);
+  };
+  async function remove() {
+    if (!deleting) return;
+    setDeletePending(true);
+    try {
+      const response = await fetch(`/api/business-records/${deleting.id}`, {
+        method: "DELETE",
+      });
+      const result = (await response.json()) as { error?: string };
+      if (!response.ok)
+        throw new Error(result.error ?? "Unable to delete the Record.");
+      setDeleting(null);
+      await Promise.all([
+        utils.business.records.invalidate({ businessActivityId: id }),
+        utils.business.list.invalidate(),
+        utils.taxItem.list.invalidate(),
+        utils.taxItem.overview.invalidate(),
+        utils.taxEstimate.get.invalidate(),
+      ]);
+      toast.success("Record deleted.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Unable to delete the Record.",
+      );
+    } finally {
+      setDeletePending(false);
+    }
+  }
+  return (
+    <div className="flex flex-col gap-5 p-6">
+      <div>
+        <Button asChild variant="ghost" className="mb-2 -ml-3">
+          <Link href="/self-employment">
+            <IconArrowLeft /> Self-employment
+          </Link>
+        </Button>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-primary text-sm font-medium">
+              {records.data.year.year} · {activity.personName}
+            </p>
+            <h2 className="mt-1 text-2xl font-semibold">{activity.name}</h2>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Recorded amounts for this T2125 business.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => openNew("revenue")}>
+              <IconPlus /> Revenue
+            </Button>
+            <Button onClick={() => openNew("expense")}>
+              <IconPlus /> Expense
+            </Button>
+          </div>
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Summary
+          label="Gross business income · 8299 / 13499"
+          value={activity.totals.revenue}
+        />
+        <Summary
+          label="Eligible expenses · 9368"
+          value={activity.totals.expenses}
+        />
+        <Summary
+          label="Net income (loss) · 9946 / 13500"
+          value={activity.totals.net}
+          highlight={activity.totals.net < 0}
+        />
+      </div>
+      <Card className="overflow-hidden py-0">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Date</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Kind / category</TableHead>
+                <TableHead>Attachment</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {records.data.items.length ? (
+                records.data.items.map((record) => (
+                  <TableRow key={record.id}>
+                    <TableCell className="whitespace-nowrap">
+                      {record.date}
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        className="hover:text-primary font-medium"
+                        onClick={() => edit(record)}
+                      >
+                        {record.description}
+                      </button>
+                      {record.notes ? (
+                        <p className="text-muted-foreground max-w-72 truncate text-xs">
+                          {record.notes}
+                        </p>
+                      ) : null}
+                    </TableCell>
+                    <TableCell>
+                      {record.kind === "revenue" ? (
+                        <Badge variant="secondary">Revenue</Badge>
+                      ) : (
+                        <>
+                          <Badge variant="outline">Expense</Badge>
+                          <p className="text-muted-foreground mt-1 text-xs">
+                            {
+                              businessExpenseCategoryDetails[
+                                record.expenseCategory!
+                              ].line
+                            }{" "}
+                            ·{" "}
+                            {
+                              businessExpenseCategoryDetails[
+                                record.expenseCategory!
+                              ].label
+                            }
+                          </p>
+                        </>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {record.attachmentFileName ? (
+                        <a
+                          className="text-primary hover:underline"
+                          href={`/api/business-records/${record.id}/attachment`}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {record.attachmentFileName}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-medium tabular-nums">
+                      {formatCad(record.amountCents)}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive"
+                        onClick={() => setDeleting(record)}
+                      >
+                        Delete
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-muted-foreground h-48 text-center"
+                  >
+                    No revenue or expense Records yet.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      <div className="bg-muted/30 text-muted-foreground rounded-lg border p-4 text-sm">
+        <p className="text-foreground font-medium">
+          Planning and organization only
+        </p>
+        <p className="mt-1">
+          Enter only amounts you have determined are business income or
+          deductible ordinary expenses. CCA, vehicles, inventory, payroll,
+          GST/HST, and business-use-of-home calculations are not supported.
+        </p>
+      </div>
+      {formOpen ? (
+        <BusinessRecordFormSheet
+          key={editing?.id ?? `new-${kind}`}
+          activityId={id}
+          record={editing}
+          initialKind={kind}
+          open={formOpen}
+          onOpenChange={setFormOpen}
+        />
+      ) : null}
+      <AlertDialog
+        open={Boolean(deleting)}
+        onOpenChange={(open) => !open && setDeleting(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this Record?</AlertDialogTitle>
+            <AlertDialogDescription>
+              “{deleting?.description}” and its attachment will be permanently
+              removed and the net result recalculated.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white"
+              disabled={deletePending}
+              onClick={() => void remove()}
+            >
+              {deletePending ? "Deleting…" : "Delete Record"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
 }
-function Summary({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) { return <Card className={highlight ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/40" : undefined}><CardHeader><CardDescription>{label}</CardDescription><CardTitle className="tabular-nums">{formatCad(value)}</CardTitle></CardHeader></Card>; }
+function Summary({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: number;
+  highlight?: boolean;
+}) {
+  return (
+    <Card
+      className={
+        highlight
+          ? "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/40"
+          : undefined
+      }
+    >
+      <CardHeader>
+        <CardDescription>{label}</CardDescription>
+        <CardTitle className="tabular-nums">{formatCad(value)}</CardTitle>
+      </CardHeader>
+    </Card>
+  );
+}

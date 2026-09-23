@@ -1,10 +1,7 @@
 import type { StatementFrequency } from "~/lib/statement-frequency";
 
 export type PeriodDisplayStatus =
-  | "not_expected"
-  | "future"
-  | "current"
-  | "past_expected";
+  "not_expected" | "future" | "current" | "past_expected";
 
 export type ExpectedPeriod = {
   key: string;
@@ -52,7 +49,9 @@ const MONTH_SHORT = [
   "Dec",
 ] as const;
 
-export function parseDateOnly(value: string): { year: number; month: number; day: number } | null {
+export function parseDateOnly(
+  value: string,
+): { year: number; month: number; day: number } | null {
   const [year, month, day] = value.split("-");
   if (!year || !month) return null;
 
@@ -84,7 +83,9 @@ export function statementYearRange(
   lifecycle: AccountLifecycle,
   asOfDate: Date = new Date(),
 ): { minYear: number; maxYear: number } | null {
-  const opened = lifecycle.openedDate ? parseDateOnly(lifecycle.openedDate) : null;
+  const opened = lifecycle.openedDate
+    ? parseDateOnly(lifecycle.openedDate)
+    : null;
   if (!opened) return null;
 
   const asOfYear = asOfDate.getFullYear();
@@ -173,7 +174,9 @@ function deriveMonthlyPeriods(
   const opened = parseDateOnly(lifecycle.openedDate!);
   if (!opened) return [];
 
-  const closed = lifecycle.closedDate ? parseDateOnly(lifecycle.closedDate) : null;
+  const closed = lifecycle.closedDate
+    ? parseDateOnly(lifecycle.closedDate)
+    : null;
 
   return MONTH_NAMES.map((name, index) => {
     const month = index + 1;
@@ -187,7 +190,9 @@ function deriveMonthlyPeriods(
       shortLabel: MONTH_SHORT[index] ?? name.slice(0, 3),
       year,
       month,
-      status: expected ? classifyPeriod(periodStart, periodEnd, asOfDate) : "not_expected",
+      status: expected
+        ? classifyPeriod(periodStart, periodEnd, asOfDate)
+        : "not_expected",
     };
   });
 }
@@ -200,7 +205,9 @@ function deriveQuarterlyPeriods(
   const opened = parseDateOnly(lifecycle.openedDate!);
   if (!opened) return [];
 
-  const closed = lifecycle.closedDate ? parseDateOnly(lifecycle.closedDate) : null;
+  const closed = lifecycle.closedDate
+    ? parseDateOnly(lifecycle.closedDate)
+    : null;
 
   return [1, 2, 3, 4].map((quarter) => {
     const expected = quarterIsExpected(year, quarter, opened, closed);
@@ -214,7 +221,9 @@ function deriveQuarterlyPeriods(
       shortLabel: `Q${quarter}`,
       year,
       quarter,
-      status: expected ? classifyPeriod(periodStart, periodEnd, asOfDate) : "not_expected",
+      status: expected
+        ? classifyPeriod(periodStart, periodEnd, asOfDate)
+        : "not_expected",
     };
   });
 }
@@ -227,7 +236,9 @@ function deriveAnnualPeriods(
   const opened = parseDateOnly(lifecycle.openedDate!);
   if (!opened) return [];
 
-  const closed = lifecycle.closedDate ? parseDateOnly(lifecycle.closedDate) : null;
+  const closed = lifecycle.closedDate
+    ? parseDateOnly(lifecycle.closedDate)
+    : null;
   const expected = yearIsExpected(year, opened, closed);
   const periodStart = new Date(year, 0, 1);
   const periodEnd = new Date(year, 11, 31);
@@ -238,7 +249,9 @@ function deriveAnnualPeriods(
       label: String(year),
       shortLabel: String(year),
       year,
-      status: expected ? classifyPeriod(periodStart, periodEnd, asOfDate) : "not_expected",
+      status: expected
+        ? classifyPeriod(periodStart, periodEnd, asOfDate)
+        : "not_expected",
     },
   ];
 }
@@ -249,7 +262,10 @@ export function deriveExpectedPeriodsForYear(
   year: number,
   asOfDate: Date = new Date(),
 ): ExpectedPeriod[] {
-  if (frequency === "none" || !canDeriveStatementPeriods(lifecycle, frequency)) {
+  if (
+    frequency === "none" ||
+    !canDeriveStatementPeriods(lifecycle, frequency)
+  ) {
     return [];
   }
 
@@ -296,8 +312,14 @@ export function deriveAllUploadablePeriods(
   const periods: ExpectedPeriod[] = [];
   for (let year = yearRange.minYear; year <= yearRange.maxYear; year += 1) {
     periods.push(
-      ...deriveExpectedPeriodsForYear(lifecycle, frequency, year, asOfDate).filter(
-        (period) => period.status !== "not_expected" && period.status !== "future",
+      ...deriveExpectedPeriodsForYear(
+        lifecycle,
+        frequency,
+        year,
+        asOfDate,
+      ).filter(
+        (period) =>
+          period.status !== "not_expected" && period.status !== "future",
       ),
     );
   }
@@ -336,6 +358,8 @@ export function suggestDefaultPeriodKey(
   uploadablePeriods: ExpectedPeriod[],
   uploadedPeriodKeys: ReadonlySet<string>,
 ): string | null {
-  const nextMissing = uploadablePeriods.find((period) => !uploadedPeriodKeys.has(period.key));
+  const nextMissing = uploadablePeriods.find(
+    (period) => !uploadedPeriodKeys.has(period.key),
+  );
   return nextMissing?.key ?? uploadablePeriods[0]?.key ?? null;
 }

@@ -1,8 +1,15 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
+import type {
+  FilingItemValueInput,
+  FilingStatus,
+  ReturnCopyStatus,
+} from "~/domain/filing";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -28,12 +35,9 @@ import {
   MAX_FILING_ATTACHMENT_BYTES,
   returnCopyStatuses,
   returnCopyStatusLabels,
-  type FilingItemValueInput,
-  type FilingStatus,
-  type ReturnCopyStatus,
 } from "~/domain/filing";
 import { formatCad, signedDollarsToCents } from "~/domain/money";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 type Person = RouterOutputs["settings"]["get"]["people"][number];
 type Filing = RouterOutputs["filing"]["timeline"]["filings"][number];
@@ -57,7 +61,8 @@ function resultCents(direction: string, amount: string) {
 
 function resultFields(cents: number | null) {
   if (cents === null) return { direction: "none", amount: "" };
-  if (cents < 0) return { direction: "owing", amount: (Math.abs(cents) / 100).toFixed(2) };
+  if (cents < 0)
+    return { direction: "owing", amount: (Math.abs(cents) / 100).toFixed(2) };
   return { direction: "refund", amount: (cents / 100).toFixed(2) };
 }
 
@@ -83,14 +88,16 @@ function serializeItemValues(rows: ItemValueRow[]): FilingItemValueInput[] {
     if (!row.itemName.trim() || amount === "") return [];
     const amountCents = signedDollarsToCents(amount);
     if (amountCents === null) return [];
-    return [{
-      taxItemId: row.taxItemId,
-      itemName: row.itemName.trim(),
-      ownerLabel: row.ownerLabel.trim(),
-      taxLineReference: row.taxLineReference?.trim() || null,
-      amountCents,
-      differenceNote: row.differenceNote.trim() || null,
-    }];
+    return [
+      {
+        taxItemId: row.taxItemId,
+        itemName: row.itemName.trim(),
+        ownerLabel: row.ownerLabel.trim(),
+        taxLineReference: row.taxLineReference?.trim() || null,
+        amountCents,
+        differenceNote: row.differenceNote.trim() || null,
+      },
+    ];
   });
 }
 
@@ -115,16 +122,26 @@ export function OriginalReturnSheet({
   const [personId, setPersonId] = useState(
     String(filing?.personId ?? defaultPersonId ?? people[0]?.id ?? ""),
   );
-  const [submissionDate, setSubmissionDate] = useState(filing?.submissionDate ?? "");
-  const [resultDirection, setResultDirection] = useState(initialResult.direction);
+  const [submissionDate, setSubmissionDate] = useState(
+    filing?.submissionDate ?? "",
+  );
+  const [resultDirection, setResultDirection] = useState(
+    initialResult.direction,
+  );
   const [resultAmount, setResultAmount] = useState(initialResult.amount);
   const [returnCopyStatus, setReturnCopyStatus] = useState<ReturnCopyStatus>(
     filing?.returnCopyStatus ?? "unavailable",
   );
-  const [status, setStatus] = useState<FilingStatus>(filing?.status ?? "preparing");
+  const [status, setStatus] = useState<FilingStatus>(
+    filing?.status ?? "preparing",
+  );
   const [notes, setNotes] = useState(filing?.notes ?? "");
-  const [itemValues, setItemValues] = useState<ItemValueRow[]>(() => itemValuesToRows(filing));
-  const [selectedHouseholdIds, setSelectedHouseholdIds] = useState<number[]>([]);
+  const [itemValues, setItemValues] = useState<ItemValueRow[]>(() =>
+    itemValuesToRows(filing),
+  );
+  const [selectedHouseholdIds, setSelectedHouseholdIds] = useState<number[]>(
+    [],
+  );
   const [file, setFile] = useState<File | null>(null);
   const [markUnavailable, setMarkUnavailable] = useState(false);
   const [pending, setPending] = useState(false);
@@ -132,7 +149,10 @@ export function OriginalReturnSheet({
   const selectedPersonId = filing?.personId ?? Number(personId);
   const candidates = api.filing.snapshotCandidates.useQuery(
     { taxYearId, personId: selectedPersonId },
-    { enabled: open && Number.isFinite(selectedPersonId) && selectedPersonId > 0 },
+    {
+      enabled:
+        open && Number.isFinite(selectedPersonId) && selectedPersonId > 0,
+    },
   );
 
   function copyFromTaxItems() {
@@ -140,15 +160,17 @@ export function OriginalReturnSheet({
     const household = candidates.data.householdItems.filter((item) =>
       selectedHouseholdIds.includes(item.taxItemId),
     );
-    const nextRows = [...candidates.data.personItems, ...household].map((item) => ({
-      taxItemId: item.taxItemId,
-      itemName: item.itemName,
-      ownerLabel: item.ownerLabel,
-      taxLineReference: item.taxLineReference,
-      amount: amountField(item.amountCents),
-      trackedAmountCents: item.trackedAmountCents,
-      differenceNote: "",
-    }));
+    const nextRows = [...candidates.data.personItems, ...household].map(
+      (item) => ({
+        taxItemId: item.taxItemId,
+        itemName: item.itemName,
+        ownerLabel: item.ownerLabel,
+        taxLineReference: item.taxLineReference,
+        amount: amountField(item.amountCents),
+        trackedAmountCents: item.trackedAmountCents,
+        differenceNote: "",
+      }),
+    );
     setItemValues(nextRows);
     toast.success(
       nextRows.length > 0
@@ -176,7 +198,9 @@ export function OriginalReturnSheet({
       return;
     }
     if (resultDirection !== "none" && resultAmount.trim() === "") {
-      toast.error("Enter an expected refund or amount owing, or choose Unknown.");
+      toast.error(
+        "Enter an expected refund or amount owing, or choose Unknown.",
+      );
       return;
     }
     if (
@@ -202,7 +226,9 @@ export function OriginalReturnSheet({
       const amount = row.amount.trim();
       if (amount === "" || row.itemName.trim() === "") continue;
       if (signedDollarsToCents(amount) === null) {
-        toast.error(`Enter a valid filed amount for ${row.itemName || "a tax item"}.`);
+        toast.error(
+          `Enter a valid filed amount for ${row.itemName || "a tax item"}.`,
+        );
         return;
       }
     }
@@ -244,12 +270,16 @@ export function OriginalReturnSheet({
       if (!response.ok) {
         throw new Error(result.error ?? "Unable to save the original return.");
       }
-      toast.success(filing ? "Original return updated." : "Original return added.");
+      toast.success(
+        filing ? "Original return updated." : "Original return added.",
+      );
       onOpenChange(false);
       await onSaved();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Unable to save the original return.",
+        error instanceof Error
+          ? error.message
+          : "Unable to save the original return.",
       );
     } finally {
       setPending(false);
@@ -265,9 +295,12 @@ export function OriginalReturnSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <form className="flex min-h-full flex-col" onSubmit={save}>
           <SheetHeader>
-            <SheetTitle>{filing ? "Edit original return" : "Add original return"}</SheetTitle>
+            <SheetTitle>
+              {filing ? "Edit original return" : "Add original return"}
+            </SheetTitle>
             <SheetDescription>
-              Record what was filed. Copy tracked tax items into a snapshot you can adjust before submission.
+              Record what was filed. Copy tracked tax items into a snapshot you
+              can adjust before submission.
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 px-4 py-6">
@@ -293,13 +326,16 @@ export function OriginalReturnSheet({
               <div className="space-y-3 rounded-lg border p-4">
                 <div>
                   <p className="font-medium">Filed tax item snapshot</p>
-                  <p className="text-sm text-muted-foreground">
-                    Copy tracked values into this return. Changes here do not update Tax Items.
+                  <p className="text-muted-foreground text-sm">
+                    Copy tracked values into this return. Changes here do not
+                    update Tax Items.
                   </p>
                 </div>
                 {(candidates.data?.householdItems.length ?? 0) > 0 ? (
                   <div className="space-y-2">
-                    <p className="text-sm font-medium">Include household items</p>
+                    <p className="text-sm font-medium">
+                      Include household items
+                    </p>
                     <div className="space-y-2">
                       {candidates.data!.householdItems.map((item) => (
                         <label
@@ -308,18 +344,22 @@ export function OriginalReturnSheet({
                         >
                           <input
                             type="checkbox"
-                            checked={selectedHouseholdIds.includes(item.taxItemId)}
+                            checked={selectedHouseholdIds.includes(
+                              item.taxItemId,
+                            )}
                             onChange={(event) => {
                               setSelectedHouseholdIds((current) =>
                                 event.target.checked
                                   ? [...current, item.taxItemId]
-                                  : current.filter((id) => id !== item.taxItemId),
+                                  : current.filter(
+                                      (id) => id !== item.taxItemId,
+                                    ),
                               );
                             }}
                           />
                           <span>
                             {item.itemName}
-                            <span className="block text-muted-foreground">
+                            <span className="text-muted-foreground block">
                               Tracked {formatCad(item.trackedAmountCents)}
                             </span>
                           </span>
@@ -328,7 +368,11 @@ export function OriginalReturnSheet({
                     </div>
                   </div>
                 ) : null}
-                <Button type="button" variant="outline" onClick={copyFromTaxItems}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={copyFromTaxItems}
+                >
                   Copy from tax items
                 </Button>
               </div>
@@ -339,36 +383,49 @@ export function OriginalReturnSheet({
                 <Label>Filed values</Label>
                 <div className="space-y-4">
                   {itemValues.map((row, index) => (
-                    <div key={`${row.taxItemId ?? "manual"}-${index}`} className="space-y-2 rounded-lg border p-3">
+                    <div
+                      key={`${row.taxItemId ?? "manual"}-${index}`}
+                      className="space-y-2 rounded-lg border p-3"
+                    >
                       <div>
                         <p className="font-medium">{row.itemName}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           {row.ownerLabel}
-                          {row.taxLineReference ? ` · ${row.taxLineReference}` : ""}
+                          {row.taxLineReference
+                            ? ` · ${row.taxLineReference}`
+                            : ""}
                           {row.trackedAmountCents !== null
                             ? ` · Tracked ${formatCad(row.trackedAmountCents)}`
                             : null}
                         </p>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor={`filed-amount-${index}`}>Filed amount</Label>
+                        <Label htmlFor={`filed-amount-${index}`}>
+                          Filed amount
+                        </Label>
                         <Input
                           id={`filed-amount-${index}`}
                           inputMode="decimal"
                           value={row.amount}
                           onChange={(event) =>
-                            updateItemValue(index, { amount: event.target.value })
+                            updateItemValue(index, {
+                              amount: event.target.value,
+                            })
                           }
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor={`filed-note-${index}`}>Difference note</Label>
+                        <Label htmlFor={`filed-note-${index}`}>
+                          Difference note
+                        </Label>
                         <Input
                           id={`filed-note-${index}`}
                           placeholder="Optional"
                           value={row.differenceNote}
                           onChange={(event) =>
-                            updateItemValue(index, { differenceNote: event.target.value })
+                            updateItemValue(index, {
+                              differenceNote: event.target.value,
+                            })
                           }
                         />
                       </div>
@@ -390,7 +447,10 @@ export function OriginalReturnSheet({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="filing-result-direction">Expected result</Label>
-                <Select value={resultDirection} onValueChange={setResultDirection}>
+                <Select
+                  value={resultDirection}
+                  onValueChange={setResultDirection}
+                >
                   <SelectTrigger id="filing-result-direction">
                     <SelectValue />
                   </SelectTrigger>
@@ -418,7 +478,9 @@ export function OriginalReturnSheet({
                 <Label htmlFor="filing-copy-status">Submitted T1</Label>
                 <Select
                   value={returnCopyStatus}
-                  onValueChange={(value) => setReturnCopyStatus(value as ReturnCopyStatus)}
+                  onValueChange={(value) =>
+                    setReturnCopyStatus(value as ReturnCopyStatus)
+                  }
                 >
                   <SelectTrigger id="filing-copy-status">
                     <SelectValue />
@@ -436,7 +498,10 @@ export function OriginalReturnSheet({
             {filing ? (
               <div className="space-y-2">
                 <Label htmlFor="filing-status">Status</Label>
-                <Select value={status} onValueChange={(value) => setStatus(value as FilingStatus)}>
+                <Select
+                  value={status}
+                  onValueChange={(value) => setStatus(value as FilingStatus)}
+                >
                   <SelectTrigger id="filing-status">
                     <SelectValue />
                   </SelectTrigger>
@@ -459,13 +524,15 @@ export function OriginalReturnSheet({
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               />
               {filing?.attachmentFileName ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-2 text-sm">
                   <span>{filing.attachmentFileName}</span>
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={markUnavailable}
-                      onChange={(event) => setMarkUnavailable(event.target.checked)}
+                      onChange={(event) =>
+                        setMarkUnavailable(event.target.checked)
+                      }
                     />
                     Mark unavailable
                   </label>
@@ -483,7 +550,11 @@ export function OriginalReturnSheet({
             </div>
           </div>
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button disabled={pending}>{pending ? "Saving…" : "Save"}</Button>

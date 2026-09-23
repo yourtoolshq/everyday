@@ -14,15 +14,15 @@ Four applications are currently under development and contain varying amounts of
 
 ### Problems being solved
 
-| Problem | Description |
-|---|---|
-| Repetitive scaffolding | Starting a new app requires rebuilding nearly the same infrastructure each time |
-| Implementation drift | Improvements in one app are not carried to others; the first app (Taxbook) has fallen behind |
-| Inconsistent storage | Taxbook uses glob storage; later apps use volumes with a common package pattern |
-| UI/UX inconsistency | Modal vs. side drawer, plain number fields vs. formatted money/percent inputs |
-| Missing QoL behaviors | e.g. inline arithmetic in numeric fields (like YNAB: `10+20+30` → `60.00`) |
-| Deployment drift | Docker files diverge between apps |
-| Distribution friction | Future concern: bundling, auto-updates, Electron — separate from development ergonomics |
+| Problem                | Description                                                                                  |
+| ---------------------- | -------------------------------------------------------------------------------------------- |
+| Repetitive scaffolding | Starting a new app requires rebuilding nearly the same infrastructure each time              |
+| Implementation drift   | Improvements in one app are not carried to others; the first app (Taxbook) has fallen behind |
+| Inconsistent storage   | Taxbook uses glob storage; later apps use volumes with a common package pattern              |
+| UI/UX inconsistency    | Modal vs. side drawer, plain number fields vs. formatted money/percent inputs                |
+| Missing QoL behaviors  | e.g. inline arithmetic in numeric fields (like YNAB: `10+20+30` → `60.00`)                   |
+| Deployment drift       | Docker files diverge between apps                                                            |
+| Distribution friction  | Future concern: bundling, auto-updates, Electron — separate from development ergonomics      |
 
 The platform should make it easier for one person, working primarily with AI coding agents, to develop and maintain multiple applications without repeatedly solving the same problems.
 
@@ -38,12 +38,12 @@ Improvements should be developed in one application, validated through real use,
 
 ## 2. Applications in scope
 
-| Application | Purpose | Status |
-|---|---|---|
-| **Taxbook** | Personal tax records, receipts, tax returns, and planning | Existing |
-| **Tenure** | Employment history, compensation, pay stubs, and documents | Existing |
-| **Passbook** | Financial institutions, accounts, statements, and receipts | Existing |
-| **First Aid** | Healthcare records, appointments, benefits, and claims | Existing |
+| Application   | Purpose                                                    | Status   |
+| ------------- | ---------------------------------------------------------- | -------- |
+| **Taxbook**   | Personal tax records, receipts, tax returns, and planning  | Existing |
+| **Tenure**    | Employment history, compensation, pay stubs, and documents | Existing |
+| **Passbook**  | Financial institutions, accounts, statements, and receipts | Existing |
+| **First Aid** | Healthcare records, appointments, benefits, and claims     | Existing |
 
 Future applications (Roof, Garage, Pantry, Envelop, etc.) should be able to benefit from the platform, but migrating or developing them is **not** part of the initial consolidation.
 
@@ -59,26 +59,26 @@ Your Tools will use **Turborepo and pnpm workspaces** as its monorepo foundation
 
 [create-t3-turbo](https://github.com/t3-oss/create-t3-turbo) will serve as a **reference implementation** for relevant architectural patterns — not an upstream dependency we expect to remain maintained.
 
-The final initialization approach (adapt template vs. fresh Turborepo) will be selected at the start of Phase 1 after comparing actual setup effort.
+**Phase 1 decision (recorded):** Option B — fresh Turborepo workspace with pnpm catalogs and T3-inspired patterns. create-t3-turbo remains a reference only.
 
 ### Technology stack
 
-| Concern | Direction |
-|---|---|
-| Monorepo | Turborepo |
-| Package management | pnpm workspaces |
-| Reference architecture | create-t3-turbo |
-| Language | TypeScript |
-| Web framework | Next.js |
-| API | tRPC where appropriate |
-| UI | shadcn/ui + Tailwind |
-| Database | SQLite per application |
-| ORM | Drizzle |
-| Shared code | Workspace packages (introduced as needed) |
-| Local deployment | Docker Compose |
-| CI/CD | GitHub Actions |
-| Task management | GitHub Issues / Projects (established in Phase 2) |
-| Distribution | Docker first; Electron evaluated later |
+| Concern                | Direction                                         |
+| ---------------------- | ------------------------------------------------- |
+| Monorepo               | Turborepo                                         |
+| Package management     | pnpm workspaces                                   |
+| Reference architecture | create-t3-turbo                                   |
+| Language               | TypeScript                                        |
+| Web framework          | Next.js                                           |
+| API                    | tRPC where appropriate                            |
+| UI                     | shadcn/ui + Tailwind                              |
+| Database               | SQLite per application                            |
+| ORM                    | Drizzle                                           |
+| Shared code            | Workspace packages (introduced as needed)         |
+| Local deployment       | Docker Compose                                    |
+| CI/CD                  | GitHub Actions                                    |
+| Task management        | GitHub Issues / Projects (established in Phase 2) |
+| Distribution           | Docker first; Electron evaluated later            |
 
 Existing implementations should be evaluated before deciding what needs to change. The monorepo is intended to simplify development — not force every application to share its database, domain model, or deployment lifecycle.
 
@@ -97,16 +97,16 @@ As of September 2026, official merged maintenance appears to have stalled:
 
 What we want from the architecture does **not** depend on T3 Turbo being maintained:
 
-| What we want | Dependency on T3 Turbo |
-|---|---|
-| Turborepo monorepo | None |
-| pnpm workspaces | None |
-| Next.js / TypeScript | None |
-| Shared tRPC API | None |
-| Shared Drizzle database package | None |
-| Shared shadcn/ui components | None |
-| Multiple applications | None |
-| Shared configurations and tooling | None |
+| What we want                      | Dependency on T3 Turbo |
+| --------------------------------- | ---------------------- |
+| Turborepo monorepo                | None                   |
+| pnpm workspaces                   | None                   |
+| Next.js / TypeScript              | None                   |
+| Shared tRPC API                   | None                   |
+| Shared Drizzle database package   | None                   |
+| Shared shadcn/ui components       | None                   |
+| Multiple applications             | None                   |
+| Shared configurations and tooling | None                   |
 
 We were already going to make significant changes regardless:
 
@@ -146,11 +146,11 @@ Compare two options before committing:
 - Adapt database and Docker configuration
 - Incorporate existing applications
 
-*Advantage:* More architecture is already assembled.
+_Advantage:_ More architecture is already assembled.
 
-*Trade-off:* Additional work to remove unnecessary functionality and modernize dependencies.
+_Trade-off:_ Additional work to remove unnecessary functionality and modernize dependencies.
 
-**Option B: Start from a fresh Turborepo** *(initial preference)*
+**Option B: Start from a fresh Turborepo** _(initial preference)_
 
 - Initialize a current Turborepo workspace
 - Configure pnpm workspaces
@@ -158,9 +158,9 @@ Compare two options before committing:
 - Reference create-t3-turbo for useful architectural patterns
 - Introduce shared packages as they become necessary
 
-*Advantage:* Introduce only the infrastructure Your Tools actually needs.
+_Advantage:_ Introduce only the infrastructure Your Tools actually needs.
 
-*Trade-off:* Some initial configuration must be assembled ourselves.
+_Trade-off:_ Some initial configuration must be assembled ourselves.
 
 **Decision rule:** Compare actual setup effort, dependency compatibility, and unnecessary migration work before selecting either option.
 
@@ -200,7 +200,7 @@ Preserve the original repositories as production environments. Do not introduce 
 - Establish basic CI checks
 - Define the development-to-production promotion process
 - Establish the shared-candidate discovery convention (below)
-- Define release notes and changelog conventions *(convention only — automation comes in Phase 8)*
+- Define release notes and changelog conventions _(convention only — automation comes in Phase 8)_
 
 The existing per-app `roadmap.md` files may eventually be replaced by GitHub Issues and Projects for active work tracking. Product and domain documentation should remain in the repository.
 
@@ -277,7 +277,7 @@ Also include an assessment of which create-t3-turbo patterns are worth adopting.
 
 ---
 
-### Phase 4 — Data durability and storage *(critical priority)*
+### Phase 4 — Data durability and storage _(critical priority)_
 
 **Goal:** Establish confidence that personal data can survive application failures, upgrades, and accidental mistakes.
 
@@ -324,24 +324,24 @@ This is more than extracting shadcn components. We also want documented guidance
 
 **Initial candidates:**
 
-| Area | Examples |
-|---|---|
-| Form controls | Money, percentage, date, and formatted number inputs |
-| Numeric interactions | Inline arithmetic, decimal normalization |
-| Navigation | Dashboard layout, breadcrumbs, sidebar |
-| Data entry | Modal versus side drawer conventions |
-| Documents | Upload, preview, download, attachment |
-| Data visualization | Monthly coverage grids, timelines |
-| Feedback | Loading, empty, error, and success states |
-| Destructive actions | Confirmation and deletion patterns |
+| Area                 | Examples                                             |
+| -------------------- | ---------------------------------------------------- |
+| Form controls        | Money, percentage, date, and formatted number inputs |
+| Numeric interactions | Inline arithmetic, decimal normalization             |
+| Navigation           | Dashboard layout, breadcrumbs, sidebar               |
+| Data entry           | Modal versus side drawer conventions                 |
+| Documents            | Upload, preview, download, attachment                |
+| Data visualization   | Monthly coverage grids, timelines                    |
+| Feedback             | Loading, empty, error, and success states            |
+| Destructive actions  | Confirmation and deletion patterns                   |
 
 **Money input behavior example:**
 
-| Input | Output |
-|---|---|
-| `.89` | `0.89` |
-| `147.3` | `147.30` |
-| `10+20+30` | `60.00` |
+| Input      | Output   |
+| ---------- | -------- |
+| `.89`      | `0.89`   |
+| `147.3`    | `147.30` |
+| `10+20+30` | `60.00`  |
 
 Components should be developed and validated in one application before promotion. The existing shadcn dashboard approach remains sufficient initially. A custom Your Tools visual identity can be introduced later without redesigning every application separately.
 
@@ -423,12 +423,12 @@ Local production deployment
 **Scope:**
 
 - Application-specific versioning
-- Changelog and release note generation *(implements conventions defined in Phase 2)*
+- Changelog and release note generation _(implements conventions defined in Phase 2)_
 - GitHub Actions build workflows
 - GitHub Container Registry
 - Release tagging
 - Safe update procedures
-- Backup-before-upgrade integration *(uses capabilities from Phase 4)*
+- Backup-before-upgrade integration _(uses capabilities from Phase 4)_
 - Rollback orchestration
 - Manual versus automatic update policies
 
@@ -438,7 +438,7 @@ Avoid automatically deploying every merge to the production environment.
 
 ---
 
-### Phase 9 — Distribution *(future)*
+### Phase 9 — Distribution _(future)_
 
 **Goal:** Make Your Tools accessible to people who do not want to manage a development environment.
 
@@ -462,17 +462,17 @@ Docker Compose remains the initial distribution method. Later, investigate an El
 
 To avoid an agent implementing the same thing twice across phases:
 
-| Phase | Owns | Does not own |
-|---|---|---|
-| 1. Workspace consolidation | Monorepo and existing apps | Shared package extraction |
-| 2. Development workflow | Issues, branching, documentation conventions, shared-candidate tracking, release note *conventions* | Full release automation |
-| 3. Architecture inventory | Discovering existing patterns and differences | Refactoring |
-| 4. Data durability | Storage, backup, restore, migration safety | General deployment infrastructure |
-| 5. UI system | Shared UI and interaction conventions | General technical utilities |
-| 6. Shared foundations | Shared technical packages and adoption | Application-specific business logic |
-| 7. Deployment | Docker, networking, runtime configuration | Release management |
-| 8. Release management | Versioning, builds, changelogs, updates, rollback orchestration | Distribution packaging |
-| 9. Distribution | Docker distribution experience, potential Electron app | Internal development workflow |
+| Phase                      | Owns                                                                                                | Does not own                        |
+| -------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| 1. Workspace consolidation | Monorepo and existing apps                                                                          | Shared package extraction           |
+| 2. Development workflow    | Issues, branching, documentation conventions, shared-candidate tracking, release note _conventions_ | Full release automation             |
+| 3. Architecture inventory  | Discovering existing patterns and differences                                                       | Refactoring                         |
+| 4. Data durability         | Storage, backup, restore, migration safety                                                          | General deployment infrastructure   |
+| 5. UI system               | Shared UI and interaction conventions                                                               | General technical utilities         |
+| 6. Shared foundations      | Shared technical packages and adoption                                                              | Application-specific business logic |
+| 7. Deployment              | Docker, networking, runtime configuration                                                           | Release management                  |
+| 8. Release management      | Versioning, builds, changelogs, updates, rollback orchestration                                     | Distribution packaging              |
+| 9. Distribution            | Docker distribution experience, potential Electron app                                              | Internal development workflow       |
 
 ---
 
@@ -504,18 +504,18 @@ This prevents experimental changes from breaking the entire suite simultaneously
 
 ### Additional principles
 
-| Principle | Meaning |
-|---|---|
-| Local-first | Core functionality should not depend on external services |
-| Data ownership | Applications retain ownership of their domains and records |
-| Human validation | Agents implement; the human validates important decisions |
-| Small blast radius | Prefer incremental migrations over sweeping changes |
-| No premature abstraction | Similar code is not automatically shared code |
-| Shared discovery | Agents flag reusable functionality for later evaluation |
-| Recoverability | Data migrations and upgrades require a recovery strategy |
-| Independent applications | Users should not need to install the entire suite |
-| Documentation over repetition | Agent instructions reference authoritative documents |
-| Open-source readiness | Avoid coupling applications to personal secrets or environments |
+| Principle                                      | Meaning                                                                           |
+| ---------------------------------------------- | --------------------------------------------------------------------------------- |
+| Local-first                                    | Core functionality should not depend on external services                         |
+| Data ownership                                 | Applications retain ownership of their domains and records                        |
+| Human validation                               | Agents implement; the human validates important decisions                         |
+| Small blast radius                             | Prefer incremental migrations over sweeping changes                               |
+| No premature abstraction                       | Similar code is not automatically shared code                                     |
+| Shared discovery                               | Agents flag reusable functionality for later evaluation                           |
+| Recoverability                                 | Data migrations and upgrades require a recovery strategy                          |
+| Independent applications                       | Users should not need to install the entire suite                                 |
+| Documentation over repetition                  | Agent instructions reference authoritative documents                              |
+| Open-source readiness                          | Avoid coupling applications to personal secrets or environments                   |
 | Reference implementations are not dependencies | Adopt useful conventions without requiring external projects to remain maintained |
 
 ---
@@ -526,22 +526,22 @@ These documents will be created during Phase 2. Listed here so the plan is compl
 
 Avoid maintaining the same information in multiple places.
 
-| Document | Responsibility |
-|---|---|
-| `README.md` | Introduction to Your Tools, applications, and getting started |
-| [Your Tools manifesto](https://your-tools.dev/) | Philosophy and motivation (external, not duplicated) |
-| `PRODUCT.md` | Platform objectives, problems being solved, scope, and intended outcomes |
-| `ROADMAP.md` | This document — phased plan, dependencies, milestones, completion criteria |
-| `DEVELOPMENT.md` | Development lifecycle, branching, agent conventions, shared-candidate tracking, promotion rules |
-| `ARCHITECTURE.md` | Actual platform architecture and established technical decisions |
-| Design system docs | UI conventions and interaction patterns |
-| `AGENTS.md` | Minimal entry point for coding agents — links to authoritative docs, does not duplicate them |
-| App `README.md` | Application introduction and setup |
-| App `product.md` | Product purpose, scope, and requirements |
-| App `domain.md` | Domain model and business rules |
-| GitHub Issues | Bugs, features, implementation tasks, shared candidates |
-| GitHub Projects | Cross-application roadmap and progress |
-| Changelog | Released changes |
+| Document                                        | Responsibility                                                                                  |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `README.md`                                     | Introduction to Your Tools, applications, and getting started                                   |
+| [Your Tools manifesto](https://your-tools.dev/) | Philosophy and motivation (external, not duplicated)                                            |
+| `PRODUCT.md`                                    | Platform objectives, problems being solved, scope, and intended outcomes                        |
+| `ROADMAP.md`                                    | This document — phased plan, dependencies, milestones, completion criteria                      |
+| `DEVELOPMENT.md`                                | Development lifecycle, branching, agent conventions, shared-candidate tracking, promotion rules |
+| `ARCHITECTURE.md`                               | Actual platform architecture and established technical decisions                                |
+| Design system docs                              | UI conventions and interaction patterns                                                         |
+| `AGENTS.md`                                     | Minimal entry point for coding agents — links to authoritative docs, does not duplicate them    |
+| App `README.md`                                 | Application introduction and setup                                                              |
+| App `product.md`                                | Product purpose, scope, and requirements                                                        |
+| App `domain.md`                                 | Domain model and business rules                                                                 |
+| GitHub Issues                                   | Bugs, features, implementation tasks, shared candidates                                         |
+| GitHub Projects                                 | Cross-application roadmap and progress                                                          |
+| Changelog                                       | Released changes                                                                                |
 
 **Documentation ownership:**
 
@@ -591,25 +591,25 @@ Cursor-generated inventories and implementation reports can provide concise cont
 
 Rather than treating all nine phases as one enormous project, group them into four milestones:
 
-### Milestone A — One development environment *(Phases 1–3)*
+### Milestone A — One development environment _(Phases 1–3)_
 
 All four applications are available in one experimental monorepo, development conventions are established, and existing implementations have been inventoried.
 
 **Outcome:** We understand the suite and can develop it efficiently.
 
-### Milestone B — Trustworthy personal data *(Phase 4)*
+### Milestone B — Trustworthy personal data _(Phase 4)_
 
 Storage, backups, restore procedures, and migration safety have been implemented and tested.
 
 **Outcome:** We can confidently manage important personal records.
 
-### Milestone C — One maintainable platform *(Phases 5–6)*
+### Milestone C — One maintainable platform _(Phases 5–6)_
 
 Shared UI patterns and technical foundations are available, with applications adopting them incrementally.
 
 **Outcome:** New development becomes faster and more consistent.
 
-### Milestone D — Reliable releases and distribution *(Phases 7–9)*
+### Milestone D — Reliable releases and distribution _(Phases 7–9)_
 
 Applications have consistent deployment, identifiable releases, safe upgrades, and a documented distribution approach.
 
@@ -619,29 +619,27 @@ Applications have consistent deployment, identifiable releases, safe upgrades, a
 
 ## 10. Impact on remaining phases after Turborepo decision
 
-| Phase | Changes from original plan |
-|---|---|
-| 2. Development workflow | No significant change |
-| 3. Architecture inventory | Include assessment of which T3 patterns are worth adopting |
-| 4. Data durability | No change |
-| 5. UI commonality | No change |
-| 6. Shared foundations | Extract packages based on actual needs, using T3 patterns where useful |
-| 7. Unified deployment | No change |
-| 8. Release management | No change |
-| 9. Distribution | No change |
+| Phase                     | Changes from original plan                                             |
+| ------------------------- | ---------------------------------------------------------------------- |
+| 2. Development workflow   | No significant change                                                  |
+| 3. Architecture inventory | Include assessment of which T3 patterns are worth adopting             |
+| 4. Data durability        | No change                                                              |
+| 5. UI commonality         | No change                                                              |
+| 6. Shared foundations     | Extract packages based on actual needs, using T3 patterns where useful |
+| 7. Unified deployment     | No change                                                              |
+| 8. Release management     | No change                                                              |
+| 9. Distribution           | No change                                                              |
 
 ---
 
 ## 11. Immediate next step
 
-When development begins, the first task is:
+**Phase 1 is complete.** Phase 2 (development workflow and governance) is active.
 
-**Evaluate the effort of initializing Your Tools from a fresh Turborepo versus adapting create-t3-turbo, then establish the experimental monorepo.**
+Current focus:
 
-Before substantial refactoring:
+1. Root documentation (`PRODUCT.md`, `ARCHITECTURE.md`, `DEVELOPMENT.md`, `AGENTS.md`) and changelog conventions
+2. Proportional GitHub CI with affected-app detection and maintainer fast path
+3. Issue forms, labels, PR template, and branch protection for `main`
 
-1. Verify backups of existing databases and uploaded files
-2. Keep existing production repositories untouched
-3. Incorporate the four applications without major refactoring
-
-Once all four applications run successfully from the monorepo, proceed to Phase 2 (development workflow) and Phase 3 (architecture inventory).
+When Phase 2 is complete, proceed to Phase 3 (architecture inventory and convergence planning).

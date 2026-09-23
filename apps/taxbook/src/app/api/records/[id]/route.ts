@@ -1,10 +1,10 @@
 import { TRPCError } from "@trpc/server";
 
-import { deleteRecord, updateRecord } from "~/server/api/record-values";
 import {
   parseUpdateRecordForm,
   recordErrorResponse,
 } from "~/server/api/record-http";
+import { deleteRecord, updateRecord } from "~/server/api/record-values";
 import { db } from "~/server/db";
 
 function recordId(value: string) {
@@ -36,7 +36,9 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> },
 ) {
   try {
-    return Response.json(await deleteRecord(db, recordId((await context.params).id)));
+    return Response.json(
+      await deleteRecord(db, recordId((await context.params).id)),
+    );
   } catch (error) {
     return recordErrorResponse(error);
   }

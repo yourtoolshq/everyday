@@ -1,8 +1,10 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -15,7 +17,7 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 type Institution = RouterOutputs["institutions"]["list"][number];
 
@@ -29,7 +31,9 @@ function emptyFormState(): InstitutionFormState {
   return { name: "", website: "", notes: "" };
 }
 
-function institutionToFormState(institution: Institution): InstitutionFormState {
+function institutionToFormState(
+  institution: Institution,
+): InstitutionFormState {
   return {
     name: institution.name,
     website: institution.website ?? "",
@@ -92,9 +96,12 @@ export function InstitutionFormSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <form className="flex min-h-full flex-col" onSubmit={submit}>
           <SheetHeader>
-            <SheetTitle>{institution ? "Edit institution" : "Add institution"}</SheetTitle>
+            <SheetTitle>
+              {institution ? "Edit institution" : "Add institution"}
+            </SheetTitle>
             <SheetDescription>
-              Banks, lenders, and investment providers that hold household accounts.
+              Banks, lenders, and investment providers that hold household
+              accounts.
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 px-4 py-6">
@@ -103,7 +110,9 @@ export function InstitutionFormSheet({
               <Input
                 id="institution-name"
                 value={form.name}
-                onChange={(event) => setForm({ ...form, name: event.target.value })}
+                onChange={(event) =>
+                  setForm({ ...form, name: event.target.value })
+                }
                 required
                 autoFocus
               />
@@ -113,7 +122,9 @@ export function InstitutionFormSheet({
               <Input
                 id="institution-website"
                 value={form.website}
-                onChange={(event) => setForm({ ...form, website: event.target.value })}
+                onChange={(event) =>
+                  setForm({ ...form, website: event.target.value })
+                }
                 placeholder="https://"
               />
             </div>
@@ -122,17 +133,27 @@ export function InstitutionFormSheet({
               <Textarea
                 id="institution-notes"
                 value={form.notes}
-                onChange={(event) => setForm({ ...form, notes: event.target.value })}
+                onChange={(event) =>
+                  setForm({ ...form, notes: event.target.value })
+                }
                 rows={4}
               />
             </div>
           </div>
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Saving…" : institution ? "Save changes" : "Add institution"}
+              {pending
+                ? "Saving…"
+                : institution
+                  ? "Save changes"
+                  : "Add institution"}
             </Button>
           </SheetFooter>
         </form>

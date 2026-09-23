@@ -10,8 +10,8 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 import { assessmentKinds } from "~/domain/filing";
-import { timestamps } from "./shared";
 import { filings } from "./filings";
+import { timestamps } from "./shared";
 
 export const assessments = sqliteTable(
   "assessments",

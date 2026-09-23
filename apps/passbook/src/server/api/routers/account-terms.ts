@@ -2,15 +2,19 @@ import { TRPCError } from "@trpc/server";
 import { desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
+import type { AccountTerms } from "~/lib/account-terms";
+import type { db as database } from "~/server/db";
 import {
   accountTermsChanged,
   accountTermsSchema,
   normalizeAccountTerms,
-  type AccountTerms,
 } from "~/lib/account-terms";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import type { db as database } from "~/server/db";
-import { accountEvents, accountTermsSnapshots, accounts } from "~/server/db/schema";
+import {
+  accountEvents,
+  accounts,
+  accountTermsSnapshots,
+} from "~/server/db/schema";
 
 type Database = typeof database;
 
@@ -45,7 +49,9 @@ function termsFromAccount(row: {
   });
 }
 
-function termsFromSnapshot(row: typeof accountTermsSnapshots.$inferSelect): AccountTerms {
+function termsFromSnapshot(
+  row: typeof accountTermsSnapshots.$inferSelect,
+): AccountTerms {
   return normalizeAccountTerms({
     interestRate: row.interestRate,
     promotionalInterestRate: row.promotionalInterestRate,
@@ -57,7 +63,11 @@ function termsFromSnapshot(row: typeof accountTermsSnapshots.$inferSelect): Acco
   });
 }
 
-function snapshotValues(terms: AccountTerms, effectiveDate: string, notes: string | null) {
+function snapshotValues(
+  terms: AccountTerms,
+  effectiveDate: string,
+  notes: string | null,
+) {
   return {
     effectiveDate,
     interestRate: terms.interestRate,
@@ -71,10 +81,7 @@ function snapshotValues(terms: AccountTerms, effectiveDate: string, notes: strin
   };
 }
 
-async function linkedActivityForSnapshot(
-  db: Database,
-  snapshotId: string,
-) {
+async function linkedActivityForSnapshot(db: Database, snapshotId: string) {
   const [event] = await db
     .select({
       id: accountEvents.id,
@@ -92,7 +99,8 @@ async function requireUnlinkedSnapshot(db: Database, snapshotId: string) {
   if (linked) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "This snapshot is linked to an activity. Change it from the activity instead.",
+      message:
+        "This snapshot is linked to an activity. Change it from the activity instead.",
     });
   }
 }
@@ -109,88 +117,15 @@ async function requireAccount(db: Database, accountId: string) {
 }
 
 export const accountTermsRouter = createTRPCRouter({
-  getCurrent: publicProcedure.input(accountIdInput).query(async ({ ctx, input }) => {
-    const [account] = await ctx.db
-      .select({
-        interestRate: accounts.interestRate,
-        promotionalInterestRate: accounts.promotionalInterestRate,
-        promotionalInterestRateExpires: accounts.promotionalInterestRateExpires,
-        creditLimit: accounts.creditLimit,
-        annualFee: accounts.annualFee,
-        renewalDate: accounts.renewalDate,
-        insurance: accounts.insurance,
-      })
-      .from(accounts)
-      .where(eq(accounts.id, input.accountId));
-
-    if (!account) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Account not found." });
-    }
-
-    return termsFromAccount(account);
-  }),
-
-  listSnapshots: publicProcedure.input(accountIdInput).query(async ({ ctx, input }) => {
-    await requireAccount(ctx.db, input.accountId);
-
-    const rows = await ctx.db
-      .select()
-      .from(accountTermsSnapshots)
-      .where(eq(accountTermsSnapshots.accountId, input.accountId))
-      .orderBy(desc(accountTermsSnapshots.effectiveDate), desc(accountTermsSnapshots.createdAt));
-
-    if (rows.length === 0) return [];
-
-    const snapshotIds = rows.map((row) => row.id);
-    const linkedEvents = await ctx.db
-      .select({
-        id: accountEvents.id,
-        title: accountEvents.title,
-        type: accountEvents.type,
-        startDate: accountEvents.startDate,
-        termsSnapshotId: accountEvents.termsSnapshotId,
-      })
-      .from(accountEvents)
-      .where(inArray(accountEvents.termsSnapshotId, snapshotIds));
-
-    const linkedBySnapshotId = new Map(
-      linkedEvents
-        .filter((event) => event.termsSnapshotId)
-        .map((event) => [event.termsSnapshotId!, event]),
-    );
-
-    return rows.map((row) => {
-      const linkedActivity = linkedBySnapshotId.get(row.id);
-      return {
-        id: row.id,
-        accountId: row.accountId,
-        effectiveDate: row.effectiveDate,
-        notes: row.notes,
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        terms: termsFromSnapshot(row),
-        linkedActivity: linkedActivity
-          ? {
-              id: linkedActivity.id,
-              title: linkedActivity.title,
-              type: linkedActivity.type,
-              startDate: linkedActivity.startDate,
-            }
-          : null,
-      };
-    });
-  }),
-
-  saveTerms: publicProcedure.input(snapshotInput).mutation(async ({ ctx, input }) => {
-    const terms = normalizeAccountTerms(input);
-
-    const account = await ctx.db.transaction(async (tx) => {
-      const [existing] = await tx
+  getCurrent: publicProcedure
+    .input(accountIdInput)
+    .query(async ({ ctx, input }) => {
+      const [account] = await ctx.db
         .select({
-          id: accounts.id,
           interestRate: accounts.interestRate,
           promotionalInterestRate: accounts.promotionalInterestRate,
-          promotionalInterestRateExpires: accounts.promotionalInterestRateExpires,
+          promotionalInterestRateExpires:
+            accounts.promotionalInterestRateExpires,
           creditLimit: accounts.creditLimit,
           annualFee: accounts.annualFee,
           renewalDate: accounts.renewalDate,
@@ -198,60 +133,156 @@ export const accountTermsRouter = createTRPCRouter({
         })
         .from(accounts)
         .where(eq(accounts.id, input.accountId));
-      if (!existing) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Account not found." });
-      }
 
-      const before = termsFromAccount(existing);
-      const changed = accountTermsChanged(before, terms);
-
-      const [updated] = await tx
-        .update(accounts)
-        .set({
-          interestRate: terms.interestRate,
-          promotionalInterestRate: terms.promotionalInterestRate,
-          promotionalInterestRateExpires: terms.promotionalInterestRateExpires,
-          creditLimit: terms.creditLimit,
-          annualFee: terms.annualFee,
-          renewalDate: terms.renewalDate,
-          insurance: terms.insurance,
-          updatedAt: now(),
-        })
-        .where(eq(accounts.id, input.accountId))
-        .returning({ id: accounts.id });
-
-      if (!updated) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Account not found." });
-      }
-
-      if (changed) {
-        await tx.insert(accountTermsSnapshots).values({
-          accountId: input.accountId,
-          ...snapshotValues(terms, input.effectiveDate, input.notes ?? null),
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found.",
         });
       }
 
-      return { accountId: updated.id, changed };
-    });
+      return termsFromAccount(account);
+    }),
 
-    return account;
-  }),
+  listSnapshots: publicProcedure
+    .input(accountIdInput)
+    .query(async ({ ctx, input }) => {
+      await requireAccount(ctx.db, input.accountId);
 
-  addSnapshot: publicProcedure.input(snapshotInput).mutation(async ({ ctx, input }) => {
-    await requireAccount(ctx.db, input.accountId);
-    const terms = normalizeAccountTerms(input);
+      const rows = await ctx.db
+        .select()
+        .from(accountTermsSnapshots)
+        .where(eq(accountTermsSnapshots.accountId, input.accountId))
+        .orderBy(
+          desc(accountTermsSnapshots.effectiveDate),
+          desc(accountTermsSnapshots.createdAt),
+        );
 
-    const [snapshot] = await ctx.db
-      .insert(accountTermsSnapshots)
-      .values({
-        accountId: input.accountId,
-        ...snapshotValues(terms, input.effectiveDate, input.notes ?? null),
-      })
-      .returning();
+      if (rows.length === 0) return [];
 
-    if (!snapshot) throw new Error("Snapshot creation failed.");
-    return snapshot;
-  }),
+      const snapshotIds = rows.map((row) => row.id);
+      const linkedEvents = await ctx.db
+        .select({
+          id: accountEvents.id,
+          title: accountEvents.title,
+          type: accountEvents.type,
+          startDate: accountEvents.startDate,
+          termsSnapshotId: accountEvents.termsSnapshotId,
+        })
+        .from(accountEvents)
+        .where(inArray(accountEvents.termsSnapshotId, snapshotIds));
+
+      const linkedBySnapshotId = new Map(
+        linkedEvents
+          .filter((event) => event.termsSnapshotId)
+          .map((event) => [event.termsSnapshotId!, event]),
+      );
+
+      return rows.map((row) => {
+        const linkedActivity = linkedBySnapshotId.get(row.id);
+        return {
+          id: row.id,
+          accountId: row.accountId,
+          effectiveDate: row.effectiveDate,
+          notes: row.notes,
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt,
+          terms: termsFromSnapshot(row),
+          linkedActivity: linkedActivity
+            ? {
+                id: linkedActivity.id,
+                title: linkedActivity.title,
+                type: linkedActivity.type,
+                startDate: linkedActivity.startDate,
+              }
+            : null,
+        };
+      });
+    }),
+
+  saveTerms: publicProcedure
+    .input(snapshotInput)
+    .mutation(async ({ ctx, input }) => {
+      const terms = normalizeAccountTerms(input);
+
+      const account = await ctx.db.transaction(async (tx) => {
+        const [existing] = await tx
+          .select({
+            id: accounts.id,
+            interestRate: accounts.interestRate,
+            promotionalInterestRate: accounts.promotionalInterestRate,
+            promotionalInterestRateExpires:
+              accounts.promotionalInterestRateExpires,
+            creditLimit: accounts.creditLimit,
+            annualFee: accounts.annualFee,
+            renewalDate: accounts.renewalDate,
+            insurance: accounts.insurance,
+          })
+          .from(accounts)
+          .where(eq(accounts.id, input.accountId));
+        if (!existing) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Account not found.",
+          });
+        }
+
+        const before = termsFromAccount(existing);
+        const changed = accountTermsChanged(before, terms);
+
+        const [updated] = await tx
+          .update(accounts)
+          .set({
+            interestRate: terms.interestRate,
+            promotionalInterestRate: terms.promotionalInterestRate,
+            promotionalInterestRateExpires:
+              terms.promotionalInterestRateExpires,
+            creditLimit: terms.creditLimit,
+            annualFee: terms.annualFee,
+            renewalDate: terms.renewalDate,
+            insurance: terms.insurance,
+            updatedAt: now(),
+          })
+          .where(eq(accounts.id, input.accountId))
+          .returning({ id: accounts.id });
+
+        if (!updated) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Account not found.",
+          });
+        }
+
+        if (changed) {
+          await tx.insert(accountTermsSnapshots).values({
+            accountId: input.accountId,
+            ...snapshotValues(terms, input.effectiveDate, input.notes ?? null),
+          });
+        }
+
+        return { accountId: updated.id, changed };
+      });
+
+      return account;
+    }),
+
+  addSnapshot: publicProcedure
+    .input(snapshotInput)
+    .mutation(async ({ ctx, input }) => {
+      await requireAccount(ctx.db, input.accountId);
+      const terms = normalizeAccountTerms(input);
+
+      const [snapshot] = await ctx.db
+        .insert(accountTermsSnapshots)
+        .values({
+          accountId: input.accountId,
+          ...snapshotValues(terms, input.effectiveDate, input.notes ?? null),
+        })
+        .returning();
+
+      if (!snapshot) throw new Error("Snapshot creation failed.");
+      return snapshot;
+    }),
 
   updateSnapshot: publicProcedure
     .input(
@@ -275,24 +306,32 @@ export const accountTermsRouter = createTRPCRouter({
         .returning();
 
       if (!snapshot) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Snapshot not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Snapshot not found.",
+        });
       }
 
       return snapshot;
     }),
 
-  deleteSnapshot: publicProcedure.input(snapshotIdInput).mutation(async ({ ctx, input }) => {
-    await requireUnlinkedSnapshot(ctx.db, input.id);
+  deleteSnapshot: publicProcedure
+    .input(snapshotIdInput)
+    .mutation(async ({ ctx, input }) => {
+      await requireUnlinkedSnapshot(ctx.db, input.id);
 
-    const [snapshot] = await ctx.db
-      .delete(accountTermsSnapshots)
-      .where(eq(accountTermsSnapshots.id, input.id))
-      .returning({ id: accountTermsSnapshots.id });
+      const [snapshot] = await ctx.db
+        .delete(accountTermsSnapshots)
+        .where(eq(accountTermsSnapshots.id, input.id))
+        .returning({ id: accountTermsSnapshots.id });
 
-    if (!snapshot) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Snapshot not found." });
-    }
+      if (!snapshot) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Snapshot not found.",
+        });
+      }
 
-    return snapshot;
-  }),
+      return snapshot;
+    }),
 });

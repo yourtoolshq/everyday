@@ -1,8 +1,10 @@
 "use client";
 
-import { IconAlertTriangle } from "@tabler/icons-react";
 import { useState } from "react";
+import { IconAlertTriangle } from "@tabler/icons-react";
 
+import type { EstimateData, EstimateMode } from "./types";
+import type { RouterOutputs } from "~/trpc/react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -13,14 +15,14 @@ import {
   CardTitle,
 } from "~/components/ui/card";
 import { Skeleton } from "~/components/ui/skeleton";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 import { EstimateWarnings } from "./estimate-warnings";
 import { HouseholdItems } from "./household-items";
 import { InputReference } from "./input-reference";
 import { PersonEstimateCard } from "./person-estimate-card";
 import { ScenarioSandbox } from "./scenario-sandbox";
 import { SupportingSources } from "./supporting-sources";
-import { resultLabel, type EstimateData, type EstimateMode } from "./types";
+import { resultLabel } from "./types";
 
 export function TaxEstimate({ taxYearId }: { taxYearId?: number }) {
   const estimate = api.taxEstimate.get.useQuery(
@@ -39,7 +41,7 @@ export function TaxEstimate({ taxYearId }: { taxYearId?: number }) {
   }
   if (estimate.error || !estimate.data) {
     return (
-      <div className="p-6 text-sm text-destructive">
+      <div className="text-destructive p-6 text-sm">
         Unable to load Tax Estimate. {estimate.error?.message}
       </div>
     );
@@ -58,14 +60,17 @@ function Unsupported({
   return (
     <div className="flex flex-col gap-5 p-6">
       <div>
-        <p className="text-sm font-medium text-primary">{data.year.year} tax year</p>
+        <p className="text-primary text-sm font-medium">
+          {data.year.year} tax year
+        </p>
         <h2 className="mt-1 text-2xl font-semibold">Tax Estimate</h2>
       </div>
       <Card>
         <CardHeader>
           <CardTitle>Estimate unavailable</CardTitle>
           <CardDescription>
-            This first estimate is intentionally limited to the current household workflow.
+            This first estimate is intentionally limited to the current
+            household workflow.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
@@ -86,14 +91,21 @@ function EstimateContent({ data }: { data: EstimateData }) {
   return (
     <div className="flex flex-col gap-6 p-6">
       <EstimateHeader data={data} mode={mode} setMode={setMode} />
-      <Card className={selected.householdResultCents >= 0 ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/40" : "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/40"}>
+      <Card
+        className={
+          selected.householdResultCents >= 0
+            ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/40"
+            : "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/40"
+        }
+      >
         <CardHeader>
           <CardDescription>{modeLabel} household result</CardDescription>
           <CardTitle className="text-4xl tabular-nums">
             {resultLabel(selected.householdResultCents)}
           </CardTitle>
           <CardDescription>
-            The combined result of the individual estimates below—not a joint tax return.
+            The combined result of the individual estimates below—not a joint
+            tax return.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -102,8 +114,9 @@ function EstimateContent({ data }: { data: EstimateData }) {
           <h3 id="member-estimates-heading" className="text-lg font-semibold">
             Estimates by person
           </h3>
-          <p className="text-sm text-muted-foreground">
-            Each statement shows how the {modeLabel.toLowerCase()} refund or amount owing is calculated.
+          <p className="text-muted-foreground text-sm">
+            Each statement shows how the {modeLabel.toLowerCase()} refund or
+            amount owing is calculated.
           </p>
         </div>
         <div className="grid items-start gap-4 xl:grid-cols-2">
@@ -121,12 +134,14 @@ function EstimateContent({ data }: { data: EstimateData }) {
       {mode === "projected" ? <ScenarioSandbox data={data} /> : null}
       <SupportingSources data={data} mode={mode} />
       <InputReference data={data} mode={mode} />
-      <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
-        <p className="font-medium text-foreground">
+      <div className="bg-muted/30 text-muted-foreground rounded-lg border p-4 text-sm">
+        <p className="text-foreground font-medium">
           2026 Manitoba planning estimate—not filing software.
         </p>
         <p className="mt-1">
-          Gross employment income is assumed to be pensionable and insurable. Contribution room, eligibility, and complete tax-return coverage are not validated.
+          Gross employment income is assumed to be pensionable and insurable.
+          Contribution room, eligibility, and complete tax-return coverage are
+          not validated.
         </p>
       </div>
     </div>
@@ -145,9 +160,13 @@ function EstimateHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <p className="text-sm font-medium text-primary">{data.year.year} Manitoba</p>
-        <h2 className="mt-1 text-2xl font-semibold tracking-tight">Tax Estimate</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-primary text-sm font-medium">
+          {data.year.year} Manitoba
+        </p>
+        <h2 className="mt-1 text-2xl font-semibold tracking-tight">
+          Tax Estimate
+        </h2>
+        <p className="text-muted-foreground mt-1 text-sm">
           See what is recorded so far or the expected year-end result.
         </p>
       </div>
@@ -168,7 +187,10 @@ function EstimateHeader({
             Inputs complete
           </Badge>
         )}
-        <div className="inline-flex rounded-lg border bg-muted/40 p-1" aria-label="Estimate view">
+        <div
+          className="bg-muted/40 inline-flex rounded-lg border p-1"
+          aria-label="Estimate view"
+        >
           <Button
             type="button"
             size="sm"

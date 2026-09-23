@@ -1,13 +1,11 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
-import {
-  statementFrequencies,
-  statementFrequencyLabels,
-  type StatementFrequency,
-} from "~/lib/statement-frequency";
+import type { StatementFrequency } from "~/lib/statement-frequency";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Label } from "~/components/ui/label";
 import {
@@ -25,7 +23,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
-import { api, type RouterOutputs } from "~/trpc/react";
+import {
+  statementFrequencies,
+  statementFrequencyLabels,
+} from "~/lib/statement-frequency";
+import { api } from "~/trpc/react";
 
 type Account = RouterOutputs["accounts"]["list"][number];
 
@@ -39,7 +41,9 @@ export function AccountSettingsSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const utils = api.useUtils();
-  const [frequency, setFrequency] = useState<StatementFrequency>(account.statementFrequency);
+  const [frequency, setFrequency] = useState<StatementFrequency>(
+    account.statementFrequency,
+  );
 
   const updateSchedule = api.accounts.updateStatementSchedule.useMutation({
     onSuccess: async () => {
@@ -65,7 +69,8 @@ export function AccountSettingsSheet({
           <SheetHeader>
             <SheetTitle>Account settings</SheetTitle>
             <SheetDescription>
-              Configure how often {account.displayName} should produce statements.
+              Configure how often {account.displayName} should produce
+              statements.
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 px-4 py-6">
@@ -73,7 +78,9 @@ export function AccountSettingsSheet({
               <Label>Statement frequency</Label>
               <Select
                 value={frequency}
-                onValueChange={(value) => setFrequency(value as StatementFrequency)}
+                onValueChange={(value) =>
+                  setFrequency(value as StatementFrequency)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -86,14 +93,18 @@ export function AccountSettingsSheet({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-sm text-muted-foreground">
-                Passbook uses this schedule with the account opened and closed dates to determine
-                which statement periods should exist.
+              <p className="text-muted-foreground text-sm">
+                Passbook uses this schedule with the account opened and closed
+                dates to determine which statement periods should exist.
               </p>
             </div>
           </div>
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={updateSchedule.isPending}>

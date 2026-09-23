@@ -6,11 +6,11 @@ Before starting work on any new phase, first have a short conversation with the 
 
 The priority is always:
 
-* make the app usable as soon as possible
-* solve the current real-world problem
-* prefer the smallest complete workflow over a broad product surface
-* avoid designing features only because they may be useful to future users
-* avoid turning a personal tool into a hypothetical commercial product
+- make the app usable as soon as possible
+- solve the current real-world problem
+- prefer the smallest complete workflow over a broad product surface
+- avoid designing features only because they may be useful to future users
+- avoid turning a personal tool into a hypothetical commercial product
 
 If the scope starts expanding, challenge it gently and bring the discussion back to:
 
@@ -37,23 +37,23 @@ Personal information may be provided during development to explain a real workfl
 
 Never copy personal names, employers, financial details, addresses, document contents, account information, or other identifying details into:
 
-* source code
-* seed data
-* fixtures
-* tests
-* screenshots
-* examples
-* documentation
-* commit messages
-* issue or PR content
+- source code
+- seed data
+- fixtures
+- tests
+- screenshots
+- examples
+- documentation
+- commit messages
+- issue or PR content
 
 Use generic examples such as `Person A`, `Person B`, `Employer`, or clearly fictional data instead.
 
 Product context and domain decisions are documented here:
 
-* [Product Overview](./docs/product.md)
-* [Domain Model](./docs/domain.md)
-* [Roadmap / Delivery Phases](./docs/roadmap.md)
-* [Intentional Exclusions](./docs/intentional-exclusions.md)
+- [Product Overview](./docs/product.md)
+- [Domain Model](./docs/domain.md)
+- [Roadmap / Delivery Phases](./docs/roadmap.md)
+- [Intentional Exclusions](./docs/intentional-exclusions.md)
 
 Treat those documents as the current source of product intent, but prefer a fresh conversation with the user when beginning a phase rather than inferring detailed requirements from the roadmap alone.

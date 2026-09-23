@@ -1,5 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 
+import type { Database } from "./helpers";
 import { calculateEmploymentProjection } from "~/domain/employment";
 import {
   employments,
@@ -7,7 +8,6 @@ import {
   taxItems,
   taxYears,
 } from "~/server/db/schema";
-import type { Database } from "./helpers";
 
 type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 type DatabaseWriter = Database | Transaction;
@@ -73,7 +73,10 @@ async function createUnionDuesTaxItem(
   return item!;
 }
 
-async function deleteTaxItemIfPresent(db: DatabaseWriter, taxItemId: number | null) {
+async function deleteTaxItemIfPresent(
+  db: DatabaseWriter,
+  taxItemId: number | null,
+) {
   if (taxItemId === null) return;
   await db.delete(taxItems).where(eq(taxItems.id, taxItemId));
 }
@@ -195,7 +198,10 @@ export async function employmentProjection(
   };
 }
 
-async function sumLinkedPaychequeAmounts(db: DatabaseWriter, employmentId: number) {
+async function sumLinkedPaychequeAmounts(
+  db: DatabaseWriter,
+  employmentId: number,
+) {
   const rows = await db
     .select({
       extendedHealthCents: paycheques.extendedHealthCents,
@@ -207,7 +213,8 @@ async function sumLinkedPaychequeAmounts(db: DatabaseWriter, employmentId: numbe
 
   return rows.reduce(
     (totals, row) => ({
-      phspCents: totals.phspCents + row.extendedHealthCents + row.travelMedicalCents,
+      phspCents:
+        totals.phspCents + row.extendedHealthCents + row.travelMedicalCents,
       unionDuesCents: totals.unionDuesCents + row.unionDuesCents,
     }),
     { phspCents: 0, unionDuesCents: 0 },
@@ -235,7 +242,10 @@ export async function syncEmploymentTaxItem(
       .where(eq(taxItems.id, projection.taxItemId));
   }
 
-  if (employment.phspTaxItemId === null && employment.unionDuesTaxItemId === null) {
+  if (
+    employment.phspTaxItemId === null &&
+    employment.unionDuesTaxItemId === null
+  ) {
     return;
   }
 

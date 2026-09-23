@@ -2,17 +2,22 @@ import { TRPCError } from "@trpc/server";
 import { asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
+import type { DeductionSettings } from "~/lib/paycheck-deductions";
+import { getCurrentCompensationChange } from "~/lib/compensation";
 import { employmentStatuses } from "~/lib/employment-status";
 import { payFrequencies } from "~/lib/pay-frequency";
 import {
   normalizeDeductionSettings,
   parseDeductionSettings,
   serializeDeductionSettings,
-  type DeductionSettings,
 } from "~/lib/paycheck-deductions";
-import { getCurrentCompensationChange } from "~/lib/compensation";
-import { compensationChanges, employers, employments, people } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import {
+  compensationChanges,
+  employers,
+  employments,
+  people,
+} from "~/server/db/schema";
 
 const deductionSettingsInput = z.object({
   incomeTaxEnabled: z.boolean(),
@@ -49,25 +54,23 @@ const paySettingsInput = z.object({
   deductionSettings: deductionSettingsInput,
 });
 
-function mapEmploymentRow(
-  row: {
-    id: string;
-    employerId: string;
-    employerName: string;
-    personId: string;
-    personName: string;
-    jobTitle: string | null;
-    status: (typeof employmentStatuses)[number];
-    startDate: string | null;
-    endDate: string | null;
-    notes: string | null;
-    payFrequency: (typeof payFrequencies)[number];
-    biweeklyAnchorDate: string | null;
-    deductionSettings: string;
-    createdAt: string;
-    updatedAt: string;
-  },
-) {
+function mapEmploymentRow(row: {
+  id: string;
+  employerId: string;
+  employerName: string;
+  personId: string;
+  personName: string;
+  jobTitle: string | null;
+  status: (typeof employmentStatuses)[number];
+  startDate: string | null;
+  endDate: string | null;
+  notes: string | null;
+  payFrequency: (typeof payFrequencies)[number];
+  biweeklyAnchorDate: string | null;
+  deductionSettings: string;
+  createdAt: string;
+  updatedAt: string;
+}) {
   return {
     ...row,
     deductionSettings: parseDeductionSettings(row.deductionSettings),
@@ -102,7 +105,10 @@ export const employmentsRouter = createTRPCRouter({
       .innerJoin(people, eq(employments.personId, people.id))
       .where(eq(employments.id, input.id));
     if (!employment) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Employment not found.",
+      });
     }
     return mapEmploymentRow(employment);
   }),
@@ -178,46 +184,56 @@ export const employmentsRouter = createTRPCRouter({
 
     return rows.map((row) => ({
       ...mapEmploymentRow(row),
-      currentCompensation: getCurrentCompensationChange(changesByEmployment.get(row.id) ?? []),
+      currentCompensation: getCurrentCompensationChange(
+        changesByEmployment.get(row.id) ?? [],
+      ),
     }));
   }),
 
-  create: publicProcedure.input(employmentInput).mutation(async ({ ctx, input }) => {
-    const [employer] = await ctx.db
-      .select({ id: employers.id })
-      .from(employers)
-      .where(eq(employers.id, input.employerId));
-    if (!employer) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Employer not found." });
-    }
+  create: publicProcedure
+    .input(employmentInput)
+    .mutation(async ({ ctx, input }) => {
+      const [employer] = await ctx.db
+        .select({ id: employers.id })
+        .from(employers)
+        .where(eq(employers.id, input.employerId));
+      if (!employer) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Employer not found.",
+        });
+      }
 
-    const person = await ctx.db.query.people.findFirst({
-      where: eq(people.id, input.personId),
-    });
-    if (!person) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "Choose a valid person." });
-    }
+      const person = await ctx.db.query.people.findFirst({
+        where: eq(people.id, input.personId),
+      });
+      if (!person) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Choose a valid person.",
+        });
+      }
 
-    const [employment] = await ctx.db
-      .insert(employments)
-      .values({
-        employerId: input.employerId,
-        personId: input.personId,
-        jobTitle: input.jobTitle ?? null,
-        status: input.status,
-        startDate: input.startDate ?? null,
-        endDate: input.endDate ?? null,
-        notes: input.notes ?? null,
-        payFrequency: input.payFrequency,
-        biweeklyAnchorDate: input.biweeklyAnchorDate ?? null,
-      })
-      .returning();
-    if (!employment) throw new Error("Employment creation failed.");
-    return {
-      ...employment,
-      deductionSettings: parseDeductionSettings(employment.deductionSettings),
-    };
-  }),
+      const [employment] = await ctx.db
+        .insert(employments)
+        .values({
+          employerId: input.employerId,
+          personId: input.personId,
+          jobTitle: input.jobTitle ?? null,
+          status: input.status,
+          startDate: input.startDate ?? null,
+          endDate: input.endDate ?? null,
+          notes: input.notes ?? null,
+          payFrequency: input.payFrequency,
+          biweeklyAnchorDate: input.biweeklyAnchorDate ?? null,
+        })
+        .returning();
+      if (!employment) throw new Error("Employment creation failed.");
+      return {
+        ...employment,
+        deductionSettings: parseDeductionSettings(employment.deductionSettings),
+      };
+    }),
 
   update: publicProcedure
     .input(idInput.and(employmentInput))
@@ -226,7 +242,10 @@ export const employmentsRouter = createTRPCRouter({
         where: eq(people.id, input.personId),
       });
       if (!person) {
-        throw new TRPCError({ code: "BAD_REQUEST", message: "Choose a valid person." });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Choose a valid person.",
+        });
       }
 
       const [employment] = await ctx.db
@@ -246,7 +265,10 @@ export const employmentsRouter = createTRPCRouter({
         .where(eq(employments.id, input.id))
         .returning();
       if (!employment) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Employment not found.",
+        });
       }
       return {
         ...employment,
@@ -254,29 +276,34 @@ export const employmentsRouter = createTRPCRouter({
       };
     }),
 
-  updatePaySettings: publicProcedure.input(paySettingsInput).mutation(async ({ ctx, input }) => {
-    const settings = normalizeDeductionSettings(
-      input.deductionSettings as DeductionSettings,
-    );
+  updatePaySettings: publicProcedure
+    .input(paySettingsInput)
+    .mutation(async ({ ctx, input }) => {
+      const settings = normalizeDeductionSettings(
+        input.deductionSettings as DeductionSettings,
+      );
 
-    const [employment] = await ctx.db
-      .update(employments)
-      .set({
-        payFrequency: input.payFrequency,
-        biweeklyAnchorDate: input.biweeklyAnchorDate ?? null,
-        deductionSettings: serializeDeductionSettings(settings),
-        updatedAt: now(),
-      })
-      .where(eq(employments.id, input.employmentId))
-      .returning();
-    if (!employment) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
-    }
-    return {
-      ...employment,
-      deductionSettings: parseDeductionSettings(employment.deductionSettings),
-    };
-  }),
+      const [employment] = await ctx.db
+        .update(employments)
+        .set({
+          payFrequency: input.payFrequency,
+          biweeklyAnchorDate: input.biweeklyAnchorDate ?? null,
+          deductionSettings: serializeDeductionSettings(settings),
+          updatedAt: now(),
+        })
+        .where(eq(employments.id, input.employmentId))
+        .returning();
+      if (!employment) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Employment not found.",
+        });
+      }
+      return {
+        ...employment,
+        deductionSettings: parseDeductionSettings(employment.deductionSettings),
+      };
+    }),
 
   delete: publicProcedure.input(idInput).mutation(async ({ ctx, input }) => {
     const [employment] = await ctx.db
@@ -284,7 +311,10 @@ export const employmentsRouter = createTRPCRouter({
       .where(eq(employments.id, input.id))
       .returning({ id: employments.id });
     if (!employment) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "Employment not found." });
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Employment not found.",
+      });
     }
     return employment;
   }),

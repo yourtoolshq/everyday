@@ -9,40 +9,50 @@ import { api } from "~/trpc/react";
 export function EmploymentRecordsReviewWorkspace() {
   const review = api.employmentRecords.listForReview.useQuery();
   const missing = review.data?.missing ?? [];
-  const missingOfferLetters = missing.filter((item) => item.kind === "offer_letter");
-  const missingCompensationDocs = missing.filter((item) => item.kind === "compensation_change");
+  const missingOfferLetters = missing.filter(
+    (item) => item.kind === "offer_letter",
+  );
+  const missingCompensationDocs = missing.filter(
+    (item) => item.kind === "compensation_change",
+  );
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Missing offer letters
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{missingOfferLetters.length}</p>
+            <p className="text-3xl font-semibold">
+              {missingOfferLetters.length}
+            </p>
           </CardContent>
         </Card>
         <Card className="shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Missing compensation documents
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{missingCompensationDocs.length}</p>
+            <p className="text-3xl font-semibold">
+              {missingCompensationDocs.length}
+            </p>
           </CardContent>
         </Card>
         <Card className="shadow-none">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+            <CardTitle className="text-muted-foreground text-sm font-medium">
               Employments tracked
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold">{review.data?.employmentCount ?? 0}</p>
+            <p className="text-3xl font-semibold">
+              {review.data?.employmentCount ?? 0}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -53,9 +63,11 @@ export function EmploymentRecordsReviewWorkspace() {
         </CardHeader>
         <CardContent>
           {review.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading review items…</p>
+            <p className="text-muted-foreground text-sm">
+              Loading review items…
+            </p>
           ) : missing.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               No missing employment records across your employments.
             </p>
           ) : (
@@ -68,18 +80,20 @@ export function EmploymentRecordsReviewWorkspace() {
                   <div className="min-w-0 space-y-1">
                     <p className="text-sm font-medium">
                       {item.employerName}
-                      <span className="font-normal text-muted-foreground">
+                      <span className="text-muted-foreground font-normal">
                         {" "}
                         · {item.personName}
                       </span>
                     </p>
-                    <p className="text-sm text-muted-foreground">{item.label}</p>
+                    <p className="text-muted-foreground text-sm">
+                      {item.label}
+                    </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <Badge variant="destructive">Missing</Badge>
                     <Link
                       href={`/employments/${item.employmentId}`}
-                      className="text-sm font-medium text-primary hover:underline"
+                      className="text-primary text-sm font-medium hover:underline"
                     >
                       View
                     </Link>

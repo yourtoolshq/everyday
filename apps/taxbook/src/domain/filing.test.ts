@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  adjustmentInput,
   assessmentKindForFiling,
   buildTaxYearLifecycleWarnings,
   originalReturnInput,
   originalReturnUpdateInput,
-  adjustmentInput,
 } from "./filing";
 
 describe("filing domain", () => {

@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   applyPaychequeIncomeTax,
+  calculateEmploymentProjection,
   calculateIncomeTaxCents,
   calculateNetPay,
-  calculateEmploymentProjection,
   countRemainingPaycheques,
   deductionFields,
   normalizeDeductionFieldOrder,
@@ -102,8 +102,12 @@ describe("deduction field order", () => {
     expect(normalizeDeductionFieldOrder(["eiCents", "cppCents"])).toHaveLength(
       deductionFields.length,
     );
-    expect(normalizeDeductionFieldOrder(["eiCents", "cppCents"])[0]).toBe("eiCents");
-    expect(normalizeDeductionFieldOrder(["eiCents", "cppCents"])[1]).toBe("cppCents");
+    expect(normalizeDeductionFieldOrder(["eiCents", "cppCents"])[0]).toBe(
+      "eiCents",
+    );
+    expect(normalizeDeductionFieldOrder(["eiCents", "cppCents"])[1]).toBe(
+      "cppCents",
+    );
     expect(normalizeDeductionFieldOrder(null)).toEqual(
       deductionFields.map((field) => field.amountField),
     );

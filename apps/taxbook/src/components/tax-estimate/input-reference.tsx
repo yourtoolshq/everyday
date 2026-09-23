@@ -1,5 +1,5 @@
-import { formatCad } from "~/domain/money";
 import type { EstimateData, EstimateMode } from "./types";
+import { formatCad } from "~/domain/money";
 
 export function InputReference({
   data,
@@ -25,9 +25,10 @@ export function InputReference({
     },
     {
       label: `${person.personName} — RRSP/FHSA/professional deductions`,
-      value: person.inputs.rrspDeductionCents
-        + person.inputs.fhsaDeductionCents
-        + person.inputs.professionalDuesCents,
+      value:
+        person.inputs.rrspDeductionCents +
+        person.inputs.fhsaDeductionCents +
+        person.inputs.professionalDuesCents,
     },
     {
       label: `${person.personName} — tax withheld`,
@@ -43,14 +44,15 @@ export function InputReference({
     },
     {
       label: `${person.personName} — tuition`,
-      value: person.inputs.currentTuitionCents
-        + person.inputs.federalTuitionCarryforwardCents
-        + person.inputs.manitobaTuitionCarryforwardCents,
+      value:
+        person.inputs.currentTuitionCents +
+        person.inputs.federalTuitionCarryforwardCents +
+        person.inputs.manitobaTuitionCarryforwardCents,
     },
   ]);
 
   return (
-    <details className="rounded-xl bg-card ring-1 ring-foreground/10">
+    <details className="bg-card ring-foreground/10 rounded-xl ring-1">
       <summary className="cursor-pointer px-4 py-4 font-medium">
         {mode === "actual" ? "Recorded" : "Projected"} input reference
       </summary>
@@ -58,7 +60,7 @@ export function InputReference({
         <div className="overflow-x-auto">
           <table className="w-full min-w-[32rem] text-sm">
             <thead>
-              <tr className="border-b text-left text-muted-foreground">
+              <tr className="text-muted-foreground border-b text-left">
                 <th className="pb-2 font-medium">Input</th>
                 <th className="pb-2 text-right font-medium">Amount</th>
               </tr>
@@ -87,8 +89,10 @@ export function InputReference({
             </tbody>
           </table>
         </div>
-        <p className="mt-4 text-sm text-muted-foreground">
-          Housing facts are inferred from mapped Tax Items · eligible rent months: {data.rentMonths.length} · eligible ownership days: {credits.homeOwnershipDays}
+        <p className="text-muted-foreground mt-4 text-sm">
+          Housing facts are inferred from mapped Tax Items · eligible rent
+          months: {data.rentMonths.length} · eligible ownership days:{" "}
+          {credits.homeOwnershipDays}
         </p>
       </div>
     </details>

@@ -1,13 +1,15 @@
 import { z } from "zod";
 
 export const scenarioInput = z.object({
-  people: z.array(z.object({
-    personId: z.number().int().positive(),
-    rrspContributionCents: z.number().int().nonnegative(),
-    rrspDeductionCents: z.number().int().nonnegative(),
-    fhsaContributionCents: z.number().int().nonnegative(),
-    fhsaDeductionCents: z.number().int().nonnegative(),
-  })),
+  people: z.array(
+    z.object({
+      personId: z.number().int().positive(),
+      rrspContributionCents: z.number().int().nonnegative(),
+      rrspDeductionCents: z.number().int().nonnegative(),
+      fhsaContributionCents: z.number().int().nonnegative(),
+      fhsaDeductionCents: z.number().int().nonnegative(),
+    }),
+  ),
 });
 
 export type ScenarioInput = z.infer<typeof scenarioInput>;

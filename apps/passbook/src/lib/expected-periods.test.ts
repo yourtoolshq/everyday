@@ -5,8 +5,8 @@ import {
   deriveAllUploadablePeriods,
   deriveExpectedPeriodsForYear,
   findUploadablePeriod,
-  suggestDefaultPeriodKey,
   statementYearRange,
+  suggestDefaultPeriodKey,
 } from "~/lib/expected-periods";
 
 const asOf = new Date("2026-09-17");
@@ -14,7 +14,10 @@ const asOf = new Date("2026-09-17");
 describe("canDeriveStatementPeriods", () => {
   it("requires an opened date when frequency is set", () => {
     expect(
-      canDeriveStatementPeriods({ openedDate: null, closedDate: null, status: "active" }, "monthly"),
+      canDeriveStatementPeriods(
+        { openedDate: null, closedDate: null, status: "active" },
+        "monthly",
+      ),
     ).toBe(false);
     expect(
       canDeriveStatementPeriods(
@@ -159,10 +162,12 @@ describe("uploadable periods", () => {
   });
 
   it("finds a specific uploadable period", () => {
-    expect(findUploadablePeriod(lifecycle, "monthly", "2025-07", asOf)?.label).toBe(
-      "July 2025",
-    );
-    expect(findUploadablePeriod(lifecycle, "monthly", "2025-05", asOf)).toBeNull();
+    expect(
+      findUploadablePeriod(lifecycle, "monthly", "2025-07", asOf)?.label,
+    ).toBe("July 2025");
+    expect(
+      findUploadablePeriod(lifecycle, "monthly", "2025-05", asOf),
+    ).toBeNull();
   });
 
   it("excludes future periods for active accounts", () => {
@@ -171,7 +176,11 @@ describe("uploadable periods", () => {
       closedDate: null,
       status: "active" as const,
     };
-    const periods = deriveAllUploadablePeriods(activeLifecycle, "monthly", asOf);
+    const periods = deriveAllUploadablePeriods(
+      activeLifecycle,
+      "monthly",
+      asOf,
+    );
 
     expect(periods.map((period) => period.key)).toEqual([
       "2026-09",
@@ -184,14 +193,21 @@ describe("uploadable periods", () => {
       "2026-02",
       "2026-01",
     ]);
-    expect(findUploadablePeriod(activeLifecycle, "monthly", "2026-10", asOf)).toBeNull();
+    expect(
+      findUploadablePeriod(activeLifecycle, "monthly", "2026-10", asOf),
+    ).toBeNull();
   });
 
   it("suggests the newest missing period first", () => {
     const periods = deriveAllUploadablePeriods(lifecycle, "monthly", asOf);
-    expect(suggestDefaultPeriodKey(periods, new Set(["2026-02", "2026-01"]))).toBe("2025-12");
-    expect(suggestDefaultPeriodKey(periods, new Set(periods.map((period) => period.key)))).toBe(
-      "2026-02",
-    );
+    expect(
+      suggestDefaultPeriodKey(periods, new Set(["2026-02", "2026-01"])),
+    ).toBe("2025-12");
+    expect(
+      suggestDefaultPeriodKey(
+        periods,
+        new Set(periods.map((period) => period.key)),
+      ),
+    ).toBe("2026-02");
   });
 });

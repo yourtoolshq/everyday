@@ -15,7 +15,8 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "pnpm exec next dev --turbopack --port 3100",
+    command:
+      "node scripts/prepare-e2e.mjs && pnpm exec next dev --turbopack --port 3100",
     url: "http://127.0.0.1:3100/api/health",
     reuseExistingServer: !process.env.CI,
     env: {

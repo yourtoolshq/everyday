@@ -4,9 +4,9 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
 import { ThemeProvider } from "~/components/theme-provider";
-import { TRPCReactProvider } from "~/trpc/react";
 import { Toaster } from "~/components/ui/sonner";
 import { TooltipProvider } from "~/components/ui/tooltip";
+import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
   title: "Tax Book",
@@ -25,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={geist.variable} suppressHydrationWarning>
       <body
-        className={`${geist.className} min-h-screen bg-background text-foreground antialiased`}
+        className={`${geist.className} bg-background text-foreground min-h-screen antialiased`}
       >
         <TRPCReactProvider>
           <ThemeProvider>

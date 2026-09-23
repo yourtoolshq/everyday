@@ -1,5 +1,12 @@
 import { sql } from "drizzle-orm";
-import { blob, check, index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  blob,
+  check,
+  index,
+  integer,
+  sqliteTable,
+  text,
+} from "drizzle-orm/sqlite-core";
 
 import { taxDocumentStatuses, taxDocumentTypes } from "~/domain/tax-document";
 import { people } from "./people";

@@ -2,9 +2,8 @@
 
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
-import { formatFileSize } from "~/lib/documents";
-import { formatDateLabel } from "~/lib/format-date";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -14,7 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import type { RouterOutputs } from "~/trpc/react";
+import { formatFileSize } from "~/lib/documents";
+import { formatDateLabel } from "~/lib/format-date";
 
 type Document = RouterOutputs["documents"]["overview"][number];
 
@@ -33,7 +33,9 @@ export function StatementDetailSheet({
   onOpenChange,
   onEdit,
 }: StatementDetailSheetProps) {
-  const { requestDelete, dialog } = useDeleteDocumentDialog(() => onOpenChange(false));
+  const { requestDelete, dialog } = useDeleteDocumentDialog(() =>
+    onOpenChange(false),
+  );
 
   return (
     <>
@@ -72,7 +74,9 @@ export function StatementDetailSheet({
               type="button"
               variant="ghost"
               className="text-destructive hover:text-destructive"
-              onClick={() => requestDelete({ id: document.id, title: document.title })}
+              onClick={() =>
+                requestDelete({ id: document.id, title: document.title })
+              }
             >
               <Trash2 />
               Delete

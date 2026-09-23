@@ -94,8 +94,12 @@ describe("compensation", () => {
     expect(firstSalary?.delta).toBeNull();
     expect(secondSalary?.delta?.amountChangeCents).toBe(5_000_00);
     expect(secondSalary?.delta?.percentChange).toBeCloseTo(5.555, 2);
-    expect(getCompensationDeltaDisplay(secondSalary!)?.label).toContain("5,000");
-    expect(getCompensationDeltaDisplay(secondSalary!)?.direction).toBe("increase");
+    expect(getCompensationDeltaDisplay(secondSalary!)?.label).toContain(
+      "5,000",
+    );
+    expect(getCompensationDeltaDisplay(secondSalary!)?.direction).toBe(
+      "increase",
+    );
   });
 
   it("formats salary, hourly, and commission rates", () => {

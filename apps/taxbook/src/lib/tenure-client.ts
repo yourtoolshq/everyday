@@ -44,7 +44,9 @@ function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.replace(/\/+$/, "");
 }
 
-export async function fetchTenureHealth(baseUrl: string): Promise<{ ok: boolean; error?: string }> {
+export async function fetchTenureHealth(
+  baseUrl: string,
+): Promise<{ ok: boolean; error?: string }> {
   try {
     const response = await fetch(`${normalizeBaseUrl(baseUrl)}/api/health`, {
       cache: "no-store",
@@ -63,13 +65,18 @@ export async function fetchTenureHealth(baseUrl: string): Promise<{ ok: boolean;
 }
 
 export async function fetchTenureEmployments(baseUrl: string) {
-  const response = await fetch(`${normalizeBaseUrl(baseUrl)}/api/integration/employments`, {
-    cache: "no-store",
-  });
+  const response = await fetch(
+    `${normalizeBaseUrl(baseUrl)}/api/integration/employments`,
+    {
+      cache: "no-store",
+    },
+  );
   if (!response.ok) {
     throw new Error(`Tenure responded with ${response.status}.`);
   }
-  const body = (await response.json()) as { items: TenureIntegrationEmployment[] };
+  const body = (await response.json()) as {
+    items: TenureIntegrationEmployment[];
+  };
   return body.items;
 }
 
@@ -87,6 +94,8 @@ export async function fetchTenurePaychecks(
   if (!response.ok) {
     throw new Error(`Tenure responded with ${response.status}.`);
   }
-  const body = (await response.json()) as { items: TenureIntegrationPaycheck[] };
+  const body = (await response.json()) as {
+    items: TenureIntegrationPaycheck[];
+  };
   return body.items;
 }

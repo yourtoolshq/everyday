@@ -3,8 +3,13 @@ import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { documentMetadataSchema } from "~/lib/documents";
-import { compensationChanges, discussions, documents, paychecks } from "~/server/db/schema";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import {
+  compensationChanges,
+  discussions,
+  documents,
+  paychecks,
+} from "~/server/db/schema";
 import {
   discardStagedDocuments,
   restoreStagedDocuments,
@@ -31,24 +36,29 @@ const publicDocumentFields = {
 };
 
 export const documentsRouter = createTRPCRouter({
-  listByEmployment: publicProcedure.input(employmentFilter).query(async ({ ctx, input }) => {
-    return ctx.db
-      .select({
-        ...publicDocumentFields,
-        discussionTitle: discussions.title,
-      })
-      .from(documents)
-      .leftJoin(discussions, eq(documents.discussionId, discussions.id))
-      .where(eq(documents.employmentId, input.employmentId))
-      .orderBy(desc(documents.documentDate), desc(documents.createdAt));
-  }),
+  listByEmployment: publicProcedure
+    .input(employmentFilter)
+    .query(async ({ ctx, input }) => {
+      return ctx.db
+        .select({
+          ...publicDocumentFields,
+          discussionTitle: discussions.title,
+        })
+        .from(documents)
+        .leftJoin(discussions, eq(documents.discussionId, discussions.id))
+        .where(eq(documents.employmentId, input.employmentId))
+        .orderBy(desc(documents.documentDate), desc(documents.createdAt));
+    }),
 
   update: publicProcedure
     .input(idInput.and(documentMetadataSchema))
     .mutation(async ({ ctx, input }) => {
       if (input.discussionId) {
         const [discussion] = await ctx.db
-          .select({ id: discussions.id, employmentId: discussions.employmentId })
+          .select({
+            id: discussions.id,
+            employmentId: discussions.employmentId,
+          })
           .from(discussions)
           .where(eq(discussions.id, input.discussionId));
         const [document] = await ctx.db
@@ -79,7 +89,11 @@ export const documentsRouter = createTRPCRouter({
         })
         .where(eq(documents.id, input.id))
         .returning(publicDocumentFields);
-      if (!updated) throw new TRPCError({ code: "NOT_FOUND", message: "Document not found." });
+      if (!updated)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Document not found.",
+        });
       return updated;
     }),
 
@@ -88,7 +102,11 @@ export const documentsRouter = createTRPCRouter({
       .select({ id: documents.id, storageKey: documents.storageKey })
       .from(documents)
       .where(eq(documents.id, input.id));
-    if (!document) throw new TRPCError({ code: "NOT_FOUND", message: "Document not found." });
+    if (!document)
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Document not found.",
+      });
 
     const staged = await stageDocumentsForDeletion([document.storageKey]);
     try {

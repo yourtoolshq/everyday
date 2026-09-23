@@ -1,9 +1,12 @@
 "use client";
 
-import { Plus, Settings2, Trash2, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Plus, Settings2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
+import type { PayFrequency } from "~/lib/pay-frequency";
+import type { DeductionSettings } from "~/lib/paycheck-deductions";
+import type { RouterOutputs } from "~/trpc/react";
 import { EmploymentPayPeriods } from "~/components/paychecks/employment-pay-periods";
 import { EmploymentPaySettingsSheet } from "~/components/paychecks/employment-pay-settings-sheet";
 import { PayStubUploadSheet } from "~/components/paychecks/pay-stub-upload-sheet";
@@ -24,9 +27,8 @@ import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { formatDateLabel } from "~/lib/documents";
 import { formatCad } from "~/lib/money";
-import { payFrequencyLabels, type PayFrequency } from "~/lib/pay-frequency";
-import type { DeductionSettings } from "~/lib/paycheck-deductions";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { payFrequencyLabels } from "~/lib/pay-frequency";
+import { api } from "~/trpc/react";
 
 type Paycheck = RouterOutputs["paychecks"]["listByEmployment"][number];
 
@@ -76,7 +78,9 @@ export function EmploymentPaychecksPanel({
 
   const employmentMissing = useMemo(
     () =>
-      (review.data?.missing ?? []).filter((item) => item.employmentId === employmentId).length,
+      (review.data?.missing ?? []).filter(
+        (item) => item.employmentId === employmentId,
+      ).length,
     [review.data?.missing, employmentId],
   );
 
@@ -87,7 +91,9 @@ export function EmploymentPaychecksPanel({
         utils.paychecks.periodCompleteness.invalidate({ employmentId }),
         utils.paychecks.listForReview.invalidate(),
         utils.overview.paySummary.invalidate(),
-        utils.employmentRecords.paySummaryByEmployment.invalidate({ employmentId }),
+        utils.employmentRecords.paySummaryByEmployment.invalidate({
+          employmentId,
+        }),
       ]);
       toast.success("Paycheck deleted.");
       setDeleteTarget(null);
@@ -117,17 +123,27 @@ export function EmploymentPaychecksPanel({
       <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 pb-2">
         <div className="space-y-1">
           <CardTitle className="text-base">Paychecks</CardTitle>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             {payFrequencyLabels[payFrequency]}
-            {employmentMissing > 0 ? ` · ${employmentMissing} item(s) need attention` : ""}
+            {employmentMissing > 0
+              ? ` · ${employmentMissing} item(s) need attention`
+              : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => setSettingsOpen(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setSettingsOpen(true)}
+          >
             <Settings2 />
             Pay settings
           </Button>
-          <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setImportOpen(true)}
+          >
             <Upload />
             Import CSV
           </Button>
@@ -147,17 +163,21 @@ export function EmploymentPaychecksPanel({
           paychecks={sortedPaychecks}
           onAddPaycheck={(periodKey) => openCreate(periodKey)}
           onEditPaycheck={(paycheckId) => {
-            const paycheck = sortedPaychecks.find((item) => item.id === paycheckId);
+            const paycheck = sortedPaychecks.find(
+              (item) => item.id === paycheckId,
+            );
             if (paycheck) openEdit(paycheck);
           }}
           onAttachStub={(paycheckId) => {
-            const paycheck = sortedPaychecks.find((item) => item.id === paycheckId);
+            const paycheck = sortedPaychecks.find(
+              (item) => item.id === paycheckId,
+            );
             if (paycheck) openStubUpload(paycheck);
           }}
         />
 
         {sortedPaychecks.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             No paychecks yet. Add the first one to start building pay history.
           </p>
         ) : (
@@ -178,16 +198,22 @@ export function EmploymentPaychecksPanel({
                       <Badge variant="secondary">Stub attached</Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Period {formatDateLabel(paycheck.periodStartDate) ?? paycheck.periodStartDate}
+                  <p className="text-muted-foreground text-xs">
+                    Period{" "}
+                    {formatDateLabel(paycheck.periodStartDate) ??
+                      paycheck.periodStartDate}
                     {" – "}
-                    {formatDateLabel(paycheck.periodEndDate) ?? paycheck.periodEndDate}
+                    {formatDateLabel(paycheck.periodEndDate) ??
+                      paycheck.periodEndDate}
                   </p>
                   <p className="text-sm">
-                    Gross {formatCad(paycheck.grossPayCents)} · Net {formatCad(paycheck.netPayCents)}
+                    Gross {formatCad(paycheck.grossPayCents)} · Net{" "}
+                    {formatCad(paycheck.netPayCents)}
                   </p>
                   {paycheck.documentTitle ? (
-                    <p className="text-xs text-muted-foreground">{paycheck.documentTitle}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {paycheck.documentTitle}
+                    </p>
                   ) : null}
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-1">
@@ -201,12 +227,19 @@ export function EmploymentPaychecksPanel({
                     </Button>
                   ) : (
                     <Button size="sm" variant="outline" asChild>
-                      <a href={`/api/documents/${paycheck.documentId}/file`} target="_blank">
+                      <a
+                        href={`/api/documents/${paycheck.documentId}/file`}
+                        target="_blank"
+                      >
                         View stub
                       </a>
                     </Button>
                   )}
-                  <Button size="sm" variant="ghost" onClick={() => openEdit(paycheck)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => openEdit(paycheck)}
+                  >
                     Edit
                   </Button>
                   <Button
@@ -265,19 +298,24 @@ export function EmploymentPaychecksPanel({
         onOpenChange={setImportOpen}
       />
 
-      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={() => setDeleteTarget(null)}>
+      <AlertDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={() => setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete paycheck?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes the paycheck entry. Any attached pay stub document will remain in
-              documents unless you delete it separately.
+              This removes the paycheck entry. Any attached pay stub document
+              will remain in documents unless you delete it separately.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteTarget && deletePaycheck.mutate({ id: deleteTarget.id })}
+              onClick={() =>
+                deleteTarget && deletePaycheck.mutate({ id: deleteTarget.id })
+              }
             >
               Delete
             </AlertDialogAction>

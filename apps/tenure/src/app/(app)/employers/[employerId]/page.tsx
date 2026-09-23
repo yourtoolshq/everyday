@@ -9,7 +9,9 @@ type EmployerDetailPageProps = {
   params: Promise<{ employerId: string }>;
 };
 
-export default async function EmployerDetailPage({ params }: EmployerDetailPageProps) {
+export default async function EmployerDetailPage({
+  params,
+}: EmployerDetailPageProps) {
   const { employerId } = await params;
 
   try {

@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
+import type { FilingStatus, ReturnCopyStatus } from "~/domain/filing";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -28,11 +31,9 @@ import {
   MAX_FILING_ATTACHMENT_BYTES,
   returnCopyStatuses,
   returnCopyStatusLabels,
-  type FilingStatus,
-  type ReturnCopyStatus,
 } from "~/domain/filing";
 import { signedDollarsToCents } from "~/domain/money";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 type Person = RouterOutputs["settings"]["get"]["people"][number];
 type Filing = RouterOutputs["filing"]["timeline"]["filings"][number];
@@ -79,13 +80,19 @@ export function AdjustmentSheet({
     String(filing?.personId ?? defaultPersonId ?? people[0]?.id ?? ""),
   );
   const [reason, setReason] = useState(filing?.reason ?? "");
-  const [submissionDate, setSubmissionDate] = useState(filing?.submissionDate ?? "");
-  const [changeDirection, setChangeDirection] = useState(initialChange.direction);
+  const [submissionDate, setSubmissionDate] = useState(
+    filing?.submissionDate ?? "",
+  );
+  const [changeDirection, setChangeDirection] = useState(
+    initialChange.direction,
+  );
   const [changeAmount, setChangeAmount] = useState(initialChange.amount);
   const [returnCopyStatus, setReturnCopyStatus] = useState<ReturnCopyStatus>(
     filing?.returnCopyStatus ?? "unavailable",
   );
-  const [status, setStatus] = useState<FilingStatus>(filing?.status ?? "preparing");
+  const [status, setStatus] = useState<FilingStatus>(
+    filing?.status ?? "preparing",
+  );
   const [notes, setNotes] = useState(filing?.notes ?? "");
   const [selectedTaxItemIds, setSelectedTaxItemIds] = useState<number[]>(
     filing?.affectedTaxItems.map((item) => item.id) ?? [],
@@ -183,7 +190,9 @@ export function AdjustmentSheet({
       await onSaved();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Unable to save the adjustment.",
+        error instanceof Error
+          ? error.message
+          : "Unable to save the adjustment.",
       );
     } finally {
       setPending(false);
@@ -201,9 +210,12 @@ export function AdjustmentSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <form className="flex min-h-full flex-col" onSubmit={save}>
           <SheetHeader>
-            <SheetTitle>{filing ? "Edit adjustment" : "Add adjustment"}</SheetTitle>
+            <SheetTitle>
+              {filing ? "Edit adjustment" : "Add adjustment"}
+            </SheetTitle>
             <SheetDescription>
-              Record a correction to a previously filed return and the expected change to the tax result.
+              Record a correction to a previously filed return and the expected
+              change to the tax result.
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 px-4 py-6">
@@ -245,15 +257,24 @@ export function AdjustmentSheet({
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="adjustment-change-direction">Expected change</Label>
-                <Select value={changeDirection} onValueChange={setChangeDirection}>
+                <Label htmlFor="adjustment-change-direction">
+                  Expected change
+                </Label>
+                <Select
+                  value={changeDirection}
+                  onValueChange={setChangeDirection}
+                >
                   <SelectTrigger id="adjustment-change-direction">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">Unknown</SelectItem>
-                    <SelectItem value="increase_refund">Increase refund</SelectItem>
-                    <SelectItem value="decrease_refund">Reduce refund / increase owing</SelectItem>
+                    <SelectItem value="increase_refund">
+                      Increase refund
+                    </SelectItem>
+                    <SelectItem value="decrease_refund">
+                      Reduce refund / increase owing
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -272,8 +293,9 @@ export function AdjustmentSheet({
             <div className="space-y-3">
               <Label>Affected tax items</Label>
               {availableItems.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No tax items in this year yet. You can still describe the change in the reason field.
+                <p className="text-muted-foreground text-sm">
+                  No tax items in this year yet. You can still describe the
+                  change in the reason field.
                 </p>
               ) : (
                 <div className="space-y-2 rounded-lg border p-3">
@@ -297,7 +319,9 @@ export function AdjustmentSheet({
             </div>
             {!file && !filing?.attachmentFileName ? (
               <div className="space-y-2">
-                <Label htmlFor="adjustment-copy-status">Submitted adjustment</Label>
+                <Label htmlFor="adjustment-copy-status">
+                  Submitted adjustment
+                </Label>
                 <Select
                   value={returnCopyStatus}
                   onValueChange={(value) =>
@@ -338,7 +362,9 @@ export function AdjustmentSheet({
               </div>
             ) : null}
             <div className="space-y-2">
-              <Label htmlFor="adjustment-attachment">Adjustment attachment</Label>
+              <Label htmlFor="adjustment-attachment">
+                Adjustment attachment
+              </Label>
               <Input
                 id="adjustment-attachment"
                 type="file"
@@ -346,13 +372,15 @@ export function AdjustmentSheet({
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               />
               {filing?.attachmentFileName ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-2 text-sm">
                   <span>{filing.attachmentFileName}</span>
                   <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={markUnavailable}
-                      onChange={(event) => setMarkUnavailable(event.target.checked)}
+                      onChange={(event) =>
+                        setMarkUnavailable(event.target.checked)
+                      }
                     />
                     Mark unavailable
                   </label>
@@ -370,7 +398,11 @@ export function AdjustmentSheet({
             </div>
           </div>
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button disabled={pending}>{pending ? "Saving…" : "Save"}</Button>

@@ -1,22 +1,25 @@
 import { TRPCError } from "@trpc/server";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
+import type { Database } from "./helpers";
+import type {
+  AdjustmentInput,
+  AdjustmentUpdateInput,
+  AssessmentInput,
+  FilingAttachmentAction,
+  FilingAttachmentInput,
+  FilingItemValueInput,
+  FilingStatus,
+  OriginalReturnInput,
+  OriginalReturnUpdateInput,
+  ReturnCopyStatus,
+  TaxYearStatus,
+} from "~/domain/filing";
 import {
-  assessmentKindForFiling,
-  assertSubmittedCopyStatus,
   assertSubmittableCopyStatus,
+  assertSubmittedCopyStatus,
+  assessmentKindForFiling,
   buildTaxYearLifecycleWarnings,
-  type AdjustmentInput,
-  type AdjustmentUpdateInput,
-  type AssessmentInput,
-  type FilingAttachmentAction,
-  type FilingAttachmentInput,
-  type FilingItemValueInput,
-  type FilingStatus,
-  type OriginalReturnInput,
-  type OriginalReturnUpdateInput,
-  type ReturnCopyStatus,
-  type TaxYearStatus,
 } from "~/domain/filing";
 import {
   assessmentAttachments,
@@ -29,10 +32,11 @@ import {
   taxItems,
   taxYears,
 } from "~/server/db/schema";
-import type { Database } from "./helpers";
 import { requireHousehold } from "./helpers";
 
-type TransactionDatabase = Parameters<Parameters<Database["transaction"]>[0]>[0];
+type TransactionDatabase = Parameters<
+  Parameters<Database["transaction"]>[0]
+>[0];
 type QueryDatabase = Database | TransactionDatabase;
 
 async function requireTaxYear(db: QueryDatabase, taxYearId: number) {
@@ -181,9 +185,9 @@ async function syncAffectedTaxItems(
       message: "Choose tax items from this tax year.",
     });
   }
-  await db.insert(filingAffectedTaxItems).values(
-    uniqueIds.map((taxItemId) => ({ filingId, taxItemId })),
-  );
+  await db
+    .insert(filingAffectedTaxItems)
+    .values(uniqueIds.map((taxItemId) => ({ filingId, taxItemId })));
 }
 
 async function replaceFilingItemValues(
@@ -191,7 +195,9 @@ async function replaceFilingItemValues(
   filingId: number,
   values: FilingItemValueInput[] | undefined,
 ) {
-  await db.delete(filingItemValues).where(eq(filingItemValues.filingId, filingId));
+  await db
+    .delete(filingItemValues)
+    .where(eq(filingItemValues.filingId, filingId));
   if (!values?.length) return;
   await db.insert(filingItemValues).values(
     values.map((value) => ({
@@ -241,7 +247,9 @@ export async function listSnapshotCandidates(
     taxItemId: row.id,
     itemName: row.name,
     ownerLabel:
-      row.ownerKind === "household" ? "Household" : (row.personName ?? "Person"),
+      row.ownerKind === "household"
+        ? "Household"
+        : (row.personName ?? "Person"),
     taxLineReference: row.taxLineReference,
     trackedAmountCents: trackedAmountCents(row),
     amountCents: trackedAmountCents(row),
@@ -250,7 +258,9 @@ export async function listSnapshotCandidates(
 
   return {
     personItems: rows.filter((row) => row.personId === personId).map(mapRow),
-    householdItems: rows.filter((row) => row.ownerKind === "household").map(mapRow),
+    householdItems: rows
+      .filter((row) => row.ownerKind === "household")
+      .map(mapRow),
   };
 }
 
@@ -317,7 +327,10 @@ export async function listFilingTimeline(db: Database, taxYearId: number) {
             taxItemName: taxItems.name,
           })
           .from(filingAffectedTaxItems)
-          .innerJoin(taxItems, eq(filingAffectedTaxItems.taxItemId, taxItems.id))
+          .innerJoin(
+            taxItems,
+            eq(filingAffectedTaxItems.taxItemId, taxItems.id),
+          )
           .where(
             inArray(
               filingAffectedTaxItems.filingId,
@@ -325,7 +338,10 @@ export async function listFilingTimeline(db: Database, taxYearId: number) {
             ),
           );
 
-  const affectedByFiling = new Map<number, Array<{ id: number; name: string }>>();
+  const affectedByFiling = new Map<
+    number,
+    Array<{ id: number; name: string }>
+  >();
   for (const row of affectedRows) {
     const current = affectedByFiling.get(row.filingId) ?? [];
     current.push({ id: row.taxItemId, name: row.taxItemName });
@@ -583,12 +599,7 @@ export async function updateAdjustment(
       })
       .where(eq(filings.id, filingId))
       .returning();
-    await syncAffectedTaxItems(
-      tx,
-      filingId,
-      year.id,
-      input.affectedTaxItemIds,
-    );
+    await syncAffectedTaxItems(tx, filingId, year.id, input.affectedTaxItemIds);
     return updated!;
   });
 }
@@ -699,7 +710,10 @@ export async function updateAssessment(
       ),
     );
   if (!row) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Assessment not found." });
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Assessment not found.",
+    });
   }
 
   return db.transaction(async (tx) => {
@@ -742,7 +756,10 @@ export async function deleteAssessment(db: Database, assessmentId: number) {
       ),
     );
   if (!row) {
-    throw new TRPCError({ code: "NOT_FOUND", message: "Assessment not found." });
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Assessment not found.",
+    });
   }
 
   return db.transaction(async (tx) => {
@@ -770,7 +787,10 @@ export async function getFilingAttachment(db: Database, filingId: number) {
   return attachment;
 }
 
-export async function getAssessmentAttachment(db: Database, assessmentId: number) {
+export async function getAssessmentAttachment(
+  db: Database,
+  assessmentId: number,
+) {
   const household = await requireHousehold(db);
   const [row] = await db
     .select({ attachment: assessmentAttachments })

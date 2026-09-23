@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import type { ExpectedPayPeriod } from "~/lib/expected-pay-periods";
+import type { PayFrequency } from "~/lib/pay-frequency";
+import type {
+  DeductionAmountField,
+  DeductionSettings,
+} from "~/lib/paycheck-deductions";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -30,21 +38,17 @@ import {
   formatCompactPeriodRange,
   periodKeyForPaycheck,
   suggestDefaultPayPeriodKey,
-  type ExpectedPayPeriod,
 } from "~/lib/expected-pay-periods";
 import { centsToDollars, dollarsToCents, formatCad } from "~/lib/money";
-import type { PayFrequency } from "~/lib/pay-frequency";
 import { suggestPayStubTitle } from "~/lib/pay-stubs";
-import { uploadPayStub } from "~/lib/upload-pay-stub";
 import {
   calculateNetPay,
   deductionFields,
   isIncomeTaxSplit,
   orderedDeductionFields,
-  type DeductionAmountField,
-  type DeductionSettings,
 } from "~/lib/paycheck-deductions";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { uploadPayStub } from "~/lib/upload-pay-stub";
+import { api } from "~/trpc/react";
 
 type Paycheck = RouterOutputs["paychecks"]["listByEmployment"][number];
 type AmountField = "grossPayCents" | DeductionAmountField;
@@ -129,8 +133,14 @@ export function PaycheckFormSheet({
 
     const synthetic: ExpectedPayPeriod = {
       key,
-      label: formatCompactPeriodRange(paycheck.periodStartDate, paycheck.periodEndDate),
-      shortLabel: formatCompactPeriodRange(paycheck.periodStartDate, paycheck.periodEndDate),
+      label: formatCompactPeriodRange(
+        paycheck.periodStartDate,
+        paycheck.periodEndDate,
+      ),
+      shortLabel: formatCompactPeriodRange(
+        paycheck.periodStartDate,
+        paycheck.periodEndDate,
+      ),
       year: Number(paycheck.periodStartDate.slice(0, 4)),
       periodStartDate: paycheck.periodStartDate,
       periodEndDate: paycheck.periodEndDate,
@@ -138,7 +148,13 @@ export function PaycheckFormSheet({
     };
 
     return [synthetic, ...derived];
-  }, [usePeriodDropdown, lifecycle, payFrequency, biweeklyAnchorDate, paycheck]);
+  }, [
+    usePeriodDropdown,
+    lifecycle,
+    payFrequency,
+    biweeklyAnchorDate,
+    paycheck,
+  ]);
 
   const periodsByYear = useMemo(() => {
     const grouped = new Map<number, ExpectedPayPeriod[]>();
@@ -152,10 +168,10 @@ export function PaycheckFormSheet({
 
   const selectedPeriod = findPayPeriodByKey(selectablePeriods, periodKey);
   const periodStartDate = usePeriodDropdown
-    ? selectedPeriod?.periodStartDate ?? ""
+    ? (selectedPeriod?.periodStartDate ?? "")
     : manualPeriodStart;
   const periodEndDate = usePeriodDropdown
-    ? selectedPeriod?.periodEndDate ?? ""
+    ? (selectedPeriod?.periodEndDate ?? "")
     : manualPeriodEnd;
 
   useEffect(() => {
@@ -186,7 +202,9 @@ export function PaycheckFormSheet({
       return;
     }
 
-    setPeriodKey(suggestDefaultPayPeriodKey(selectablePeriods, coveredPeriodKeys) ?? "");
+    setPeriodKey(
+      suggestDefaultPayPeriodKey(selectablePeriods, coveredPeriodKeys) ?? "",
+    );
   }, [
     open,
     paycheck,
@@ -219,27 +237,33 @@ export function PaycheckFormSheet({
 
   const splitIncomeTax = isIncomeTaxSplit(deductionSettings);
   const visibleFields = useMemo(() => {
-    return orderedDeductionFields(deductionSettings.deductionFieldOrder).filter((field) => {
-      if (field.amountField === "incomeTaxCents" && splitIncomeTax) return true;
-      if (
-        (field.amountField === "federalIncomeTaxCents" ||
-          field.amountField === "manitobaIncomeTaxCents") &&
-        !deductionSettings[field.enabledField]
-      ) {
-        return false;
-      }
-      return (
-        deductionSettings[field.enabledField] ||
-        (dollarsToCents(amounts[field.amountField]) ?? 0) > 0
-      );
-    });
+    return orderedDeductionFields(deductionSettings.deductionFieldOrder).filter(
+      (field) => {
+        if (field.amountField === "incomeTaxCents" && splitIncomeTax)
+          return true;
+        if (
+          (field.amountField === "federalIncomeTaxCents" ||
+            field.amountField === "manitobaIncomeTaxCents") &&
+          !deductionSettings[field.enabledField]
+        ) {
+          return false;
+        }
+        return (
+          deductionSettings[field.enabledField] ||
+          (dollarsToCents(amounts[field.amountField]) ?? 0) > 0
+        );
+      },
+    );
   }, [amounts, deductionSettings, splitIncomeTax]);
 
   const parsedAmounts = useMemo(() => {
     const values = Object.fromEntries(
-      (["grossPayCents", ...deductionFields.map((field) => field.amountField)] as const).map(
-        (field) => [field, dollarsToCents(amounts[field])],
-      ),
+      (
+        [
+          "grossPayCents",
+          ...deductionFields.map((field) => field.amountField),
+        ] as const
+      ).map((field) => [field, dollarsToCents(amounts[field])]),
     ) as Record<AmountField, number | null>;
 
     if (
@@ -247,13 +271,16 @@ export function PaycheckFormSheet({
       values.federalIncomeTaxCents !== null &&
       values.manitobaIncomeTaxCents !== null
     ) {
-      values.incomeTaxCents = values.federalIncomeTaxCents + values.manitobaIncomeTaxCents;
+      values.incomeTaxCents =
+        values.federalIncomeTaxCents + values.manitobaIncomeTaxCents;
     }
 
     return values;
   }, [amounts, splitIncomeTax]);
 
-  const netPayCents = Object.values(parsedAmounts).some((value) => value === null)
+  const netPayCents = Object.values(parsedAmounts).some(
+    (value) => value === null,
+  )
     ? null
     : calculateNetPay(parsedAmounts as Record<AmountField, number>);
 
@@ -268,7 +295,9 @@ export function PaycheckFormSheet({
       utils.documents.listByEmployment.invalidate({ employmentId }),
       utils.overview.summary.invalidate(),
       utils.overview.paySummary.invalidate(),
-      utils.employmentRecords.paySummaryByEmployment.invalidate({ employmentId }),
+      utils.employmentRecords.paySummaryByEmployment.invalidate({
+        employmentId,
+      }),
     ]);
   }
 
@@ -291,7 +320,9 @@ export function PaycheckFormSheet({
     const invalid = (
       [
         ["grossPayCents", "Gross pay"],
-        ...deductionFields.map((field) => [field.amountField, field.label] as const),
+        ...deductionFields.map(
+          (field) => [field.amountField, field.label] as const,
+        ),
       ] as const
     ).find(([field]) => parsedAmounts[field] === null);
 
@@ -347,7 +378,9 @@ export function PaycheckFormSheet({
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save paycheck.");
+      toast.error(
+        error instanceof Error ? error.message : "Could not save paycheck.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -358,9 +391,12 @@ export function PaycheckFormSheet({
       <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-xl">
         <form className="flex min-h-full flex-col" onSubmit={submitPaycheck}>
           <SheetHeader>
-            <SheetTitle>{paycheck ? "Edit paycheck" : "Add paycheck"}</SheetTitle>
+            <SheetTitle>
+              {paycheck ? "Edit paycheck" : "Add paycheck"}
+            </SheetTitle>
             <SheetDescription>
-              Enter the amounts shown on the pay statement. Net pay is calculated for comparison.
+              Enter the amounts shown on the pay statement. Net pay is
+              calculated for comparison.
             </SheetDescription>
           </SheetHeader>
 
@@ -384,7 +420,9 @@ export function PaycheckFormSheet({
                           {periods.map((period) => (
                             <SelectItem key={period.key} value={period.key}>
                               {period.label}
-                              {coveredPeriodKeys.has(period.key) ? " · Recorded" : ""}
+                              {coveredPeriodKeys.has(period.key)
+                                ? " · Recorded"
+                                : ""}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -392,20 +430,25 @@ export function PaycheckFormSheet({
                     </SelectContent>
                   </Select>
                   {selectablePeriods.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                      Set a start date and pay frequency to choose expected pay periods.
+                    <p className="text-muted-foreground text-sm">
+                      Set a start date and pay frequency to choose expected pay
+                      periods.
                     </p>
                   ) : null}
                 </div>
               ) : (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="paycheck-period-start">Pay period start</Label>
+                    <Label htmlFor="paycheck-period-start">
+                      Pay period start
+                    </Label>
                     <Input
                       id="paycheck-period-start"
                       type="date"
                       value={manualPeriodStart}
-                      onChange={(event) => setManualPeriodStart(event.target.value)}
+                      onChange={(event) =>
+                        setManualPeriodStart(event.target.value)
+                      }
                       required
                     />
                   </div>
@@ -415,7 +458,9 @@ export function PaycheckFormSheet({
                       id="paycheck-period-end"
                       type="date"
                       value={manualPeriodEnd}
-                      onChange={(event) => setManualPeriodEnd(event.target.value)}
+                      onChange={(event) =>
+                        setManualPeriodEnd(event.target.value)
+                      }
                       required
                     />
                   </div>
@@ -440,7 +485,10 @@ export function PaycheckFormSheet({
                   id="paycheck-gross"
                   value={amounts.grossPayCents}
                   onChange={(value) =>
-                    setAmounts((current) => ({ ...current, grossPayCents: value }))
+                    setAmounts((current) => ({
+                      ...current,
+                      grossPayCents: value,
+                    }))
                   }
                   required
                 />
@@ -452,7 +500,9 @@ export function PaycheckFormSheet({
 
                 return (
                   <div key={field.amountField} className="space-y-2">
-                    <Label htmlFor={`paycheck-${field.amountField}`}>{field.label}</Label>
+                    <Label htmlFor={`paycheck-${field.amountField}`}>
+                      {field.label}
+                    </Label>
                     <DollarInput
                       id={`paycheck-${field.amountField}`}
                       value={
@@ -472,7 +522,7 @@ export function PaycheckFormSheet({
                       required={!computedIncomeTax}
                     />
                     {computedIncomeTax ? (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         Sum of federal and Manitoba tax withheld.
                       </p>
                     ) : null}
@@ -481,13 +531,16 @@ export function PaycheckFormSheet({
               })}
 
               <div className="sm:col-span-2">
-                <div className="rounded-lg border bg-muted/40 p-4">
+                <div className="bg-muted/40 rounded-lg border p-4">
                   <p className="text-sm font-medium">Calculated net pay</p>
                   <p className="mt-1 text-2xl font-semibold tabular-nums">
-                    {netPayCents === null || netPayCents < 0 ? "—" : formatCad(netPayCents)}
+                    {netPayCents === null || netPayCents < 0
+                      ? "—"
+                      : formatCad(netPayCents)}
                   </p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Compare this with the pay stub. If it does not match, check your line items.
+                  <p className="text-muted-foreground mt-2 text-xs">
+                    Compare this with the pay stub. If it does not match, check
+                    your line items.
                   </p>
                 </div>
               </div>
@@ -496,18 +549,23 @@ export function PaycheckFormSheet({
             <div className="space-y-4 rounded-lg border p-4">
               <div className="space-y-1">
                 <p className="text-sm font-medium">Pay stub</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Attach the original PDF or image now, or add it later.
                 </p>
               </div>
 
               {paycheck?.documentId && !stubFile ? (
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-muted/30 px-3 py-2 text-sm">
+                <div className="bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
                   <span className="truncate">
-                    {paycheck.documentTitle ?? paycheck.documentFilename ?? "Attached pay stub"}
+                    {paycheck.documentTitle ??
+                      paycheck.documentFilename ??
+                      "Attached pay stub"}
                   </span>
                   <Button type="button" size="sm" variant="outline" asChild>
-                    <a href={`/api/documents/${paycheck.documentId}/file`} target="_blank">
+                    <a
+                      href={`/api/documents/${paycheck.documentId}/file`}
+                      target="_blank"
+                    >
                       View
                     </a>
                   </Button>
@@ -522,7 +580,9 @@ export function PaycheckFormSheet({
                   id="paycheck-stub-file"
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
-                  onChange={(event) => setStubFile(event.target.files?.[0] ?? null)}
+                  onChange={(event) =>
+                    setStubFile(event.target.files?.[0] ?? null)
+                  }
                 />
               </div>
 
@@ -538,8 +598,9 @@ export function PaycheckFormSheet({
                     }}
                     placeholder="Pay stub"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Suggested from the pay period and employer. You can edit it before saving.
+                  <p className="text-muted-foreground text-xs">
+                    Suggested from the pay period and employer. You can edit it
+                    before saving.
                   </p>
                 </div>
               ) : null}
@@ -547,11 +608,19 @@ export function PaycheckFormSheet({
           </div>
 
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? "Saving…" : paycheck ? "Save changes" : "Add paycheck"}
+              {submitting
+                ? "Saving…"
+                : paycheck
+                  ? "Save changes"
+                  : "Add paycheck"}
             </Button>
           </SheetFooter>
         </form>
@@ -575,7 +644,9 @@ function DollarInput({
 }) {
   return (
     <div className="relative">
-      <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
+      <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
+        $
+      </span>
       <Input
         id={id}
         className="pl-7 tabular-nums"

@@ -10,14 +10,14 @@ The app is designed around one household and one tax year at a time.
 
 Its main job is to help answer questions such as:
 
-* How much income has each household member earned so far?
-* What is each person likely to earn by the end of the year?
-* Which deductions, credits, benefits, expenses, and contributions may matter?
-* Which supporting records do we need to keep ourselves?
-* Which official tax documents are still expected?
-* Are we likely to receive a refund or owe tax?
-* Are we ready to file?
-* After filing, can we confidently look back at the completed tax year?
+- How much income has each household member earned so far?
+- What is each person likely to earn by the end of the year?
+- Which deductions, credits, benefits, expenses, and contributions may matter?
+- Which supporting records do we need to keep ourselves?
+- Which official tax documents are still expected?
+- Are we likely to receive a refund or owe tax?
+- Are we ready to file?
+- After filing, can we confidently look back at the completed tax year?
 
 ## Problem
 
@@ -27,13 +27,13 @@ Some information comes from employment paycheques. Some comes from expenses and 
 
 Without a dedicated system, this information can end up spread across:
 
-* payslips
-* receipts
-* downloaded tax documents
-* spreadsheets
-* notes
-* email
-* memory
+- payslips
+- receipts
+- downloaded tax documents
+- spreadsheets
+- notes
+- email
+- memory
 
 This makes tax preparation unnecessarily dependent on finding and reconstructing information later.
 
@@ -67,16 +67,16 @@ The initial use case is a Canadian household with two people.
 
 The household may have:
 
-* regular employment income
-* variable employment income
-* multiple paycheques throughout the year
-* income tax, CPP, and EI deductions
-* self-employment or freelance income
-* RRSP and FHSA activity
-* medical expenses
-* professional expenses
-* federal and provincial credits or benefits
-* tax documents expected from employers and financial institutions
+- regular employment income
+- variable employment income
+- multiple paycheques throughout the year
+- income tax, CPP, and EI deductions
+- self-employment or freelance income
+- RRSP and FHSA activity
+- medical expenses
+- professional expenses
+- federal and provincial credits or benefits
+- tax documents expected from employers and financial institutions
 
 The app should support individual items belonging to either household member as well as items that apply to the household more broadly.
 
@@ -86,17 +86,17 @@ Employment income should be tracked from individual paycheques.
 
 Each paycheque may include values such as:
 
-* gross pay
-* income tax withheld
-* federal tax withheld
-* Manitoba tax withheld
-* CPP
-* CPP2
-* EI
-* weekly indemnity (WI)
-* long-term disability (LTD)
-* other deductions
-* net pay
+- gross pay
+- income tax withheld
+- federal tax withheld
+- Manitoba tax withheld
+- CPP
+- CPP2
+- EI
+- weekly indemnity (WI)
+- long-term disability (LTD)
+- other deductions
+- net pay
 
 Each Employment chooses which deduction fields appear during paycheque entry and
 can reorder those fields to match the pay statement. When federal or Manitoba
@@ -106,11 +106,11 @@ be compared with the amount on the pay statement.
 
 This allows the app to calculate:
 
-* actual year-to-date income
-* actual tax withheld
-* year-to-date CPP and EI
-* average pay
-* projected full-year income
+- actual year-to-date income
+- actual tax withheld
+- year-to-date CPP and EI
+- average pay
+- projected full-year income
 
 This is particularly useful when income varies from one pay period to another.
 
@@ -120,25 +120,25 @@ A Tax Item represents something that matters to the household's tax return.
 
 Examples include:
 
-* employment income
-* RRSP deduction
-* FHSA deduction
-* medical expenses
-* professional expenses
-* tax credits
-* benefits
-* business income
-* business expenses
+- employment income
+- RRSP deduction
+- FHSA deduction
+- medical expenses
+- professional expenses
+- tax credits
+- benefits
+- business income
+- business expenses
 
 Different Tax Items may eventually determine their filing value in different ways.
 
 For example:
 
-* some values may be entered manually
-* some may be calculated from paycheques
-* some may total multiple records
-* some may come from official tax documents
-* some may eventually require tax-specific calculations
+- some values may be entered manually
+- some may be calculated from paycheques
+- some may total multiple records
+- some may come from official tax documents
+- some may eventually require tax-specific calculations
 
 The first versions of the app do not need to generalize all of these behaviours.
 
@@ -158,18 +158,18 @@ Tax Documents are official documents expected for tax filing.
 
 Examples include:
 
-* T4
-* T5
-* RRSP contribution receipt
-* FHSA tax document
-* other tax slips issued by employers, financial institutions, or government agencies
+- T4
+- T5
+- RRSP contribution receipt
+- FHSA tax document
+- other tax slips issued by employers, financial institutions, or government agencies
 
 The app should track whether an expected Tax Document:
 
-* is expected
-* has been received
-* is ready to file after review
-* has been used for filing
+- is expected
+- has been received
+- is ready to file after review
+- has been used for filing
 
 This helps determine whether a tax year is ready to file.
 
@@ -179,12 +179,12 @@ The app provides a 2026 Manitoba planning estimate for the household using the i
 
 This may include:
 
-* projected annual income
-* expected deductions
-* credits
-* tax already withheld
-* estimated tax payable
-* estimated refund or amount owing
+- projected annual income
+- expected deductions
+- credits
+- tax already withheld
+- estimated tax payable
+- estimated refund or amount owing
 
 The estimate is intended for planning.
 
@@ -220,14 +220,14 @@ After a tax return is filed, the app should preserve information about the filin
 
 This may include:
 
-* filing date
-* submitted T1 return
-* expected refund or amount owing
-* actual refund or payment
-* refund or payment date
-* Notice of Assessment
-* CRA assessment result
-* relevant notes
+- filing date
+- submitted T1 return
+- expected refund or amount owing
+- actual refund or payment
+- refund or payment date
+- Notice of Assessment
+- CRA assessment result
+- relevant notes
 
 Once the filing and assessment are complete, the tax year should become a trustworthy historical snapshot.
 
@@ -237,28 +237,28 @@ The household should be able to open a previous year and understand what was fil
 
 Tax Book should help the household:
 
-* maintain an accurate picture of the current tax year
-* track income throughout the year
-* handle variable employment income
-* identify and track tax-relevant items
-* retain supporting records where necessary
-* know which official tax documents are still missing
-* estimate refund or amount owing
-* understand whether the year is ready to file
-* preserve completed tax years for future reference
+- maintain an accurate picture of the current tax year
+- track income throughout the year
+- handle variable employment income
+- identify and track tax-relevant items
+- retain supporting records where necessary
+- know which official tax documents are still missing
+- estimate refund or amount owing
+- understand whether the year is ready to file
+- preserve completed tax years for future reference
 
 ## Non-Goals
 
 Tax Book is not intended to become:
 
-* a general budgeting app
-* a banking transaction aggregator
-* a replacement for YNAB or similar personal-finance software
-* a full accounting or double-entry bookkeeping system
-* payroll software
-* a complete Canadian tax rules engine
-* tax filing software
-* a commercial tax product designed around hypothetical users
+- a general budgeting app
+- a banking transaction aggregator
+- a replacement for YNAB or similar personal-finance software
+- a full accounting or double-entry bookkeeping system
+- payroll software
+- a complete Canadian tax rules engine
+- tax filing software
+- a commercial tax product designed around hypothetical users
 
 The project should prioritize solving the household's actual tax workflow before adding generalization, automation, or features intended for broader audiences.
 

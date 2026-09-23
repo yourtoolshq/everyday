@@ -4,9 +4,9 @@ First Aid is a personal, self-hosted tool for planning a healthcare year and kee
 
 Read these before making product or domain decisions:
 
-- `PRODUCT.md`
-- `DOMAIN.md`
-- `ROADMAP.md`
+- [docs/PRODUCT.md](./docs/PRODUCT.md)
+- [docs/DOMAIN.md](./docs/DOMAIN.md)
+- [docs/ROADMAP.md](./docs/ROADMAP.md)
 
 ## Working on a roadmap phase
 

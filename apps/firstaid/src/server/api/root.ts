@@ -4,10 +4,7 @@ import { documentsRouter } from "~/server/api/routers/documents";
 import { planningRouter } from "~/server/api/routers/planning";
 import { systemRouter } from "~/server/api/routers/system";
 import { visitsRouter } from "~/server/api/routers/visits";
-import {
-  createCallerFactory,
-  createTRPCRouter,
-} from "~/server/api/trpc";
+import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 export const appRouter = createTRPCRouter({
   benefits: benefitsRouter,

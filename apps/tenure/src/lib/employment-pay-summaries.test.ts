@@ -27,7 +27,10 @@ describe("employment pay summaries", () => {
   });
 
   it("builds household lifetime and this-year summaries", () => {
-    const summary = buildHouseholdPaySummary(paychecks, new Date("2025-09-19T12:00:00"));
+    const summary = buildHouseholdPaySummary(
+      paychecks,
+      new Date("2025-09-19T12:00:00"),
+    );
     expect(summary.year).toBe(2025);
     expect(summary.lifetime.paycheckCount).toBe(3);
     expect(summary.thisYear.paycheckCount).toBe(2);

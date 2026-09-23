@@ -1,9 +1,9 @@
-import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
 
-import { listIntegrationPaychecks } from "~/server/integration";
 import { db } from "~/server/db";
 import { employments } from "~/server/db/schema";
+import { listIntegrationPaychecks } from "~/server/integration";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,10 @@ export async function GET(request: Request) {
   const updatedSince = params.get("updatedSince");
 
   if (!employmentId) {
-    return NextResponse.json({ error: "employmentId is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "employmentId is required." },
+      { status: 400 },
+    );
   }
 
   const [employment] = await db
@@ -22,7 +25,10 @@ export async function GET(request: Request) {
     .where(eq(employments.id, employmentId));
 
   if (!employment) {
-    return NextResponse.json({ error: "Employment not found." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Employment not found." },
+      { status: 404 },
+    );
   }
 
   const items = await listIntegrationPaychecks({

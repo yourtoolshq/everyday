@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 
+import type { CraReferenceCategory } from "~/domain/cra-reference";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -26,9 +29,8 @@ import {
   craReferenceCategories,
   craReferenceCategoryLabels,
   MAX_CRA_REFERENCE_ATTACHMENT_BYTES,
-  type CraReferenceCategory,
 } from "~/domain/cra-reference";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 type Person = RouterOutputs["settings"]["get"]["people"][number];
 type CraReferenceDocument =
@@ -56,7 +58,9 @@ export function CraReferenceSheet({
   const [personId, setPersonId] = useState(
     String(document?.personId ?? "none"),
   );
-  const [documentDate, setDocumentDate] = useState(document?.documentDate ?? "");
+  const [documentDate, setDocumentDate] = useState(
+    document?.documentDate ?? "",
+  );
   const [reportingPeriodLabel, setReportingPeriodLabel] = useState(
     document?.reportingPeriodLabel ?? "",
   );
@@ -102,9 +106,15 @@ export function CraReferenceSheet({
       );
       const result = (await response.json()) as { error?: string };
       if (!response.ok) {
-        throw new Error(result.error ?? "Unable to save the CRA reference document.");
+        throw new Error(
+          result.error ?? "Unable to save the CRA reference document.",
+        );
       }
-      toast.success(document ? "CRA reference document updated." : "CRA reference document added.");
+      toast.success(
+        document
+          ? "CRA reference document updated."
+          : "CRA reference document added.",
+      );
       onOpenChange(false);
       await onSaved();
     } catch (error) {
@@ -124,10 +134,13 @@ export function CraReferenceSheet({
         <form className="flex min-h-full flex-col" onSubmit={save}>
           <SheetHeader>
             <SheetTitle>
-              {document ? "Edit CRA reference document" : "Add CRA reference document"}
+              {document
+                ? "Edit CRA reference document"
+                : "Add CRA reference document"}
             </SheetTitle>
             <SheetDescription>
-              Retain GST/HST returns, Canada Carbon Rebate notices, and other CRA material for this tax year.
+              Retain GST/HST returns, Canada Carbon Rebate notices, and other
+              CRA material for this tax year.
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 px-4 py-6">
@@ -135,7 +148,9 @@ export function CraReferenceSheet({
               <Label htmlFor="cra-category">Category</Label>
               <Select
                 value={category}
-                onValueChange={(value) => setCategory(value as CraReferenceCategory)}
+                onValueChange={(value) =>
+                  setCategory(value as CraReferenceCategory)
+                }
               >
                 <SelectTrigger id="cra-category">
                   <SelectValue />
@@ -190,7 +205,9 @@ export function CraReferenceSheet({
                   id="cra-reporting-period"
                   placeholder="e.g. Jan 1 – Mar 31, 2023"
                   value={reportingPeriodLabel}
-                  onChange={(event) => setReportingPeriodLabel(event.target.value)}
+                  onChange={(event) =>
+                    setReportingPeriodLabel(event.target.value)
+                  }
                 />
               </div>
             ) : null}
@@ -203,11 +220,13 @@ export function CraReferenceSheet({
                 onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               />
               {document?.attachmentFileName ? (
-                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                <label className="text-muted-foreground flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
                     checked={removeAttachment}
-                    onChange={(event) => setRemoveAttachment(event.target.checked)}
+                    onChange={(event) =>
+                      setRemoveAttachment(event.target.checked)
+                    }
                   />
                   Remove {document.attachmentFileName}
                 </label>
@@ -224,7 +243,11 @@ export function CraReferenceSheet({
             </div>
           </div>
           <SheetFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
             <Button disabled={pending}>{pending ? "Saving…" : "Save"}</Button>

@@ -1,9 +1,15 @@
 "use client";
 
+import type { FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
+import {
+  TenureEmploymentLink,
+  TenureHomeButton,
+  TenureHomeLink,
+} from "~/components/tenure/tenure-external-link";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -22,11 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import {
-  TenureEmploymentLink,
-  TenureHomeButton,
-  TenureHomeLink,
-} from "~/components/tenure/tenure-external-link";
 import { api } from "~/trpc/react";
 
 export function TenureIntegrationSetting() {
@@ -109,8 +110,9 @@ export function TenureIntegrationSetting() {
 
   const importableCount = useMemo(
     () =>
-      employmentLinks.data?.tenureEmployments.filter((employment) => employment.canImport)
-        .length ?? 0,
+      employmentLinks.data?.tenureEmployments.filter(
+        (employment) => employment.canImport,
+      ).length ?? 0,
     [employmentLinks.data?.tenureEmployments],
   );
 
@@ -124,8 +126,8 @@ export function TenureIntegrationSetting() {
         </CardTitle>
         <CardDescription>
           Tax Book is year-based. Link employments from{" "}
-          <TenureHomeLink>Tenure</TenureHomeLink> for the active tax year, then sync
-          paycheques and employment-income tax items automatically.
+          <TenureHomeLink>Tenure</TenureHomeLink> for the active tax year, then
+          sync paycheques and employment-income tax items automatically.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -143,7 +145,11 @@ export function TenureIntegrationSetting() {
               required
             />
           </div>
-          <Button type="submit" variant="outline" disabled={updateSettings.isPending}>
+          <Button
+            type="submit"
+            variant="outline"
+            disabled={updateSettings.isPending}
+          >
             Save
           </Button>
         </form>
@@ -167,21 +173,25 @@ export function TenureIntegrationSetting() {
               : `Import from Tenure (${importableCount})`}
           </Button>
           <Button
-            disabled={syncNow.isPending || (status.data?.linkedEmploymentCount ?? 0) === 0}
+            disabled={
+              syncNow.isPending ||
+              (status.data?.linkedEmploymentCount ?? 0) === 0
+            }
             onClick={() => syncNow.mutate({ fullRefresh: true })}
           >
             {syncNow.isPending ? "Syncing…" : "Sync paycheques"}
           </Button>
         </div>
 
-        <div className="space-y-1 text-sm text-muted-foreground">
+        <div className="text-muted-foreground space-y-1 text-sm">
           <p>
             Status:{" "}
             {status.data?.connected ? "Connected" : "Unable to reach Tenure"}
           </p>
           <p>Last sync: {lastSyncLabel}</p>
           <p>
-            Linked employments this year: {status.data?.linkedEmploymentCount ?? 0}
+            Linked employments this year:{" "}
+            {status.data?.linkedEmploymentCount ?? 0}
           </p>
           {status.data?.lastSyncError ? (
             <p className="text-destructive">{status.data.lastSyncError}</p>
@@ -195,10 +205,12 @@ export function TenureIntegrationSetting() {
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-sm font-medium">Employments for this tax year</h3>
-                <p className="text-xs text-muted-foreground">
-                  Match each Tenure person to a Tax Book household member, then import
-                  employments for the active tax year.
+                <h3 className="text-sm font-medium">
+                  Employments for this tax year
+                </h3>
+                <p className="text-muted-foreground text-xs">
+                  Match each Tenure person to a Tax Book household member, then
+                  import employments for the active tax year.
                 </p>
               </div>
               <Button asChild variant="ghost" size="sm">
@@ -207,11 +219,13 @@ export function TenureIntegrationSetting() {
             </div>
 
             {employmentLinks.isLoading ? (
-              <p className="text-sm text-muted-foreground">Loading employments…</p>
+              <p className="text-muted-foreground text-sm">
+                Loading employments…
+              </p>
             ) : employmentLinks.data?.tenureEmployments.length ? (
               <div className="overflow-hidden rounded-lg border">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-muted/50 text-xs text-muted-foreground">
+                  <thead className="bg-muted/50 text-muted-foreground text-xs">
                     <tr>
                       <th className="px-3 py-2">Tenure person</th>
                       <th className="px-3 py-2">Tax Book person</th>
@@ -221,100 +235,114 @@ export function TenureIntegrationSetting() {
                     </tr>
                   </thead>
                   <tbody>
-                    {employmentLinks.data.tenureEmployments.map((employment) => (
-                      <tr key={employment.id} className="border-t align-top">
-                        <td className="px-3 py-2">{employment.personName}</td>
-                        <td className="px-3 py-2">
-                          {employment.linkedEmploymentId ? (
-                            <span className="text-muted-foreground">
-                              {householdPeople.find(
-                                (person) => person.id === employment.matchedPersonId,
-                              )?.name ?? "Linked"}
-                            </span>
-                          ) : (
-                            <Select
-                              value={
-                                employment.matchedPersonId
-                                  ? String(employment.matchedPersonId)
-                                  : "__none__"
-                              }
-                              onValueChange={(value) => {
-                                setPersonMapping.mutate({
-                                  tenurePersonId: employment.tenurePersonId,
-                                  taxbookPersonId:
-                                    value === "__none__" ? null : Number(value),
-                                });
-                              }}
-                              disabled={setPersonMapping.isPending}
-                            >
-                              <SelectTrigger
-                                className="w-full min-w-40"
-                                aria-label={`Map ${employment.personName} to a Tax Book person`}
+                    {employmentLinks.data.tenureEmployments.map(
+                      (employment) => (
+                        <tr key={employment.id} className="border-t align-top">
+                          <td className="px-3 py-2">{employment.personName}</td>
+                          <td className="px-3 py-2">
+                            {employment.linkedEmploymentId ? (
+                              <span className="text-muted-foreground">
+                                {householdPeople.find(
+                                  (person) =>
+                                    person.id === employment.matchedPersonId,
+                                )?.name ?? "Linked"}
+                              </span>
+                            ) : (
+                              <Select
+                                value={
+                                  employment.matchedPersonId
+                                    ? String(employment.matchedPersonId)
+                                    : "__none__"
+                                }
+                                onValueChange={(value) => {
+                                  setPersonMapping.mutate({
+                                    tenurePersonId: employment.tenurePersonId,
+                                    taxbookPersonId:
+                                      value === "__none__"
+                                        ? null
+                                        : Number(value),
+                                  });
+                                }}
+                                disabled={setPersonMapping.isPending}
                               >
-                                <SelectValue placeholder="Choose person" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__none__">Not mapped</SelectItem>
-                                {householdPeople.map((person) => (
-                                  <SelectItem key={person.id} value={String(person.id)}>
-                                    {person.name}
+                                <SelectTrigger
+                                  className="w-full min-w-40"
+                                  aria-label={`Map ${employment.personName} to a Tax Book person`}
+                                >
+                                  <SelectValue placeholder="Choose person" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="__none__">
+                                    Not mapped
                                   </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
-                          {!employment.linkedEmploymentId &&
-                          employment.personMatchKind === "name" ? (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              Matched by name
-                            </p>
-                          ) : null}
-                          {!employment.linkedEmploymentId &&
-                          employment.personMatchKind === "mapped" ? (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              Manually mapped
-                            </p>
-                          ) : null}
-                          {!employment.linkedEmploymentId &&
-                          !employment.matchedPersonId ? (
-                            <p className="mt-1 text-xs text-destructive">
-                              Choose the matching Tax Book person
-                            </p>
-                          ) : null}
-                        </td>
-                        <td className="px-3 py-2">{employment.employerName}</td>
-                        <td className="px-3 py-2">
-                          {employment.linkedEmploymentId ? (
-                            <Badge variant="secondary">Linked</Badge>
-                          ) : employment.canImport ? (
-                            <Badge>Ready to import</Badge>
-                          ) : (
-                            <Badge variant="outline">Needs person</Badge>
-                          )}
-                        </td>
-                        <td className="px-3 py-2">
-                          <TenureEmploymentLink
-                            employmentId={employment.id}
-                            className="text-sm text-primary underline-offset-4 hover:underline"
-                          >
-                            Open
-                          </TenureEmploymentLink>
-                        </td>
-                      </tr>
-                    ))}
+                                  {householdPeople.map((person) => (
+                                    <SelectItem
+                                      key={person.id}
+                                      value={String(person.id)}
+                                    >
+                                      {person.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                            {!employment.linkedEmploymentId &&
+                            employment.personMatchKind === "name" ? (
+                              <p className="text-muted-foreground mt-1 text-xs">
+                                Matched by name
+                              </p>
+                            ) : null}
+                            {!employment.linkedEmploymentId &&
+                            employment.personMatchKind === "mapped" ? (
+                              <p className="text-muted-foreground mt-1 text-xs">
+                                Manually mapped
+                              </p>
+                            ) : null}
+                            {!employment.linkedEmploymentId &&
+                            !employment.matchedPersonId ? (
+                              <p className="text-destructive mt-1 text-xs">
+                                Choose the matching Tax Book person
+                              </p>
+                            ) : null}
+                          </td>
+                          <td className="px-3 py-2">
+                            {employment.employerName}
+                          </td>
+                          <td className="px-3 py-2">
+                            {employment.linkedEmploymentId ? (
+                              <Badge variant="secondary">Linked</Badge>
+                            ) : employment.canImport ? (
+                              <Badge>Ready to import</Badge>
+                            ) : (
+                              <Badge variant="outline">Needs person</Badge>
+                            )}
+                          </td>
+                          <td className="px-3 py-2">
+                            <TenureEmploymentLink
+                              employmentId={employment.id}
+                              className="text-primary text-sm underline-offset-4 hover:underline"
+                            >
+                              Open
+                            </TenureEmploymentLink>
+                          </td>
+                        </tr>
+                      ),
+                    )}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 No Tenure employments overlap the active tax year.
               </p>
             )}
 
             {employmentLinks.data?.localEmployments.length ? (
               <div className="space-y-2">
-                <h4 className="text-sm font-medium">Tax Book employments this year</h4>
-                <ul className="space-y-1 text-sm text-muted-foreground">
+                <h4 className="text-sm font-medium">
+                  Tax Book employments this year
+                </h4>
+                <ul className="text-muted-foreground space-y-1 text-sm">
                   {employmentLinks.data.localEmployments.map((employment) => (
                     <li key={employment.id}>
                       {employment.tenureEmploymentId ? (
@@ -332,7 +360,9 @@ export function TenureIntegrationSetting() {
                       {employment.tenureEmploymentId ? (
                         <>
                           {" · "}
-                          <TenureEmploymentLink employmentId={employment.tenureEmploymentId}>
+                          <TenureEmploymentLink
+                            employmentId={employment.tenureEmploymentId}
+                          >
                             Tenure
                           </TenureEmploymentLink>
                         </>
@@ -342,9 +372,9 @@ export function TenureIntegrationSetting() {
                     </li>
                   ))}
                 </ul>
-                <p className="text-xs text-muted-foreground">
-                  To link an existing Tax Book employment manually, edit it from the Paycheques
-                  workspace when manual employments are in use.
+                <p className="text-muted-foreground text-xs">
+                  To link an existing Tax Book employment manually, edit it from
+                  the Paycheques workspace when manual employments are in use.
                 </p>
               </div>
             ) : null}

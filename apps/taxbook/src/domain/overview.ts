@@ -1,9 +1,5 @@
-import {
-  itemStatuses,
-  itemTypes,
-  type ItemStatus,
-  type ItemType,
-} from "./tax-item";
+import type { ItemStatus, ItemType } from "./tax-item";
+import { itemStatuses, itemTypes } from "./tax-item";
 
 export type OverviewItem = {
   id: number;

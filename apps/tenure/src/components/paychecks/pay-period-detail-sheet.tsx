@@ -1,7 +1,8 @@
 "use client";
 
-import { ExternalLink, Pencil, Paperclip, Plus } from "lucide-react";
+import { ExternalLink, Paperclip, Pencil, Plus } from "lucide-react";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -15,9 +16,9 @@ import {
 import { formatDateLabel } from "~/lib/documents";
 import { formatCad } from "~/lib/money";
 import { payStubCompletenessLabels } from "~/lib/pay-stub-completeness";
-import type { RouterOutputs } from "~/trpc/react";
 
-type PeriodRow = RouterOutputs["paychecks"]["periodCompleteness"]["periods"][number];
+type PeriodRow =
+  RouterOutputs["paychecks"]["periodCompleteness"]["periods"][number];
 type Paycheck = RouterOutputs["paychecks"]["listByEmployment"][number];
 
 type PayPeriodDetailSheetProps = {
@@ -45,7 +46,9 @@ export function PayPeriodDetailSheet({
 }: PayPeriodDetailSheetProps) {
   const periodPaychecks = period
     ? paychecks
-        .filter((paycheck) => period.paychecks.some((item) => item.id === paycheck.id))
+        .filter((paycheck) =>
+          period.paychecks.some((item) => item.id === paycheck.id),
+        )
         .sort((left, right) => right.payDate.localeCompare(left.payDate))
     : [];
 
@@ -57,8 +60,10 @@ export function PayPeriodDetailSheet({
     completeness === "waiting" ||
     completeness === "complete" ||
     completeness === "missing_stub";
-  const canMarkNotApplicable = completeness === "missing_paycheck" && Boolean(onMarkNotApplicable);
-  const canUndoNotApplicable = completeness === "not_applicable" && Boolean(onUndoNotApplicable);
+  const canMarkNotApplicable =
+    completeness === "missing_paycheck" && Boolean(onMarkNotApplicable);
+  const canUndoNotApplicable =
+    completeness === "not_applicable" && Boolean(onUndoNotApplicable);
 
   function runAction(action: () => void) {
     action();
@@ -92,16 +97,22 @@ export function PayPeriodDetailSheet({
                     <Badge variant="destructive">Missing stub</Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  Gross {formatCad(paycheck.grossPayCents)} · Net {formatCad(paycheck.netPayCents)}
+                <p className="text-muted-foreground text-sm">
+                  Gross {formatCad(paycheck.grossPayCents)} · Net{" "}
+                  {formatCad(paycheck.netPayCents)}
                 </p>
                 {paycheck.documentTitle ? (
-                  <p className="truncate text-xs text-muted-foreground">{paycheck.documentTitle}</p>
+                  <p className="text-muted-foreground truncate text-xs">
+                    {paycheck.documentTitle}
+                  </p>
                 ) : null}
                 <div className="flex flex-wrap gap-2">
                   {paycheck.documentId ? (
                     <Button type="button" size="sm" variant="outline" asChild>
-                      <a href={`/api/documents/${paycheck.documentId}/file`} target="_blank">
+                      <a
+                        href={`/api/documents/${paycheck.documentId}/file`}
+                        target="_blank"
+                      >
                         <ExternalLink />
                         View stub
                       </a>
@@ -131,7 +142,7 @@ export function PayPeriodDetailSheet({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             No paychecks recorded for this period yet.
           </p>
         )}
@@ -142,7 +153,9 @@ export function PayPeriodDetailSheet({
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => runAction(() => onMarkNotApplicable?.(period.key))}
+                onClick={() =>
+                  runAction(() => onMarkNotApplicable?.(period.key))
+                }
               >
                 Not applicable
               </Button>
@@ -151,7 +164,9 @@ export function PayPeriodDetailSheet({
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => runAction(() => onUndoNotApplicable?.(period.key))}
+                onClick={() =>
+                  runAction(() => onUndoNotApplicable?.(period.key))
+                }
               >
                 Undo not applicable
               </Button>

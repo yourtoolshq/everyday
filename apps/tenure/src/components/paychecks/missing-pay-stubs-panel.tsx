@@ -14,15 +14,18 @@ export function MissingPayStubsPanel() {
     <Card className="shadow-none">
       <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
         <CardTitle className="text-base">Pay stub review</CardTitle>
-        <Link href="/review/pay-stubs" className="text-sm font-medium text-primary hover:underline">
+        <Link
+          href="/review/pay-stubs"
+          className="text-primary text-sm font-medium hover:underline"
+        >
           View all
         </Link>
       </CardHeader>
       <CardContent>
         {review.isLoading ? (
-          <p className="text-sm text-muted-foreground">Loading…</p>
+          <p className="text-muted-foreground text-sm">Loading…</p>
         ) : missing.length === 0 ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             No missing paychecks or pay stubs right now.
           </p>
         ) : (
@@ -34,7 +37,7 @@ export function MissingPayStubsPanel() {
               >
                 <div className="min-w-0">
                   <p className="text-sm font-medium">{item.employerName}</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {item.periodLabel} · {item.personName}
                   </p>
                 </div>

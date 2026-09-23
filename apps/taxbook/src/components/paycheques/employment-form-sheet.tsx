@@ -1,9 +1,17 @@
 "use client";
 
+import type { FormEvent } from "react";
+import { useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
-import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
+import type {
+  DeductionAmountField,
+  DeductionEnabledField,
+  EmploymentStatus,
+  PayFrequency,
+} from "~/domain/employment";
+import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -30,13 +38,9 @@ import {
   orderedDeductionFields,
   payFrequencies,
   payFrequencyLabels,
-  type DeductionAmountField,
-  type DeductionEnabledField,
-  type EmploymentStatus,
-  type PayFrequency,
 } from "~/domain/employment";
 import { centsToDollars, dollarsToCents } from "~/domain/money";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 type Employment = RouterOutputs["employment"]["list"]["items"][number];
 type Person = RouterOutputs["settings"]["get"]["people"][number];
@@ -77,13 +81,14 @@ export function EmploymentFormSheet({
   );
   const [enabledDeductions, setEnabledDeductions] = useState<
     Record<DeductionEnabledField, boolean>
-  >(() =>
-    Object.fromEntries(
-      deductionFields.map((field) => [
-        field.enabledField,
-        employment?.[field.enabledField] ?? field.defaultEnabled,
-      ]),
-    ) as Record<DeductionEnabledField, boolean>,
+  >(
+    () =>
+      Object.fromEntries(
+        deductionFields.map((field) => [
+          field.enabledField,
+          employment?.[field.enabledField] ?? field.defaultEnabled,
+        ]),
+      ) as Record<DeductionEnabledField, boolean>,
   );
   const [fieldOrder, setFieldOrder] = useState<DeductionAmountField[]>(() =>
     orderedDeductionFields(employment?.deductionFieldOrder).map(
@@ -143,9 +148,12 @@ export function EmploymentFormSheet({
     toast.success(message);
     onOpenChange(false);
   };
-  const tenureEmployments = api.tenureSync.listTenureEmployments.useQuery(undefined, {
-    enabled: open && Boolean(employment),
-  });
+  const tenureEmployments = api.tenureSync.listTenureEmployments.useQuery(
+    undefined,
+    {
+      enabled: open && Boolean(employment),
+    },
+  );
   const [tenureEmploymentId, setTenureEmploymentId] = useState(
     employment?.tenureEmploymentId ?? "",
   );
@@ -156,7 +164,9 @@ export function EmploymentFormSheet({
         utils.tenureSync.status.invalidate(),
       ]);
       if (result.matchedCount > 0) {
-        toast.success(`Linked employment and matched ${result.matchedCount} existing paycheque(s).`);
+        toast.success(
+          `Linked employment and matched ${result.matchedCount} existing paycheque(s).`,
+        );
       } else {
         toast.success("Tenure employment linked.");
       }
@@ -191,7 +201,9 @@ export function EmploymentFormSheet({
       unionDuesReportedOnT4,
       deductionFieldOrder: fieldOrder,
       ...enabledDeductions,
-      incomeTaxEnabled: splitIncomeTax ? true : enabledDeductions.incomeTaxEnabled,
+      incomeTaxEnabled: splitIncomeTax
+        ? true
+        : enabledDeductions.incomeTaxEnabled,
     };
     if (employment) update.mutate({ id: employment.id, ...values });
     else create.mutate(values);
@@ -203,19 +215,26 @@ export function EmploymentFormSheet({
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <form className="flex min-h-full flex-col" onSubmit={submit}>
           <SheetHeader>
-            <SheetTitle>{employment ? "Edit employment" : "Add employment"}</SheetTitle>
+            <SheetTitle>
+              {employment ? "Edit employment" : "Add employment"}
+            </SheetTitle>
             <SheetDescription>
-              Each employment keeps its paycheques and calculated income separate.
+              Each employment keeps its paycheques and calculated income
+              separate.
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 px-4 py-6">
             <div className="space-y-2">
               <Label>Person</Label>
               <Select value={personId} onValueChange={setPersonId}>
-                <SelectTrigger aria-label="Person"><SelectValue /></SelectTrigger>
+                <SelectTrigger aria-label="Person">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {people.map((person) => (
-                    <SelectItem key={person.id} value={String(person.id)}>{person.name}</SelectItem>
+                    <SelectItem key={person.id} value={String(person.id)}>
+                      {person.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -234,22 +253,38 @@ export function EmploymentFormSheet({
             </div>
             <div className="space-y-2">
               <Label>Pay frequency</Label>
-              <Select value={payFrequency} onValueChange={(value) => setPayFrequency(value as PayFrequency)}>
-                <SelectTrigger aria-label="Pay frequency"><SelectValue /></SelectTrigger>
+              <Select
+                value={payFrequency}
+                onValueChange={(value) =>
+                  setPayFrequency(value as PayFrequency)
+                }
+              >
+                <SelectTrigger aria-label="Pay frequency">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {payFrequencies.map((frequency) => (
-                    <SelectItem key={frequency} value={frequency}>{payFrequencyLabels[frequency]}</SelectItem>
+                    <SelectItem key={frequency} value={frequency}>
+                      {payFrequencyLabels[frequency]}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
-              <Select value={status} onValueChange={(value) => setStatus(value as EmploymentStatus)}>
-                <SelectTrigger aria-label="Employment status"><SelectValue /></SelectTrigger>
+              <Select
+                value={status}
+                onValueChange={(value) => setStatus(value as EmploymentStatus)}
+              >
+                <SelectTrigger aria-label="Employment status">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {employmentStatuses.map((value) => (
-                    <SelectItem key={value} value={value}>{employmentStatusLabels[value]}</SelectItem>
+                    <SelectItem key={value} value={value}>
+                      {employmentStatusLabels[value]}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -257,7 +292,15 @@ export function EmploymentFormSheet({
             {status === "ended" ? (
               <div className="space-y-2">
                 <Label htmlFor="employment-end-date">End date</Label>
-                <Input id="employment-end-date" type="date" min={`${year}-01-01`} max={`${year}-12-31`} value={endDate} onChange={(event) => setEndDate(event.target.value)} required />
+                <Input
+                  id="employment-end-date"
+                  type="date"
+                  min={`${year}-01-01`}
+                  max={`${year}-12-31`}
+                  value={endDate}
+                  onChange={(event) => setEndDate(event.target.value)}
+                  required
+                />
               </div>
             ) : null}
             {employment ? (
@@ -287,26 +330,40 @@ export function EmploymentFormSheet({
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  Link this employment to Tenure to sync paycheques automatically.
+                <p className="text-muted-foreground text-xs">
+                  Link this employment to Tenure to sync paycheques
+                  automatically.
                 </p>
               </div>
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="typical-gross">Typical gross pay override</Label>
               <div className="relative">
-                <span className="absolute left-3 top-2.5 text-sm text-muted-foreground">$</span>
-                <Input id="typical-gross" className="pl-7 tabular-nums" inputMode="decimal" placeholder="Use average pay" value={typicalGross} onChange={(event) => setTypicalGross(event.target.value)} />
+                <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
+                  $
+                </span>
+                <Input
+                  id="typical-gross"
+                  className="pl-7 tabular-nums"
+                  inputMode="decimal"
+                  placeholder="Use average pay"
+                  value={typicalGross}
+                  onChange={(event) => setTypicalGross(event.target.value)}
+                />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Leave blank to project from the average gross pay for this employment.
+              <p className="text-muted-foreground text-xs">
+                Leave blank to project from the average gross pay for this
+                employment.
               </p>
             </div>
             <fieldset className="space-y-3">
-              <legend className="text-sm font-medium">Paycheque deductions</legend>
-              <p className="text-xs text-muted-foreground">
-                Choose the deduction fields that appear when entering a paycheque.
-                Use the arrows to match the order on the pay statement.
+              <legend className="text-sm font-medium">
+                Paycheque deductions
+              </legend>
+              <p className="text-muted-foreground text-xs">
+                Choose the deduction fields that appear when entering a
+                paycheque. Use the arrows to match the order on the pay
+                statement.
               </p>
               <div className="space-y-1 rounded-lg border p-2">
                 {orderedFields.map((field, index) => {
@@ -320,7 +377,7 @@ export function EmploymentFormSheet({
                       <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3 text-sm">
                         <input
                           type="checkbox"
-                          className="size-4 rounded border-input accent-primary disabled:cursor-not-allowed"
+                          className="border-input accent-primary size-4 rounded disabled:cursor-not-allowed"
                           checked={
                             incomeTaxLocked ||
                             enabledDeductions[field.enabledField]
@@ -362,44 +419,55 @@ export function EmploymentFormSheet({
                 })}
               </div>
               {splitIncomeTax ? (
-                <p className="text-xs text-muted-foreground">
-                  Income tax withheld is calculated as federal plus Manitoba tax.
-                  Existing paycheques keep their current total until you edit them
-                  and enter the split amounts.
+                <p className="text-muted-foreground text-xs">
+                  Income tax withheld is calculated as federal plus Manitoba
+                  tax. Existing paycheques keep their current total until you
+                  edit them and enter the split amounts.
                 </p>
               ) : null}
             </fieldset>
             <fieldset className="space-y-3">
               <legend className="text-sm font-medium">T4 reporting</legend>
-              <p className="text-xs text-muted-foreground">
-                When the employer reports these amounts on the T4, paycheque totals are linked to the matching Tax Items.
+              <p className="text-muted-foreground text-xs">
+                When the employer reports these amounts on the T4, paycheque
+                totals are linked to the matching Tax Items.
               </p>
               <div className="space-y-3 rounded-lg border p-4">
                 <label className="flex cursor-pointer items-start gap-3 text-sm">
                   <input
                     type="checkbox"
-                    className="mt-0.5 size-4 rounded border-input accent-primary"
+                    className="border-input accent-primary mt-0.5 size-4 rounded"
                     checked={phspReportedOnT4}
-                    onChange={(event) => setPhspReportedOnT4(event.target.checked)}
+                    onChange={(event) =>
+                      setPhspReportedOnT4(event.target.checked)
+                    }
                   />
                   <span>
-                    <span className="font-medium">Employer reports PHSP premiums on T4 (code 85)</span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
-                      Extended health and travel medical deductions feed the household medical-expense Tax Item.
+                    <span className="font-medium">
+                      Employer reports PHSP premiums on T4 (code 85)
+                    </span>
+                    <span className="text-muted-foreground mt-0.5 block text-xs">
+                      Extended health and travel medical deductions feed the
+                      household medical-expense Tax Item.
                     </span>
                   </span>
                 </label>
                 <label className="flex cursor-pointer items-start gap-3 text-sm">
                   <input
                     type="checkbox"
-                    className="mt-0.5 size-4 rounded border-input accent-primary"
+                    className="border-input accent-primary mt-0.5 size-4 rounded"
                     checked={unionDuesReportedOnT4}
-                    onChange={(event) => setUnionDuesReportedOnT4(event.target.checked)}
+                    onChange={(event) =>
+                      setUnionDuesReportedOnT4(event.target.checked)
+                    }
                   />
                   <span>
-                    <span className="font-medium">Employer reports union dues on T4 (box 44)</span>
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
-                      Union dues feed a professional-dues Tax Item on line 21200.
+                    <span className="font-medium">
+                      Employer reports union dues on T4 (box 44)
+                    </span>
+                    <span className="text-muted-foreground mt-0.5 block text-xs">
+                      Union dues feed a professional-dues Tax Item on line
+                      21200.
                     </span>
                   </span>
                 </label>
@@ -408,12 +476,29 @@ export function EmploymentFormSheet({
           </div>
           <SheetFooter>
             {employment ? (
-              <Button type="button" variant="destructive" className="sm:mr-auto" onClick={() => onRequestDelete(employment)}>
+              <Button
+                type="button"
+                variant="destructive"
+                className="sm:mr-auto"
+                onClick={() => onRequestDelete(employment)}
+              >
                 Delete employment
               </Button>
             ) : null}
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-            <Button disabled={pending}>{pending ? "Saving…" : employment ? "Save changes" : "Add employment"}</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button disabled={pending}>
+              {pending
+                ? "Saving…"
+                : employment
+                  ? "Save changes"
+                  : "Add employment"}
+            </Button>
           </SheetFooter>
         </form>
       </SheetContent>

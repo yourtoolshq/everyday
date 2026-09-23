@@ -1,13 +1,13 @@
 import { TRPCError } from "@trpc/server";
 
 import {
-  deleteTaxDocument,
-  updateTaxDocument,
-} from "~/server/api/tax-document-values";
-import {
   parseUpdateTaxDocumentForm,
   taxDocumentErrorResponse,
 } from "~/server/api/tax-document-http";
+import {
+  deleteTaxDocument,
+  updateTaxDocument,
+} from "~/server/api/tax-document-values";
 import { db } from "~/server/db";
 
 function taxDocumentId(value: string) {
@@ -30,12 +30,7 @@ export async function PUT(
     const { input, attachmentAction } = await parseUpdateTaxDocumentForm(
       await request.formData(),
     );
-    const document = await updateTaxDocument(
-      db,
-      id,
-      input,
-      attachmentAction,
-    );
+    const document = await updateTaxDocument(db, id, input, attachmentAction);
     return Response.json({ document });
   } catch (error) {
     return taxDocumentErrorResponse(error);

@@ -2,22 +2,31 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
+import type { Database } from "../helpers";
 import {
   employmentDeductionSettings,
   employmentInput,
   employmentUpdateInput,
 } from "~/domain/employment";
+import { employments, people, taxItems } from "~/server/db/schema";
 import {
-  employments,
-  people,
-  taxItems,
-} from "~/server/db/schema";
-import { employmentProjection, reconcileEmploymentLinkedTaxItems, syncEmploymentTaxItem, deleteEmploymentTaxItems } from "../employment-values";
-import type { Database } from "../helpers";
-import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "../helpers";
+  deleteEmploymentTaxItems,
+  employmentProjection,
+  reconcileEmploymentLinkedTaxItems,
+  syncEmploymentTaxItem,
+} from "../employment-values";
+import {
+  requireActiveYear,
+  requireEditableActiveYear,
+  requireHousehold,
+} from "../helpers";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
-async function requirePerson(db: Database, householdId: number, personId: number) {
+async function requirePerson(
+  db: Database,
+  householdId: number,
+  personId: number,
+) {
   const person = await db.query.people.findFirst({
     where: (table, operators) =>
       operators.and(
@@ -130,12 +139,16 @@ export const employmentRouter = createTRPCRouter({
             ...employmentDeductionSettings(input),
           })
           .returning();
-        const linked = await reconcileEmploymentLinkedTaxItems(tx, employment!, {
-          employerName: input.employerName,
-          personId: input.personId,
-          phspReportedOnT4: input.phspReportedOnT4,
-          unionDuesReportedOnT4: input.unionDuesReportedOnT4,
-        });
+        const linked = await reconcileEmploymentLinkedTaxItems(
+          tx,
+          employment!,
+          {
+            employerName: input.employerName,
+            personId: input.personId,
+            phspReportedOnT4: input.phspReportedOnT4,
+            unionDuesReportedOnT4: input.unionDuesReportedOnT4,
+          },
+        );
         await syncEmploymentTaxItem(tx, linked.id);
         return linked;
       });
@@ -152,7 +165,9 @@ export const employmentRouter = createTRPCRouter({
         const [employment] = await tx
           .update(employments)
           .set(values)
-          .where(and(eq(employments.id, id), eq(employments.taxYearId, year.id)))
+          .where(
+            and(eq(employments.id, id), eq(employments.taxYearId, year.id)),
+          )
           .returning();
         if (!employment) {
           throw new TRPCError({
@@ -190,10 +205,7 @@ export const employmentRouter = createTRPCRouter({
         })
         .from(employments)
         .where(
-          and(
-            eq(employments.id, input.id),
-            eq(employments.taxYearId, year.id),
-          ),
+          and(eq(employments.id, input.id), eq(employments.taxYearId, year.id)),
         );
       if (!employment) {
         throw new TRPCError({

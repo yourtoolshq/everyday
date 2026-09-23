@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import {
   Check,
   ChevronLeft,
@@ -9,8 +10,10 @@ import {
   Minus,
   Paperclip,
 } from "lucide-react";
-import { useMemo, useState } from "react";
 
+import type { PayFrequency } from "~/lib/pay-frequency";
+import type { PayStubCompletenessStatus } from "~/lib/pay-stub-completeness";
+import type { RouterOutputs } from "~/trpc/react";
 import { PayPeriodDetailSheet } from "~/components/paychecks/pay-period-detail-sheet";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -21,15 +24,13 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { payYearRange } from "~/lib/expected-pay-periods";
-import { payFrequencyLabels, type PayFrequency } from "~/lib/pay-frequency";
-import {
-  payStubCompletenessLabels,
-  type PayStubCompletenessStatus,
-} from "~/lib/pay-stub-completeness";
+import { payFrequencyLabels } from "~/lib/pay-frequency";
+import { payStubCompletenessLabels } from "~/lib/pay-stub-completeness";
 import { cn } from "~/lib/utils";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
-type PeriodRow = RouterOutputs["paychecks"]["periodCompleteness"]["periods"][number];
+type PeriodRow =
+  RouterOutputs["paychecks"]["periodCompleteness"]["periods"][number];
 type ViewMode = "grid" | "list";
 
 type Paycheck = RouterOutputs["paychecks"]["listByEmployment"][number];
@@ -95,7 +96,9 @@ function gridColumns(frequency: PayFrequency): string {
   }
 }
 
-function formatYearSummary(summary: RouterOutputs["paychecks"]["periodCompleteness"]["summary"]) {
+function formatYearSummary(
+  summary: RouterOutputs["paychecks"]["periodCompleteness"]["summary"],
+) {
   const satisfiedCount = summary.completeCount + summary.notApplicableCount;
   const parts = [`${satisfiedCount}/${summary.expectedCount} satisfied`];
 
@@ -128,7 +131,8 @@ function PeriodCell({
     completeness === "missing_stub" ||
     completeness === "missing_paycheck" ||
     completeness === "waiting";
-  const canUndoNotApplicable = completeness === "not_applicable" && Boolean(onUndoNotApplicable);
+  const canUndoNotApplicable =
+    completeness === "not_applicable" && Boolean(onUndoNotApplicable);
 
   const cellClassName = cn(
     "flex aspect-[4/3] min-h-14 w-full flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
@@ -156,7 +160,9 @@ function PeriodCell({
             className={cellClassName}
             onClick={onUndoNotApplicable}
           >
-            <span className="text-xs font-medium leading-tight sm:text-sm">{period.shortLabel}</span>
+            <span className="text-xs leading-tight font-medium sm:text-sm">
+              {period.shortLabel}
+            </span>
             {icon}
           </button>
         ) : (
@@ -167,10 +173,14 @@ function PeriodCell({
             disabled={!canOpen}
             onClick={canOpen ? onOpen : undefined}
           >
-            <span className="text-xs font-medium leading-tight sm:text-sm">{period.shortLabel}</span>
+            <span className="text-xs leading-tight font-medium sm:text-sm">
+              {period.shortLabel}
+            </span>
             {icon}
             {period.paycheckCount > 1 ? (
-              <span className="text-[10px] font-medium opacity-80">{period.paycheckCount}</span>
+              <span className="text-[10px] font-medium opacity-80">
+                {period.paycheckCount}
+              </span>
             ) : null}
           </button>
         )}
@@ -180,11 +190,16 @@ function PeriodCell({
         <p>{payStubCompletenessLabels[completeness]}</p>
         {period.paycheckCount > 0 ? (
           <p className="text-background/70">
-            {period.paycheckCount} paycheck{period.paycheckCount === 1 ? "" : "s"}
+            {period.paycheckCount} paycheck
+            {period.paycheckCount === 1 ? "" : "s"}
           </p>
         ) : null}
-        {canOpen ? <p className="text-background/70">Click for details</p> : null}
-        {canUndoNotApplicable ? <p className="text-background/70">Click to undo</p> : null}
+        {canOpen ? (
+          <p className="text-background/70">Click for details</p>
+        ) : null}
+        {canUndoNotApplicable ? (
+          <p className="text-background/70">Click to undo</p>
+        ) : null}
       </TooltipContent>
     </Tooltip>
   );
@@ -202,10 +217,15 @@ function PeriodLegend() {
   ];
 
   return (
-    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+    <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
       {items.map((item) => (
         <span key={item.status} className="inline-flex items-center gap-1.5">
-          <span className={cn("size-2 rounded-full", completenessStatusStyles[item.status].dot)} />
+          <span
+            className={cn(
+              "size-2 rounded-full",
+              completenessStatusStyles[item.status].dot,
+            )}
+          />
           {item.label}
         </span>
       ))}
@@ -234,7 +254,10 @@ export function EmploymentPayPeriods({
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [selectedPeriod, setSelectedPeriod] = useState<PeriodRow | null>(null);
 
-  const completeness = api.paychecks.periodCompleteness.useQuery({ employmentId, year });
+  const completeness = api.paychecks.periodCompleteness.useQuery({
+    employmentId,
+    year,
+  });
   const markNotApplicable = api.paychecks.markPeriodNotApplicable.useMutation({
     onSuccess: () => completeness.refetch(),
   });
@@ -246,7 +269,7 @@ export function EmploymentPayPeriods({
 
   if (payFrequency === "irregular") {
     return (
-      <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+      <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
         Set a pay frequency in pay settings to track expected pay periods.
       </div>
     );
@@ -264,7 +287,9 @@ export function EmploymentPayPeriods({
   }
 
   if (completeness.isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading pay periods…</p>;
+    return (
+      <p className="text-muted-foreground text-sm">Loading pay periods…</p>
+    );
   }
 
   const summary = completeness.data?.summary;
@@ -285,7 +310,9 @@ export function EmploymentPayPeriods({
           >
             <ChevronLeft />
           </Button>
-          <span className="min-w-16 text-center text-sm font-medium">{year}</span>
+          <span className="min-w-16 text-center text-sm font-medium">
+            {year}
+          </span>
           <Button
             type="button"
             variant="outline"
@@ -300,7 +327,9 @@ export function EmploymentPayPeriods({
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">{payFrequencyLabels[payFrequency]}</Badge>
           {summary ? (
-            <span className="text-sm text-muted-foreground">{formatYearSummary(summary)}</span>
+            <span className="text-muted-foreground text-sm">
+              {formatYearSummary(summary)}
+            </span>
           ) : null}
           <div className="flex rounded-lg border p-0.5">
             <Button
@@ -327,7 +356,9 @@ export function EmploymentPayPeriods({
 
       <TooltipProvider>
         {periods.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No expected pay periods for {year}.</p>
+          <p className="text-muted-foreground text-sm">
+            No expected pay periods for {year}.
+          </p>
         ) : viewMode === "grid" ? (
           <div className={cn("grid gap-2", gridColumns(payFrequency))}>
             {periods.map((period) => (
@@ -353,7 +384,8 @@ export function EmploymentPayPeriods({
                 period.completeness === "missing_stub" ||
                 period.completeness === "missing_paycheck" ||
                 period.completeness === "waiting";
-              const canUndoNotApplicable = period.completeness === "not_applicable";
+              const canUndoNotApplicable =
+                period.completeness === "not_applicable";
 
               return (
                 <div
@@ -361,10 +393,12 @@ export function EmploymentPayPeriods({
                   className="flex items-center justify-between gap-3 px-3 py-2 text-sm"
                 >
                   <div className="flex min-w-0 items-center gap-2">
-                    <span className={cn("size-2 shrink-0 rounded-full", styles.dot)} />
+                    <span
+                      className={cn("size-2 shrink-0 rounded-full", styles.dot)}
+                    />
                     <span className="truncate font-medium">{period.label}</span>
                     {period.paycheckCount > 1 ? (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-muted-foreground text-xs">
                         {period.paycheckCount} paychecks
                       </span>
                     ) : null}
@@ -393,7 +427,7 @@ export function EmploymentPayPeriods({
                       Undo
                     </Button>
                   ) : (
-                    <span className="shrink-0 text-muted-foreground">
+                    <span className="text-muted-foreground shrink-0">
                       {payStubCompletenessLabels[period.completeness]}
                     </span>
                   )}

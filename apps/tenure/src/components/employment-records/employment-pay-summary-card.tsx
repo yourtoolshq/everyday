@@ -8,14 +8,18 @@ type EmploymentPaySummaryCardProps = {
   employmentId: string;
 };
 
-export function EmploymentPaySummaryCard({ employmentId }: EmploymentPaySummaryCardProps) {
-  const summary = api.employmentRecords.paySummaryByEmployment.useQuery({ employmentId });
+export function EmploymentPaySummaryCard({
+  employmentId,
+}: EmploymentPaySummaryCardProps) {
+  const summary = api.employmentRecords.paySummaryByEmployment.useQuery({
+    employmentId,
+  });
 
   if (summary.isLoading) {
     return (
       <Card className="shadow-none">
         <CardContent className="py-6">
-          <p className="text-sm text-muted-foreground">Loading pay totals…</p>
+          <p className="text-muted-foreground text-sm">Loading pay totals…</p>
         </CardContent>
       </Card>
     );
@@ -34,18 +38,24 @@ export function EmploymentPaySummaryCard({ employmentId }: EmploymentPaySummaryC
       </CardHeader>
       <CardContent className="grid gap-4 sm:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-muted-foreground">Lifetime</p>
-          <p className="text-lg font-semibold">{formatCad(lifetime.grossCents)} gross</p>
-          <p className="text-sm text-muted-foreground">
-            {formatCad(lifetime.netCents)} net · {lifetime.paycheckCount} paycheck
+          <p className="text-muted-foreground text-sm font-medium">Lifetime</p>
+          <p className="text-lg font-semibold">
+            {formatCad(lifetime.grossCents)} gross
+          </p>
+          <p className="text-muted-foreground text-sm">
+            {formatCad(lifetime.netCents)} net · {lifetime.paycheckCount}{" "}
+            paycheck
             {lifetime.paycheckCount === 1 ? "" : "s"}
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-muted-foreground">{year}</p>
-          <p className="text-lg font-semibold">{formatCad(thisYear.grossCents)} gross</p>
-          <p className="text-sm text-muted-foreground">
-            {formatCad(thisYear.netCents)} net · {thisYear.paycheckCount} paycheck
+          <p className="text-muted-foreground text-sm font-medium">{year}</p>
+          <p className="text-lg font-semibold">
+            {formatCad(thisYear.grossCents)} gross
+          </p>
+          <p className="text-muted-foreground text-sm">
+            {formatCad(thisYear.netCents)} net · {thisYear.paycheckCount}{" "}
+            paycheck
             {thisYear.paycheckCount === 1 ? "" : "s"}
           </p>
         </div>

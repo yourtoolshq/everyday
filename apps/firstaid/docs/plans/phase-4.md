@@ -94,8 +94,7 @@ Rules:
 - A household-scoped benefit must not reference a person.
 - Limits and opening usage cannot be negative.
 - Opening usage cannot exceed the annual limit.
-- The period is derived from the insurance plan year: January 1 through December
-  31. Separate period rows are unnecessary for this phase.
+- The period is derived from the insurance plan year: January 1 through December 31. Separate period rows are unnecessary for this phase.
 - Remaining amount is derived and is never stored directly.
 
 ### Claim
@@ -383,4 +382,3 @@ pnpm test:e2e
 - receipt parsing or automatic extraction
 - tax and accounting reports
 - predictions about whether an insurer will pay a claim
-

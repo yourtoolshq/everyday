@@ -1,5 +1,8 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Briefcase,
   Building2,
@@ -8,10 +11,7 @@ import {
   LayoutDashboard,
   Settings,
   Users,
-  type LucideIcon,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 import {
   Sidebar,
@@ -47,7 +47,11 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     { title: "Overview", href: "/", icon: LayoutDashboard },
     { title: "Employments", href: "/employments", icon: Briefcase },
     { title: "Pay review", href: "/review/pay-stubs", icon: ClipboardCheck },
-    { title: "Record review", href: "/review/employment-records", icon: FileCheck },
+    {
+      title: "Record review",
+      href: "/review/employment-records",
+      icon: FileCheck,
+    },
     { title: "Employers", href: "/employers", icon: Building2 },
     { title: "People", href: "/people", icon: Users },
   ];
@@ -56,7 +60,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader className="border-b p-3">
         <Link href="/" className="flex items-center gap-2 px-1.5 font-semibold">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+          <span className="bg-primary text-primary-foreground flex size-8 shrink-0 items-center justify-center rounded-lg shadow-sm">
             <Briefcase aria-hidden="true" className="size-5" />
           </span>
           <span className="truncate">Tenure</span>

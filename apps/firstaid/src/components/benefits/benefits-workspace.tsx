@@ -1,9 +1,12 @@
 "use client";
 
-import { Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 
+import type { BenefitCoverageScope } from "~/lib/benefits";
+import type { RouterInputs, RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,20 +40,19 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
-import {
-  benefitCoverageScopeLabels,
-  type BenefitCoverageScope,
-} from "~/lib/benefits";
+import { benefitCoverageScopeLabels } from "~/lib/benefits";
 import { formatCents, parseDollarsToCents } from "~/lib/money";
 import { cn } from "~/lib/utils";
-import { api, type RouterInputs, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 type BenefitsOverview = RouterOutputs["benefits"]["overview"];
 type BenefitRow = BenefitsOverview["plans"][number]["benefits"][number];
 type Person = BenefitsOverview["people"][number];
 
 function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Something went wrong. Please try again.";
+  return error instanceof Error
+    ? error.message
+    : "Something went wrong. Please try again.";
 }
 
 function nullableText(value: FormDataEntryValue | null) {
@@ -58,29 +60,43 @@ function nullableText(value: FormDataEntryValue | null) {
   return text || null;
 }
 
-export function BenefitsWorkspace({ initialOverview }: { initialOverview: BenefitsOverview }) {
-  const [selectedYear, setSelectedYear] = useState(initialOverview.selectedYear);
+export function BenefitsWorkspace({
+  initialOverview,
+}: {
+  initialOverview: BenefitsOverview;
+}) {
+  const [selectedYear, setSelectedYear] = useState(
+    initialOverview.selectedYear,
+  );
   const overview = api.benefits.overview.useQuery(
     { year: selectedYear },
-    { initialData: selectedYear === initialOverview.selectedYear ? initialOverview : undefined },
+    {
+      initialData:
+        selectedYear === initialOverview.selectedYear
+          ? initialOverview
+          : undefined,
+    },
   );
   const data = overview.data;
 
   if (!data) return null;
 
-  const yearOptions = data.years.length > 0
-    ? data.years
-    : [data.selectedYear];
+  const yearOptions = data.years.length > 0 ? data.years : [data.selectedYear];
 
   return (
     <main className="flex-1 px-4 py-6 md:px-8 md:py-8">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-primary">Coverage planning</p>
-            <h2 className="mt-1 text-3xl font-semibold tracking-tight">Benefits</h2>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Track the benefits worth watching during the year. Only add coverage you actively use for planning.
+            <p className="text-primary text-sm font-medium">
+              Coverage planning
+            </p>
+            <h2 className="mt-1 text-3xl font-semibold tracking-tight">
+              Benefits
+            </h2>
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm">
+              Track the benefits worth watching during the year. Only add
+              coverage you actively use for planning.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -93,7 +109,9 @@ export function BenefitsWorkspace({ initialOverview }: { initialOverview: Benefi
               </SelectTrigger>
               <SelectContent>
                 {yearOptions.map((year) => (
-                  <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+                  <SelectItem key={year} value={String(year)}>
+                    {year}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -107,10 +125,13 @@ export function BenefitsWorkspace({ initialOverview }: { initialOverview: Benefi
         {data.plans.length === 0 ? (
           <Card className="border-dashed shadow-none">
             <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <ShieldCheck className="mb-3 size-6 text-muted-foreground" />
-              <p className="font-medium">No insurance plans for {selectedYear}</p>
-              <p className="mt-1 max-w-md text-sm text-muted-foreground">
-                Add the plans and benefits you want visible while planning care for the year.
+              <ShieldCheck className="text-muted-foreground mb-3 size-6" />
+              <p className="font-medium">
+                No insurance plans for {selectedYear}
+              </p>
+              <p className="text-muted-foreground mt-1 max-w-md text-sm">
+                Add the plans and benefits you want visible while planning care
+                for the year.
               </p>
             </CardContent>
           </Card>
@@ -120,7 +141,9 @@ export function BenefitsWorkspace({ initialOverview }: { initialOverview: Benefi
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="text-xl font-semibold">{plan.name}</h3>
-                  <p className="text-sm text-muted-foreground">{plan.year} coverage</p>
+                  <p className="text-muted-foreground text-sm">
+                    {plan.year} coverage
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <BenefitDialog
@@ -141,8 +164,9 @@ export function BenefitsWorkspace({ initialOverview }: { initialOverview: Benefi
 
               {plan.benefits.length === 0 ? (
                 <Card className="border-dashed shadow-none">
-                  <CardContent className="py-8 text-center text-sm text-muted-foreground">
-                    No benefits added yet. Add the dollar pools you want to track.
+                  <CardContent className="text-muted-foreground py-8 text-center text-sm">
+                    No benefits added yet. Add the dollar pools you want to
+                    track.
                   </CardContent>
                 </Card>
               ) : (
@@ -181,9 +205,10 @@ function BenefitCard({
   const person = benefit.personId
     ? people.find((candidate) => candidate.id === benefit.personId)
     : null;
-  const usedPercent = benefit.annualLimitCents > 0
-    ? Math.min((benefit.usedCents / benefit.annualLimitCents) * 100, 100)
-    : 0;
+  const usedPercent =
+    benefit.annualLimitCents > 0
+      ? Math.min((benefit.usedCents / benefit.annualLimitCents) * 100, 100)
+      : 0;
 
   return (
     <Card className="shadow-none">
@@ -195,23 +220,31 @@ function BenefitCard({
               <Badge variant="outline">
                 {benefit.coverageScope === "household"
                   ? benefitCoverageScopeLabels.household
-                  : person?.displayName ?? benefitCoverageScopeLabels.person}
+                  : (person?.displayName ?? benefitCoverageScopeLabels.person)}
               </Badge>
             </div>
             <p className="mt-2 text-sm">
-              <span className="font-medium">{formatCents(benefit.remainingCents)} remaining</span>
-              <span className="text-muted-foreground"> · resets {benefit.resetDate}</span>
+              <span className="font-medium">
+                {formatCents(benefit.remainingCents)} remaining
+              </span>
+              <span className="text-muted-foreground">
+                {" "}
+                · resets {benefit.resetDate}
+              </span>
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {formatCents(benefit.usedCents)} used of {formatCents(benefit.annualLimitCents)}
-              {benefit.pendingCents > 0 ? ` · ${formatCents(benefit.pendingCents)} pending` : ""}
+            <p className="text-muted-foreground mt-1 text-sm">
+              {formatCents(benefit.usedCents)} used of{" "}
+              {formatCents(benefit.annualLimitCents)}
+              {benefit.pendingCents > 0
+                ? ` · ${formatCents(benefit.pendingCents)} pending`
+                : ""}
             </p>
             {benefit.overLimitCents > 0 ? (
               <p className="mt-1 text-sm text-amber-700">
                 {formatCents(benefit.overLimitCents)} over the annual limit
               </p>
             ) : null}
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+            <div className="bg-muted mt-3 h-2 overflow-hidden rounded-full">
               <div
                 className={cn(
                   "h-full rounded-full transition-all",
@@ -230,15 +263,21 @@ function BenefitCard({
             />
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive">
-                  <Trash2 />Delete
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 />
+                  Delete
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Delete “{benefit.name}”?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Benefits with claims cannot be deleted. This removes the benefit from planning only when no claims reference it.
+                    Benefits with claims cannot be deleted. This removes the
+                    benefit from planning only when no claims reference it.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -306,14 +345,22 @@ function InsurancePlanDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {plan ? (
-          <Button size="sm" variant="outline"><Pencil />Edit plan</Button>
+          <Button size="sm" variant="outline">
+            <Pencil />
+            Edit plan
+          </Button>
         ) : (
-          <Button size="sm" variant="outline"><Plus />Add plan</Button>
+          <Button size="sm" variant="outline">
+            <Plus />
+            Add plan
+          </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{plan ? "Edit insurance plan" : "Add insurance plan"}</DialogTitle>
+          <DialogTitle>
+            {plan ? "Edit insurance plan" : "Add insurance plan"}
+          </DialogTitle>
           <DialogDescription>
             Group benefits from one coverage source for a calendar year.
           </DialogDescription>
@@ -321,7 +368,13 @@ function InsurancePlanDialog({
         <form className="space-y-4" onSubmit={submit}>
           <div className="space-y-2">
             <Label htmlFor="plan-name">Plan name</Label>
-            <Input id="plan-name" name="name" defaultValue={plan?.name ?? ""} required maxLength={160} />
+            <Input
+              id="plan-name"
+              name="name"
+              defaultValue={plan?.name ?? ""}
+              required
+              maxLength={160}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="plan-year">Year</Label>
@@ -331,18 +384,38 @@ function InsurancePlanDialog({
               type="number"
               min={1900}
               max={9999}
-              defaultValue={plan?.year ?? defaultYear ?? new Date().getFullYear()}
+              defaultValue={
+                plan?.year ?? defaultYear ?? new Date().getFullYear()
+              }
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="plan-notes">Notes <span className="font-normal text-muted-foreground">(optional)</span></Label>
-            <Textarea id="plan-notes" name="notes" defaultValue={plan?.notes ?? ""} rows={3} maxLength={2000} />
+            <Label htmlFor="plan-notes">
+              Notes{" "}
+              <span className="text-muted-foreground font-normal">
+                (optional)
+              </span>
+            </Label>
+            <Textarea
+              id="plan-notes"
+              name="notes"
+              defaultValue={plan?.notes ?? ""}
+              rows={3}
+              maxLength={2000}
+            />
           </div>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error ? <p className="text-destructive text-sm">{error}</p> : null}
           <DialogFooter>
-            <Button type="submit" disabled={createPlan.isPending || updatePlan.isPending}>
-              {createPlan.isPending || updatePlan.isPending ? "Saving…" : plan ? "Save changes" : "Add plan"}
+            <Button
+              type="submit"
+              disabled={createPlan.isPending || updatePlan.isPending}
+            >
+              {createPlan.isPending || updatePlan.isPending
+                ? "Saving…"
+                : plan
+                  ? "Save changes"
+                  : "Add plan"}
             </Button>
           </DialogFooter>
         </form>
@@ -369,14 +442,20 @@ function BenefitDialog({
   const [coverageScope, setCoverageScope] = useState<BenefitCoverageScope>(
     benefit?.coverageScope ?? "person",
   );
-  const [personId, setPersonId] = useState(benefit?.personId ?? people[0]?.id ?? "");
+  const [personId, setPersonId] = useState(
+    benefit?.personId ?? people[0]?.id ?? "",
+  );
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(undefined);
     const form = new FormData(event.currentTarget);
-    const annualLimit = parseDollarsToCents(String(form.get("annualLimit") ?? ""));
-    const openingUsed = parseDollarsToCents(String(form.get("openingUsed") ?? "0"));
+    const annualLimit = parseDollarsToCents(
+      String(form.get("annualLimit") ?? ""),
+    );
+    const openingUsed = parseDollarsToCents(
+      String(form.get("openingUsed") ?? "0"),
+    );
     if (annualLimit === null) {
       setError("Enter a valid annual limit.");
       return;
@@ -397,7 +476,8 @@ function BenefitDialog({
     };
 
     try {
-      if (benefit) await updateBenefit.mutateAsync({ id: benefit.id, ...fields });
+      if (benefit)
+        await updateBenefit.mutateAsync({ id: benefit.id, ...fields });
       else await createBenefit.mutateAsync(fields);
       setOpen(false);
       onSaved();
@@ -410,27 +490,47 @@ function BenefitDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {benefit ? (
-          <Button size="sm" variant="outline"><Pencil />Edit</Button>
+          <Button size="sm" variant="outline">
+            <Pencil />
+            Edit
+          </Button>
         ) : (
-          <Button size="sm"><Plus />Add benefit</Button>
+          <Button size="sm">
+            <Plus />
+            Add benefit
+          </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{benefit ? "Edit benefit" : "Add benefit"}</DialogTitle>
           <DialogDescription>
-            Track a dollar pool for planning. Opening usage covers spending that happened outside First Aid.
+            Track a dollar pool for planning. Opening usage covers spending that
+            happened outside First Aid.
           </DialogDescription>
         </DialogHeader>
         <form className="space-y-4" onSubmit={submit}>
           <div className="space-y-2">
             <Label htmlFor="benefit-name">Benefit name</Label>
-            <Input id="benefit-name" name="name" defaultValue={benefit?.name ?? ""} required maxLength={160} />
+            <Input
+              id="benefit-name"
+              name="name"
+              defaultValue={benefit?.name ?? ""}
+              required
+              maxLength={160}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="benefit-scope">Coverage</Label>
-            <Select value={coverageScope} onValueChange={(value) => setCoverageScope(value as BenefitCoverageScope)}>
-              <SelectTrigger id="benefit-scope"><SelectValue /></SelectTrigger>
+            <Select
+              value={coverageScope}
+              onValueChange={(value) =>
+                setCoverageScope(value as BenefitCoverageScope)
+              }
+            >
+              <SelectTrigger id="benefit-scope">
+                <SelectValue />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="person">One household member</SelectItem>
                 <SelectItem value="household">Shared by household</SelectItem>
@@ -441,10 +541,14 @@ function BenefitDialog({
             <div className="space-y-2">
               <Label htmlFor="benefit-person">Household member</Label>
               <Select value={personId} onValueChange={setPersonId}>
-                <SelectTrigger id="benefit-person"><SelectValue /></SelectTrigger>
+                <SelectTrigger id="benefit-person">
+                  <SelectValue />
+                </SelectTrigger>
                 <SelectContent>
                   {people.map((person) => (
-                    <SelectItem key={person.id} value={person.id}>{person.displayName}</SelectItem>
+                    <SelectItem key={person.id} value={person.id}>
+                      {person.displayName}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -457,7 +561,11 @@ function BenefitDialog({
                 id="benefit-limit"
                 name="annualLimit"
                 inputMode="decimal"
-                defaultValue={benefit ? formatCents(benefit.annualLimitCents).replace("$", "") : ""}
+                defaultValue={
+                  benefit
+                    ? formatCents(benefit.annualLimitCents).replace("$", "")
+                    : ""
+                }
                 required
               />
             </div>
@@ -476,13 +584,31 @@ function BenefitDialog({
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="benefit-notes">Notes <span className="font-normal text-muted-foreground">(optional)</span></Label>
-            <Textarea id="benefit-notes" name="notes" defaultValue={benefit?.notes ?? ""} rows={3} maxLength={2000} />
+            <Label htmlFor="benefit-notes">
+              Notes{" "}
+              <span className="text-muted-foreground font-normal">
+                (optional)
+              </span>
+            </Label>
+            <Textarea
+              id="benefit-notes"
+              name="notes"
+              defaultValue={benefit?.notes ?? ""}
+              rows={3}
+              maxLength={2000}
+            />
           </div>
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          {error ? <p className="text-destructive text-sm">{error}</p> : null}
           <DialogFooter>
-            <Button type="submit" disabled={createBenefit.isPending || updateBenefit.isPending}>
-              {createBenefit.isPending || updateBenefit.isPending ? "Saving…" : benefit ? "Save changes" : "Add benefit"}
+            <Button
+              type="submit"
+              disabled={createBenefit.isPending || updateBenefit.isPending}
+            >
+              {createBenefit.isPending || updateBenefit.isPending
+                ? "Saving…"
+                : benefit
+                  ? "Save changes"
+                  : "Add benefit"}
             </Button>
           </DialogFooter>
         </form>
@@ -503,15 +629,21 @@ function DeletePlanButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-destructive">
-          <Trash2 />Delete plan
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 />
+          Delete plan
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete “{plan.name}”?</AlertDialogTitle>
           <AlertDialogDescription>
-            Plans with claims on their benefits cannot be deleted. Otherwise this removes the plan and its benefits.
+            Plans with claims on their benefits cannot be deleted. Otherwise
+            this removes the plan and its benefits.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

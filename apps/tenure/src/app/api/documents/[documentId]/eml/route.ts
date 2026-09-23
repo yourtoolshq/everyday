@@ -1,8 +1,8 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 
-import { parseEml } from "~/lib/eml";
 import { isEmlMimeType } from "~/lib/documents";
+import { parseEml } from "~/lib/eml";
 import { databaseReady, db } from "~/server/db";
 import { documents } from "~/server/db/schema";
 import { readDocument } from "~/server/documents/storage";

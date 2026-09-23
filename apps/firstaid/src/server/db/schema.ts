@@ -1,16 +1,24 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
+import type { BenefitCoverageScope, ClaimStatus } from "~/lib/benefits";
 import type {
   CareCadence,
   CareCategory,
   CareSource,
+  dateMeanings,
+  intervalUnits,
+  seasons,
   TimingKind,
 } from "~/lib/care-planning";
-import type { dateMeanings, intervalUnits, seasons } from "~/lib/care-planning";
-import type { VisitStatus } from "~/lib/visits";
-import type { BenefitCoverageScope, ClaimStatus } from "~/lib/benefits";
 import type { DocumentType } from "~/lib/documents";
+import type { VisitStatus } from "~/lib/visits";
 
 const id = () =>
   text("id")
@@ -113,15 +121,21 @@ export const benefits = sqliteTable(
       .notNull()
       .references(() => insurancePlans.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
-    coverageScope: text("coverage_scope").$type<BenefitCoverageScope>().notNull(),
-    personId: text("person_id").references(() => people.id, { onDelete: "restrict" }),
+    coverageScope: text("coverage_scope")
+      .$type<BenefitCoverageScope>()
+      .notNull(),
+    personId: text("person_id").references(() => people.id, {
+      onDelete: "restrict",
+    }),
     annualLimitCents: integer("annual_limit_cents").notNull(),
     openingUsedCents: integer("opening_used_cents").notNull().default(0),
     notes: text("notes"),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (table) => [index("benefits_insurance_plan_id_idx").on(table.insurancePlanId)],
+  (table) => [
+    index("benefits_insurance_plan_id_idx").on(table.insurancePlanId),
+  ],
 );
 
 export const visits = sqliteTable("visits", {
@@ -176,7 +190,9 @@ export const documents = sqliteTable("documents", {
   visitId: text("visit_id")
     .notNull()
     .references(() => visits.id, { onDelete: "cascade" }),
-  claimId: text("claim_id").references(() => claims.id, { onDelete: "set null" }),
+  claimId: text("claim_id").references(() => claims.id, {
+    onDelete: "set null",
+  }),
   type: text("type").$type<DocumentType>().notNull(),
   title: text("title").notNull(),
   originalFilename: text("original_filename").notNull(),

@@ -1,7 +1,7 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { PersonFormDrawer } from "~/components/people/person-form-drawer";
@@ -14,7 +14,8 @@ export function PeopleWorkspace() {
   const people = api.people.list.useQuery();
   const [createOpen, setCreateOpen] = useState(false);
   const [editPerson, setEditPerson] = useState<
-    (typeof people.data extends (infer Item)[] | undefined ? Item : never) | null
+    | (typeof people.data extends (infer Item)[] | undefined ? Item : never)
+    | null
   >(null);
 
   const deletePerson = api.people.delete.useMutation({
@@ -61,11 +62,15 @@ export function PeopleWorkspace() {
           </Card>
         ))}
         {people.data?.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No people yet.</p>
+          <p className="text-muted-foreground text-sm">No people yet.</p>
         ) : null}
       </div>
 
-      <PersonFormDrawer open={createOpen} onOpenChange={setCreateOpen} mode="create" />
+      <PersonFormDrawer
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        mode="create"
+      />
 
       <PersonFormDrawer
         open={Boolean(editPerson)}

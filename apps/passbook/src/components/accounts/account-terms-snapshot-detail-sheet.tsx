@@ -1,14 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { Link2, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { toast } from "sonner";
 
+import type { RouterOutputs } from "~/trpc/react";
 import { AccountTermsSnapshotSheet } from "~/components/accounts/account-terms-snapshot-sheet";
-import { accountTermsFieldLabels, listAccountTermsEntries } from "~/lib/account-terms";
-import { formatDateLabel } from "~/lib/format-date";
-import { formatTermValue } from "~/lib/format-term-value";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +27,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
-import { api, type RouterOutputs } from "~/trpc/react";
+import {
+  accountTermsFieldLabels,
+  listAccountTermsEntries,
+} from "~/lib/account-terms";
+import { formatDateLabel } from "~/lib/format-date";
+import { formatTermValue } from "~/lib/format-term-value";
+import { api } from "~/trpc/react";
 
 type Snapshot = RouterOutputs["accountTerms"]["listSnapshots"][number];
 
@@ -69,9 +73,12 @@ export function AccountTermsSnapshotDetailSheet({
         <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
           <SheetHeader>
             <div className="space-y-2">
-              {isLinked ? <Badge variant="secondary">Linked to activity</Badge> : null}
+              {isLinked ? (
+                <Badge variant="secondary">Linked to activity</Badge>
+              ) : null}
               <SheetTitle>
-                {formatDateLabel(snapshot.effectiveDate) ?? snapshot.effectiveDate}
+                {formatDateLabel(snapshot.effectiveDate) ??
+                  snapshot.effectiveDate}
               </SheetTitle>
               <SheetDescription>Terms snapshot</SheetDescription>
             </div>
@@ -79,14 +86,20 @@ export function AccountTermsSnapshotDetailSheet({
 
           <div className="space-y-6 px-4 py-6">
             {isLinked ? (
-              <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+              <div className="bg-muted/30 rounded-lg border p-4 text-sm">
                 <p className="font-medium">Recorded from an activity</p>
-                <p className="mt-1 text-muted-foreground">
-                  This snapshot is linked to &quot;{snapshot.linkedActivity?.title}&quot;. To change
-                  the terms recorded with that conversation, edit the activity instead.
+                <p className="text-muted-foreground mt-1">
+                  This snapshot is linked to &quot;
+                  {snapshot.linkedActivity?.title}&quot;. To change the terms
+                  recorded with that conversation, edit the activity instead.
                 </p>
                 {snapshot.linkedActivity ? (
-                  <Button type="button" variant="link" className="mt-2 h-auto p-0" asChild>
+                  <Button
+                    type="button"
+                    variant="link"
+                    className="mt-2 h-auto p-0"
+                    asChild
+                  >
                     <Link href={`/activity/${snapshot.linkedActivity.id}`}>
                       <Link2 />
                       View activity
@@ -99,22 +112,28 @@ export function AccountTermsSnapshotDetailSheet({
             {snapshot.notes ? (
               <div className="space-y-2">
                 <h3 className="text-sm font-medium">Notes</h3>
-                <p className="text-sm whitespace-pre-wrap text-muted-foreground">{snapshot.notes}</p>
+                <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+                  {snapshot.notes}
+                </p>
               </div>
             ) : null}
 
             <div className="space-y-3">
               <h3 className="text-sm font-medium">Terms</h3>
               {entries.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No values recorded.</p>
+                <p className="text-muted-foreground text-sm">
+                  No values recorded.
+                </p>
               ) : (
                 <dl className="grid gap-3 sm:grid-cols-2">
                   {entries.map((entry) => (
                     <div key={entry.field} className="space-y-1">
-                      <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                         {accountTermsFieldLabels[entry.field]}
                       </dt>
-                      <dd className="text-sm">{formatTermValue(entry.field, entry.value)}</dd>
+                      <dd className="text-sm">
+                        {formatTermValue(entry.field, entry.value)}
+                      </dd>
                     </div>
                   ))}
                 </dl>
@@ -132,11 +151,19 @@ export function AccountTermsSnapshotDetailSheet({
               </Button>
             ) : (
               <>
-                <Button type="button" variant="outline" onClick={() => setEditOpen(true)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditOpen(true)}
+                >
                   <Pencil />
                   Edit
                 </Button>
-                <Button type="button" variant="destructive" onClick={() => setDeleteOpen(true)}>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setDeleteOpen(true)}
+                >
                   <Trash2 />
                   Delete
                 </Button>
@@ -165,12 +192,15 @@ export function AccountTermsSnapshotDetailSheet({
             <AlertDialogTitle>Delete snapshot?</AlertDialogTitle>
             <AlertDialogDescription>
               The snapshot from{" "}
-              {formatDateLabel(snapshot.effectiveDate) ?? snapshot.effectiveDate} will be removed
-              permanently.
+              {formatDateLabel(snapshot.effectiveDate) ??
+                snapshot.effectiveDate}{" "}
+              will be removed permanently.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteSnapshot.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteSnapshot.isPending}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               disabled={deleteSnapshot.isPending}

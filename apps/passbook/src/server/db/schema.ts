@@ -1,9 +1,15 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
+import type { AccountEventType } from "~/lib/account-events";
 import type { AccountStatus } from "~/lib/account-status";
 import type { AccountType } from "~/lib/account-types";
-import type { AccountEventType } from "~/lib/account-events";
 import type { DocumentType } from "~/lib/documents";
 import type { StatementFrequency } from "~/lib/statement-frequency";
 
@@ -102,17 +108,17 @@ export const accountTermsSnapshots = sqliteTable(
   (table) => [index("account_terms_snapshots_account_idx").on(table.accountId)],
 );
 
-export const statementExpectations = sqliteTable(
-  "statement_expectations",
-  {
-    accountId: text("account_id")
-      .primaryKey()
-      .references(() => accounts.id, { onDelete: "cascade" }),
-    frequency: text("frequency").$type<StatementFrequency>().notNull().default("monthly"),
-    createdAt: createdAt(),
-    updatedAt: updatedAt(),
-  },
-);
+export const statementExpectations = sqliteTable("statement_expectations", {
+  accountId: text("account_id")
+    .primaryKey()
+    .references(() => accounts.id, { onDelete: "cascade" }),
+  frequency: text("frequency")
+    .$type<StatementFrequency>()
+    .notNull()
+    .default("monthly"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
 
 export const statementPeriodExceptions = sqliteTable(
   "statement_period_exceptions",
@@ -125,7 +131,10 @@ export const statementPeriodExceptions = sqliteTable(
     updatedAt: updatedAt(),
   },
   (table) => [
-    uniqueIndex("statement_period_exceptions_unique").on(table.accountId, table.periodKey),
+    uniqueIndex("statement_period_exceptions_unique").on(
+      table.accountId,
+      table.periodKey,
+    ),
     index("statement_period_exceptions_account_idx").on(table.accountId),
   ],
 );
@@ -158,9 +167,12 @@ export const accountEvents = sqliteTable(
     notes: text("notes"),
     startDate: text("start_date").notNull(),
     resolvedDate: text("resolved_date"),
-    termsSnapshotId: text("terms_snapshot_id").references(() => accountTermsSnapshots.id, {
-      onDelete: "set null",
-    }),
+    termsSnapshotId: text("terms_snapshot_id").references(
+      () => accountTermsSnapshots.id,
+      {
+        onDelete: "set null",
+      },
+    ),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -179,10 +191,15 @@ export const documents = sqliteTable(
     title: text("title").notNull(),
     documentDate: text("document_date"),
     notes: text("notes"),
-    eventId: text("event_id").references(() => accountEvents.id, { onDelete: "set null" }),
-    termsSnapshotId: text("terms_snapshot_id").references(() => accountTermsSnapshots.id, {
+    eventId: text("event_id").references(() => accountEvents.id, {
       onDelete: "set null",
     }),
+    termsSnapshotId: text("terms_snapshot_id").references(
+      () => accountTermsSnapshots.id,
+      {
+        onDelete: "set null",
+      },
+    ),
     originalFilename: text("original_filename").notNull(),
     storageKey: text("storage_key").notNull().unique(),
     mimeType: text("mime_type").notNull(),
@@ -194,6 +211,9 @@ export const documents = sqliteTable(
     index("documents_account_idx").on(table.accountId),
     index("documents_event_idx").on(table.eventId),
     index("documents_terms_snapshot_idx").on(table.termsSnapshotId),
-    uniqueIndex("documents_account_period_unique").on(table.accountId, table.periodKey),
+    uniqueIndex("documents_account_period_unique").on(
+      table.accountId,
+      table.periodKey,
+    ),
   ],
 );

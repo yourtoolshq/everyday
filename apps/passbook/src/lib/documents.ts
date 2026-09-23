@@ -14,7 +14,9 @@ export const documentTypes = [
 
 export type DocumentType = (typeof documentTypes)[number];
 
-export const accountDocumentTypes = documentTypes.filter((type) => type !== "statement");
+export const accountDocumentTypes = documentTypes.filter(
+  (type) => type !== "statement",
+);
 
 export type AccountDocumentType = (typeof accountDocumentTypes)[number];
 
@@ -57,7 +59,10 @@ const audioSignatures: Array<{
     mimeType: "audio/mpeg",
     extension: "mp3",
     match: (bytes) =>
-      bytes.length >= 3 && bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33,
+      bytes.length >= 3 &&
+      bytes[0] === 0x49 &&
+      bytes[1] === 0x44 &&
+      bytes[2] === 0x33,
   },
   {
     mimeType: "audio/mp4",
@@ -71,7 +76,9 @@ const audioSignatures: Array<{
     mimeType: "audio/wav",
     extension: "wav",
     match: (bytes) =>
-      bytes.length >= 12 && ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 12) === "WAVE",
+      bytes.length >= 12 &&
+      ascii(bytes, 0, 4) === "RIFF" &&
+      ascii(bytes, 8, 12) === "WAVE",
   },
   {
     mimeType: "audio/ogg",
@@ -80,7 +87,10 @@ const audioSignatures: Array<{
   },
 ];
 
-export function detectDocumentFile(bytes: Uint8Array, filename?: string): DetectedFile | null {
+export function detectDocumentFile(
+  bytes: Uint8Array,
+  filename?: string,
+): DetectedFile | null {
   if (
     bytes.length >= 5 &&
     bytes[0] === 0x25 &&
@@ -91,7 +101,12 @@ export function detectDocumentFile(bytes: Uint8Array, filename?: string): Detect
   ) {
     return { mimeType: "application/pdf", extension: "pdf" };
   }
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+  if (
+    bytes.length >= 3 &&
+    bytes[0] === 0xff &&
+    bytes[1] === 0xd8 &&
+    bytes[2] === 0xff
+  ) {
     return { mimeType: "image/jpeg", extension: "jpg" };
   }
   if (
@@ -134,8 +149,10 @@ export function detectDocumentFile(bytes: Uint8Array, filename?: string): Detect
 
   if (filename) {
     const extension = filename.split(".").pop()?.toLowerCase();
-    if (extension === "eml") return { mimeType: "message/rfc822", extension: "eml" };
-    if (extension === "mp3") return { mimeType: "audio/mpeg", extension: "mp3" };
+    if (extension === "eml")
+      return { mimeType: "message/rfc822", extension: "eml" };
+    if (extension === "mp3")
+      return { mimeType: "audio/mpeg", extension: "mp3" };
     if (extension === "m4a") return { mimeType: "audio/mp4", extension: "m4a" };
     if (extension === "wav") return { mimeType: "audio/wav", extension: "wav" };
     if (extension === "ogg") return { mimeType: "audio/ogg", extension: "ogg" };
@@ -147,8 +164,12 @@ export function detectDocumentFile(bytes: Uint8Array, filename?: string): Detect
 function looksLikeEml(bytes: Uint8Array, filename?: string) {
   if (filename?.toLowerCase().endsWith(".eml")) return true;
   const limit = Math.min(bytes.length, 4096);
-  const sample = new TextDecoder("utf-8", { fatal: false }).decode(bytes.subarray(0, limit));
-  return /^(from|received|return-path|message-id|date|subject|mime-version):/im.test(sample);
+  const sample = new TextDecoder("utf-8", { fatal: false }).decode(
+    bytes.subarray(0, limit),
+  );
+  return /^(from|received|return-path|message-id|date|subject|mime-version):/im.test(
+    sample,
+  );
 }
 
 export function isEmlMimeType(mimeType: string) {
@@ -202,7 +223,11 @@ export function suggestDocumentTitle(input: {
     return joinTitleParts(accountName, typeLabel);
   }
 
-  return joinTitleParts(documentDateYearMonth(input.documentDate), accountName, typeLabel);
+  return joinTitleParts(
+    documentDateYearMonth(input.documentDate),
+    accountName,
+    typeLabel,
+  );
 }
 
 export function usesSuggestedDocumentTitle(type: DocumentType) {

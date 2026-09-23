@@ -3,18 +3,18 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+import type { RequiredDocumentKind } from "~/lib/employment-document-suggestions";
+import type { EmploymentRecordRequirement } from "~/lib/employment-record-completeness";
+import type { RouterOutputs } from "~/trpc/react";
 import { RequiredDocumentUploadSheet } from "~/components/employment-records/required-document-upload-sheet";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  employmentRecordCompletenessLabels,
-  type EmploymentRecordRequirement,
-} from "~/lib/employment-record-completeness";
-import type { RequiredDocumentKind } from "~/lib/employment-document-suggestions";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { employmentRecordCompletenessLabels } from "~/lib/employment-record-completeness";
+import { api } from "~/trpc/react";
 
-type Requirement = RouterOutputs["employmentRecords"]["completenessByEmployment"]["requirements"][number];
+type Requirement =
+  RouterOutputs["employmentRecords"]["completenessByEmployment"]["requirements"][number];
 
 type EmploymentRecordCompletenessPanelProps = {
   employmentId: string;
@@ -53,41 +53,58 @@ export function EmploymentRecordCompletenessPanel({
   personName,
 }: EmploymentRecordCompletenessPanelProps) {
   const utils = api.useUtils();
-  const completeness = api.employmentRecords.completenessByEmployment.useQuery({ employmentId });
-  const compensationChanges = api.compensationChanges.listByEmployment.useQuery({ employmentId });
+  const completeness = api.employmentRecords.completenessByEmployment.useQuery({
+    employmentId,
+  });
+  const compensationChanges = api.compensationChanges.listByEmployment.useQuery(
+    { employmentId },
+  );
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadRequirement, setUploadRequirement] = useState<Requirement | null>(null);
+  const [uploadRequirement, setUploadRequirement] =
+    useState<Requirement | null>(null);
 
-  const markNotApplicable = api.employmentRecords.markNotApplicable.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.employmentRecords.completenessByEmployment.invalidate({ employmentId }),
-        utils.employmentRecords.listForReview.invalidate(),
-      ]);
-      toast.success("Marked as not applicable.");
+  const markNotApplicable = api.employmentRecords.markNotApplicable.useMutation(
+    {
+      onSuccess: async () => {
+        await Promise.all([
+          utils.employmentRecords.completenessByEmployment.invalidate({
+            employmentId,
+          }),
+          utils.employmentRecords.listForReview.invalidate(),
+        ]);
+        toast.success("Marked as not applicable.");
+      },
+      onError: (error) => toast.error(error.message),
     },
-    onError: (error) => toast.error(error.message),
-  });
+  );
 
-  const undoNotApplicable = api.employmentRecords.undoNotApplicable.useMutation({
-    onSuccess: async () => {
-      await Promise.all([
-        utils.employmentRecords.completenessByEmployment.invalidate({ employmentId }),
-        utils.employmentRecords.listForReview.invalidate(),
-      ]);
-      toast.success("Requirement restored.");
+  const undoNotApplicable = api.employmentRecords.undoNotApplicable.useMutation(
+    {
+      onSuccess: async () => {
+        await Promise.all([
+          utils.employmentRecords.completenessByEmployment.invalidate({
+            employmentId,
+          }),
+          utils.employmentRecords.listForReview.invalidate(),
+        ]);
+        toast.success("Requirement restored.");
+      },
+      onError: (error) => toast.error(error.message),
     },
-    onError: (error) => toast.error(error.message),
-  });
+  );
 
   function openUpload(requirement: Requirement) {
     setUploadRequirement(requirement);
     setUploadOpen(true);
   }
 
-  const uploadKind = uploadRequirement ? requirementUploadKind(uploadRequirement) : null;
+  const uploadKind = uploadRequirement
+    ? requirementUploadKind(uploadRequirement)
+    : null;
   const uploadCompensationChange = uploadRequirement?.compensationChangeId
-    ? compensationChanges.data?.find((item) => item.id === uploadRequirement.compensationChangeId)
+    ? compensationChanges.data?.find(
+        (item) => item.id === uploadRequirement.compensationChangeId,
+      )
     : null;
 
   const requirements = completeness.data?.requirements ?? [];
@@ -100,15 +117,21 @@ export function EmploymentRecordCompletenessPanel({
           <div className="space-y-1">
             <CardTitle className="text-base">Employment records</CardTitle>
             {summary ? (
-              <p className="text-xs text-muted-foreground">{formatSummary(summary)}</p>
+              <p className="text-muted-foreground text-xs">
+                {formatSummary(summary)}
+              </p>
             ) : null}
           </div>
         </CardHeader>
         <CardContent>
           {completeness.isLoading ? (
-            <p className="text-sm text-muted-foreground">Loading record checklist…</p>
+            <p className="text-muted-foreground text-sm">
+              Loading record checklist…
+            </p>
           ) : requirements.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No record requirements yet.</p>
+            <p className="text-muted-foreground text-sm">
+              No record requirements yet.
+            </p>
           ) : (
             <ul className="divide-y rounded-lg border">
               {requirements.map((requirement) => (
@@ -125,8 +148,13 @@ export function EmploymentRecordCompletenessPanel({
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-wrap justify-end gap-1">
-                    {requirement.status === "missing" && requirementUploadKind(requirement) ? (
-                      <Button size="sm" variant="outline" onClick={() => openUpload(requirement)}>
+                    {requirement.status === "missing" &&
+                    requirementUploadKind(requirement) ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openUpload(requirement)}
+                      >
                         Upload
                       </Button>
                     ) : null}

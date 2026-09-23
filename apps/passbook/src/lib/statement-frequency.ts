@@ -1,4 +1,9 @@
-export const statementFrequencies = ["monthly", "quarterly", "annually", "none"] as const;
+export const statementFrequencies = [
+  "monthly",
+  "quarterly",
+  "annually",
+  "none",
+] as const;
 
 export type StatementFrequency = (typeof statementFrequencies)[number];
 

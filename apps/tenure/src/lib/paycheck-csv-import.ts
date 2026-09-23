@@ -1,9 +1,9 @@
+import type { EmploymentLifecycle } from "~/lib/expected-pay-periods";
+import type { PayFrequency } from "~/lib/pay-frequency";
 import {
   canDerivePayPeriods,
   findExpectedPeriodForPayDate,
-  type EmploymentLifecycle,
 } from "~/lib/expected-pay-periods";
-import type { PayFrequency } from "~/lib/pay-frequency";
 import { paycheckInput } from "~/lib/paycheck-deductions";
 
 export const paycheckImportFields = [
@@ -27,9 +27,12 @@ export const paycheckImportFields = [
 
 export type PaycheckImportField = (typeof paycheckImportFields)[number];
 
-export type PaycheckColumnMapping = Partial<Record<PaycheckImportField, string>>;
+export type PaycheckColumnMapping = Partial<
+  Record<PaycheckImportField, string>
+>;
 
-export type PaycheckImportPeriodStrategy = "mapped" | "derived" | "pay_date_fallback";
+export type PaycheckImportPeriodStrategy =
+  "mapped" | "derived" | "pay_date_fallback";
 
 export type PaycheckImportPreviewRow = {
   rowNumber: number;
@@ -138,8 +141,12 @@ function normalizeHeader(value: string): string {
   return value.trim().toLowerCase();
 }
 
-export function detectPaycheckColumnMapping(headers: string[]): PaycheckColumnMapping {
-  const normalized = new Map(headers.map((header) => [normalizeHeader(header), header]));
+export function detectPaycheckColumnMapping(
+  headers: string[],
+): PaycheckColumnMapping {
+  const normalized = new Map(
+    headers.map((header) => [normalizeHeader(header), header]),
+  );
   const mapping: PaycheckColumnMapping = {};
 
   for (const [field, presetHeader] of Object.entries(taxbookPresetMapping)) {
@@ -152,7 +159,11 @@ export function detectPaycheckColumnMapping(headers: string[]): PaycheckColumnMa
   return mapping;
 }
 
-function parseInteger(value: string | undefined, fieldLabel: string, errors: string[]): number {
+function parseInteger(
+  value: string | undefined,
+  fieldLabel: string,
+  errors: string[],
+): number {
   if (!value || value.trim().length === 0) return 0;
   const parsed = Number(value.trim());
   if (!Number.isInteger(parsed) || parsed < 0) {
@@ -162,7 +173,11 @@ function parseInteger(value: string | undefined, fieldLabel: string, errors: str
   return parsed;
 }
 
-function parseDate(value: string | undefined, fieldLabel: string, errors: string[]): string | null {
+function parseDate(
+  value: string | undefined,
+  fieldLabel: string,
+  errors: string[],
+): string | null {
   if (!value || value.trim().length === 0) {
     errors.push(`${fieldLabel} is required.`);
     return null;
@@ -213,7 +228,9 @@ function resolvePeriod(
       payDate,
     );
     if (period) {
-      warnings.push("Pay period estimated from pay date and employment schedule.");
+      warnings.push(
+        "Pay period estimated from pay date and employment schedule.",
+      );
       return {
         periodStartDate: period.periodStartDate,
         periodEndDate: period.periodEndDate,
@@ -278,7 +295,11 @@ export function buildPaycheckImportPreview(input: {
 
     const amounts = {
       grossPayCents: parseInteger(read("grossPayCents"), "Gross pay", errors),
-      incomeTaxCents: parseInteger(read("incomeTaxCents"), "Income tax", errors),
+      incomeTaxCents: parseInteger(
+        read("incomeTaxCents"),
+        "Income tax",
+        errors,
+      ),
       federalIncomeTaxCents: parseInteger(
         read("federalIncomeTaxCents"),
         "Federal tax",
@@ -294,10 +315,26 @@ export function buildPaycheckImportPreview(input: {
       eiCents: parseInteger(read("eiCents"), "EI", errors),
       wiCents: parseInteger(read("wiCents"), "WI", errors),
       ltdCents: parseInteger(read("ltdCents"), "LTD", errors),
-      extendedHealthCents: parseInteger(read("extendedHealthCents"), "Extended health", errors),
-      travelMedicalCents: parseInteger(read("travelMedicalCents"), "Travel medical", errors),
-      unionDuesCents: parseInteger(read("unionDuesCents"), "Union dues", errors),
-      otherDeductionsCents: parseInteger(read("otherDeductionsCents"), "Other deductions", errors),
+      extendedHealthCents: parseInteger(
+        read("extendedHealthCents"),
+        "Extended health",
+        errors,
+      ),
+      travelMedicalCents: parseInteger(
+        read("travelMedicalCents"),
+        "Travel medical",
+        errors,
+      ),
+      unionDuesCents: parseInteger(
+        read("unionDuesCents"),
+        "Union dues",
+        errors,
+      ),
+      otherDeductionsCents: parseInteger(
+        read("otherDeductionsCents"),
+        "Other deductions",
+        errors,
+      ),
     };
 
     if (!payDate) {
@@ -327,10 +364,13 @@ export function buildPaycheckImportPreview(input: {
 
     const isDuplicate = input.existingPaychecks.some(
       (existing) =>
-        existing.payDate === payDate && existing.grossPayCents === amounts.grossPayCents,
+        existing.payDate === payDate &&
+        existing.grossPayCents === amounts.grossPayCents,
     );
     if (isDuplicate) {
-      warnings.push("Matches an existing paycheck with the same pay date and gross pay.");
+      warnings.push(
+        "Matches an existing paycheck with the same pay date and gross pay.",
+      );
     }
 
     rows.push({
@@ -352,7 +392,8 @@ export function buildPaycheckImportPreview(input: {
   const estimatedPeriodCount = rows.filter(
     (row) =>
       row.errors.length === 0 &&
-      (row.periodStrategy === "derived" || row.periodStrategy === "pay_date_fallback"),
+      (row.periodStrategy === "derived" ||
+        row.periodStrategy === "pay_date_fallback"),
   ).length;
 
   return {

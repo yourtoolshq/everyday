@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import type { EstimateData, EstimateMode } from "./types";
 import {
   Card,
   CardContent,
@@ -9,7 +10,6 @@ import {
 } from "~/components/ui/card";
 import { formatCad } from "~/domain/money";
 import { taxTreatmentLabels } from "~/domain/tax-item";
-import type { EstimateData, EstimateMode } from "./types";
 
 export function SupportingSources({
   data,
@@ -18,14 +18,14 @@ export function SupportingSources({
   data: EstimateData;
   mode: EstimateMode;
 }) {
-  const amountForItem = (
-    item: EstimateData["sources"]["taxItems"][number],
-  ) => (mode === "actual" ? item.actualCents : item.projectedCents);
+  const amountForItem = (item: EstimateData["sources"]["taxItems"][number]) =>
+    mode === "actual" ? item.actualCents : item.projectedCents;
   const amountForEmployment = (
     employment: EstimateData["sources"]["employments"][number],
-  ) => mode === "actual"
-    ? employment.actualGrossCents
-    : employment.projectedGrossCents;
+  ) =>
+    mode === "actual"
+      ? employment.actualGrossCents
+      : employment.projectedGrossCents;
   const groups = data.projected.people.map((person) => ({
     name: person.personName,
     personId: person.personId,
@@ -72,10 +72,7 @@ export function SupportingSources({
             ))}
           </SourceGroup>
         ))}
-        <SourceGroup
-          name="Household items"
-          empty={householdItems.length === 0}
-        >
+        <SourceGroup name="Household items" empty={householdItems.length === 0}>
           {householdItems.map((item) => (
             <TaxItemSource
               key={item.id}
@@ -107,23 +104,27 @@ function EmploymentSource({
         <span className="font-medium">{employment.employerName}</span>
         <span className="tabular-nums">{formatCad(amount)}</span>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Employment income · {mode === "actual" ? paychequeLabel : `Projected from ${paychequeLabel}`}
+      <p className="text-muted-foreground mt-1 text-xs">
+        Employment income ·{" "}
+        {mode === "actual"
+          ? paychequeLabel
+          : `Projected from ${paychequeLabel}`}
       </p>
       {mode === "actual" ? (
         <details className="mt-2">
-          <summary className="cursor-pointer text-xs text-primary">
+          <summary className="text-primary cursor-pointer text-xs">
             View paycheques
           </summary>
           <div className="mt-2 space-y-1">
             {employment.paycheques.map((paycheque) => (
               <p
-                className="flex justify-between gap-3 text-xs text-muted-foreground"
+                className="text-muted-foreground flex justify-between gap-3 text-xs"
                 key={paycheque.id}
               >
                 <span>{paycheque.payDate}</span>
                 <span>
-                  {formatCad(paycheque.grossPayCents)} gross · {formatCad(paycheque.incomeTaxCents)} tax
+                  {formatCad(paycheque.grossPayCents)} gross ·{" "}
+                  {formatCad(paycheque.incomeTaxCents)} tax
                 </span>
               </p>
             ))}
@@ -145,12 +146,12 @@ function TaxItemSource({
     <div className="flex justify-between gap-4 rounded-md border p-3">
       <div>
         <Link
-          className="font-medium text-primary hover:underline"
+          className="text-primary font-medium hover:underline"
           href={`/items/${item.id}`}
         >
           {item.name}
         </Link>
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="text-muted-foreground mt-1 text-xs">
           {taxTreatmentLabels[item.treatment]}
         </p>
       </div>
@@ -172,10 +173,12 @@ function SourceGroup({
     <section className="space-y-2">
       <h4 className="font-semibold">{name}</h4>
       {empty ? (
-        <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+        <p className="text-muted-foreground rounded-md border border-dashed p-3 text-sm">
           No mapped sources.
         </p>
-      ) : children}
+      ) : (
+        children
+      )}
     </section>
   );
 }

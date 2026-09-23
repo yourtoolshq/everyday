@@ -1,7 +1,7 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
@@ -100,11 +100,14 @@ export function MembersWorkspace() {
           </Card>
         ))}
         {members.data?.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No members yet.</p>
+          <p className="text-muted-foreground text-sm">No members yet.</p>
         ) : null}
       </div>
 
-      <Dialog open={editingId !== null} onOpenChange={(open) => !open && setEditingId(null)}>
+      <Dialog
+        open={editingId !== null}
+        onOpenChange={(open) => !open && setEditingId(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit member</DialogTitle>
@@ -114,7 +117,10 @@ export function MembersWorkspace() {
             onSubmit={(event) => {
               event.preventDefault();
               if (!editingId || !editName.trim()) return;
-              updateMember.mutate({ id: editingId, displayName: editName.trim() });
+              updateMember.mutate({
+                id: editingId,
+                displayName: editName.trim(),
+              });
             }}
           >
             <div className="space-y-2">
@@ -127,7 +133,11 @@ export function MembersWorkspace() {
               />
             </div>
             <DialogFooter className="px-0 pb-0">
-              <Button type="button" variant="outline" onClick={() => setEditingId(null)}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingId(null)}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={updateMember.isPending}>

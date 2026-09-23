@@ -1,15 +1,15 @@
 "use client";
 
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
+import Link from "next/link";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { EmploymentFormDrawer } from "~/components/employments/employment-form-drawer";
-import { formatCompensationRate } from "~/lib/compensation";
-import { employmentStatusLabels } from "~/lib/employment-status";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
+import { formatCompensationRate } from "~/lib/compensation";
+import { employmentStatusLabels } from "~/lib/employment-status";
 import { api } from "~/trpc/react";
 
 function employmentHeading(jobTitle: string | null, employerName: string) {
@@ -22,7 +22,10 @@ export function EmploymentsWorkspace() {
   const employments = api.employments.list.useQuery();
   const [createOpen, setCreateOpen] = useState(false);
   const [editEmployment, setEditEmployment] = useState<
-    (typeof employments.data extends (infer Item)[] | undefined ? Item : never) | null
+    | (typeof employments.data extends (infer Item)[] | undefined
+        ? Item
+        : never)
+    | null
   >(null);
 
   const deleteEmployment = api.employments.delete.useMutation({
@@ -46,12 +49,15 @@ export function EmploymentsWorkspace() {
         {employments.data?.map((employment) => (
           <Card key={employment.id} className="shadow-none">
             <CardContent className="flex items-start justify-between gap-4 p-4">
-              <Link href={`/employments/${employment.id}`} className="min-w-0 flex-1 space-y-1">
+              <Link
+                href={`/employments/${employment.id}`}
+                className="min-w-0 flex-1 space-y-1"
+              >
                 <p className="font-medium">
                   {employment.jobTitle ? (
                     <>
                       {employment.jobTitle}
-                      <span className="font-normal text-muted-foreground">
+                      <span className="text-muted-foreground font-normal">
                         {" "}
                         at {employment.employerName}
                       </span>
@@ -60,14 +66,18 @@ export function EmploymentsWorkspace() {
                     employment.employerName
                   )}
                 </p>
-                <p className="text-sm text-muted-foreground">{employment.personName}</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
+                  {employment.personName}
+                </p>
+                <p className="text-muted-foreground text-sm">
                   {employmentStatusLabels[employment.status]}
-                  {employment.startDate ? ` · from ${employment.startDate}` : ""}
+                  {employment.startDate
+                    ? ` · from ${employment.startDate}`
+                    : ""}
                   {employment.endDate ? ` to ${employment.endDate}` : ""}
                 </p>
                 {employment.currentCompensation ? (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {formatCompensationRate(employment.currentCompensation)}
                   </p>
                 ) : null}
@@ -94,7 +104,7 @@ export function EmploymentsWorkspace() {
           </Card>
         ))}
         {employments.data?.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No employments yet.</p>
+          <p className="text-muted-foreground text-sm">No employments yet.</p>
         ) : null}
       </div>
 

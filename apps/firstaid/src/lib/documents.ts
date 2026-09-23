@@ -26,7 +26,10 @@ export const documentTypeLabels = {
   other: "Other",
 } satisfies Record<(typeof documentTypes)[number], string>;
 
-export const claimDocumentTypes = ["claim_record", "explanation_of_benefits"] as const;
+export const claimDocumentTypes = [
+  "claim_record",
+  "explanation_of_benefits",
+] as const;
 
 export type ClaimDocumentType = (typeof claimDocumentTypes)[number];
 
@@ -70,7 +73,12 @@ export function detectDocumentFile(bytes: Uint8Array): DetectedFile | null {
   ) {
     return { mimeType: "application/pdf", extension: "pdf" };
   }
-  if (bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+  if (
+    bytes.length >= 3 &&
+    bytes[0] === 0xff &&
+    bytes[1] === 0xd8 &&
+    bytes[2] === 0xff
+  ) {
     return { mimeType: "image/jpeg", extension: "jpg" };
   }
   if (

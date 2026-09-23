@@ -4,12 +4,12 @@ First Aid helps manage a household's healthcare year.
 
 The goal is not to build a complete medical-record system. The goal is to answer a few practical questions:
 
-* What healthcare should we consider doing this year?
-* What have we already planned or scheduled?
-* What follow-ups are due?
-* What healthcare benefits do we have available?
-* What happened during previous visits?
-* Where are the documents related to those visits?
+- What healthcare should we consider doing this year?
+- What have we already planned or scheduled?
+- What follow-ups are due?
+- What healthcare benefits do we have available?
+- What happened during previous visits?
+- Where are the documents related to those visits?
 
 The domain should stay focused on those problems.
 
@@ -81,14 +81,14 @@ For V1 this will primarily be members of the household.
 
 Examples:
 
-* Me
-* Spouse
+- Me
+- Spouse
 
 A Person owns:
 
-* care items
-* visits
-* benefit eligibility/usage
+- care items
+- visits
+- benefit eligibility/usage
 
 The Person domain should contain only basic information needed by First Aid. It should not attempt to become a complete patient profile.
 
@@ -580,15 +580,15 @@ flowchart TD
 
 The same domain therefore supports:
 
-* preventive healthcare
-* vaccinations
-* dental care
-* family doctor visits
-* recurring wellness care
-* insurance utilization
-* provider recommendations
-* follow-ups
-* historical healthcare records
+- preventive healthcare
+- vaccinations
+- dental care
+- family doctor visits
+- recurring wellness care
+- insurance utilization
+- provider recommendations
+- follow-ups
+- historical healthcare records
 
 without needing a separate system for each category.
 

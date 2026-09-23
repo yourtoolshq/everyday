@@ -1,9 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { Bold, Italic, List, ListOrdered } from "lucide-react";
-import { useEffect } from "react";
 
 import { Button } from "~/components/ui/button";
 import { cn } from "~/lib/utils";
@@ -15,7 +15,12 @@ type RichTextEditorProps = {
   className?: string;
 };
 
-export function RichTextEditor({ value, onChange, placeholder, className }: RichTextEditorProps) {
+export function RichTextEditor({
+  value,
+  onChange,
+  placeholder,
+  className,
+}: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [StarterKit],
     content: value || "",
@@ -41,8 +46,13 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
   }, [editor, value]);
 
   return (
-    <div className={cn("overflow-hidden rounded-md border bg-background", className)}>
-      <div className="flex flex-wrap gap-1 border-b bg-muted/40 p-1">
+    <div
+      className={cn(
+        "bg-background overflow-hidden rounded-md border",
+        className,
+      )}
+    >
+      <div className="bg-muted/40 flex flex-wrap gap-1 border-b p-1">
         <Button
           type="button"
           variant={editor?.isActive("bold") ? "secondary" : "ghost"}
@@ -86,7 +96,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
       </div>
       <EditorContent editor={editor} />
       {!value && placeholder ? (
-        <p className="pointer-events-none -mt-24 px-3 py-2 text-sm text-muted-foreground">
+        <p className="text-muted-foreground pointer-events-none -mt-24 px-3 py-2 text-sm">
           {placeholder}
         </p>
       ) : null}
@@ -96,7 +106,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
 
 export function RichTextContent({ html }: { html: string | null | undefined }) {
   if (!html?.trim()) {
-    return <p className="text-sm text-muted-foreground">No notes yet.</p>;
+    return <p className="text-muted-foreground text-sm">No notes yet.</p>;
   }
 
   return (

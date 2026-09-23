@@ -44,7 +44,9 @@ function escapeCsvValue(value: string | number): string {
   return text;
 }
 
-export function serializePaychequesForTenure(rows: TenurePaychequeExportRow[]): string {
+export function serializePaychequesForTenure(
+  rows: TenurePaychequeExportRow[],
+): string {
   const lines = [
     tenurePaychequeExportColumns.join(","),
     ...rows.map((row) =>

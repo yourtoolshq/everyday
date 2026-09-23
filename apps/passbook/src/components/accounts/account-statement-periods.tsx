@@ -1,25 +1,24 @@
 "use client";
 
-import { Check, ChevronLeft, ChevronRight, LayoutGrid, List, Minus } from "lucide-react";
 import { useMemo, useState } from "react";
+import { cn } from "cn";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  LayoutGrid,
+  List,
+  Minus,
+} from "lucide-react";
 
+import type { ExpectedPeriod } from "~/lib/expected-periods";
+import type { StatementCompletenessStatus } from "~/lib/statement-completeness";
+import type { StatementFrequency } from "~/lib/statement-frequency";
+import type { RouterOutputs } from "~/trpc/react";
+import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
 import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
 import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
-import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
 import { StatementDetailSheet } from "~/components/documents/statement-detail-sheet";
-import {
-  canDeriveStatementPeriods,
-  deriveExpectedPeriodsForYear,
-  statementYearRange,
-  type ExpectedPeriod,
-} from "~/lib/expected-periods";
-import {
-  completenessStatusLabels,
-  countCompletenessForYear,
-  deriveStatementCompleteness,
-  type StatementCompletenessStatus,
-} from "~/lib/statement-completeness";
-import { statementFrequencyLabels, type StatementFrequency } from "~/lib/statement-frequency";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -28,8 +27,17 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { cn } from "cn";
-import type { RouterOutputs } from "~/trpc/react";
+import {
+  canDeriveStatementPeriods,
+  deriveExpectedPeriodsForYear,
+  statementYearRange,
+} from "~/lib/expected-periods";
+import {
+  completenessStatusLabels,
+  countCompletenessForYear,
+  deriveStatementCompleteness,
+} from "~/lib/statement-completeness";
+import { statementFrequencyLabels } from "~/lib/statement-frequency";
 
 type Account = RouterOutputs["accounts"]["list"][number];
 type StatementDocument = RouterOutputs["documents"]["overview"][number];
@@ -83,12 +91,19 @@ function PeriodCell({
   onMarkNotApplicable?: () => void;
   onUndoNotApplicable?: () => void;
 }) {
-  const completeness = deriveStatementCompleteness(period, Boolean(document), hasException);
+  const completeness = deriveStatementCompleteness(
+    period,
+    Boolean(document),
+    hasException,
+  );
   const styles = completenessStatusStyles[completeness];
   const canUpload =
-    (completeness === "missing" || completeness === "waiting") && Boolean(onUpload);
-  const canMarkNotApplicable = completeness === "missing" && Boolean(onMarkNotApplicable);
-  const canUndoNotApplicable = completeness === "not_applicable" && Boolean(onUndoNotApplicable);
+    (completeness === "missing" || completeness === "waiting") &&
+    Boolean(onUpload);
+  const canMarkNotApplicable =
+    completeness === "missing" && Boolean(onMarkNotApplicable);
+  const canUndoNotApplicable =
+    completeness === "not_applicable" && Boolean(onUndoNotApplicable);
   const cellClassName = cn(
     "flex aspect-[4/3] min-h-14 w-full flex-col items-center justify-center gap-1 rounded-lg px-2 py-2 text-center transition-colors",
     styles.cell,
@@ -111,7 +126,9 @@ function PeriodCell({
             className={cellClassName}
             onClick={() => onSelect?.(document)}
           >
-            <span className="text-sm font-medium leading-none">{period.shortLabel}</span>
+            <span className="text-sm leading-none font-medium">
+              {period.shortLabel}
+            </span>
             <Check className="size-3.5 shrink-0" aria-hidden="true" />
           </button>
         ) : completeness === "not_applicable" ? (
@@ -121,7 +138,9 @@ function PeriodCell({
             className={cellClassName}
             onClick={onUndoNotApplicable}
           >
-            <span className="text-sm font-medium leading-none">{period.shortLabel}</span>
+            <span className="text-sm leading-none font-medium">
+              {period.shortLabel}
+            </span>
             <Minus className="size-3.5 shrink-0" aria-hidden="true" />
           </button>
         ) : (
@@ -152,12 +171,20 @@ function PeriodCell({
       <TooltipContent side="top" className="text-left">
         <p className="font-medium">{period.label}</p>
         <p>{completenessStatusLabels[completeness]}</p>
-        {completeness === "complete" ? <p className="text-background/70">Click for details</p> : null}
-        {canUpload ? <p className="text-background/70">Click to upload</p> : null}
-        {canMarkNotApplicable ? (
-          <p className="text-background/70">Use N/A if no statement was issued</p>
+        {completeness === "complete" ? (
+          <p className="text-background/70">Click for details</p>
         ) : null}
-        {canUndoNotApplicable ? <p className="text-background/70">Click to undo</p> : null}
+        {canUpload ? (
+          <p className="text-background/70">Click to upload</p>
+        ) : null}
+        {canMarkNotApplicable ? (
+          <p className="text-background/70">
+            Use N/A if no statement was issued
+          </p>
+        ) : null}
+        {canUndoNotApplicable ? (
+          <p className="text-background/70">Click to undo</p>
+        ) : null}
       </TooltipContent>
     </Tooltip>
   );
@@ -174,10 +201,15 @@ function PeriodLegend() {
   ];
 
   return (
-    <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+    <div className="text-muted-foreground flex flex-wrap gap-3 text-xs">
       {items.map((item) => (
         <span key={item.status} className="inline-flex items-center gap-1.5">
-          <span className={cn("size-2 rounded-full", completenessStatusStyles[item.status].dot)} />
+          <span
+            className={cn(
+              "size-2 rounded-full",
+              completenessStatusStyles[item.status].dot,
+            )}
+          />
           {item.label}
         </span>
       ))}
@@ -217,7 +249,9 @@ function formatYearSummary({
   const parts = [`${satisfiedCount}/${expectedCount} satisfied in ${year}`];
 
   if (notApplicableCount > 0) {
-    parts.push(`${completeCount} complete · ${notApplicableCount} not applicable`);
+    parts.push(
+      `${completeCount} complete · ${notApplicableCount} not applicable`,
+    );
   }
 
   if (missingCount > 0) parts.push(`${missingCount} missing`);
@@ -261,7 +295,8 @@ export function AccountStatementPeriods({
     document: StatementDocument;
     periodLabel: string;
   } | null>(null);
-  const [editingStatement, setEditingStatement] = useState<StatementDocument | null>(null);
+  const [editingStatement, setEditingStatement] =
+    useState<StatementDocument | null>(null);
 
   const periods = useMemo(
     () => deriveExpectedPeriodsForYear(lifecycle, frequency, year),
@@ -270,18 +305,29 @@ export function AccountStatementPeriods({
 
   const statementIdsByPeriod = useMemo(() => {
     const map: Record<string, string> = {};
-    for (const [periodKey, document] of Object.entries(statementDocumentsByPeriod)) {
+    for (const [periodKey, document] of Object.entries(
+      statementDocumentsByPeriod,
+    )) {
       map[periodKey] = document.id;
     }
     return map;
   }, [statementDocumentsByPeriod]);
 
-  const { completeCount, notApplicableCount, missingCount, waitingCount, expectedCount } =
-    countCompletenessForYear(periods, statementIdsByPeriod, exceptionsByPeriod);
+  const {
+    completeCount,
+    notApplicableCount,
+    missingCount,
+    waitingCount,
+    expectedCount,
+  } = countCompletenessForYear(
+    periods,
+    statementIdsByPeriod,
+    exceptionsByPeriod,
+  );
 
   if (frequency === "none") {
     return (
-      <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+      <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
         No statement schedule configured for this account.
       </div>
     );
@@ -292,7 +338,8 @@ export function AccountStatementPeriods({
       <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-900 dark:text-amber-100">
         <p className="font-medium">Opened date required</p>
         <p className="mt-1 text-amber-800/80 dark:text-amber-100/80">
-          Add an opened date to derive expected statement periods for this account.
+          Add an opened date to derive expected statement periods for this
+          account.
         </p>
       </div>
     );
@@ -315,7 +362,9 @@ export function AccountStatementPeriods({
           >
             <ChevronLeft />
           </Button>
-          <span className="min-w-16 text-center text-sm font-medium">{year}</span>
+          <span className="min-w-16 text-center text-sm font-medium">
+            {year}
+          </span>
           <Button
             type="button"
             variant="outline"
@@ -328,8 +377,10 @@ export function AccountStatementPeriods({
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="secondary">{statementFrequencyLabels[frequency]}</Badge>
-          <span className="text-sm text-muted-foreground">
+          <Badge variant="secondary">
+            {statementFrequencyLabels[frequency]}
+          </Badge>
+          <span className="text-muted-foreground text-sm">
             {formatYearSummary({
               completeCount,
               notApplicableCount,
@@ -374,12 +425,18 @@ export function AccountStatementPeriods({
                 onSelect={(document) =>
                   setSelectedStatement({ document, periodLabel: period.label })
                 }
-                onUpload={onUploadPeriod ? () => onUploadPeriod(period.key) : undefined}
+                onUpload={
+                  onUploadPeriod ? () => onUploadPeriod(period.key) : undefined
+                }
                 onMarkNotApplicable={
-                  onMarkNotApplicable ? () => onMarkNotApplicable(period.key) : undefined
+                  onMarkNotApplicable
+                    ? () => onMarkNotApplicable(period.key)
+                    : undefined
                 }
                 onUndoNotApplicable={
-                  onUndoNotApplicable ? () => onUndoNotApplicable(period.key) : undefined
+                  onUndoNotApplicable
+                    ? () => onUndoNotApplicable(period.key)
+                    : undefined
                 }
               />
             ))}
@@ -401,7 +458,8 @@ export function AccountStatementPeriods({
               const canMarkNotApplicable =
                 completeness === "missing" && Boolean(onMarkNotApplicable);
               const canUndoNotApplicable =
-                completeness === "not_applicable" && Boolean(onUndoNotApplicable);
+                completeness === "not_applicable" &&
+                Boolean(onUndoNotApplicable);
               return (
                 <div
                   key={period.key}
@@ -416,9 +474,16 @@ export function AccountStatementPeriods({
                       documentId={document.id}
                       title={document.title}
                       onEdit={() => setEditingStatement(document)}
-                      onDelete={() => requestDelete({ id: document.id, title: document.title })}
+                      onDelete={() =>
+                        requestDelete({
+                          id: document.id,
+                          title: document.title,
+                        })
+                      }
                     />
-                  ) : canUpload || canMarkNotApplicable || canUndoNotApplicable ? (
+                  ) : canUpload ||
+                    canMarkNotApplicable ||
+                    canUndoNotApplicable ? (
                     <div className="flex items-center gap-1">
                       {canUpload ? (
                         <Button
@@ -464,9 +529,9 @@ export function AccountStatementPeriods({
       </TooltipProvider>
 
       <PeriodLegend />
-      <p className="text-xs text-muted-foreground">
-        Red periods are missing. Gray periods are marked not applicable. Blue is the current period
-        still waiting for a statement.
+      <p className="text-muted-foreground text-xs">
+        Red periods are missing. Gray periods are marked not applicable. Blue is
+        the current period still waiting for a statement.
       </p>
 
       {selectedStatement ? (

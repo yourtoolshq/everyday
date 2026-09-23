@@ -1,0 +1,211 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
+      run_heavy: ${{ steps.scope.outputs.run_heavy }}
+      e2e_apps: ${{ steps.scope.outputs.e2e_apps }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            docs:
+              - '**/*.md'
+              - 'docs/**'
+              - '**/CHANGELOG.md'
+            code:
+              - '**'
+              - '!**/*.md'
+              - '!docs/**'
+              - '!**/CHANGELOG.md'
+            platform:
+              - package.json
+              - pnpm-lock.yaml
+              - pnpm-workspace.yaml
+              - turbo.json
+              - tooling/**
+              - .github/**
+            taxbook:
+              - apps/taxbook/**
+            firstaid:
+              - apps/firstaid/**
+            passbook:
+              - apps/passbook/**
+            tenure:
+              - apps/tenure/**
+
+      - id: scope
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo 'docs_only=false' >> "$GITHUB_OUTPUT"
+            echo 'run_heavy=true' >> "$GITHUB_OUTPUT"
+            echo 'e2e_apps=["taxbook","firstaid","passbook","tenure"]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "${{ steps.filter.outputs.code }}" != "true" ]; then
+            echo 'docs_only=true' >> "$GITHUB_OUTPUT"
+            echo 'run_heavy=false' >> "$GITHUB_OUTPUT"
+            echo 'e2e_apps=[]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo 'docs_only=false' >> "$GITHUB_OUTPUT"
+          echo 'run_heavy=true' >> "$GITHUB_OUTPUT"
+
+          if [ "${{ steps.filter.outputs.platform }}" = "true" ]; then
+            echo 'e2e_apps=["taxbook","firstaid","passbook","tenure"]' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          apps=()
+          for app in taxbook firstaid passbook tenure; do
+            case "$app" in
+              taxbook) changed="${{ steps.filter.outputs.taxbook }}" ;;
+              firstaid) changed="${{ steps.filter.outputs.firstaid }}" ;;
+              passbook) changed="${{ steps.filter.outputs.passbook }}" ;;
+              tenure) changed="${{ steps.filter.outputs.tenure }}" ;;
+            esac
+            if [ "$changed" = "true" ]; then
+              apps+=("\"$app\"")
+            fi
+          done
+
+          if [ "${#apps[@]}" -eq 0 ]; then
+            echo 'e2e_apps=[]' >> "$GITHUB_OUTPUT"
+            echo 'run_heavy=false' >> "$GITHUB_OUTPUT"
+          else
+            echo "e2e_apps=[$(IFS=,; echo "${apps[*]}")]" >> "$GITHUB_OUTPUT"
+          fi
+
+  format:
+    name: format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup
+
+      - run: pnpm format
+
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: file:./.data/ci.db
+      DOCUMENTS_DIR: ./.data/ci-documents
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup
+
+      - run: mkdir -p .data
+
+      - name: Lint, typecheck, test, and build (affected)
+        if: github.event_name == 'pull_request'
+        run: pnpm exec turbo run lint typecheck test build --filter=...[origin/main]
+
+      - name: Lint, typecheck, test, and build (all)
+        if: github.event_name != 'pull_request'
+        run: pnpm exec turbo run lint typecheck test build
+
+  e2e:
+    name: e2e (${{ matrix.app }})
+    needs: changes
+    if: needs.changes.outputs.run_heavy == 'true' && needs.changes.outputs.e2e_apps != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJson(needs.changes.outputs.e2e_apps) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup
+
+      - run: pnpm --filter ${{ matrix.app }} exec playwright install --with-deps chromium
+
+      - name: Run Playwright E2E
+        run: pnpm exec turbo run test:e2e -F ${{ matrix.app }}
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.app }}
+          path: |
+            apps/${{ matrix.app }}/playwright-report/
+            apps/${{ matrix.app }}/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  docker:
+    name: docker (${{ matrix.app }})
+    needs: changes
+    if: needs.changes.outputs.run_heavy == 'true' && needs.changes.outputs.e2e_apps != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJson(needs.changes.outputs.e2e_apps) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: docker build -f apps/${{ matrix.app }}/Dockerfile -t ${{ matrix.app }} .
+
+      - name: Health check
+        run: |
+          docker run -d --name "${{ matrix.app }}-ci" -p 8080:3000 "${{ matrix.app }}"
+          for i in $(seq 1 30); do
+            if wget -q --spider http://127.0.0.1:8080/api/health; then
+              docker rm -f "${{ matrix.app }}-ci"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs "${{ matrix.app }}-ci" || true
+          docker rm -f "${{ matrix.app }}-ci"
+          exit 1
+
+  required:
+    name: required
+    needs: [changes, format, quality, e2e, docker]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggregate CI result
+        shell: bash
+        run: |
+          check() {
+            local result="$1"
+            local name="$2"
+            if [ "$result" = "failure" ] || [ "$result" = "cancelled" ]; then
+              echo "::error::$name job $result"
+              exit 1
+            fi
+          }
+
+          check "${{ needs.format.result }}" "format"
+          check "${{ needs.quality.result }}" "quality"
+          check "${{ needs.e2e.result }}" "e2e"
+          check "${{ needs.docker.result }}" "docker"

@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
+import type { Database } from "../helpers";
 import { buildOverview } from "~/domain/overview";
 import { taxItemInput, taxItemUpdateInput } from "~/domain/tax-item";
 import {
@@ -13,8 +14,11 @@ import {
   taxDocuments,
   taxItems,
 } from "~/server/db/schema";
-import type { Database } from "../helpers";
-import { requireActiveYear, requireEditableActiveYear, requireHousehold } from "../helpers";
+import {
+  requireActiveYear,
+  requireEditableActiveYear,
+  requireHousehold,
+} from "../helpers";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 async function validatePerson(
@@ -79,7 +83,10 @@ export const taxItemRouter = createTRPCRouter({
       const { year, items } = await listActiveItems(ctx.db);
       const item = items.find((candidate) => candidate.id === input.id);
       if (!item) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Tax item not found." });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Tax item not found.",
+        });
       }
       const [aggregate] = await ctx.db
         .select({ recordCount: count() })
@@ -162,7 +169,10 @@ export const taxItemRouter = createTRPCRouter({
             operators.eq(table.taxYearId, year.id),
           ),
       });
-      if (existing?.valueSource === "paycheques" || existing?.valueSource === "self_employment") {
+      if (
+        existing?.valueSource === "paycheques" ||
+        existing?.valueSource === "self_employment"
+      ) {
         throw new TRPCError({
           code: "CONFLICT",
           message: "Manage this calculated item from its dedicated workspace.",
@@ -184,8 +194,14 @@ export const taxItemRouter = createTRPCRouter({
           .where(and(eq(taxItems.id, id), eq(taxItems.taxYearId, year.id)))
           .returning();
         if (updated?.ownerKind === "person") {
-          await tx.update(records).set({ personId: updated.personId }).where(eq(records.taxItemId, updated.id));
-          await tx.update(taxDocuments).set({ personId: updated.personId }).where(eq(taxDocuments.taxItemId, updated.id));
+          await tx
+            .update(records)
+            .set({ personId: updated.personId })
+            .where(eq(records.taxItemId, updated.id));
+          await tx
+            .update(taxDocuments)
+            .set({ personId: updated.personId })
+            .where(eq(taxDocuments.taxItemId, updated.id));
         }
         return updated;
       });
@@ -206,7 +222,10 @@ export const taxItemRouter = createTRPCRouter({
         .select({ valueSource: taxItems.valueSource })
         .from(taxItems)
         .where(and(eq(taxItems.id, input.id), eq(taxItems.taxYearId, year.id)));
-      if (item?.valueSource === "paycheques" || item?.valueSource === "self_employment") {
+      if (
+        item?.valueSource === "paycheques" ||
+        item?.valueSource === "self_employment"
+      ) {
         throw new TRPCError({
           code: "CONFLICT",
           message: "Delete this calculated item from its dedicated workspace.",
@@ -214,9 +233,7 @@ export const taxItemRouter = createTRPCRouter({
       }
       const [deleted] = await ctx.db
         .delete(taxItems)
-        .where(
-          and(eq(taxItems.id, input.id), eq(taxItems.taxYearId, year.id)),
-        )
+        .where(and(eq(taxItems.id, input.id), eq(taxItems.taxYearId, year.id)))
         .returning({ id: taxItems.id });
       if (!deleted) {
         throw new TRPCError({

@@ -1,9 +1,12 @@
-import { formatCompensationRate, type CompensationChangeRecord } from "~/lib/compensation";
-import { documentTypeLabels, formatDateLabel, type DocumentType } from "~/lib/documents";
+import type { CompensationChangeRecord } from "~/lib/compensation";
+import type { DocumentType } from "~/lib/documents";
+import { formatCompensationRate } from "~/lib/compensation";
+import { documentTypeLabels, formatDateLabel } from "~/lib/documents";
 
 export const BASELINE_REQUIREMENT_KEY = "offer_letter";
 
-export type EmploymentRecordCompletenessStatus = "complete" | "missing" | "not_applicable";
+export type EmploymentRecordCompletenessStatus =
+  "complete" | "missing" | "not_applicable";
 
 export type EmploymentRecordRequirement = {
   key: string;
@@ -49,7 +52,10 @@ export function compensationChangeRequirementKey(changeId: string): string {
 
 export function parseRequirementKey(
   key: string,
-): { kind: "offer_letter" } | { kind: "compensation_change"; changeId: string } | null {
+):
+  | { kind: "offer_letter" }
+  | { kind: "compensation_change"; changeId: string }
+  | null {
   if (key === BASELINE_REQUIREMENT_KEY) return { kind: "offer_letter" };
   if (key.startsWith("compensation_change:")) {
     return {
@@ -79,7 +85,8 @@ export function buildEmploymentRecordRequirements(
 
   for (const change of compensationChanges) {
     const rateLabel = formatCompensationRate(change);
-    const dateLabel = formatDateLabel(change.effectiveDate) ?? change.effectiveDate;
+    const dateLabel =
+      formatDateLabel(change.effectiveDate) ?? change.effectiveDate;
     requirements.push({
       key: compensationChangeRequirementKey(change.id),
       kind: "compensation_change",
@@ -110,7 +117,10 @@ export function deriveRequirementStatus(
   input: {
     documents: DocumentForCompleteness[];
     documentsById: ReadonlyMap<string, DocumentForCompleteness>;
-    compensationChangesById: ReadonlyMap<string, CompensationChangeForCompleteness>;
+    compensationChangesById: ReadonlyMap<
+      string,
+      CompensationChangeForCompleteness
+    >;
     exceptions: Readonly<Record<string, true>>;
   },
 ): EmploymentRecordCompletenessStatus {
@@ -145,17 +155,17 @@ export function deriveEmploymentRecordCompleteness(
   const compensationChangesById = new Map(
     compensationChanges.map((change) => [change.id, change]),
   );
-  const requirements = buildEmploymentRecordRequirements(compensationChanges).map(
-    (requirement) => ({
-      ...requirement,
-      status: deriveRequirementStatus(requirement, {
-        documents: input.documents,
-        documentsById: input.documentsById,
-        compensationChangesById,
-        exceptions: input.exceptions,
-      }),
+  const requirements = buildEmploymentRecordRequirements(
+    compensationChanges,
+  ).map((requirement) => ({
+    ...requirement,
+    status: deriveRequirementStatus(requirement, {
+      documents: input.documents,
+      documentsById: input.documentsById,
+      compensationChangesById,
+      exceptions: input.exceptions,
     }),
-  );
+  }));
 
   let completeCount = 0;
   let notApplicableCount = 0;
@@ -209,7 +219,10 @@ export function buildMissingEmploymentRecordItems(
       string,
       {
         documents: DocumentForCompleteness[];
-        documentsById: ReadonlyMap<string, DocumentForCompleteness & { id: string }>;
+        documentsById: ReadonlyMap<
+          string,
+          DocumentForCompleteness & { id: string }
+        >;
         compensationChanges: CompensationChangeForCompleteness[];
       }
     >
@@ -222,11 +235,14 @@ export function buildMissingEmploymentRecordItems(
     const data = dataByEmployment[employment.id];
     if (!data) continue;
 
-    const { requirements } = deriveEmploymentRecordCompleteness(data.compensationChanges, {
-      documents: data.documents,
-      documentsById: data.documentsById,
-      exceptions: exceptionsByEmployment[employment.id] ?? {},
-    });
+    const { requirements } = deriveEmploymentRecordCompleteness(
+      data.compensationChanges,
+      {
+        documents: data.documents,
+        documentsById: data.documentsById,
+        exceptions: exceptionsByEmployment[employment.id] ?? {},
+      },
+    );
 
     for (const requirement of requirements) {
       if (requirement.status !== "missing") continue;
