@@ -28,7 +28,10 @@ Follow links from each app's `AGENTS.md` to product, domain, and roadmap docs. D
 
 - Keep changes **bounded** to the requested scope and affected apps.
 - Use **fictional data** only — never commit personal or identifying information.
-- Do **not** automatically extract shared code; record `shared-candidate` Issues instead (see [DEVELOPMENT.md](./DEVELOPMENT.md)).
+- Do **not** automatically extract shared code. Record future candidates in the
+  architecture audit or phase implementation notes; create a
+  `shared-candidate` issue only for actionable work in the active phase (see
+  [DEVELOPMENT.md](./DEVELOPMENT.md)).
 - Phase 2 does not change production deployments; legacy repos stay live until Phase 4.
 
 ## Verification

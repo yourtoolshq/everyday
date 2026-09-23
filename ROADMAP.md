@@ -18,7 +18,7 @@ Four applications are currently under development and contain varying amounts of
 | ---------------------- | -------------------------------------------------------------------------------------------- |
 | Repetitive scaffolding | Starting a new app requires rebuilding nearly the same infrastructure each time              |
 | Implementation drift   | Improvements in one app are not carried to others; the first app (Taxbook) has fallen behind |
-| Inconsistent storage   | Taxbook uses glob storage; later apps use volumes with a common package pattern              |
+| Inconsistent storage   | Taxbook uses blob storage; later apps use volumes with a common package pattern              |
 | UI/UX inconsistency    | Modal vs. side drawer, plain number fields vs. formatted money/percent inputs                |
 | Missing QoL behaviors  | e.g. inline arithmetic in numeric fields (like YNAB: `10+20+30` → `60.00`)                   |
 | Deployment drift       | Docker files diverge between apps                                                            |
@@ -221,28 +221,38 @@ Examples:
 **Workflow:**
 
 1. **Discover** — Agent identifies potentially reusable functionality while implementing a feature
-2. **Flag** — Agent records it as a shared candidate, including where it currently exists and which applications might benefit
+2. **Flag** — Agent records it in the active architecture audit or implementation notes, including where it currently exists and which applications might benefit
 3. **Validate** — Continue using the implementation in its original application; refine based on actual usage
 4. **Promote** — Once mature, create or move it into an appropriate shared package
-5. **Adopt** — Migrate other applications incrementally, tracking adoption until the candidate can be closed
+5. **Adopt** — Migrate other applications incrementally, recording the result
+   in the audit until the candidate is promoted, deliberately kept local, or
+   rejected with reasoning
 
 **Tracking:**
 
-- **Eventually:** GitHub Issues with label `shared-candidate`
-- **During early migration:** Temporary `SHARED_CANDIDATES.md` file is acceptable
-- **Rule:** Agents must record promising shared functionality, but must not automatically abstract it
-- Once GitHub Issues are established, migrate candidates there and avoid maintaining two sources of truth
+- The architecture audit is the source of truth for future candidates and
+  implementation notes.
+- Open an issue only when work is needed now, can proceed independently in the
+  active phase, or needs a separately reviewable change.
+- Group related candidates into a small number of substantial implementation
+  issues when their phase begins. Each issue links back to the audit.
+- Assign actionable issues to the active phase milestone. Do not create one
+  issue per future candidate or pre-create future milestones.
+- Agents must record promising shared functionality, but must not
+  automatically abstract it.
 
-Example issue:
+Example implementation issue created when its phase begins:
 
 ```
-Label: shared-candidate
-Title: Extract monthly coverage grid
+Milestone: Phase 5 — UI commonality
+Title: Establish shared period-coverage presentation
 
-Currently implemented in: Passbook
-Potential consumers: Tenure, Taxbook
-Reason: Multiple applications visualize document availability by month.
-Status: Needs validation in Tenure before extraction.
+Audit references: Period coverage presentation; common feedback states
+Strongest references: Tenure pay-period grid and Passbook statement grid
+Scope: Presentation API, responsive layouts, legend, and accessible actions
+App-local: Queries, mutations, status derivation, actions, and summary wording
+Validation: Exercise the presentation API against both current consumers
+Non-goals: Generic calendar, scheduler, or shared domain status model
 ```
 
 This convention applies to UI components, storage utilities, validation, infrastructure, and other potentially reusable functionality — not just UI.
@@ -273,7 +283,20 @@ For example, First Aid might have a mature storage implementation while Passbook
 
 Also include an assessment of which create-t3-turbo patterns are worth adopting.
 
-**Completion criteria:** A documented convergence plan identifies duplication, architectural differences, and proposed shared foundations — without premature refactoring.
+Phase 3 also records accepted architecture decisions, reference
+implementations, reusable candidates, validation needs, and the work required
+before Phase 4 starts. It does not extract packages or reorganize applications.
+
+The accepted application direction is a lightweight, DDD-inspired vertical
+slice with explicit repository boundaries. Repositories are the auditable path
+between stored data and application DTOs; full DDD ceremony, generic base
+repositories, and dependency-injection infrastructure are not goals. See the
+[Phase 3 audit](./docs/phase-3/architecture-audit.md).
+
+**Completion criteria:** The audit compares all four apps, identifies reference
+implementations, records target decisions and shared candidates, maps every
+candidate to an existing roadmap phase, and documents pre-Phase-4 readiness —
+without premature refactoring.
 
 ---
 
@@ -289,6 +312,12 @@ Each application should retain ownership of its data, generally consisting of:
 
 Introduce shared storage conventions and supporting infrastructure.
 
+Phase 4 creates one common durability foundation and adopts it in every
+application. It is not complete while an app uses an app-specific backup and
+restore path. The filesystem behavior already proven in First Aid, Passbook,
+and Tenure is the starting reference; it must be validated before Taxbook moves
+from database blobs.
+
 **Scope:**
 
 - Standardized file storage operations
@@ -303,6 +332,12 @@ Introduce shared storage conventions and supporting infrastructure.
 - Recovery from failed migrations
 - Documented recovery expectations
 - Upgrade rollback procedures
+- A versioned backup artifact containing SQLite, managed documents, a manifest,
+  file sizes/digests, integrity results, app identity, and required non-secret
+  metadata
+- Automated restore verification into an empty disposable volume
+- Safe Taxbook attachment migration that copies and verifies every blob before
+  retiring blob data and retains a rollback path through human validation
 
 **Critical requirements:**
 
@@ -312,7 +347,11 @@ Introduce shared storage conventions and supporting infrastructure.
 
 This phase establishes the data-safety capabilities that Phase 8 (release management) will later integrate into automated upgrade and rollback workflows. That is a dependency, not duplication.
 
-**Completion criteria:** Personal data can be backed up, restored, and safely migrated using documented and tested procedures. A failed deployment or corrupted application can be recovered without losing records beyond the explicitly accepted backup interval.
+**Completion criteria:** Every application uses the same storage/backup/restore
+foundation. Personal data can be backed up, restored, and safely migrated using
+documented and tested procedures, including verified Taxbook attachment
+migration. A failed deployment or corrupted application can be recovered
+without losing records beyond the explicitly accepted backup interval.
 
 ---
 
@@ -334,6 +373,11 @@ This is more than extracting shadcn components. We also want documented guidance
 | Data visualization   | Monthly coverage grids, timelines                    |
 | Feedback             | Loading, empty, error, and success states            |
 | Destructive actions  | Confirmation and deletion patterns                   |
+
+Phase 3 identified Taxbook as the theme-mechanics reference and the
+Tenure/Passbook period coverage views as the strongest validated visualization
+candidate. Shared presentation must not absorb app-specific queries, mutations,
+status derivation, or domain wording.
 
 **Money input behavior example:**
 
@@ -363,10 +407,16 @@ Potential shared concerns:
 - Database conventions
 - Testing utilities
 - Common TypeScript configuration
+- Incremental vertical-slice adoption guidance
+- Concrete feature repositories with explicit read DTOs and write commands
 
 This phase focuses on extracting and adopting technical functionality identified during earlier phases, using T3 patterns where useful.
 
 Not every duplicated implementation needs to become a shared package. Shared packages should emerge from demonstrated needs rather than hypothetical future requirements.
+
+Application architecture adoption is incremental when a feature is
+substantially changed or its current structure blocks a fix. Phase 6 does not
+perform a repository-wide directory rewrite.
 
 **Completion criteria:** Applications can adopt mature technical foundations without repeatedly implementing the same infrastructure or copying large amounts of code from existing applications.
 
@@ -462,17 +512,17 @@ Docker Compose remains the initial distribution method. Later, investigate an El
 
 To avoid an agent implementing the same thing twice across phases:
 
-| Phase                      | Owns                                                                                                | Does not own                        |
-| -------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| 1. Workspace consolidation | Monorepo and existing apps                                                                          | Shared package extraction           |
-| 2. Development workflow    | Issues, branching, documentation conventions, shared-candidate tracking, release note _conventions_ | Full release automation             |
-| 3. Architecture inventory  | Discovering existing patterns and differences                                                       | Refactoring                         |
-| 4. Data durability         | Storage, backup, restore, migration safety                                                          | General deployment infrastructure   |
-| 5. UI system               | Shared UI and interaction conventions                                                               | General technical utilities         |
-| 6. Shared foundations      | Shared technical packages and adoption                                                              | Application-specific business logic |
-| 7. Deployment              | Docker, networking, runtime configuration                                                           | Release management                  |
-| 8. Release management      | Versioning, builds, changelogs, updates, rollback orchestration                                     | Distribution packaging              |
-| 9. Distribution            | Docker distribution experience, potential Electron app                                              | Internal development workflow       |
+| Phase                      | Owns                                                                                                 | Does not own                        |
+| -------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| 1. Workspace consolidation | Monorepo and existing apps                                                                           | Shared package extraction           |
+| 2. Development workflow    | Issues, branching, documentation conventions, shared-candidate tracking, release note _conventions_  | Full release automation             |
+| 3. Architecture inventory  | Audit evidence, architecture decisions, reference selection, candidate records, and readiness work   | Convergence refactoring             |
+| 4. Data durability         | Storage, backup, restore, migration safety                                                           | General deployment infrastructure   |
+| 5. UI system               | Shared UI and interaction conventions                                                                | General technical utilities         |
+| 6. Shared foundations      | Incremental vertical-slice adoption, repository conventions, technical packages, and tooling presets | Application-specific business logic |
+| 7. Deployment              | Docker, networking, runtime configuration                                                            | Release management                  |
+| 8. Release management      | Versioning, builds, changelogs, updates, rollback orchestration                                      | Distribution packaging              |
+| 9. Distribution            | Docker distribution experience, potential Electron app                                               | Internal development workflow       |
 
 ---
 
@@ -634,12 +684,14 @@ Applications have consistent deployment, identifiable releases, safe upgrades, a
 
 ## 11. Immediate next step
 
-**Phase 1 is complete.** Phase 2 (development workflow and governance) is active.
+**Phases 1 and 2 are complete.** Phase 3 documentation is prepared for
+maintainer review.
 
 Current focus:
 
-1. Root documentation (`PRODUCT.md`, `ARCHITECTURE.md`, `DEVELOPMENT.md`, `AGENTS.md`) and changelog conventions
-2. Proportional GitHub CI with affected-app detection and maintainer fast path
-3. Issue forms, labels, PR template, and branch protection for `main`
+1. Review and merge the Phase 3 audit and architecture decisions.
+2. Complete any unresolved baseline verification and close Phase 3 only after
+   its completion criteria are met.
+3. Create the Phase 4 milestone when durability implementation actually begins.
 
-When Phase 2 is complete, proceed to Phase 3 (architecture inventory and convergence planning).
+Then proceed to Phase 4 using the acceptance contract in the Phase 3 audit.
