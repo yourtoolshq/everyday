@@ -255,10 +255,12 @@ Every backup is verified immediately: extract `db.sqlite`, run `integrity_check`
 
 ### Scheduling and retention
 
-The scheduler runs in the application process. Backups, migrations, restores, and file deletes share one state machine, so they never overlap.
+The scheduler runs in the application process once `boot()` succeeds, when the platform is defined with `backups`. Backups, migrations, restores, and file deletes share one state machine, so they never overlap. `yt-data` defines the platform without `backups`, so it never schedules.
 
-- On `ready`, a backup runs within minutes when the newest verified backup is older than one interval.
-- Retention keeps the configured daily, weekly, and monthly backups, prunes only verified backups, and always keeps the newest verified backup.
+- `schedule` is `daily@HH:MM` in the process's time zone, UTC in the Docker images unless `TZ` is set. The scheduler compares the wall clock every minute, so a host that slept or changed its clock still backs up on its next check.
+- On `ready`, a backup runs within two minutes when the newest verified backup is more than a day old.
+- A failed backup is logged as an error and retried at the next scheduled time.
+- Retention runs after every scheduled backup. Each count keeps the newest backup of that many of the most recent local calendar days, weeks starting Monday, and months that have a backup. Every trigger counts toward retention; pre-migration backups are kept for 30 days regardless. Retention prunes only verified backups and always keeps the newest verified backup.
 - Health reports `backup: ok | stale | failing` and `lastVerifiedBackupAt`. Stale means no verified backup within twice the interval. Backup status does not change the HTTP status.
 
 ### Command line

@@ -9,4 +9,8 @@ export const dataPlatform = defineDataPlatform({
   dataDir: env.DATA_DIR,
   backupDir: env.BACKUP_DIR,
   db: { schema, migrationsFolder: "drizzle" },
+  backups: {
+    schedule: "daily@02:00",
+    retention: { daily: 7, weekly: 4, monthly: 12 },
+  },
 });
