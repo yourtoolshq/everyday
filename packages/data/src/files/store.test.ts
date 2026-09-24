@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { DetectedFileType } from "./detect";
 import { createTestPlatform, pdfBytes } from "../test-platform";
 import { parseFileToken } from "./router";
+import { createFileCoordinator } from "./store";
 
 const pdf: DetectedFileType = {
   group: "pdf",
@@ -142,7 +143,6 @@ describe("withFiles", () => {
     expect(await exists(join(context.documentsDir, file.storageKey))).toBe(
       false,
     );
-    expect(await readdir(join(context.documentsDir, ".trash"))).toEqual([]);
   });
 
   it("restores a removed file when the transaction throws", async () => {
@@ -216,5 +216,24 @@ describe("read and stream", () => {
     await expect(
       files().read("4f7d3c2a-1b0e-4a9f-8c6d-5e4f3a2b1c0d"),
     ).rejects.toThrow("Invalid storage key: ../outside.pdf");
+  });
+});
+
+describe("createFileCoordinator", () => {
+  it("defers discards until every hold is released", async () => {
+    const coordinator = createFileCoordinator((work) => work());
+    const path = join(context.documentsDir, "held.pdf");
+    const file = { id: "held", storageKey: "held.pdf" };
+    await writeFile(path, pdfBytes);
+
+    const releaseFirst = coordinator.holdDeletes();
+    const releaseSecond = coordinator.holdDeletes();
+    await coordinator.discard(path, file);
+    await releaseFirst();
+    await releaseFirst();
+    expect(await exists(path)).toBe(true);
+
+    await releaseSecond();
+    expect(await exists(path)).toBe(false);
   });
 });

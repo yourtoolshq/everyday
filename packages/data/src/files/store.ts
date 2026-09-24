@@ -57,17 +57,74 @@ interface PendingFileChange {
   commit: () => Promise<void>;
 }
 
-const storageKeyPattern = /^[0-9a-f-]{36}\.[a-z0-9]{2,5}$/;
+export type FileCoordinator = ReturnType<typeof createFileCoordinator>;
+
+// Shared by every store over the same documents directory. `guard` keeps a file
+// transaction and its post-commit file changes inside one unit of database work, and a
+// backup holds deletes so the files referenced by its snapshot stay on disk until archived.
+export function createFileCoordinator(
+  guard: <T>(work: () => Promise<T>) => Promise<T>,
+) {
+  let holds = 0;
+  let deferred: (() => Promise<void>)[] = [];
+
+  async function discard(
+    path: string,
+    file: Pick<StoredFile, "id" | "storageKey">,
+  ) {
+    try {
+      await unlink(path);
+    } catch (error) {
+      if (!isMissing(error)) throw error;
+      console.warn("removed file was already missing on disk", {
+        fileId: file.id,
+        storageKey: file.storageKey,
+      });
+    }
+  }
+
+  return {
+    discard(path: string, file: Pick<StoredFile, "id" | "storageKey">) {
+      if (holds === 0) return discard(path, file);
+      deferred.push(() => discard(path, file));
+      return Promise.resolve();
+    },
+    holdDeletes() {
+      holds += 1;
+      let released = false;
+      return async () => {
+        if (released) return;
+        released = true;
+        holds -= 1;
+        if (holds > 0) return;
+        const pending = deferred;
+        deferred = [];
+        const outcomes = await Promise.allSettled(pending.map((run) => run()));
+        for (const outcome of outcomes) {
+          if (outcome.status === "rejected") {
+            console.warn("failed to discard removed file", {
+              error: outcome.reason as unknown,
+            });
+          }
+        }
+      };
+    },
+    guard,
+  };
+}
+
+export const storageKeyPattern = /^[0-9a-f-]{36}\.[a-z0-9]{2,5}$/;
 
 export type FileStore = ReturnType<typeof createFileStore>;
 
 export function createFileStore(options: {
   db: Database;
   documentsDir: string;
+  coordinator: FileCoordinator;
 }) {
   const root = resolve(options.documentsDir);
   const stagingDir = join(root, ".staging");
-  const trashDir = join(root, ".trash");
+  const { coordinator } = options;
 
   function storedPath(storageKey: string) {
     if (
@@ -200,28 +257,23 @@ export function createFileStore(options: {
         if (!file) return;
 
         const path = storedPath(file.storageKey);
-        await mkdir(trashDir, { recursive: true });
-        const trashed = join(trashDir, `${randomUUID()}.deleted`);
-        try {
-          await rename(path, trashed);
-        } catch (error) {
-          if (!isMissing(error)) throw error;
-          console.warn("removed file was already missing on disk", {
-            fileId,
-            storageKey: file.storageKey,
-          });
-          return;
-        }
         pending.push({
           path,
-          rollback: () => rename(trashed, path),
-          commit: () => unlink(trashed),
+          rollback: () => Promise.resolve(),
+          commit: () => coordinator.discard(path, file),
         });
       },
     };
   }
 
-  async function withFiles<TDb extends Database, TResult>(
+  function withFiles<TDb extends Database, TResult>(
+    db: TDb,
+    fn: (tx: TransactionOf<TDb>, files: FileTransaction) => Promise<TResult>,
+  ): Promise<TResult> {
+    return coordinator.guard(() => runWithFiles(db, fn));
+  }
+
+  async function runWithFiles<TDb extends Database, TResult>(
     db: TDb,
     fn: (tx: TransactionOf<TDb>, files: FileTransaction) => Promise<TResult>,
   ): Promise<TResult> {
