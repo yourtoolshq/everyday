@@ -7,11 +7,17 @@ import { drizzle } from "drizzle-orm/libsql";
 import type { BackupContext } from "./backup/backups";
 import type { BackupPolicy } from "./backup/schedule";
 import type { FileCoordinator } from "./files/store";
+import type { BlockedReason, JournalMigration } from "./migrations";
 import { createBackups, recoverInterruptedRestore } from "./backup/backups";
 import { parseSchedule, startBackupSchedule } from "./backup/schedule";
 import { PausableClient } from "./connection";
 import { createFileCoordinator, createFileStore } from "./files/store";
-import { applyMigrations, readMigrationPlan } from "./migrations";
+import {
+  applyMigrations,
+  DataPlatformBlockedError,
+  readJournal,
+  readMigrationPlan,
+} from "./migrations";
 
 export interface DataPlatformConfig<TSchema extends Record<string, unknown>> {
   app: string;
@@ -26,11 +32,37 @@ export type DataPlatform<
   TSchema extends Record<string, unknown> = Record<string, unknown>,
 > = ReturnType<typeof defineDataPlatform<TSchema>>;
 
+export type PlatformState =
+  | { state: "ready" }
+  | { state: "upgrading"; step: "backup" | "migrate"; migrations: string[] }
+  | { state: "restoring" }
+  | { state: "blocked"; reason: BlockedReason; message: string };
+
+export interface RestorableBackup {
+  id: string;
+  createdAt: string;
+  appVersion: string | null;
+  trigger: string;
+}
+
+export type PlatformStatus = PlatformState & {
+  app: string;
+  version: string | null;
+  // Verified backups this version can restore; listed while the platform is blocked.
+  restorableBackups?: RestorableBackup[];
+};
+
+export class DataPlatformBusyError extends Error {
+  override name = "DataPlatformBusyError";
+}
+
 interface Connection {
   client: PausableClient;
   coordinator: FileCoordinator;
   serialize: <T>(operation: () => Promise<T>) => Promise<T>;
+  state: PlatformState;
   booted?: Promise<void>;
+  upgrade?: Promise<void>;
   stopSchedule?: () => void;
 }
 
@@ -56,6 +88,7 @@ function openConnection(databasePath: string) {
     connection = {
       client,
       coordinator: createFileCoordinator((work) => client.guard(work)),
+      state: { state: "upgrading", step: "migrate", migrations: [] },
       serialize(operation) {
         const result = queue.then(operation, operation);
         queue = result.catch(() => undefined);
@@ -89,23 +122,40 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
     serialize: connection.serialize,
   };
 
-  const backups = createBackups(backupContext);
+  const archives = createBackups(backupContext);
+  // The scheduler and the upgrade use the same object the platform exposes.
+  const backups = { ...archives, restore };
   const planOptions = {
     app: config.app,
     databasePath,
     migrationsFolder: config.db.migrationsFolder,
   };
 
-  async function prepareDatabase() {
-    await connection.serialize(async () => {
-      await recoverInterruptedRestore(backupContext);
-      await mkdir(documentsDir, { recursive: true });
-    });
-    const plan = await readMigrationPlan(planOptions);
-    if (plan.status === "current") return;
+  async function enterReady() {
+    connection.state = { state: "ready" };
+    if (config.backups && !connection.stopSchedule) {
+      connection.stopSchedule = await startBackupSchedule({
+        app: config.app,
+        policy: config.backups,
+        backups,
+      });
+    }
+  }
 
+  function block(reason: BlockedReason, message: string) {
+    connection.state = { state: "blocked", reason, message };
+    console.error("data platform blocked", {
+      app: config.app,
+      reason,
+      message,
+    });
+  }
+
+  async function migrate(pending: JournalMigration[], applied: number) {
+    const migrations = pending.map((m) => m.tag);
     let preMigrationBackup: string | null = null;
-    if (plan.applied > 0) {
+    if (applied > 0) {
+      connection.state = { state: "upgrading", step: "backup", migrations };
       const backup = await backups.create({ trigger: "pre-migration" });
       if (backup.verification.status !== "verified") {
         throw new Error(
@@ -114,6 +164,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
       }
       preMigrationBackup = backup.id;
     }
+    connection.state = { state: "upgrading", step: "migrate", migrations };
     await connection.serialize(() =>
       connection.client.exclusive(async () => {
         const current = await readMigrationPlan(planOptions);
@@ -132,15 +183,95 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
     );
   }
 
-  async function boot() {
-    await prepareDatabase();
-    if (config.backups) {
-      connection.stopSchedule = await startBackupSchedule({
+  async function upgrade(pending: JournalMigration[], applied: number) {
+    try {
+      await migrate(pending, applied);
+    } catch (error) {
+      block(
+        "migration-failed",
+        error instanceof Error ? error.message : String(error),
+      );
+      return;
+    }
+    try {
+      await enterReady();
+    } catch (error) {
+      console.error("backup schedule failed to start", {
         app: config.app,
-        policy: config.backups,
-        backups,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
+  }
+
+  // Recovery and the version guard are awaited; pending migrations run in the
+  // background while the state is `upgrading`, so the gates can answer requests.
+  async function boot() {
+    await connection.serialize(async () => {
+      await recoverInterruptedRestore(backupContext);
+      await mkdir(documentsDir, { recursive: true });
+    });
+    let plan;
+    try {
+      plan = await readMigrationPlan(planOptions);
+    } catch (error) {
+      if (!(error instanceof DataPlatformBlockedError)) throw error;
+      block(error.reason, error.message);
+      return;
+    }
+    if (plan.status === "current") {
+      await enterReady();
+      return;
+    }
+    connection.state = {
+      state: "upgrading",
+      step: plan.applied > 0 ? "backup" : "migrate",
+      migrations: plan.pending.map((m) => m.tag),
+    };
+    connection.upgrade = upgrade(plan.pending, plan.applied);
+  }
+
+  function startBoot() {
+    connection.booted ??= boot();
+    return connection.booted;
+  }
+
+  async function restore(archivePath: string) {
+    const previous = connection.state;
+    if (previous.state === "upgrading" || previous.state === "restoring") {
+      throw new DataPlatformBusyError(
+        `${config.app} is ${previous.state === "upgrading" ? "upgrading its data" : "already restoring a backup"}; try again when it is done`,
+      );
+    }
+    connection.state = { state: "restoring" };
+    let result;
+    try {
+      result = await archives.restore(archivePath);
+    } catch (error) {
+      connection.state = previous;
+      throw error;
+    }
+    await enterReady();
+    return result;
+  }
+
+  async function listRestorableBackups(): Promise<RestorableBackup[]> {
+    const known = new Set(
+      readJournal(config.db.migrationsFolder).map((m) => m.hash),
+    );
+    return (await backups.list()).flatMap(({ id, manifest, verification }) =>
+      manifest &&
+      verification?.status === "verified" &&
+      manifest.migrations.every((m) => known.has(m.hash))
+        ? [
+            {
+              id,
+              createdAt: manifest.createdAt,
+              appVersion: manifest.appVersion,
+              trigger: manifest.trigger,
+            },
+          ]
+        : [],
+    );
   }
 
   return {
@@ -153,9 +284,30 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
       coordinator: connection.coordinator,
     }),
     backups,
-    boot() {
-      connection.booted ??= boot();
-      return connection.booted;
+    boot: startBoot,
+    async state(): Promise<PlatformState> {
+      await startBoot();
+      return connection.state;
+    },
+    async status(): Promise<PlatformStatus> {
+      await startBoot();
+      const state = connection.state;
+      const status = { app: config.app, version: backupContext.appVersion };
+      // Restoring cannot fix a failed migration: the restored data is upgraded with the same migrations.
+      if (state.state === "blocked" && state.reason !== "migration-failed") {
+        return {
+          ...status,
+          ...state,
+          restorableBackups: await listRestorableBackups(),
+        };
+      }
+      return { ...status, ...state };
+    },
+    // Resolves once boot has finished, including any migrations it started.
+    async settled(): Promise<PlatformState> {
+      await startBoot();
+      await connection.upgrade;
+      return connection.state;
     },
     close() {
       connection.stopSchedule?.();

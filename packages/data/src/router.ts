@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import type { DataPlatform } from "./platform";
 import { BackupVerificationError } from "./backup/backups";
+import { DataPlatformBusyError } from "./platform";
 
 const t = initTRPC.create();
 
@@ -37,6 +38,13 @@ export function createDataRouter(platform: DataPlatform) {
         try {
           return await platform.backups.restore(backup.path);
         } catch (error) {
+          if (error instanceof DataPlatformBusyError) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: error.message,
+              cause: error,
+            });
+          }
           if (!(error instanceof BackupVerificationError)) throw error;
           throw new TRPCError({
             code: "BAD_REQUEST",

@@ -1,5 +1,12 @@
-export { defineDataPlatform } from "./platform";
-export type { DataPlatform, DataPlatformConfig } from "./platform";
+export { DataPlatformBusyError, defineDataPlatform } from "./platform";
+export type {
+  DataPlatform,
+  DataPlatformConfig,
+  PlatformState,
+  PlatformStatus,
+  RestorableBackup,
+} from "./platform";
+export { requireReady } from "./readiness";
 export { BackupVerificationError } from "./backup/backups";
 export { DataPlatformBlockedError, MigrationFailedError } from "./migrations";
 export type { RestoreResult } from "./backup/backups";

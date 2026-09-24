@@ -2,6 +2,8 @@ import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import { requireReady } from "@yourtoolshq/data";
+
 import { dataPlatform } from "~/server/data";
 import { checkDatabaseConnection, db } from "~/server/db";
 
@@ -30,4 +32,4 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
 
 export const createCallerFactory = t.createCallerFactory;
 export const createTRPCRouter = t.router;
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure.use(requireReady(dataPlatform));

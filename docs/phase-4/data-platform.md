@@ -135,15 +135,15 @@ create: publicProcedure
 
 All served by the catch-all route.
 
-| Route                             | Purpose                                                                |
-| --------------------------------- | ---------------------------------------------------------------------- |
-| `POST /api/data/upload/:endpoint` | Validate and stage an upload; returns a token                          |
-| `GET /api/data/files/:id`         | Stream a file (`?download=1` for attachment disposition)               |
-| `GET /api/data/files/:id/eml`     | Parsed EML for the viewer                                              |
-| `GET /api/data/backups/:id`       | Stream a backup archive                                                |
-| `POST /api/data/backups/upload`   | Upload an archive to restore                                           |
-| `GET /api/data/status`            | Platform state and progress                                            |
-| `/api/data/trpc/*`                | Platform router: `backups`, `usage`, `integrity`, `schedule`, `health` |
+| Route                             | Purpose                                                                 |
+| --------------------------------- | ----------------------------------------------------------------------- |
+| `POST /api/data/upload/:endpoint` | Validate and stage an upload; returns a token                           |
+| `GET /api/data/files/:id`         | Stream a file (`?download=1` for attachment disposition)                |
+| `GET /api/data/files/:id/eml`     | Parsed EML for the viewer                                               |
+| `GET /api/data/backups/:id`       | Stream a backup archive                                                 |
+| `POST /api/data/backups/upload`   | Upload an archive to restore                                            |
+| `GET /api/data/status`            | Platform state; see [Platform state](#boot-sequence-and-platform-state) |
+| `/api/data/trpc/*`                | Platform router: `backups`, `usage`, `integrity`, `schedule`, `health`  |
 
 The `backups` router has `list`, `create`, `verify`, and `restore`; `verify` and `restore` take a backup id in the backup directory. The platform router accepts POST requests only as `application/json` and answers 415 otherwise. Applications keep their own router at `/api/trpc` for domain procedures.
 
@@ -183,17 +183,32 @@ State is one of `ready`, `upgrading`, `restoring`, `blocked`.
   6. ready          start scheduler; reap .staging older than 24 h
 ```
 
+`boot()` resolves after step 3. Steps 4 and 5 run in the background, so the status endpoint and the gates answer while they do; `settled()` resolves once they finish and returns the state. Local libsql runs each statement synchronously, and the runner yields to the event loop between statements, so one long statement holds requests until it completes.
+
+`GET /api/data/status` returns the state with the application name and version:
+
+```text
+{ "app": "passbook", "version": "1.4.0", "state": "upgrading", "step": "migrate", "migrations": ["0011_x"] }
+{ "app": "passbook", "version": "1.4.0", "state": "blocked", "reason": "downgrade", "message": "…",
+  "restorableBackups": [{ "id": "…", "createdAt": "…", "appVersion": "1.5.0", "trigger": "pre-migration" }] }
+```
+
+`step` is `backup` or `migrate`. `restorableBackups` lists verified backups whose migrations are all in the running version's journal; it is present while the version guard blocks the database. A `migration-failed` block has none: a restored backup is upgraded by the same migrations.
+
 The version guard reads the rows drizzle keeps in `__drizzle_migrations`, matches each to the journal entry with the same timestamp, and compares their hashes. The runner writes the same rows drizzle does, so `drizzle-kit migrate` works on a database the platform migrated.
 
 Migrations run with foreign keys off because drizzle-kit's SQLite table rebuilds (`CREATE __new_x`, `DROP x`, `RENAME`) set `PRAGMA foreign_keys=OFF` inside the migration transaction, where SQLite ignores it; with enforcement on, `DROP x` cascades to child rows. Every other connection enforces foreign keys, which is the libsql default.
 
 ### Gates
 
-| Layer  | Behavior when not `ready`                                                                                                        |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------- |
-| Pages  | `DataGate` renders `MaintenanceScreen` (progress, or the blocked reason with compatible backups to restore); reloads on `ready`  |
-| tRPC   | Readiness middleware throws `SERVICE_UNAVAILABLE`. This is the guard that matters: Next.js renders layouts and pages in parallel |
-| Health | `/api/health` returns 503 with the state. Compose `start_period` covers the longest expected migration                           |
+| Layer  | Behavior when not `ready`                                                                                                                                                                                                                          |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pages  | `DataGate` renders `MaintenanceScreen` (progress, or the blocked reason with compatible backups to restore); reloads on `ready`                                                                                                                    |
+| tRPC   | Readiness middleware throws `SERVICE_UNAVAILABLE`. This is the guard that matters: Next.js renders layouts and pages in parallel                                                                                                                   |
+| Files  | `GET /api/data/files/:id` and `POST /api/data/upload/:endpoint` answer 503; a migration may be changing `yt_files`                                                                                                                                 |
+| Health | `/api/health` answers 200 with `status: "maintenance"` and the state, and skips the database check. Traefik routes only to healthy containers, and the maintenance screen has to stay reachable. When `ready`, a failed database check answers 503 |
+
+The platform router and backup downloads stay available: restoring a backup is the remedy for a blocked database.
 
 ## Version guarantees
 
@@ -293,12 +308,14 @@ A host cron entry such as `docker compose exec -T app yt-data backup` adds backu
 
 1. Extract the archive into `.restore/incoming` and verify it; reject it if its migrations are not a subset of the application journal.
 2. Take a `pre-restore` backup; stop if it does not verify.
-3. Enter `restoring`: new database work waits, and work already running finishes. Write `restore.inprogress` (`swapping`).
+3. Pause database work: new work waits, and work already running finishes. Write `restore.inprogress` (`swapping`).
 4. Close the connection, move the live database and documents to `.restore/previous`, move the extracted ones into place, reopen, and run `integrity_check`.
 5. Apply pending migrations in one transaction when the backup is from an older version. The archive is the pre-migration state, so no further backup is taken.
 6. Mark the restore `swapped`, delete `.restore`, and remove the marker. Waiting work continues against the restored data.
 
 A failure in steps 4–5 moves the previous data back. At boot, a `swapping` marker rolls the swap back and a `swapped` marker finishes the cleanup.
+
+The platform state is `restoring` for the whole restore. A restore requested while the platform is `upgrading` or `restoring` is refused, with 409 over HTTP. A successful restore leaves the platform `ready` and starts the scheduler if it was not running; a failed one returns to the state it started from.
 
 ## Integrity
 

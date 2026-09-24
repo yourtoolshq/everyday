@@ -60,7 +60,7 @@ beforeAll(async () => {
 
   vi.stubEnv("DATA_DIR", dataDir);
   ({ dataPlatform: platform } = await import("~/server/data"));
-  await platform.boot();
+  expect(await platform.settled()).toEqual({ state: "ready" });
   caller = await createCaller();
   client = createClient({ url: `file:${join(dataDir, "passbook.db")}` });
 });

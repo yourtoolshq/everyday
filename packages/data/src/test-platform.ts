@@ -57,7 +57,7 @@ export async function createTestPlatform() {
     dataDir,
     db: { schema: { filesTable }, migrationsFolder },
   });
-  await platform.boot();
+  await platform.settled();
   return {
     db: platform.db,
     dataDir,

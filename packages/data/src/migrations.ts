@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { setImmediate as yieldToEventLoop } from "node:timers/promises";
 import type { Client } from "@libsql/client";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 
@@ -19,13 +20,17 @@ export type MigrationPlan =
   | { status: "downgrade"; unknown: number }
   | { status: "edited-migration"; tag: string };
 
-export type BlockedReason = "downgrade" | "edited-migration";
+export type BlockedReason =
+  "downgrade" | "edited-migration" | "migration-failed";
 
 export class DataPlatformBlockedError extends Error {
   override name = "DataPlatformBlockedError";
-  readonly reason: BlockedReason;
+  readonly reason: Exclude<BlockedReason, "migration-failed">;
 
-  constructor(reason: BlockedReason, message: string) {
+  constructor(
+    reason: Exclude<BlockedReason, "migration-failed">,
+    message: string,
+  ) {
     super(message);
     this.reason = reason;
   }
@@ -176,6 +181,9 @@ export async function applyMigrations(
             { cause: error },
           );
         }
+        // Local libsql runs each statement synchronously; yielding lets the server
+        // answer status and maintenance requests between statements.
+        await yieldToEventLoop();
       }
       await client.execute({
         sql: "INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)",
