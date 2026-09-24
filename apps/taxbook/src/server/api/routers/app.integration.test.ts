@@ -59,6 +59,8 @@ describe("Tax Book API", () => {
   beforeEach(async () => {
     testDirectory = mkdtempSync(join(tmpdir(), "taxbook-test-"));
     client = createClient({ url: `file:${join(testDirectory, "test.db")}` });
+    // Throwaway database: skipping fsyncs keeps libsql's synchronous calls from stalling the worker on slow CI disks.
+    await client.execute("PRAGMA synchronous = OFF");
     await client.executeMultiple(migration);
     database = drizzle(client, { schema });
     caller = createCaller({ db: database, headers: new Headers() });
