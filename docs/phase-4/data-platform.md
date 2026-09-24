@@ -226,7 +226,14 @@ An application's `migrations:check` script runs `yt-data migrations check` again
 
 In the application directory, run `pnpm migrations:check` right after `pnpm db:generate` and add any marker then: adding it changes the file's hash, so a development database that already applied the migration reports `blocked(edited-migration)`.
 
-An upgrade test applies new migrations to the fixture database from the previous release, followed by integrity and foreign-key checks.
+Each application's `src/server/db/upgrade.test.ts` upgrades the previous release's data. Its fixture, `src/server/db/fixtures/previous-release/`, holds `<app>.sql`, a `sqlite3 .dump` of a fictional database, and the `documents/` it references. The test loads the fixture into a temporary data directory and boots the platform on it. It then checks for a verified pre-migration backup, unchanged row counts, `integrity_check`, and `foreign_key_check`. Finally it calls the application's own procedures and reads every file.
+
+When a release ships, refresh the fixture from that release:
+
+1. Load the fixture into a data directory with `sqlite3 <dir>/<app>.db < <app>.sql` and copy `documents/` next to it.
+2. Start the released version with `DATA_DIR=<dir>`. It migrates the fixture.
+3. Add fictional records for anything the release introduced.
+4. Stop it and replace the fixture with `sqlite3 <dir>/<app>.db .dump` and the files in `<dir>/documents/`, leaving out its `.staging`, `.trash`, and `.orphans` folders.
 
 ## Backups
 
