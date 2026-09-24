@@ -47,6 +47,7 @@ const publicDocumentFields = {
   title: documents.title,
   documentDate: documents.documentDate,
   notes: documents.notes,
+  fileId: documents.fileId,
   originalFilename: documents.originalFilename,
   mimeType: documents.mimeType,
   sizeBytes: documents.sizeBytes,
@@ -121,6 +122,7 @@ type EventDocument = {
   title: string;
   documentDate: string | null;
   notes: string | null;
+  fileId: string;
   originalFilename: string;
   mimeType: string;
   sizeBytes: number;

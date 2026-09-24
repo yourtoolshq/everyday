@@ -7,11 +7,15 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+import { filesTable } from "@yourtoolshq/data/schema";
+
 import type { AccountEventType } from "~/lib/account-events";
 import type { AccountStatus } from "~/lib/account-status";
 import type { AccountType } from "~/lib/account-types";
 import type { DocumentType } from "~/lib/documents";
 import type { StatementFrequency } from "~/lib/statement-frequency";
+
+export { filesTable };
 
 const id = () =>
   text("id")
@@ -200,6 +204,9 @@ export const documents = sqliteTable(
         onDelete: "set null",
       },
     ),
+    fileId: text("file_id")
+      .notNull()
+      .references(() => filesTable.id),
     originalFilename: text("original_filename").notNull(),
     storageKey: text("storage_key").notNull().unique(),
     mimeType: text("mime_type").notNull(),
@@ -211,6 +218,7 @@ export const documents = sqliteTable(
     index("documents_account_idx").on(table.accountId),
     index("documents_event_idx").on(table.eventId),
     index("documents_terms_snapshot_idx").on(table.termsSnapshotId),
+    uniqueIndex("documents_file_unique").on(table.fileId),
     uniqueIndex("documents_account_period_unique").on(
       table.accountId,
       table.periodKey,

@@ -2,7 +2,9 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq, isNotNull, ne, not } from "drizzle-orm";
 import { z } from "zod";
 
-import { documentTypes } from "~/lib/documents";
+import { fileToken } from "@yourtoolshq/data/files";
+
+import { defaultDocumentTitle, documentTypes } from "~/lib/documents";
 import { defaultStatementFrequency } from "~/lib/statement-frequency";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
@@ -14,11 +16,6 @@ import {
   statementExpectations,
 } from "~/server/db/schema";
 import { validateStatementPeriod } from "~/server/documents/statement-upload";
-import {
-  discardStagedDocuments,
-  restoreStagedDocuments,
-  stageDocumentsForDeletion,
-} from "~/server/documents/storage";
 
 const idInput = z.object({ id: z.string().uuid() });
 const overviewFilter = z.object({
@@ -38,6 +35,7 @@ const publicDocumentFields = {
   notes: documents.notes,
   eventId: documents.eventId,
   termsSnapshotId: documents.termsSnapshotId,
+  fileId: documents.fileId,
   originalFilename: documents.originalFilename,
   mimeType: documents.mimeType,
   sizeBytes: documents.sizeBytes,
@@ -53,6 +51,35 @@ const updateDocumentInput = z
     documentDate: z.string().trim().max(10).nullable().optional(),
     notes: z.string().trim().max(2000).nullable().optional(),
     periodKey: z.string().trim().min(1).nullable().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "statement" && !data.periodKey) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Choose a statement period.",
+        path: ["periodKey"],
+      });
+    }
+    if (data.type !== "statement" && data.periodKey) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Only statements can be linked to a period.",
+        path: ["periodKey"],
+      });
+    }
+  });
+
+const createDocumentInput = z
+  .object({
+    accountId: z.string().uuid(),
+    file: fileToken("document"),
+    type: z.enum(documentTypes),
+    title: z.string().trim().max(160).optional(),
+    periodKey: z.string().trim().min(1).optional(),
+    documentDate: z.string().trim().max(10).nullable().optional(),
+    notes: z.string().trim().max(2000).optional(),
+    eventId: z.string().uuid().optional(),
+    termsSnapshotId: z.string().uuid().nullable().optional(),
   })
   .superRefine((data, ctx) => {
     if (data.type === "statement" && !data.periodKey) {
@@ -122,6 +149,7 @@ export const documentsRouter = createTRPCRouter({
         notes: row.notes,
         eventId: row.eventId,
         termsSnapshotId: row.termsSnapshotId,
+        fileId: row.fileId,
         originalFilename: row.originalFilename,
         mimeType: row.mimeType,
         sizeBytes: row.sizeBytes,
@@ -168,6 +196,152 @@ export const documentsRouter = createTRPCRouter({
 
     return byAccount;
   }),
+
+  create: publicProcedure
+    .input(createDocumentInput)
+    .mutation(async ({ ctx, input }) => {
+      const [account] = await ctx.db
+        .select({
+          id: accounts.id,
+          displayName: accounts.displayName,
+          accountType: accounts.accountType,
+          openedDate: accounts.openedDate,
+          closedDate: accounts.closedDate,
+          status: accounts.status,
+          statementFrequency: statementExpectations.frequency,
+        })
+        .from(accounts)
+        .leftJoin(
+          statementExpectations,
+          eq(statementExpectations.accountId, accounts.id),
+        )
+        .where(eq(accounts.id, input.accountId));
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found.",
+        });
+      }
+
+      let eventId: string | null = null;
+      let termsSnapshotId = input.termsSnapshotId ?? null;
+      if (input.eventId) {
+        const [event] = await ctx.db
+          .select({
+            id: accountEvents.id,
+            termsSnapshotId: accountEvents.termsSnapshotId,
+          })
+          .from(accountEvents)
+          .where(
+            and(
+              eq(accountEvents.id, input.eventId),
+              eq(accountEvents.accountId, account.id),
+            ),
+          );
+        if (!event) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Activity not found.",
+          });
+        }
+        eventId = event.id;
+        termsSnapshotId ??= event.termsSnapshotId;
+      }
+
+      if (input.type === "void_cheque") {
+        if (account.accountType !== "chequing") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Void cheques belong on chequing accounts only.",
+          });
+        }
+        const [existingVoidCheque] = await ctx.db
+          .select({ id: documents.id })
+          .from(documents)
+          .where(
+            and(
+              eq(documents.accountId, account.id),
+              eq(documents.type, "void_cheque"),
+            ),
+          );
+        if (existingVoidCheque) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message:
+              "This account already has a void cheque. Delete it before uploading a new one.",
+          });
+        }
+      }
+
+      let periodKey: string | null = null;
+      if (input.type === "statement" && input.periodKey) {
+        const validation = validateStatementPeriod(
+          {
+            openedDate: account.openedDate,
+            closedDate: account.closedDate,
+            status: account.status,
+            statementFrequency:
+              account.statementFrequency ?? defaultStatementFrequency,
+          },
+          input.periodKey,
+        );
+        if (!validation.ok) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: validation.error,
+          });
+        }
+        periodKey = validation.period.key;
+
+        const [duplicate] = await ctx.db
+          .select({ id: documents.id })
+          .from(documents)
+          .where(
+            and(
+              eq(documents.accountId, account.id),
+              eq(documents.type, "statement"),
+              eq(documents.periodKey, periodKey),
+            ),
+          );
+        if (duplicate) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "This account already has a statement for that period.",
+          });
+        }
+      }
+
+      return ctx.files.withFiles(ctx.db, async (tx, files) => {
+        const file = await files.claim(input.file);
+        const [document] = await tx
+          .insert(documents)
+          .values({
+            accountId: account.id,
+            type: input.type,
+            periodKey,
+            title:
+              input.title ||
+              defaultDocumentTitle({
+                type: input.type,
+                accountDisplayName: account.displayName,
+                periodKey,
+                documentDate: input.documentDate,
+                filename: file.originalFilename,
+              }),
+            documentDate: input.documentDate || null,
+            notes: input.notes || null,
+            eventId,
+            termsSnapshotId,
+            fileId: file.id,
+            originalFilename: file.originalFilename,
+            storageKey: file.storageKey,
+            mimeType: file.mimeType,
+            sizeBytes: file.sizeBytes,
+          })
+          .returning(publicDocumentFields);
+        return document;
+      });
+    }),
 
   update: publicProcedure
     .input(updateDocumentInput)
@@ -273,25 +447,20 @@ export const documentsRouter = createTRPCRouter({
       return document;
     }),
 
-  delete: publicProcedure.input(idInput).mutation(async ({ ctx, input }) => {
-    const [document] = await ctx.db
-      .select({ id: documents.id, storageKey: documents.storageKey })
-      .from(documents)
-      .where(eq(documents.id, input.id));
-    if (!document)
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Document not found.",
-      });
+  delete: publicProcedure.input(idInput).mutation(({ ctx, input }) =>
+    ctx.files.withFiles(ctx.db, async (tx, files) => {
+      const [document] = await tx
+        .delete(documents)
+        .where(eq(documents.id, input.id))
+        .returning({ id: documents.id, fileId: documents.fileId });
+      if (!document)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Document not found.",
+        });
 
-    const staged = await stageDocumentsForDeletion([document.storageKey]);
-    try {
-      await ctx.db.delete(documents).where(eq(documents.id, input.id));
-    } catch (error) {
-      await restoreStagedDocuments(staged);
-      throw error;
-    }
-    await discardStagedDocuments(staged);
-    return { id: document.id };
-  }),
+      await files.remove(document.fileId);
+      return { id: document.id };
+    }),
+  ),
 });

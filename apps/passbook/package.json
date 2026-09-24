@@ -32,6 +32,8 @@
     "@trpc/client": "catalog:",
     "@trpc/react-query": "catalog:",
     "@trpc/server": "catalog:",
+    "@yourtoolshq/data": "workspace:*",
+    "@yourtoolshq/data-ui": "workspace:*",
     "class-variance-authority": "catalog:",
     "cn": "catalog:",
     "drizzle-orm": "catalog:",

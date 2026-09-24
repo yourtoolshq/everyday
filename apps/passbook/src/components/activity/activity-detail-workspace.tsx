@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { fileUrl } from "@yourtoolshq/data-ui";
+
 import type { AccountEventType } from "~/lib/account-events";
 import type { DocumentType } from "~/lib/documents";
 import { AccountEventSheet } from "~/components/accounts/account-event-sheet";
@@ -62,6 +64,7 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [emlPreview, setEmlPreview] = useState<{
     id: string;
+    fileId: string;
     title: string;
   } | null>(null);
   const [snapshotDetailOpen, setSnapshotDetailOpen] = useState(false);
@@ -296,6 +299,7 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
                           onClick={() =>
                             setEmlPreview({
                               id: document.id,
+                              fileId: document.fileId,
                               title: document.title,
                             })
                           }
@@ -305,7 +309,7 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
                       ) : null}
                       <Button variant="ghost" size="icon-sm" asChild>
                         <a
-                          href={`/api/documents/${document.id}/file`}
+                          href={fileUrl(document.fileId)}
                           target="_blank"
                           rel="noreferrer"
                           aria-label={`Open ${document.title}`}
@@ -373,6 +377,7 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
       {emlPreview ? (
         <EmlPreviewDialog
           documentId={emlPreview.id}
+          fileId={emlPreview.fileId}
           title={emlPreview.title}
           open={Boolean(emlPreview)}
           onOpenChange={(nextOpen) => {

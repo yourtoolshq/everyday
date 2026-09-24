@@ -32,7 +32,7 @@ import {
   deriveAllUploadablePeriods,
   suggestDefaultPeriodKey,
 } from "~/lib/expected-periods";
-import { uploadStatement } from "~/lib/upload-statement";
+import { uploadFile } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type Account = RouterOutputs["accounts"]["list"][number];
@@ -65,6 +65,7 @@ export function StatementUploadSheet({
   periodKey: initialPeriodKey,
 }: StatementUploadSheetProps) {
   const utils = api.useUtils();
+  const createDocument = api.documents.create.useMutation();
   const accounts = api.accounts.list.useQuery();
   const statementDocuments =
     api.documents.statementDocumentsByAccount.useQuery();
@@ -182,9 +183,11 @@ export function StatementUploadSheet({
 
     setUploading(true);
     try {
-      await uploadStatement({
+      const uploaded = await uploadFile("document", file);
+      await createDocument.mutateAsync({
         accountId,
-        file,
+        file: uploaded.token,
+        type: "statement",
         periodKey,
         title,
         notes,

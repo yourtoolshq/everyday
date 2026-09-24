@@ -2,10 +2,12 @@
 
 import { ExternalLink, Mail, Pencil, Trash2 } from "lucide-react";
 
+import { fileUrl } from "@yourtoolshq/data-ui";
+
 import { Button } from "~/components/ui/button";
 
 type DocumentActionButtonsProps = {
-  documentId: string;
+  fileId: string;
   title: string;
   mimeType?: string;
   onPreview?: () => void;
@@ -15,7 +17,7 @@ type DocumentActionButtonsProps = {
 };
 
 export function DocumentActionButtons({
-  documentId,
+  fileId,
   title,
   onPreview,
   onEdit,
@@ -36,7 +38,7 @@ export function DocumentActionButtons({
       ) : null}
       <Button variant="ghost" size={size} asChild>
         <a
-          href={`/api/documents/${documentId}/file`}
+          href={fileUrl(fileId)}
           target="_blank"
           rel="noreferrer"
           aria-label={`Open ${title}`}

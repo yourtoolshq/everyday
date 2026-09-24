@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { fileUrl } from "@yourtoolshq/data-ui";
+
 import type { ParsedEml } from "~/lib/eml";
 import { Button } from "~/components/ui/button";
 import {
@@ -59,11 +61,13 @@ function EmailAddressFields({ email }: { email: ParsedEml }) {
 
 export function EmlPreviewDialog({
   documentId,
+  fileId,
   title,
   open,
   onOpenChange,
 }: {
   documentId: string;
+  fileId: string;
   title: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -153,11 +157,7 @@ export function EmlPreviewDialog({
 
         <DialogFooter className="mx-0 mb-0 shrink-0 border-t">
           <Button type="button" variant="outline" asChild>
-            <a
-              href={`/api/documents/${documentId}/file`}
-              target="_blank"
-              rel="noreferrer"
-            >
+            <a href={fileUrl(fileId)} target="_blank" rel="noreferrer">
               Open original
             </a>
           </Button>
