@@ -6,6 +6,6 @@ export default {
   schema: "./src/server/db/schema.ts",
   dialect: "sqlite",
   dbCredentials: {
-    url: env.DATABASE_URL,
+    url: `file:${env.DATA_DIR}/passbook.db`,
   },
 } satisfies Config;

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { isEmlMimeType } from "~/lib/documents";
 import { parseEml } from "~/lib/eml";
 import { dataPlatform } from "~/server/data";
-import { databaseReady, db } from "~/server/db";
+import { db } from "~/server/db";
 import { documents } from "~/server/db/schema";
 
 export const runtime = "nodejs";
@@ -15,7 +15,6 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ documentId: string }> },
 ) {
-  await databaseReady;
   const parsed = paramsSchema.safeParse(await params);
   if (!parsed.success) return new Response("Not found", { status: 404 });
 

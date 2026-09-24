@@ -12,7 +12,6 @@ RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 ENV SKIP_ENV_VALIDATION=1
-ENV DATABASE_URL=file:/tmp/passbook-build.db
 ENV DATA_DIR=/tmp/passbook-build-data
 COPY --from=deps /app/ .
 COPY --from=prepare /app/out/full/ .
@@ -23,7 +22,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
-ENV DATABASE_URL=file:/data/passbook.db
 ENV DATA_DIR=/data
 RUN apk add --no-cache sqlite su-exec wget && addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 

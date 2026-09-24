@@ -9,12 +9,11 @@ pnpm install
 pnpm dev
 ```
 
-Open http://localhost:3002. Local SQLite data and managed documents are stored under `.data/` and ignored by Git.
+Open http://localhost:3002. The SQLite database (`DATA_DIR/passbook.db`) and managed documents are stored under `.data/` and ignored by Git.
 
 Optional environment variables:
 
 ```sh
-DATABASE_URL=file:./.data/passbook.db
 DATA_DIR=./.data
 PORT=3002
 ```

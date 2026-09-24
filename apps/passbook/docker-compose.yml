@@ -4,7 +4,6 @@ services:
       context: ../..
       dockerfile: apps/passbook/Dockerfile
     environment:
-      DATABASE_URL: file:/data/passbook.db
       DATA_DIR: /data
       NODE_ENV: production
     ports:
