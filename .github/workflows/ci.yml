@@ -122,13 +122,13 @@ jobs:
 
       - run: mkdir -p .data
 
-      - name: Lint, typecheck, test, and build (affected)
+      - name: Lint, typecheck, test, build, and check migrations (affected)
         if: github.event_name == 'pull_request'
-        run: pnpm exec turbo run lint typecheck test build --filter=...[origin/main]
+        run: pnpm exec turbo run lint typecheck test build migrations:check --filter=...[origin/main]
 
-      - name: Lint, typecheck, test, and build (all)
+      - name: Lint, typecheck, test, build, and check migrations (all)
         if: github.event_name != 'pull_request'
-        run: pnpm exec turbo run lint typecheck test build
+        run: pnpm exec turbo run lint typecheck test build migrations:check
 
   e2e:
     name: e2e (${{ matrix.app }})

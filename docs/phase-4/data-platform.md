@@ -218,11 +218,15 @@ A migration that transforms data incorrectly still applies; the CI upgrade test 
 
 ### CI checks
 
-`yt-data migrations check` runs in `pnpm check:<app>`:
+An application's `migrations:check` script runs `yt-data migrations check` against `origin/main` (`--base <ref>` picks another ref). It runs in `pnpm check`, `pnpm check:<app>`, and CI:
 
-- The migration journal is append-only relative to `origin/main`.
-- `DROP TABLE`, `DROP COLUMN`, and rebuilds of foreign-key parent tables need a `-- yt:reviewed-destructive` marker.
-- New migrations apply cleanly to the fixture database from the previous release, followed by integrity and foreign-key checks.
+- Migrations on `origin/main` keep their file, journal position, and timestamp. Each timestamp is later than the one before it, so a migration generated on an out-of-date branch is generated again on top of `origin/main`.
+- Every migration applies, in order, to an empty database.
+- A new migration that drops a table, drops a column (including a table rebuild that leaves a column out), or runs `DELETE FROM` starts with the line `-- yt:reviewed-destructive`. Renames are followed, so renaming a table or column needs no marker.
+
+In the application directory, run `pnpm migrations:check` right after `pnpm db:generate` and add any marker then: adding it changes the file's hash, so a development database that already applied the migration reports `blocked(edited-migration)`.
+
+An upgrade test applies new migrations to the fixture database from the previous release, followed by integrity and foreign-key checks.
 
 ## Backups
 

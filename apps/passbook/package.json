@@ -17,6 +17,7 @@
     "docker:build": "docker build -f Dockerfile -t passbook ../..",
     "docker:up": "docker compose up --build",
     "lint": "eslint .",
+    "migrations:check": "pnpm data migrations check",
     "preview": "next build && next start",
     "start": "next start",
     "test": "vitest run",
