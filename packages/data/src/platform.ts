@@ -5,8 +5,10 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
 import type { BackupContext } from "./backup/backups";
+import type { BackupPolicy } from "./backup/schedule";
 import type { FileCoordinator } from "./files/store";
 import { createBackups, recoverInterruptedRestore } from "./backup/backups";
+import { parseSchedule, startBackupSchedule } from "./backup/schedule";
 import { PausableClient } from "./connection";
 import { createFileCoordinator, createFileStore } from "./files/store";
 import { applyMigrations, readMigrationPlan } from "./migrations";
@@ -17,6 +19,7 @@ export interface DataPlatformConfig<TSchema extends Record<string, unknown>> {
   dataDir: string;
   backupDir?: string;
   db: { schema: TSchema; migrationsFolder: string };
+  backups?: BackupPolicy;
 }
 
 export type DataPlatform<
@@ -28,6 +31,7 @@ interface Connection {
   coordinator: FileCoordinator;
   serialize: <T>(operation: () => Promise<T>) => Promise<T>;
   booted?: Promise<void>;
+  stopSchedule?: () => void;
 }
 
 // Next.js evaluates instrumentation and route bundles as separate module graphs, and dev
@@ -69,6 +73,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
   const dataDir = resolve(config.dataDir);
   const documentsDir = join(dataDir, "documents");
   const databasePath = join(dataDir, `${config.app}.db`);
+  if (config.backups) parseSchedule(config.backups.schedule);
   const connection = openConnection(databasePath);
   const db = drizzle(connection.client, { schema: config.db.schema });
   const backupContext: BackupContext = {
@@ -91,7 +96,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
     migrationsFolder: config.db.migrationsFolder,
   };
 
-  async function boot() {
+  async function prepareDatabase() {
     await connection.serialize(async () => {
       await recoverInterruptedRestore(backupContext);
       await mkdir(documentsDir, { recursive: true });
@@ -127,6 +132,17 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
     );
   }
 
+  async function boot() {
+    await prepareDatabase();
+    if (config.backups) {
+      connection.stopSchedule = await startBackupSchedule({
+        app: config.app,
+        policy: config.backups,
+        backups,
+      });
+    }
+  }
+
   return {
     app: config.app,
     dataDir,
@@ -142,6 +158,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
       return connection.booted;
     },
     close() {
+      connection.stopSchedule?.();
       connection.client.close();
       connections.delete(databasePath);
     },

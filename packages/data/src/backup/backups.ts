@@ -23,12 +23,14 @@ import type {
   BackupTrigger,
   Verification,
 } from "./manifest";
+import type { RetentionPolicy } from "./retention";
 import type { DataLayout } from "./swap";
 import packageJson from "../../package.json";
 import { storageKeyPattern } from "../files/store";
 import { applyMigrations, readJournal, readMigrationPlan } from "../migrations";
 import { digestInto, readArchive, writeArchive } from "./archive";
 import { manifestSchema, sidecarSchema } from "./manifest";
+import { selectExpiredBackups } from "./retention";
 import {
   findStructuralProblem,
   readContents,
@@ -438,6 +440,26 @@ export function createBackups(context: BackupContext) {
     },
     restore(archivePath: string) {
       return context.serialize(() => restoreBackup(archivePath));
+    },
+    prune(policy: RetentionPolicy) {
+      return context.serialize(async () => {
+        const expired = selectExpiredBackups(
+          await listBackups(),
+          policy,
+          new Date(),
+        );
+        for (const backup of expired) {
+          await rm(backup.path, { force: true });
+          await rm(`${backup.path}.json`, { force: true });
+        }
+        if (expired.length > 0) {
+          console.info("backups pruned", {
+            app: context.app,
+            backupIds: expired.map((backup) => backup.id),
+          });
+        }
+        return expired.map((backup) => backup.id);
+      });
     },
   };
 }
