@@ -1,0 +1,39 @@
+{
+  "name": "@yourtoolshq/data",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./schema": "./src/schema.ts",
+    "./files": "./src/files/index.ts",
+    "./next": "./src/next/handlers.ts"
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@libsql/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@libsql/client": "catalog:",
+    "@trpc/server": "catalog:",
+    "@types/node": "catalog:",
+    "@yourtoolshq/eslint-config": "workspace:*",
+    "@yourtoolshq/prettier-config": "workspace:*",
+    "@yourtoolshq/tsconfig": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "eslint": "catalog:",
+    "jiti": "^2.7.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "zod": "catalog:"
+  },
+  "prettier": "@yourtoolshq/prettier-config"
+}
