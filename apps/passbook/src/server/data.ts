@@ -1,10 +1,10 @@
 import { defineDataPlatform } from "@yourtoolshq/data";
 
 import { env } from "~/env";
-import { db } from "~/server/db";
+import * as schema from "~/server/db/schema";
 
 export const dataPlatform = defineDataPlatform({
   app: "passbook",
   dataDir: env.DATA_DIR,
-  db,
+  db: { schema, migrationsFolder: "drizzle" },
 });

@@ -1,36 +1,64 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
 
 import { defineDataPlatform } from "./platform";
+import { filesTable } from "./schema";
+
+const createFilesTable = `CREATE TABLE yt_files (
+  id text PRIMARY KEY NOT NULL,
+  storage_key text NOT NULL UNIQUE,
+  original_filename text NOT NULL,
+  mime_type text NOT NULL,
+  size_bytes integer NOT NULL,
+  sha256 text,
+  endpoint text NOT NULL,
+  created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);`;
+
+async function writeMigrations(
+  folder: string,
+  migrations: { tag: string; sql: string }[],
+) {
+  await mkdir(join(folder, "meta"), { recursive: true });
+  for (const migration of migrations) {
+    await writeFile(join(folder, `${migration.tag}.sql`), migration.sql);
+  }
+  const entries = migrations.map((migration, idx) => ({
+    idx,
+    version: "6",
+    when: 1_789_000_000_000 + idx,
+    tag: migration.tag,
+    breakpoints: true,
+  }));
+  await writeFile(
+    join(folder, "meta", "_journal.json"),
+    JSON.stringify({ version: "7", dialect: "sqlite", entries }),
+  );
+}
 
 export async function createTestPlatform() {
-  const dataDir = await mkdtemp(join(tmpdir(), "yt-data-"));
-  const client = createClient({ url: `file:${join(dataDir, "test.db")}` });
-  await client.execute(`
-    CREATE TABLE yt_files (
-      id text PRIMARY KEY NOT NULL,
-      storage_key text NOT NULL UNIQUE,
-      original_filename text NOT NULL,
-      mime_type text NOT NULL,
-      size_bytes integer NOT NULL,
-      sha256 text,
-      endpoint text NOT NULL,
-      created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL
-    )
-  `);
-  const db = drizzle(client);
-  const platform = defineDataPlatform({ app: "test", dataDir, db });
+  const root = await mkdtemp(join(tmpdir(), "yt-data-"));
+  const dataDir = join(root, "data");
+  const migrationsFolder = join(root, "drizzle");
+  await writeMigrations(migrationsFolder, [
+    { tag: "0000_files", sql: createFilesTable },
+  ]);
+  const platform = defineDataPlatform({
+    app: "test",
+    dataDir,
+    db: { schema: { filesTable }, migrationsFolder },
+  });
+  await platform.boot();
   return {
-    db,
+    db: platform.db,
     dataDir,
     documentsDir: join(dataDir, "documents"),
+    migrationsFolder,
     platform,
     async cleanup() {
-      client.close();
-      await rm(dataDir, { recursive: true, force: true });
+      platform.close();
+      await rm(root, { recursive: true, force: true });
     },
   };
 }
