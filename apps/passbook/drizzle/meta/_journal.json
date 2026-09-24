@@ -71,6 +71,13 @@
       "when": 1790257789174,
       "tag": "0009_require_document_files",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1790272966886,
+      "tag": "0010_platform_meta",
+      "breakpoints": true
     }
   ]
 }

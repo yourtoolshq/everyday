@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { defineDataPlatform } from "./platform";
 import { filesTable } from "./schema";
 
-const createFilesTable = `CREATE TABLE yt_files (
+const createPlatformTables = `CREATE TABLE yt_files (
   id text PRIMARY KEY NOT NULL,
   storage_key text NOT NULL UNIQUE,
   original_filename text NOT NULL,
@@ -14,6 +14,11 @@ const createFilesTable = `CREATE TABLE yt_files (
   sha256 text,
   endpoint text NOT NULL,
   created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE yt_meta (
+  key text PRIMARY KEY NOT NULL,
+  value text NOT NULL
 );`;
 
 export async function writeMigrations(
@@ -37,13 +42,16 @@ export async function writeMigrations(
   );
 }
 
-export const filesMigration = { tag: "0000_files", sql: createFilesTable };
+export const platformMigration = {
+  tag: "0000_platform",
+  sql: createPlatformTables,
+};
 
 export async function createTestPlatform() {
   const root = await mkdtemp(join(tmpdir(), "yt-data-"));
   const dataDir = join(root, "data");
   const migrationsFolder = join(root, "drizzle");
-  await writeMigrations(migrationsFolder, [filesMigration]);
+  await writeMigrations(migrationsFolder, [platformMigration]);
   const platform = defineDataPlatform({
     app: "test",
     dataDir,

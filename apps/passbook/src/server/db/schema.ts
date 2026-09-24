@@ -7,7 +7,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
-import { filesTable } from "@yourtoolshq/data/schema";
+import { filesTable, platformMetaTable } from "@yourtoolshq/data/schema";
 
 import type { AccountEventType } from "~/lib/account-events";
 import type { AccountStatus } from "~/lib/account-status";
@@ -15,7 +15,7 @@ import type { AccountType } from "~/lib/account-types";
 import type { DocumentType } from "~/lib/documents";
 import type { StatementFrequency } from "~/lib/statement-frequency";
 
-export { filesTable };
+export { filesTable, platformMetaTable };
 
 const id = () =>
   text("id")

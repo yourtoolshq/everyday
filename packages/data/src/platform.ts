@@ -3,13 +3,13 @@ import { mkdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
-import { migrate } from "drizzle-orm/libsql/migrator";
 
 import type { BackupContext } from "./backup/backups";
 import type { FileCoordinator } from "./files/store";
 import { createBackups, recoverInterruptedRestore } from "./backup/backups";
 import { PausableClient } from "./connection";
 import { createFileCoordinator, createFileStore } from "./files/store";
+import { applyMigrations, readMigrationPlan } from "./migrations";
 
 export interface DataPlatformConfig<TSchema extends Record<string, unknown>> {
   app: string;
@@ -84,6 +84,49 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
     serialize: connection.serialize,
   };
 
+  const backups = createBackups(backupContext);
+  const planOptions = {
+    app: config.app,
+    databasePath,
+    migrationsFolder: config.db.migrationsFolder,
+  };
+
+  async function boot() {
+    await connection.serialize(async () => {
+      await recoverInterruptedRestore(backupContext);
+      await mkdir(documentsDir, { recursive: true });
+    });
+    const plan = await readMigrationPlan(planOptions);
+    if (plan.status === "current") return;
+
+    let preMigrationBackup: string | null = null;
+    if (plan.applied > 0) {
+      const backup = await backups.create({ trigger: "pre-migration" });
+      if (backup.verification.status !== "verified") {
+        throw new Error(
+          `Pre-migration backup ${backup.id} failed verification, so no migrations were applied: ${backup.verification.error}`,
+        );
+      }
+      preMigrationBackup = backup.id;
+    }
+    await connection.serialize(() =>
+      connection.client.exclusive(async () => {
+        const current = await readMigrationPlan(planOptions);
+        if (current.status === "current") return;
+        await applyMigrations(
+          databasePath,
+          current.pending,
+          backupContext.appVersion,
+        );
+        console.info("database migrated", {
+          app: config.app,
+          migrations: current.pending.map((m) => m.tag),
+          preMigrationBackup,
+        });
+      }),
+    );
+  }
+
   return {
     app: config.app,
     dataDir,
@@ -93,13 +136,9 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
       documentsDir,
       coordinator: connection.coordinator,
     }),
-    backups: createBackups(backupContext),
+    backups,
     boot() {
-      connection.booted ??= connection.serialize(async () => {
-        await recoverInterruptedRestore(backupContext);
-        await mkdir(documentsDir, { recursive: true });
-        await migrate(db, { migrationsFolder: config.db.migrationsFolder });
-      });
+      connection.booted ??= boot();
       return connection.booted;
     },
     close() {

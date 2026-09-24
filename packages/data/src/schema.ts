@@ -16,3 +16,8 @@ export const filesTable = sqliteTable("yt_files", {
 });
 
 export type StoredFile = typeof filesTable.$inferSelect;
+
+export const platformMetaTable = sqliteTable("yt_meta", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+});

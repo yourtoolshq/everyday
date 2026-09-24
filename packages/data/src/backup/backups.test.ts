@@ -17,8 +17,8 @@ import { defineDataPlatform } from "../platform";
 import { filesTable } from "../schema";
 import {
   createTestPlatform,
-  filesMigration,
   pdfBytes,
+  platformMigration,
   writeMigrations,
 } from "../test-platform";
 
@@ -100,7 +100,9 @@ describe("backups.create", () => {
       app: "test",
       appVersion: null,
       trigger: "manual",
-      migrations: [{ tag: "0000_files", hash: expect.any(String) as string }],
+      migrations: [
+        { tag: "0000_platform", hash: expect.any(String) as string },
+      ],
       rowCounts: { __drizzle_migrations: 1, yt_files: 1 },
       files: [
         {
@@ -298,7 +300,7 @@ describe("backups.restore", () => {
     const root = await mkdtemp(join(tmpdir(), "yt-data-newer-"));
     const migrationsFolder = join(root, "drizzle");
     await writeMigrations(migrationsFolder, [
-      filesMigration,
+      platformMigration,
       { tag: "0001_notes", sql: "CREATE TABLE notes (id text PRIMARY KEY);" },
     ]);
     const newer = defineDataPlatform({

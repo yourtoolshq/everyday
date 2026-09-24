@@ -169,22 +169,23 @@ State is one of `ready`, `upgrading`, `restoring`, `blocked`.
 ```
  awaited in register(), before the server accepts requests
   1. layout         ensure data, documents, staging, orphans, and backup directories
-  2. crash check    restore.inprogress or migration.inprogress marker → finish or roll back from its backup
+  2. crash check    restore.inprogress marker → finish or roll back the restore
   3. version guard  compare applied migration hashes with the application journal
                       database has unknown migrations → blocked(downgrade)
                       an applied hash differs         → blocked(edited-migration)
                       nothing pending                 → step 6
  server listening; state = upgrading
-  4. snapshot       verified pre-migration backup; write migration.inprogress
-  5. migrate        foreign_keys=OFF on the connection → drizzle migrations in a transaction
-                      → foreign_key_check + integrity_check → dataMigrations (recorded in yt_meta)
-                      failure → restore the snapshot → blocked(migration-failed)
-                      success → remove marker; record app version, platform version, time in yt_meta
-  6. pragmas        journal_mode=WAL, busy_timeout=5000, foreign_keys=ON when foreign_key_check is clean
-  7. ready          start scheduler; reap .staging older than 24 h
+  4. snapshot       verified pre-migration backup (skipped for an empty database)
+  5. migrate        one transaction, on a connection with foreign_keys=OFF:
+                      pending migrations → foreign_key_check → dataMigrations
+                      → record app version, platform version, and time in yt_meta
+                      failure → transaction rolled back → blocked(migration-failed)
+  6. ready          start scheduler; reap .staging older than 24 h
 ```
 
-Migrations run with foreign keys off because drizzle-kit's SQLite table rebuilds (`CREATE __new_x`, `DROP x`, `RENAME`) set `PRAGMA foreign_keys=OFF` inside the migration transaction, where SQLite ignores it; with enforcement on, `DROP x` cascades to child rows.
+The version guard reads the rows drizzle keeps in `__drizzle_migrations`, matches each to the journal entry with the same timestamp, and compares their hashes. The runner writes the same rows drizzle does, so `drizzle-kit migrate` works on a database the platform migrated.
+
+Migrations run with foreign keys off because drizzle-kit's SQLite table rebuilds (`CREATE __new_x`, `DROP x`, `RENAME`) set `PRAGMA foreign_keys=OFF` inside the migration transaction, where SQLite ignores it; with enforcement on, `DROP x` cascades to child rows. Every other connection enforces foreign keys, which is the libsql default.
 
 ### Gates
 
@@ -203,17 +204,17 @@ Migrations run with foreign keys off because drizzle-kit's SQLite table rebuilds
 
 A migration that transforms data incorrectly still applies; the CI upgrade test and the pre-migration backup cover that case.
 
-| Scenario                               | Outcome                                                                       |
-| -------------------------------------- | ----------------------------------------------------------------------------- |
-| Upgrade succeeds                       | Pre-migration backup kept for 30 days regardless of retention                 |
-| Migration throws                       | Snapshot restored; `blocked(migration-failed)` names the migration and backup |
-| Process killed mid-migration           | Next boot restores from the marker's backup and retries                       |
-| Older version on a newer database      | `blocked(downgrade)` lists backups created by the running version             |
-| Applied migration edited               | `blocked(edited-migration)`                                                   |
-| Restore a backup from an older version | Restore, then the normal upgrade path                                         |
-| Restore a backup from a newer version  | Rejected during verification                                                  |
-| Archive format change                  | `manifest.formatVersion`; every earlier format stays readable                 |
-| Platform table change                  | Shipped as drizzle schema; the application generates the migration            |
+| Scenario                               | Outcome                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------------ |
+| Upgrade succeeds                       | Pre-migration backup kept for 30 days regardless of retention            |
+| Migration throws                       | Transaction rolled back; `blocked(migration-failed)` names the migration |
+| Process killed mid-migration           | SQLite rolls back the transaction; the next boot retries                 |
+| Older version on a newer database      | `blocked(downgrade)` lists backups created by the running version        |
+| Applied migration edited               | `blocked(edited-migration)`                                              |
+| Restore a backup from an older version | Restore, then the normal upgrade path                                    |
+| Restore a backup from a newer version  | Rejected during verification                                             |
+| Archive format change                  | `manifest.formatVersion`; every earlier format stays readable            |
+| Platform table change                  | Shipped as drizzle schema; the application generates the migration       |
 
 ### CI checks
 
@@ -271,7 +272,7 @@ The scheduler runs in the application process. Backups, migrations, restores, an
 | `verify <backup>`  | Verify a backup again                                 |
 | `restore <backup>` | Take a `pre-restore` backup, then restore `<backup>`  |
 
-`<backup>` is a backup id or the path of a `.ytbackup` file. When the application answers at `http://127.0.0.1:$PORT`, the command runs inside it, so it never overlaps with the application's own work; the application verifies and restores only archives in `BACKUP_DIR`. When nothing answers, the command opens the data directory itself the way the application does at start, which finishes an interrupted restore and creates the schema in an empty data directory. It cannot see an application running in another container on the same volume, so stop the application first. `--direct` skips the HTTP check.
+`<backup>` is a backup id or the path of a `.ytbackup` file. When the application answers at `http://127.0.0.1:$PORT`, the command runs inside it, so it never overlaps with the application's own work; the application verifies and restores only archives in `BACKUP_DIR`. When nothing answers, the command opens the data directory itself the way the application does at start, which finishes an interrupted restore and runs pending migrations, taking a pre-migration backup first. When the version guard blocks the database, the command prints the reason and carries on, so `restore` can replace it. It cannot see an application running in another container on the same volume, so stop the application first. `--direct` skips the HTTP check.
 
 A host cron entry such as `docker compose exec -T app yt-data backup` adds backups on top of the schedule.
 
@@ -281,7 +282,7 @@ A host cron entry such as `docker compose exec -T app yt-data backup` adds backu
 2. Take a `pre-restore` backup; stop if it does not verify.
 3. Enter `restoring`: new database work waits, and work already running finishes. Write `restore.inprogress` (`swapping`).
 4. Close the connection, move the live database and documents to `.restore/previous`, move the extracted ones into place, reopen, and run `integrity_check`.
-5. Run pending migrations through the upgrade path when the backup is from an older version.
+5. Apply pending migrations in one transaction when the backup is from an older version. The archive is the pre-migration state, so no further backup is taken.
 6. Mark the restore `swapped`, delete `.restore`, and remove the marker. Waiting work continues against the restored data.
 
 A failure in steps 4–5 moves the previous data back. At boot, a `swapping` marker rolls the swap back and a `swapped` marker finishes the cleanup.
@@ -302,7 +303,7 @@ The integrity scan covers the whole database and every stored file:
 
 ## Storage usage
 
-Reported per application: database and WAL size, file count and bytes by type group, backup count and bytes, and free space on the data and backup volumes.
+Reported per application: database size, file count and bytes by type group, backup count and bytes, and free space on the data and backup volumes.
 
 ## Recovery expectations
 
