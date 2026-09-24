@@ -23,13 +23,14 @@ start_app() {
   docker run -d --name "$container" -p "$port:3000" \
     -v "$1:/data" -v "$backup_volume:/backups" "$image" >/dev/null
   for _ in $(seq 1 30); do
-    if curl -fsS "$base_url/api/health" >/dev/null 2>&1; then
+    # Health answers 200 with status "maintenance" while the data is upgrading.
+    if curl -fsS "$base_url/api/health" 2>/dev/null | grep -q '"status":"ok"'; then
       return 0
     fi
     sleep 2
   done
   docker logs "$container" || true
-  echo "Passbook did not become healthy" >&2
+  echo "Passbook did not become ready" >&2
   return 1
 }
 
