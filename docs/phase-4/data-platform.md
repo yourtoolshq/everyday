@@ -1,0 +1,308 @@
+# Phase 4 — Data Platform
+
+Design for the shared data layer every Your Tools application adopts: file storage, backup, restore, scheduled backups, integrity checks, storage usage, and version-safe migrations, together with the UI that exposes them. Phase goals and completion criteria live in [ROADMAP.md](../../ROADMAP.md#phase-4--data-durability-and-storage-critical-priority).
+
+An application declares a contract and a file router and wires the files listed under [Wiring](#wiring). Everything else in this document comes with the packages.
+
+## Packages
+
+| Package                | Kind        | Contents                                                                                                                                                                                   |
+| ---------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `@yourtoolshq/data`    | server-only | `defineDataPlatform`, file store and file router, `yt_files`/`yt_meta` schema, guarded migration runner, backup/verify/restore, scheduler, integrity, usage, route handlers, `yt-data` CLI |
+| `@yourtoolshq/ui`      | client      | Generic shadcn primitives: card, button, table, badge, alert-dialog, dialog, progress, skeleton, sonner                                                                                    |
+| `@yourtoolshq/data-ui` | client      | Data screens built from `@yourtoolshq/ui`: `DataSettingsPage`, `DataGate`, `MaintenanceScreen`, `BackupStatusBanner`, `FileDropzone`, `FilePreview`, `FileViewerPage`, upload helpers      |
+
+```
+@yourtoolshq/ui  ◄── @yourtoolshq/data-ui ──► (HTTP) /api/data/*  ◄── @yourtoolshq/data
+   primitives          data screens                                     server
+        ▲                     ▲
+        └──── apps ───────────┘
+```
+
+`data-ui` talks to the platform only over HTTP, so it has no dependency on an application's tRPC client.
+
+## Application contract
+
+```ts
+// src/server/data.ts
+export const dataPlatform = defineDataPlatform({
+  app: "passbook",
+  version: process.env.APP_VERSION,
+  dataDir: env.DATA_DIR, // /data in Docker, ./.data in development
+  backupDir: env.BACKUP_DIR, // separate mount; falls back to <dataDir>/backups
+  db: { schema, migrationsFolder: "drizzle" },
+  backups: {
+    schedule: "daily@02:00",
+    retention: { daily: 7, weekly: 4, monthly: 12 },
+  },
+  dataMigrations: [],
+});
+```
+
+```ts
+// src/server/db/index.ts
+export const db = dataPlatform.db;
+```
+
+The platform owns the database connection so it can close and reopen it around a restore.
+
+### Wiring
+
+| File                                   | Content                                                                         |
+| -------------------------------------- | ------------------------------------------------------------------------------- |
+| `src/instrumentation.ts`               | `await dataPlatform.boot()` in `register()` for the Node.js runtime             |
+| `src/app/api/data/[...path]/route.ts`  | `export const { GET, POST } = createDataHandlers(dataPlatform, { fileRouter })` |
+| `src/app/(app)/layout.tsx`             | Wrap the shell in `<DataGate platform={dataPlatform}>`                          |
+| `src/app/(app)/settings/data/page.tsx` | Render `<DataSettingsPage />`                                                   |
+| `src/app/files/[fileId]/page.tsx`      | `export { FileViewerPage as default } from "@yourtoolshq/data-ui"`              |
+
+Plus `files: dataPlatform.files` in the tRPC context and the platform readiness middleware on the base procedure.
+
+## Files
+
+### Schema
+
+The platform owns file metadata in `yt_files`: `id`, `storage_key`, `original_filename`, `mime_type`, `size_bytes`, `sha256`, `endpoint`, `created_at`. Applications re-export `filesTable` and `platformMetaTable` from their schema, so drizzle-kit generates both tables into the application's own migration history. Domain tables reference a file with a single foreign key:
+
+```ts
+fileId: text("file_id").notNull().references(() => filesTable.id),
+```
+
+References are discovered with `PRAGMA foreign_key_list`, so integrity checks, usage, and backups need no per-application configuration.
+
+### File router
+
+```ts
+// src/server/files.ts
+export const fileRouter = createFileRouter({
+  statement: file({ types: ["pdf"], maxBytes: "25MB" }),
+  accountDocument: file({ types: ["pdf", "image", "eml"], maxBytes: "25MB" }),
+  voiceNote: file({ types: ["audio"], maxBytes: "50MB" }),
+});
+export type AppFileRouter = typeof fileRouter;
+```
+
+Type groups: `pdf`, `image` (JPEG, PNG, WebP, HEIC), `eml`, `audio` (MP3, M4A, WAV, OGG). Types are detected from magic bytes, not from the client-supplied MIME type.
+
+### Upload, claim, and remove
+
+```
+ pick file ─► FileDropzone ─► POST /api/data/upload/:endpoint ─► .staging/<token>   (reaped after 24 h)
+                               ◄── { token, name, size }
+ submit form ─► app tRPC mutation { ..., file: token }
+                 withFiles(db, async (tx, files) => {
+                   const f = await files.claim(token)       // yt_files row + move into documents/
+                   await tx.insert(table).values({ ..., fileId: f.id })
+                 })
+                 commit ─► file is permanent        throw ─► file returns to staging, row rolled back
+```
+
+A file becomes permanent only in the transaction that inserts the row referencing it. `files.remove(fileId)` inside `withFiles` stages the file in `.trash/`, discards it after commit, and restores it on rollback.
+
+```ts
+// src/lib/uploads.ts
+export const { FileDropzone, useUpload } = createUploadHelpers<AppFileRouter>();
+```
+
+```tsx
+<FileDropzone endpoint="statement" onUploaded={setFile} />
+```
+
+```ts
+create: publicProcedure
+  .input(z.object({ accountId: z.string().uuid(), file: fileToken("statement") }))
+  .mutation(({ ctx, input }) =>
+    ctx.files.withFiles(ctx.db, async (tx, files) => {
+      const f = await files.claim(input.file);
+      return tx.insert(statements).values({ accountId: input.accountId, fileId: f.id }).returning();
+    }),
+  ),
+```
+
+### Retrieval and preview
+
+`FilePreview` opens every file in a new tab:
+
+| Type              | New tab                                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------------------- |
+| PDF, image, audio | `/api/data/files/:id`, served inline for the browser's native viewer                                 |
+| EML               | `/files/:id`, rendering `EmlViewer`: headers, sanitized HTML body in a sandboxed iframe, attachments |
+| Anything else     | Download                                                                                             |
+
+`fileUrl(id, { download: true })` returns a download link. Server code uses `ctx.files.read(id)` and `ctx.files.stream(id)`. Responses send `Cache-Control: private, no-store`, `X-Content-Type-Options: nosniff`, and an RFC 5987 `Content-Disposition`.
+
+## HTTP surface
+
+All served by the catch-all route.
+
+| Route                             | Purpose                                                                |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| `POST /api/data/upload/:endpoint` | Validate and stage an upload; returns a token                          |
+| `GET /api/data/files/:id`         | Stream a file (`?download=1` for attachment disposition)               |
+| `GET /api/data/files/:id/eml`     | Parsed EML for the viewer                                              |
+| `GET /api/data/backups/:id`       | Stream a backup archive                                                |
+| `POST /api/data/backups/upload`   | Upload an archive to restore                                           |
+| `GET /api/data/status`            | Platform state and progress                                            |
+| `/api/data/trpc/*`                | Platform router: `backups`, `usage`, `integrity`, `schedule`, `health` |
+
+Applications keep their own router at `/api/trpc` for domain procedures.
+
+## Storage layout
+
+```
+<dataDir>/<app>.db
+<dataDir>/documents/<uuid>.<ext>
+<dataDir>/documents/.staging/    uploads awaiting claim
+<dataDir>/documents/.trash/      deletes awaiting commit
+<dataDir>/documents/.orphans/    quarantined unreferenced files
+<backupDir>/<app>-<UTC timestamp>.ytbackup
+```
+
+`BACKUP_DIR` is a separate mount (host path or NAS) so backups survive loss of the data volume. Without it, backups are written to `<dataDir>/backups` and the data page, banner, and health report show a warning.
+
+## Boot sequence and platform state
+
+State is one of `ready`, `upgrading`, `restoring`, `blocked`.
+
+```
+ awaited in register(), before the server accepts requests
+  1. layout         ensure data, documents, staging, trash, orphans, and backup directories
+  2. crash check    restore.inprogress or migration.inprogress marker → finish or roll back from its backup
+  3. version guard  compare applied migration hashes with the application journal
+                      database has unknown migrations → blocked(downgrade)
+                      an applied hash differs         → blocked(edited-migration)
+                      nothing pending                 → step 6
+ server listening; state = upgrading
+  4. snapshot       verified pre-migration backup; write migration.inprogress
+  5. migrate        foreign_keys=OFF on the connection → drizzle migrations in a transaction
+                      → foreign_key_check + integrity_check → dataMigrations (recorded in yt_meta)
+                      failure → restore the snapshot → blocked(migration-failed)
+                      success → remove marker; record app version, platform version, time in yt_meta
+  6. pragmas        journal_mode=WAL, busy_timeout=5000, foreign_keys=ON when foreign_key_check is clean
+  7. ready          start scheduler; reap .staging older than 24 h and .trash older than 7 days
+```
+
+Migrations run with foreign keys off because drizzle-kit's SQLite table rebuilds (`CREATE __new_x`, `DROP x`, `RENAME`) set `PRAGMA foreign_keys=OFF` inside the migration transaction, where SQLite ignores it; with enforcement on, `DROP x` cascades to child rows.
+
+### Gates
+
+| Layer  | Behavior when not `ready`                                                                                                        |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| Pages  | `DataGate` renders `MaintenanceScreen` (progress, or the blocked reason with compatible backups to restore); reloads on `ready`  |
+| tRPC   | Readiness middleware throws `SERVICE_UNAVAILABLE`. This is the guard that matters: Next.js renders layouts and pages in parallel |
+| Health | `/api/health` returns 503 with the state. Compose `start_period` covers the longest expected migration                           |
+
+## Version guarantees
+
+1. The pre-upgrade state is never lost.
+2. Code never runs against a schema it does not recognize.
+3. No partially applied migration survives a failure or crash.
+4. Structural corruption is detected before the application serves requests.
+
+A migration that transforms data incorrectly still applies; the CI upgrade test and the pre-migration backup cover that case.
+
+| Scenario                               | Outcome                                                                       |
+| -------------------------------------- | ----------------------------------------------------------------------------- |
+| Upgrade succeeds                       | Pre-migration backup kept for 30 days regardless of retention                 |
+| Migration throws                       | Snapshot restored; `blocked(migration-failed)` names the migration and backup |
+| Process killed mid-migration           | Next boot restores from the marker's backup and retries                       |
+| Older version on a newer database      | `blocked(downgrade)` lists backups created by the running version             |
+| Applied migration edited               | `blocked(edited-migration)`                                                   |
+| Restore a backup from an older version | Restore, then the normal upgrade path                                         |
+| Restore a backup from a newer version  | Rejected during verification                                                  |
+| Archive format change                  | `manifest.formatVersion`; every earlier format stays readable                 |
+| Platform table change                  | Shipped as drizzle schema; the application generates the migration            |
+
+### CI checks
+
+`yt-data migrations check` runs in `pnpm check:<app>`:
+
+- The migration journal is append-only relative to `origin/main`.
+- `DROP TABLE`, `DROP COLUMN`, and rebuilds of foreign-key parent tables need a `-- yt:reviewed-destructive` marker.
+- New migrations apply cleanly to the fixture database from the previous release, followed by integrity and foreign-key checks.
+
+## Backups
+
+### Archive
+
+`<app>-<UTC timestamp>.ytbackup` is a tar file containing `db.sqlite` (from `VACUUM INTO`), every file referenced by `yt_files` in that snapshot, and `manifest.json`:
+
+```json
+{
+  "formatVersion": 1,
+  "app": "passbook",
+  "appVersion": "1.4.0",
+  "platformVersion": "0.3.0",
+  "createdAt": "2026-09-24T02:00:00Z",
+  "trigger": "scheduled",
+  "migrations": ["0000_…", "0006_…"],
+  "rowCounts": { "accounts": 12, "yt_files": 318 },
+  "files": [
+    { "id": "…", "path": "documents/….pdf", "size": 184223, "sha256": "…" }
+  ]
+}
+```
+
+Triggers: `scheduled`, `manual`, `pre-migration`, `pre-restore`.
+
+### Verification
+
+Every backup is verified immediately: extract, `integrity_check`, `foreign_key_check`, row counts against the manifest, and a re-hash of every file. Only verified backups count toward freshness and retention.
+
+### Scheduling and retention
+
+The scheduler runs in the application process. Backups, migrations, restores, and `.trash` discards share one state machine, so they never overlap.
+
+- On `ready`, a backup runs within minutes when the newest verified backup is older than one interval.
+- Retention keeps the configured daily, weekly, and monthly backups, prunes only verified backups, and always keeps the newest verified backup.
+- Health reports `backup: ok | stale | failing` and `lastVerifiedBackupAt`. Stale means no verified backup within twice the interval. Backup status does not change the HTTP status.
+
+`yt-data backup` asks a running application to take the backup over HTTP and works on files directly when the application is stopped, so it can also be run from host cron.
+
+### Restore
+
+1. Verify the archive; reject it if its migrations are not a subset of the application journal.
+2. Take a `pre-restore` backup.
+3. Enter `restoring` and write `restore.inprogress`.
+4. Close the connection, swap the database and documents, reopen, run `integrity_check`.
+5. Remove the marker; the next boot finishes or rolls back an interrupted swap.
+6. Run pending migrations through the upgrade path when the backup is from an older version.
+
+## Integrity
+
+The integrity scan covers the whole database and every stored file:
+
+| Check                   | Finding                                                 | Action                                            |
+| ----------------------- | ------------------------------------------------------- | ------------------------------------------------- |
+| `integrity_check`       | Page or index corruption in any table                   | Restore the newest verified backup                |
+| `foreign_key_check`     | Broken relationship in any table                        | Reported with table and row                       |
+| Migration version guard | Schema mismatch                                         | `blocked` state                                   |
+| File presence           | `yt_files` row without a file on disk                   | Reported with the referencing record              |
+| Checksum                | File content differs from `sha256`                      | Reported; restore the file from a backup          |
+| Unreferenced file       | File on disk without a row, or a row nothing references | Moved to `.orphans/`; purged only on confirmation |
+| Stale staging and trash | Leftovers older than their window                       | Reaped automatically                              |
+
+## Storage usage
+
+Reported per application: database and WAL size, file count and bytes by type group, backup count and bytes, and free space on the data and backup volumes.
+
+## Recovery expectations
+
+| Measure                     | Target                                                                |
+| --------------------------- | --------------------------------------------------------------------- |
+| Data loss, normal operation | Up to one backup interval (24 hours by default)                       |
+| Data loss, upgrade          | None; a verified backup is taken immediately before migrating         |
+| Recovery time               | Restoring a backup from the data page, typically minutes for a few GB |
+
+## Recovery runbook
+
+Commands run on the host that runs the application, from a checkout of this repository at the deployed commit.
+
+| Situation                          | Steps                                                                                                                                       |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Upgrade blocked                    | Follow the maintenance screen: run the version it names, or restore a compatible backup from that screen                                    |
+| Integrity check reports corruption | Data page → Backups → restore the newest verified backup                                                                                    |
+| Application does not load at all   | `docker compose exec app yt-data restore <archive>`, or with the container stopped, `docker compose run --rm app yt-data restore <archive>` |
+| Data volume lost                   | Create an empty volume, copy an archive from `BACKUP_DIR`, run `yt-data restore <archive>`, start the application                           |
+| One file missing or damaged        | `tar -xf <archive> documents/<storage key>` and copy it into `<dataDir>/documents/`, then rescan                                            |
+| Backups stale or failing           | Data page → Automatic backups shows the last error; check `BACKUP_DIR` mount and free space; run **Back up now**                            |
