@@ -97,7 +97,7 @@ Type groups: `pdf`, `image` (JPEG, PNG, WebP, HEIC), `eml`, `audio` (MP3, M4A, W
                  commit ─► file is permanent        throw ─► file returns to staging, row rolled back
 ```
 
-A file becomes permanent only in the transaction that inserts the row referencing it. `files.remove(fileId)` inside `withFiles` stages the file in `.trash/`, discards it after commit, and restores it on rollback.
+A file becomes permanent only in the transaction that inserts the row referencing it. `files.remove(fileId)` inside `withFiles` deletes the row and unlinks the file after commit; a running backup holds the unlink until its archive is written.
 
 ```ts
 // src/lib/uploads.ts
@@ -153,9 +153,11 @@ Applications keep their own router at `/api/trpc` for domain procedures.
 <dataDir>/<app>.db
 <dataDir>/documents/<uuid>.<ext>
 <dataDir>/documents/.staging/    uploads awaiting claim
-<dataDir>/documents/.trash/      deletes awaiting commit
 <dataDir>/documents/.orphans/    quarantined unreferenced files
+<dataDir>/restore.inprogress     marker for a restore in progress
+<dataDir>/.restore/              extracted archive and the data it replaces, during a restore
 <backupDir>/<app>-<UTC timestamp>.ytbackup
+<backupDir>/<app>-<UTC timestamp>.ytbackup.json   manifest and verification result
 ```
 
 `BACKUP_DIR` is a separate mount (host path or NAS) so backups survive loss of the data volume. Without it, backups are written to `<dataDir>/backups` and the data page, banner, and health report show a warning.
@@ -166,7 +168,7 @@ State is one of `ready`, `upgrading`, `restoring`, `blocked`.
 
 ```
  awaited in register(), before the server accepts requests
-  1. layout         ensure data, documents, staging, trash, orphans, and backup directories
+  1. layout         ensure data, documents, staging, orphans, and backup directories
   2. crash check    restore.inprogress or migration.inprogress marker → finish or roll back from its backup
   3. version guard  compare applied migration hashes with the application journal
                       database has unknown migrations → blocked(downgrade)
@@ -179,7 +181,7 @@ State is one of `ready`, `upgrading`, `restoring`, `blocked`.
                       failure → restore the snapshot → blocked(migration-failed)
                       success → remove marker; record app version, platform version, time in yt_meta
   6. pragmas        journal_mode=WAL, busy_timeout=5000, foreign_keys=ON when foreign_key_check is clean
-  7. ready          start scheduler; reap .staging older than 24 h and .trash older than 7 days
+  7. ready          start scheduler; reap .staging older than 24 h
 ```
 
 Migrations run with foreign keys off because drizzle-kit's SQLite table rebuilds (`CREATE __new_x`, `DROP x`, `RENAME`) set `PRAGMA foreign_keys=OFF` inside the migration transaction, where SQLite ignores it; with enforcement on, `DROP x` cascades to child rows.
@@ -225,7 +227,7 @@ A migration that transforms data incorrectly still applies; the CI upgrade test 
 
 ### Archive
 
-`<app>-<UTC timestamp>.ytbackup` is a tar file containing `db.sqlite` (from `VACUUM INTO`), every file referenced by `yt_files` in that snapshot, and `manifest.json`:
+`<app>-<UTC timestamp>.ytbackup` is a tar file containing `db.sqlite` (from `VACUUM INTO`), every file referenced by `yt_files` in that snapshot, and `manifest.json`, in that order:
 
 ```json
 {
@@ -235,23 +237,24 @@ A migration that transforms data incorrectly still applies; the CI upgrade test 
   "platformVersion": "0.3.0",
   "createdAt": "2026-09-24T02:00:00Z",
   "trigger": "scheduled",
-  "migrations": ["0000_…", "0006_…"],
+  "migrations": [{ "tag": "0000_…", "hash": "…" }],
   "rowCounts": { "accounts": 12, "yt_files": 318 },
   "files": [
     { "id": "…", "path": "documents/….pdf", "size": 184223, "sha256": "…" }
-  ]
+  ],
+  "missingFiles": [{ "id": "…", "storageKey": "….pdf" }]
 }
 ```
 
-Triggers: `scheduled`, `manual`, `pre-migration`, `pre-restore`.
+Triggers: `scheduled`, `manual`, `pre-migration`, `pre-restore`. `migrations` lists the snapshot's applied drizzle migrations by hash; `tag` is `null` for a hash the application journal does not contain. `missingFiles` lists `yt_files` rows whose file was not on disk when the backup ran; the backup still succeeds and logs a warning for each.
 
 ### Verification
 
-Every backup is verified immediately: extract, `integrity_check`, `foreign_key_check`, row counts against the manifest, and a re-hash of every file. Only verified backups count toward freshness and retention.
+Every backup is verified immediately: extract `db.sqlite`, run `integrity_check` and `foreign_key_check`, compare row counts and `yt_files` rows with the manifest, and re-hash every file. An archive with an entry the manifest does not list, or any entry other than `db.sqlite`, `manifest.json`, and `documents/<storage key>`, fails. The result is written to the `.ytbackup.json` sidecar next to the archive. Only verified backups count toward freshness and retention.
 
 ### Scheduling and retention
 
-The scheduler runs in the application process. Backups, migrations, restores, and `.trash` discards share one state machine, so they never overlap.
+The scheduler runs in the application process. Backups, migrations, restores, and file deletes share one state machine, so they never overlap.
 
 - On `ready`, a backup runs within minutes when the newest verified backup is older than one interval.
 - Retention keeps the configured daily, weekly, and monthly backups, prunes only verified backups, and always keeps the newest verified backup.
@@ -261,12 +264,14 @@ The scheduler runs in the application process. Backups, migrations, restores, an
 
 ### Restore
 
-1. Verify the archive; reject it if its migrations are not a subset of the application journal.
-2. Take a `pre-restore` backup.
-3. Enter `restoring` and write `restore.inprogress`.
-4. Close the connection, swap the database and documents, reopen, run `integrity_check`.
-5. Remove the marker; the next boot finishes or rolls back an interrupted swap.
-6. Run pending migrations through the upgrade path when the backup is from an older version.
+1. Extract the archive into `.restore/incoming` and verify it; reject it if its migrations are not a subset of the application journal.
+2. Take a `pre-restore` backup; stop if it does not verify.
+3. Enter `restoring`: new database work waits, and work already running finishes. Write `restore.inprogress` (`swapping`).
+4. Close the connection, move the live database and documents to `.restore/previous`, move the extracted ones into place, reopen, and run `integrity_check`.
+5. Run pending migrations through the upgrade path when the backup is from an older version.
+6. Mark the restore `swapped`, delete `.restore`, and remove the marker. Waiting work continues against the restored data.
+
+A failure in steps 4–5 moves the previous data back. At boot, a `swapping` marker rolls the swap back and a `swapped` marker finishes the cleanup.
 
 ## Integrity
 
@@ -280,7 +285,7 @@ The integrity scan covers the whole database and every stored file:
 | File presence           | `yt_files` row without a file on disk                   | Reported with the referencing record              |
 | Checksum                | File content differs from `sha256`                      | Reported; restore the file from a backup          |
 | Unreferenced file       | File on disk without a row, or a row nothing references | Moved to `.orphans/`; purged only on confirmation |
-| Stale staging and trash | Leftovers older than their window                       | Reaped automatically                              |
+| Stale staging           | Uploads older than 24 hours                             | Reaped automatically                              |
 
 ## Storage usage
 

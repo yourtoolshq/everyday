@@ -1,16 +1,21 @@
 import { mkdirSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import type { Client } from "@libsql/client";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { migrate } from "drizzle-orm/libsql/migrator";
 
-import { createFileStore } from "./files/store";
+import type { BackupContext } from "./backup/backups";
+import type { FileCoordinator } from "./files/store";
+import { createBackups, recoverInterruptedRestore } from "./backup/backups";
+import { PausableClient } from "./connection";
+import { createFileCoordinator, createFileStore } from "./files/store";
 
 export interface DataPlatformConfig<TSchema extends Record<string, unknown>> {
   app: string;
+  version?: string;
   dataDir: string;
+  backupDir?: string;
   db: { schema: TSchema; migrationsFolder: string };
 }
 
@@ -19,7 +24,9 @@ export type DataPlatform<
 > = ReturnType<typeof defineDataPlatform<TSchema>>;
 
 interface Connection {
-  client: Client;
+  client: PausableClient;
+  coordinator: FileCoordinator;
+  serialize: <T>(operation: () => Promise<T>) => Promise<T>;
   booted?: Promise<void>;
 }
 
@@ -38,7 +45,19 @@ function openConnection(databasePath: string) {
   let connection = connections.get(databasePath);
   if (!connection) {
     mkdirSync(dirname(databasePath), { recursive: true });
-    connection = { client: createClient({ url: `file:${databasePath}` }) };
+    const client = new PausableClient(() =>
+      createClient({ url: `file:${databasePath}` }),
+    );
+    let queue: Promise<unknown> = Promise.resolve();
+    connection = {
+      client,
+      coordinator: createFileCoordinator((work) => client.guard(work)),
+      serialize(operation) {
+        const result = queue.then(operation, operation);
+        queue = result.catch(() => undefined);
+        return result;
+      },
+    };
     connections.set(databasePath, connection);
   }
   return connection;
@@ -52,17 +71,35 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
   const databasePath = join(dataDir, `${config.app}.db`);
   const connection = openConnection(databasePath);
   const db = drizzle(connection.client, { schema: config.db.schema });
+  const backupContext: BackupContext = {
+    app: config.app,
+    appVersion: config.version ?? null,
+    dataDir,
+    databasePath,
+    documentsDir,
+    backupDir: resolve(config.backupDir ?? join(dataDir, "backups")),
+    migrationsFolder: config.db.migrationsFolder,
+    client: connection.client,
+    coordinator: connection.coordinator,
+    serialize: connection.serialize,
+  };
 
   return {
     app: config.app,
     dataDir,
     db,
-    files: createFileStore({ db, documentsDir }),
+    files: createFileStore({
+      db,
+      documentsDir,
+      coordinator: connection.coordinator,
+    }),
+    backups: createBackups(backupContext),
     boot() {
-      connection.booted ??= (async () => {
+      connection.booted ??= connection.serialize(async () => {
+        await recoverInterruptedRestore(backupContext);
         await mkdir(documentsDir, { recursive: true });
         await migrate(db, { migrationsFolder: config.db.migrationsFolder });
-      })();
+      });
       return connection.booted;
     },
     close() {

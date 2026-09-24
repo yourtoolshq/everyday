@@ -16,7 +16,7 @@ const createFilesTable = `CREATE TABLE yt_files (
   created_at text DEFAULT CURRENT_TIMESTAMP NOT NULL
 );`;
 
-async function writeMigrations(
+export async function writeMigrations(
   folder: string,
   migrations: { tag: string; sql: string }[],
 ) {
@@ -37,13 +37,13 @@ async function writeMigrations(
   );
 }
 
+export const filesMigration = { tag: "0000_files", sql: createFilesTable };
+
 export async function createTestPlatform() {
   const root = await mkdtemp(join(tmpdir(), "yt-data-"));
   const dataDir = join(root, "data");
   const migrationsFolder = join(root, "drizzle");
-  await writeMigrations(migrationsFolder, [
-    { tag: "0000_files", sql: createFilesTable },
-  ]);
+  await writeMigrations(migrationsFolder, [filesMigration]);
   const platform = defineDataPlatform({
     app: "test",
     dataDir,
@@ -56,6 +56,7 @@ export async function createTestPlatform() {
     documentsDir: join(dataDir, "documents"),
     migrationsFolder,
     platform,
+    root,
     async cleanup() {
       platform.close();
       await rm(root, { recursive: true, force: true });

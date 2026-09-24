@@ -35,5 +35,8 @@
     "vitest": "catalog:",
     "zod": "catalog:"
   },
-  "prettier": "@yourtoolshq/prettier-config"
+  "prettier": "@yourtoolshq/prettier-config",
+  "dependencies": {
+    "tar-stream": "^3.2.1"
+  }
 }
