@@ -7,6 +7,7 @@ import type { FileRouter } from "../files/router";
 import type { DataPlatform } from "../platform";
 import { detectFileType } from "../files/detect";
 import { describeAllowedTypes, formatByteLimit } from "../files/router";
+import { describeUnavailable } from "../readiness";
 import { createDataRouter } from "../router";
 
 export const trpcEndpoint = "/api/data/trpc";
@@ -40,12 +41,29 @@ export function createDataHandlers(
     });
   }
 
+  // Files and uploads read and write yt_files, whose schema a migration may be changing.
+  async function unavailableResponse() {
+    const unavailable = describeUnavailable(
+      platform.app,
+      await platform.state(),
+    );
+    return unavailable ? errorResponse(unavailable, 503) : null;
+  }
+
   async function GET(request: Request, context: RouteContext) {
     const [resource, id, ...rest] = (await context.params).path ?? [];
     if (resource === "trpc") return handleTrpc(request);
+    if (resource === "status" && id === undefined) {
+      return Response.json(await platform.status(), {
+        headers: { "Cache-Control": "no-store" },
+      });
+    }
     if (resource === "files" && id && rest.length === 0) {
       const download = new URL(request.url).searchParams.get("download");
-      return serveFile(platform, id, download === "1");
+      return (
+        (await unavailableResponse()) ??
+        serveFile(platform, id, download === "1")
+      );
     }
     if (resource === "backups" && id && rest.length === 0) {
       return serveBackup(platform, id);
@@ -65,7 +83,10 @@ export function createDataHandlers(
       return handleTrpc(request);
     }
     if (resource === "upload" && endpoint && rest.length === 0) {
-      return upload(platform, options.fileRouter, endpoint, request);
+      return (
+        (await unavailableResponse()) ??
+        upload(platform, options.fileRouter, endpoint, request)
+      );
     }
     return errorResponse("Not found", 404);
   }

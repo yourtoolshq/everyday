@@ -309,7 +309,7 @@ describe("backups.restore", () => {
       db: { schema: { filesTable }, migrationsFolder },
     });
     try {
-      await newer.boot();
+      await newer.settled();
       const backup = await newer.backups.create();
 
       await expect(platform().backups.restore(backup.path)).rejects.toThrow(
@@ -347,7 +347,7 @@ describe("boot", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const kept = await interruptSwap("swapping");
 
-    await platform().boot();
+    await platform().settled();
 
     expect(await platform().files.read(kept.id)).not.toBeNull();
     expect(await exists(join(context.dataDir, ".restore"))).toBe(false);
@@ -365,7 +365,7 @@ describe("boot", () => {
     await interruptSwap("swapped");
     await rm(join(context.dataDir, "test.db"));
 
-    await platform().boot();
+    await platform().settled();
 
     expect(await platform().db.select().from(filesTable)).toEqual([]);
     expect(await exists(join(context.dataDir, ".restore"))).toBe(false);

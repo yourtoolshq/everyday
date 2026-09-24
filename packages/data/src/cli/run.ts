@@ -4,7 +4,6 @@ import { parseArgs } from "node:util";
 import type { RestoreResult } from "../backup/backups";
 import type { BackupRecord, BackupSummary } from "../backup/manifest";
 import { checkMigrations, readBaseMigrations } from "../migration-check";
-import { DataPlatformBlockedError } from "../migrations";
 import { defineDataPlatform } from "../platform";
 import { ApplicationUnreachableError, callProcedure } from "./http";
 
@@ -274,16 +273,15 @@ async function openDirect(config: {
   });
   // Opening the data the way the application does at start also finishes or rolls
   // back an interrupted restore and brings the data directory up to the schema.
+  let state;
   try {
-    await platform.boot();
+    state = await platform.settled();
   } catch (error) {
-    // Restoring is the remedy for a blocked database, so the commands stay available.
-    if (!(error instanceof DataPlatformBlockedError)) {
-      platform.close();
-      throw error;
-    }
-    config.io.stderr(`yt-data: ${error.message}`);
+    platform.close();
+    throw error;
   }
+  // Restoring is the remedy for a blocked database, so the commands stay available.
+  if (state.state === "blocked") config.io.stderr(`yt-data: ${state.message}`);
   return {
     list: () => platform.backups.list(),
     create: () => platform.backups.create(),

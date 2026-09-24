@@ -31,13 +31,13 @@ function openPlatform(backups?: BackupPolicy) {
 
 async function startScheduled(backups = policy) {
   const platform = openPlatform(backups);
-  await platform.boot();
+  await platform.settled();
   return platform;
 }
 
 async function backUpAt(dates: Date[]) {
   const platform = openPlatform();
-  await platform.boot();
+  await platform.settled();
   for (const date of dates) {
     vi.setSystemTime(date);
     await platform.backups.create();

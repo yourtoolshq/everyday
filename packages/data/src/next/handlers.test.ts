@@ -3,7 +3,14 @@ import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createFileRouter, file } from "../files/router";
-import { createTestPlatform, pdfBytes } from "../test-platform";
+import { defineDataPlatform } from "../platform";
+import { filesTable } from "../schema";
+import {
+  createTestPlatform,
+  pdfBytes,
+  platformMigration,
+  writeMigrations,
+} from "../test-platform";
 import { createDataHandlers } from "./handlers";
 
 let context: Awaited<ReturnType<typeof createTestPlatform>>;
@@ -148,6 +155,77 @@ describe("GET files/:id", () => {
       params(...path),
     );
     expect(response.status).toBe(404);
+  });
+});
+
+describe("while the platform is not ready", () => {
+  let storedId: string;
+  let backupId: string;
+
+  beforeEach(async () => {
+    vi.spyOn(console, "info").mockImplementation(() => undefined);
+    storedId = (await uploadAndClaim()).id;
+    backupId = (await context.platform.backups.create()).id;
+    context.platform.close();
+    await writeMigrations(context.migrationsFolder, [
+      platformMigration,
+      { tag: "0001_notes", sql: "CREATE TABLE notes (id text PRIMARY KEY);" },
+    ]);
+    context.platform = defineDataPlatform({
+      app: "test",
+      version: "1.1.0",
+      dataDir: context.dataDir,
+      db: {
+        schema: { filesTable },
+        migrationsFolder: context.migrationsFolder,
+      },
+    });
+    handlers = createDataHandlers(context.platform, { fileRouter });
+    await context.platform.boot();
+  });
+
+  afterEach(async () => {
+    await context.platform.settled();
+    vi.restoreAllMocks();
+  });
+
+  const unavailable = {
+    error: "test is upgrading its data; try again when it is done",
+  };
+
+  it("reports the upgrade at GET status", async () => {
+    const response = await handlers.GET(
+      new Request("http://localhost/api/data/status"),
+      params("status"),
+    );
+
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    expect(await response.json()).toEqual({
+      app: "test",
+      version: "1.1.0",
+      state: "upgrading",
+      step: "backup",
+      migrations: ["0001_notes"],
+    });
+  });
+
+  it("answers files and uploads with 503", async () => {
+    const served = await handlers.GET(
+      new Request(`http://localhost/api/data/files/${storedId}`),
+      params("files", storedId),
+    );
+    const uploaded = await uploadRequest(formWith(pdfBytes, "a.pdf"));
+
+    expect(served.status).toBe(503);
+    expect(await served.json()).toEqual(unavailable);
+    expect(uploaded.status).toBe(503);
+    expect(await uploaded.json()).toEqual(unavailable);
+  });
+
+  it("reports a restore requested during the upgrade as a conflict", async () => {
+    const restore = await trpc("backups.restore", { id: backupId });
+
+    expect(restore.status).toBe(409);
   });
 });
 

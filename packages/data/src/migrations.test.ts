@@ -7,7 +7,6 @@ import { migrate } from "drizzle-orm/libsql/migrator";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { withDatabaseFile } from "./backup/sqlite";
-import { DataPlatformBlockedError, MigrationFailedError } from "./migrations";
 import { defineDataPlatform } from "./platform";
 import { filesTable } from "./schema";
 import { platformMigration, writeMigrations } from "./test-platform";
@@ -34,8 +33,13 @@ async function bootWith(
     dataDir,
     db: { schema: { filesTable }, migrationsFolder },
   });
-  await current.boot();
+  await current.settled();
   return current;
+}
+
+async function blockedMessage(migrations: { tag: string; sql: string }[]) {
+  const state = await (await bootWith(migrations)).state();
+  return state.state === "blocked" ? state.message : null;
 }
 
 function query(sql: string) {
@@ -67,6 +71,7 @@ async function readMeta() {
 
 beforeEach(async () => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
   root = await mkdtemp(join(tmpdir(), "yt-data-migrations-"));
   dataDir = join(root, "data");
   migrationsFolder = join(root, "drizzle");
@@ -113,6 +118,31 @@ describe("boot migrations", () => {
     });
   });
 
+  it("lets other work run between statements", async () => {
+    const statements = Array.from(
+      { length: 500 },
+      (_, i) => `CREATE TABLE t${i} (id integer PRIMARY KEY);`,
+    );
+    let ticks = 0;
+    let migrated = false;
+    const tick = () => {
+      ticks += 1;
+      if (!migrated) setImmediate(tick);
+    };
+    setImmediate(tick);
+
+    await bootWith([
+      platformMigration,
+      {
+        tag: "0001_many",
+        sql: statements.join("\n--> statement-breakpoint\n"),
+      },
+    ]);
+    migrated = true;
+
+    expect(ticks).toBeGreaterThanOrEqual(statements.length);
+  });
+
   it("does nothing when the database is current", async () => {
     await bootWith([platformMigration, notesMigration]);
     await bootWith([platformMigration, notesMigration]);
@@ -123,16 +153,25 @@ describe("boot migrations", () => {
   it("rolls back every pending migration when one fails", async () => {
     await bootWith([platformMigration]);
 
-    await expect(
-      bootWith([
-        platformMigration,
-        notesMigration,
-        {
-          tag: "0002_broken",
-          sql: "ALTER TABLE notes ADD COLUMN title text;\n--> statement-breakpoint\nINSERT INTO missing_table VALUES (1);",
-        },
-      ]),
-    ).rejects.toThrow(MigrationFailedError);
+    const platform = await bootWith([
+      platformMigration,
+      notesMigration,
+      {
+        tag: "0002_broken",
+        sql: "ALTER TABLE notes ADD COLUMN title text;\n--> statement-breakpoint\nINSERT INTO missing_table VALUES (1);",
+      },
+    ]);
+
+    expect(await platform.state()).toEqual({
+      state: "blocked",
+      reason: "migration-failed",
+      message:
+        "Migration 0002_broken failed: SQLITE_ERROR: no such table: missing_table",
+    });
+    expect(console.error).toHaveBeenCalledWith(
+      "data platform blocked",
+      expect.objectContaining({ app: "test", reason: "migration-failed" }),
+    );
 
     expect(await tableNames()).not.toContain("notes");
     expect(await query("SELECT hash FROM __drizzle_migrations")).toHaveLength(
@@ -142,7 +181,7 @@ describe("boot migrations", () => {
   });
 
   it("requires the migrations to create yt_meta", async () => {
-    await expect(bootWith([notesMigration])).rejects.toThrow(
+    expect(await blockedMessage([notesMigration])).toContain(
       "export platformMetaTable from the app schema",
     );
 
@@ -152,15 +191,15 @@ describe("boot migrations", () => {
   it("rejects migrations that leave foreign key violations", async () => {
     await bootWith([platformMigration]);
 
-    await expect(
-      bootWith([
+    expect(
+      await blockedMessage([
         platformMigration,
         {
           tag: "0001_links",
           sql: "CREATE TABLE links (id text PRIMARY KEY NOT NULL, file_id text NOT NULL REFERENCES yt_files(id));\n--> statement-breakpoint\nINSERT INTO links VALUES ('link-1', 'no-such-file');",
         },
       ]),
-    ).rejects.toThrow("1 foreign key violation(s) in links");
+    ).toContain("1 foreign key violation(s) in links");
 
     expect(await tableNames()).not.toContain("links");
   });
@@ -233,13 +272,13 @@ describe("version guard", () => {
   it("blocks a database migrated by a newer version without changing it", async () => {
     await bootWith([platformMigration, notesMigration], "2.0.0");
 
-    const error = await bootWith([platformMigration], "1.0.0").catch(
-      (caught: unknown) => caught,
-    );
+    const state = await (await bootWith([platformMigration], "1.0.0")).state();
 
-    expect(error).toBeInstanceOf(DataPlatformBlockedError);
-    expect(error).toMatchObject({ reason: "downgrade" });
-    expect((error as Error).message).toContain("upgraded by test 2.0.0");
+    expect(state).toMatchObject({
+      state: "blocked",
+      reason: "downgrade",
+      message: expect.stringContaining("upgraded by test 2.0.0") as string,
+    });
     expect(await tableNames()).toContain("notes");
     expect((await readMeta()).migratedByAppVersion).toBe("2.0.0");
     await expect(readdir(join(dataDir, "backups"))).rejects.toThrow();
@@ -248,12 +287,15 @@ describe("version guard", () => {
   it("blocks a database whose applied migration was edited", async () => {
     await bootWith([platformMigration, notesMigration]);
 
-    await expect(
-      bootWith([
-        platformMigration,
-        { ...notesMigration, sql: `${notesMigration.sql}\n` },
-      ]),
-    ).rejects.toMatchObject({
+    expect(
+      await (
+        await bootWith([
+          platformMigration,
+          { ...notesMigration, sql: `${notesMigration.sql}\n` },
+        ])
+      ).state(),
+    ).toMatchObject({
+      state: "blocked",
       reason: "edited-migration",
       message: expect.stringContaining("0001_notes") as string,
     });

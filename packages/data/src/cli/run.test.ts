@@ -243,7 +243,7 @@ describe("with the application stopped", () => {
       platformMigration,
       { tag: "0001_notes", sql: "CREATE TABLE notes (id text PRIMARY KEY);" },
     ]);
-    await reopenPlatform().boot();
+    await reopenPlatform().settled();
     context.platform.close();
     await writeMigrations(context.migrationsFolder, [platformMigration]);
 
@@ -251,7 +251,7 @@ describe("with the application stopped", () => {
     expect(output.stderr).toContainEqual(
       expect.stringContaining("yt-data: This database was upgraded by"),
     );
-    await expect(reopenPlatform().boot()).resolves.toBeUndefined();
+    expect(await reopenPlatform().settled()).toEqual({ state: "ready" });
   });
 });
 
