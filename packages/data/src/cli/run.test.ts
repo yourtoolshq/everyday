@@ -9,7 +9,12 @@ import { createFileRouter } from "../files/router";
 import { createDataHandlers } from "../next/handlers";
 import { defineDataPlatform } from "../platform";
 import { filesTable } from "../schema";
-import { createTestPlatform, pdfBytes } from "../test-platform";
+import {
+  createTestPlatform,
+  pdfBytes,
+  platformMigration,
+  writeMigrations,
+} from "../test-platform";
 import { runCli } from "./run";
 
 let context: Awaited<ReturnType<typeof createTestPlatform>>;
@@ -229,6 +234,24 @@ describe("with the application stopped", () => {
     } finally {
       await rm(elsewhere, { recursive: true, force: true });
     }
+  });
+
+  it("restores a database this version cannot open", async () => {
+    const backup = await context.platform.backups.create();
+    context.platform.close();
+    await writeMigrations(context.migrationsFolder, [
+      platformMigration,
+      { tag: "0001_notes", sql: "CREATE TABLE notes (id text PRIMARY KEY);" },
+    ]);
+    await reopenPlatform().boot();
+    context.platform.close();
+    await writeMigrations(context.migrationsFolder, [platformMigration]);
+
+    expect(await cli("restore", backup.id, "--direct")).toBe(0);
+    expect(output.stderr).toContainEqual(
+      expect.stringContaining("yt-data: This database was upgraded by"),
+    );
+    await expect(reopenPlatform().boot()).resolves.toBeUndefined();
   });
 });
 

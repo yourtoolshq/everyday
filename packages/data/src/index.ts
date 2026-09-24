@@ -1,6 +1,7 @@
 export { defineDataPlatform } from "./platform";
 export type { DataPlatform, DataPlatformConfig } from "./platform";
 export { BackupVerificationError } from "./backup/backups";
+export { DataPlatformBlockedError, MigrationFailedError } from "./migrations";
 export type { RestoreResult } from "./backup/backups";
 export type {
   BackupManifest,

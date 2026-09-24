@@ -1,4 +1,4 @@
-import { createWriteStream, readFileSync } from "node:fs";
+import { createWriteStream } from "node:fs";
 import {
   mkdir,
   mkdtemp,
@@ -12,9 +12,6 @@ import {
 import { basename, join } from "node:path";
 import { Writable } from "node:stream";
 import type { Readable } from "node:stream";
-import { drizzle } from "drizzle-orm/libsql";
-import { migrate } from "drizzle-orm/libsql/migrator";
-import { readMigrationFiles } from "drizzle-orm/migrator";
 
 import type { PausableClient } from "../connection";
 import type { FileCoordinator } from "../files/store";
@@ -29,6 +26,7 @@ import type {
 import type { DataLayout } from "./swap";
 import packageJson from "../../package.json";
 import { storageKeyPattern } from "../files/store";
+import { applyMigrations, readJournal, readMigrationPlan } from "../migrations";
 import { digestInto, readArchive, writeArchive } from "./archive";
 import { manifestSchema, sidecarSchema } from "./manifest";
 import {
@@ -74,21 +72,6 @@ export type Backups = ReturnType<typeof createBackups>;
 export function createBackups(context: BackupContext) {
   const workDir = join(context.backupDir, ".work");
 
-  function readAppMigrations() {
-    const journal = JSON.parse(
-      readFileSync(
-        join(context.migrationsFolder, "meta", "_journal.json"),
-        "utf8",
-      ),
-    ) as { entries: { tag: string }[] };
-    return readMigrationFiles({
-      migrationsFolder: context.migrationsFolder,
-    }).map((migration, index) => ({
-      tag: journal.entries[index]?.tag ?? null,
-      hash: migration.hash,
-    }));
-  }
-
   async function createBackup(trigger: BackupTrigger): Promise<BackupRecord> {
     const createdAt = new Date().toISOString();
     const id = `${context.app}-${createdAt.replaceAll(":", "-")}`;
@@ -104,7 +87,9 @@ export function createBackups(context: BackupContext) {
         args: [snapshotPath],
       });
       const contents = await withDatabaseFile(snapshotPath, readContents);
-      const known = new Map(readAppMigrations().map((m) => [m.hash, m.tag]));
+      const known = new Map(
+        readJournal(context.migrationsFolder).map((m) => [m.hash, m.tag]),
+      );
       const files: BackupManifest["files"] = [];
       const missingFiles: BackupManifest["missingFiles"] = [];
 
@@ -342,7 +327,9 @@ export function createBackups(context: BackupContext) {
       manifest = await inspectArchive(archivePath, paths.incomingDir, {
         extractDocuments: true,
       });
-      const known = new Set(readAppMigrations().map((m) => m.hash));
+      const known = new Set(
+        readJournal(context.migrationsFolder).map((m) => m.hash),
+      );
       const unknown = manifest.migrations.filter((m) => !known.has(m.hash));
       if (unknown.length > 0) {
         throw new BackupVerificationError(
@@ -366,12 +353,16 @@ export function createBackups(context: BackupContext) {
       close();
       try {
         await swapIn(context);
-        const client = open();
-        const problem = await findStructuralProblem(client);
+        const problem = await findStructuralProblem(open());
         if (problem) throw new Error(`Restored database ${problem}`);
-        await migrate(drizzle(client), {
-          migrationsFolder: context.migrationsFolder,
-        });
+        const plan = await readMigrationPlan(context);
+        if (plan.status === "pending") {
+          await applyMigrations(
+            context.databasePath,
+            plan.pending,
+            context.appVersion,
+          );
+        }
         await writeMarker(context, { stage: "swapped", ...marker });
       } catch (error) {
         close();

@@ -3,6 +3,7 @@ import { parseArgs } from "node:util";
 
 import type { RestoreResult } from "../backup/backups";
 import type { BackupRecord, BackupSummary } from "../backup/manifest";
+import { DataPlatformBlockedError } from "../migrations";
 import { defineDataPlatform } from "../platform";
 import { ApplicationUnreachableError, callProcedure } from "./http";
 
@@ -136,6 +137,7 @@ async function run(argv: string[], io: CliIo) {
       dataDir,
       backupDir,
       migrationsFolder: resolve(migrations),
+      io,
     }));
 
   try {
@@ -228,6 +230,7 @@ async function openDirect(config: {
   dataDir: string;
   backupDir: string;
   migrationsFolder: string;
+  io: CliIo;
 }): Promise<Backups> {
   const platform = defineDataPlatform({
     app: config.app,
@@ -237,8 +240,17 @@ async function openDirect(config: {
     db: { schema: {}, migrationsFolder: config.migrationsFolder },
   });
   // Opening the data the way the application does at start also finishes or rolls
-  // back an interrupted restore and brings an empty data directory up to the schema.
-  await platform.boot();
+  // back an interrupted restore and brings the data directory up to the schema.
+  try {
+    await platform.boot();
+  } catch (error) {
+    // Restoring is the remedy for a blocked database, so the commands stay available.
+    if (!(error instanceof DataPlatformBlockedError)) {
+      platform.close();
+      throw error;
+    }
+    config.io.stderr(`yt-data: ${error.message}`);
+  }
   return {
     list: () => platform.backups.list(),
     create: () => platform.backups.create(),
