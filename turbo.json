@@ -29,6 +29,10 @@
       "dependsOn": ["^topo"],
       "outputs": ["coverage/**"]
     },
+    "migrations:check": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
     "test:e2e": {
       "cache": false,
       "dependsOn": ["^topo"]

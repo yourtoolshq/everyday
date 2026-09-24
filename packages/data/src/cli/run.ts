@@ -3,6 +3,7 @@ import { parseArgs } from "node:util";
 
 import type { RestoreResult } from "../backup/backups";
 import type { BackupRecord, BackupSummary } from "../backup/manifest";
+import { checkMigrations, readBaseMigrations } from "../migration-check";
 import { DataPlatformBlockedError } from "../migrations";
 import { defineDataPlatform } from "../platform";
 import { ApplicationUnreachableError, callProcedure } from "./http";
@@ -20,6 +21,7 @@ Commands:
   backup             Take a backup and verify it
   verify <backup>    Verify a backup again
   restore <backup>   Restore a backup; a pre-restore backup is taken first
+  migrations check   Check the migrations against --base; needs only --migrations
 
 <backup> is a backup id or the path of a .ytbackup file.
 
@@ -30,6 +32,7 @@ Options:
   --backup-dir <dir>   Backup directory (default: $BACKUP_DIR, else <data-dir>/backups)
   --url <url>          Running application (default: http://127.0.0.1:$PORT, port 3000)
   --direct             Work on the data directory even if the application answers
+  --base <ref>         Git ref holding the merged migrations (default: origin/main)
 
 When the application answers at --url, commands run inside it, so they never overlap with
 its own work. Otherwise they run on the data directory directly; the application must be
@@ -78,6 +81,7 @@ async function run(argv: string[], io: CliIo) {
         "backup-dir": { type: "string" },
         url: { type: "string" },
         direct: { type: "boolean", default: false },
+        base: { type: "string" },
         help: { type: "boolean", short: "h", default: false },
       },
     });
@@ -91,6 +95,17 @@ async function run(argv: string[], io: CliIo) {
   }
 
   const [command, argument, ...extra] = positionals;
+  if (command === "migrations") {
+    if (argument !== "check" || extra.length > 0) {
+      throw new UsageError("migrations takes the subcommand check");
+    }
+    if (!values.migrations) throw new UsageError("--migrations is required");
+    return runMigrationsCheck(
+      resolve(values.migrations),
+      values.base ?? "origin/main",
+      io,
+    );
+  }
   if (!command || !["list", "backup", "verify", "restore"].includes(command)) {
     throw new UsageError(
       command ? `Unknown command: ${command}` : "No command given",
@@ -157,6 +172,24 @@ async function run(argv: string[], io: CliIo) {
   } finally {
     backups.close();
   }
+}
+
+async function runMigrationsCheck(
+  migrationsFolder: string,
+  base: string,
+  io: CliIo,
+) {
+  const result = await checkMigrations({
+    migrationsFolder,
+    base: await readBaseMigrations(migrationsFolder, base),
+    baseName: base,
+  });
+  for (const problem of result.problems) io.stdout(problem);
+  if (result.problems.length > 0) return 1;
+  io.stdout(
+    `Migrations are append-only relative to ${base}; new: ${result.checked.join(", ") || "none"}`,
+  );
+  return 0;
 }
 
 function parseTarget(

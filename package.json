@@ -7,10 +7,10 @@
   "packageManager": "pnpm@10.28.2",
   "scripts": {
     "build": "turbo run build",
-    "check": "pnpm format && turbo run lint typecheck test build",
+    "check": "pnpm format && turbo run lint typecheck test build migrations:check",
     "check:taxbook": "turbo run lint typecheck test build -F taxbook",
     "check:firstaid": "turbo run lint typecheck test build -F firstaid",
-    "check:passbook": "turbo run lint typecheck test build -F passbook...",
+    "check:passbook": "turbo run lint typecheck test build migrations:check -F passbook...",
     "check:tenure": "turbo run lint typecheck test build -F tenure",
     "clean": "git clean -xdf node_modules",
     "dev": "turbo watch dev --continue",
