@@ -8,6 +8,7 @@
   },
   "scripts": {
     "build": "next build",
+    "data": "pnpm --silent -F @yourtoolshq/data build && node node_modules/@yourtoolshq/data/dist/yt-data.cjs --app passbook --migrations drizzle --data-dir \"${DATA_DIR:-./.data}\" --url \"http://127.0.0.1:${PORT:-3002}\"",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -21,9 +22,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "typecheck": "tsc --noEmit",
-    "backup": "sh scripts/backup.sh",
-    "restore": "sh scripts/restore.sh"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@libsql/client": "catalog:",

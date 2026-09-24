@@ -145,7 +145,7 @@ All served by the catch-all route.
 | `GET /api/data/status`            | Platform state and progress                                            |
 | `/api/data/trpc/*`                | Platform router: `backups`, `usage`, `integrity`, `schedule`, `health` |
 
-Applications keep their own router at `/api/trpc` for domain procedures.
+The `backups` router has `list`, `create`, `verify`, and `restore`; `verify` and `restore` take a backup id in the backup directory. The platform router accepts POST requests only as `application/json` and answers 415 otherwise. Applications keep their own router at `/api/trpc` for domain procedures.
 
 ## Storage layout
 
@@ -260,7 +260,20 @@ The scheduler runs in the application process. Backups, migrations, restores, an
 - Retention keeps the configured daily, weekly, and monthly backups, prunes only verified backups, and always keeps the newest verified backup.
 - Health reports `backup: ok | stale | failing` and `lastVerifiedBackupAt`. Stale means no verified backup within twice the interval. Backup status does not change the HTTP status.
 
-`yt-data backup` asks a running application to take the backup over HTTP and works on files directly when the application is stopped, so it can also be run from host cron.
+### Command line
+
+`yt-data` is in every application image at `/usr/local/bin/yt-data` and runs as the application user. In development it runs as `pnpm data <command>` from the application directory.
+
+| Command            | Effect                                                |
+| ------------------ | ----------------------------------------------------- |
+| `list`             | Backups, newest first, with trigger, size, and status |
+| `backup`           | Take a backup and verify it                           |
+| `verify <backup>`  | Verify a backup again                                 |
+| `restore <backup>` | Take a `pre-restore` backup, then restore `<backup>`  |
+
+`<backup>` is a backup id or the path of a `.ytbackup` file. When the application answers at `http://127.0.0.1:$PORT`, the command runs inside it, so it never overlaps with the application's own work; the application verifies and restores only archives in `BACKUP_DIR`. When nothing answers, the command opens the data directory itself the way the application does at start, which finishes an interrupted restore and creates the schema in an empty data directory. It cannot see an application running in another container on the same volume, so stop the application first. `--direct` skips the HTTP check.
+
+A host cron entry such as `docker compose exec -T app yt-data backup` adds backups on top of the schedule.
 
 ### Restore
 
@@ -301,13 +314,29 @@ Reported per application: database and WAL size, file count and bytes by type gr
 
 ## Recovery runbook
 
-Commands run on the host that runs the application, from a checkout of this repository at the deployed commit.
+Commands run on the host that runs the application, in the application directory of a checkout of this repository at the deployed commit. `<id>` is a backup id from `yt-data list`.
 
-| Situation                          | Steps                                                                                                                                       |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Upgrade blocked                    | Follow the maintenance screen: run the version it names, or restore a compatible backup from that screen                                    |
-| Integrity check reports corruption | Data page → Backups → restore the newest verified backup                                                                                    |
-| Application does not load at all   | `docker compose exec app yt-data restore <archive>`, or with the container stopped, `docker compose run --rm app yt-data restore <archive>` |
-| Data volume lost                   | Create an empty volume, copy an archive from `BACKUP_DIR`, run `yt-data restore <archive>`, start the application                           |
-| One file missing or damaged        | `tar -xf <archive> documents/<storage key>` and copy it into `<dataDir>/documents/`, then rescan                                            |
-| Backups stale or failing           | Data page → Automatic backups shows the last error; check `BACKUP_DIR` mount and free space; run **Back up now**                            |
+| Situation                          | Steps                                                                                                                                                                |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Upgrade blocked                    | Follow the maintenance screen: run the version it names, or restore a compatible backup from that screen                                                             |
+| Integrity check reports corruption | Data page → Backups → restore the newest verified backup                                                                                                             |
+| Application does not load at all   | `docker compose exec app yt-data restore <id>`; if the container does not stay up, `docker compose stop app` then `docker compose run --rm app yt-data restore <id>` |
+| Data volume lost                   | Start the application on an empty volume, put the archive in the backup directory, `docker compose exec app yt-data restore <id>`                                    |
+| One file missing or damaged        | `tar -xf <archive> documents/<storage key>` and copy it into `<dataDir>/documents/`, then rescan                                                                     |
+| Backups stale or failing           | Data page → Automatic backups shows the last error; check `BACKUP_DIR` mount and free space; run **Back up now**                                                     |
+
+### Moving data to another computer
+
+The backup directory is the named volume `<app>-backups` unless `<APP>_BACKUP_DIR` names a host path, for example `PASSBOOK_BACKUP_DIR=/srv/backups/passbook`. A host path lets `rsync` or `scp` copy archives between computers; with the named volume, use `docker compose cp`.
+
+```sh
+# on the source computer
+docker compose exec app yt-data backup
+docker compose cp app:/backups/<id>.ytbackup .
+
+# on the destination computer, with the application running
+docker compose cp <id>.ytbackup app:/backups/
+docker compose exec app yt-data restore <id>
+```
+
+The destination restores backups from the same or an older application version; it refuses a backup from a newer version until it runs that version.

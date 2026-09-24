@@ -1,5 +1,14 @@
 import { createWriteStream, readFileSync } from "node:fs";
-import { mkdir, mkdtemp, rename, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rename,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { basename, join } from "node:path";
 import { Writable } from "node:stream";
 import type { Readable } from "node:stream";
@@ -13,6 +22,7 @@ import type { Digest } from "./archive";
 import type {
   BackupManifest,
   BackupRecord,
+  BackupSummary,
   BackupTrigger,
   Verification,
 } from "./manifest";
@@ -20,7 +30,7 @@ import type { DataLayout } from "./swap";
 import packageJson from "../../package.json";
 import { storageKeyPattern } from "../files/store";
 import { digestInto, readArchive, writeArchive } from "./archive";
-import { manifestSchema } from "./manifest";
+import { manifestSchema, sidecarSchema } from "./manifest";
 import {
   findStructuralProblem,
   readContents,
@@ -52,6 +62,8 @@ export interface RestoreResult {
 }
 
 const maxManifestBytes = 64 * 1024 * 1024;
+
+export const backupIdPattern = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 export class BackupVerificationError extends Error {
   override name = "BackupVerificationError";
@@ -217,6 +229,15 @@ export function createBackups(context: BackupContext) {
             : undefined,
         ),
       );
+    }).catch((error: unknown) => {
+      // tar-stream reports a malformed archive as a plain Error without an errno code.
+      if (error instanceof BackupVerificationError || hasErrnoCode(error)) {
+        throw error;
+      }
+      throw new BackupVerificationError(
+        `Archive is not a readable backup: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
+      );
     });
 
     if (!rawManifest) {
@@ -377,7 +398,47 @@ export function createBackups(context: BackupContext) {
     return { manifest, preRestoreBackup: preRestore.id };
   }
 
+  async function summarize(id: string): Promise<BackupSummary | null> {
+    const path = join(context.backupDir, `${id}.ytbackup`);
+    let size: number;
+    try {
+      size = (await stat(path)).size;
+    } catch (error) {
+      if (isMissing(error)) return null;
+      throw error;
+    }
+    const sidecar = await readSidecar(`${path}.json`);
+    return {
+      id,
+      path,
+      size,
+      manifest: sidecar?.manifest ?? null,
+      verification: sidecar?.verification ?? null,
+    };
+  }
+
+  async function listBackups() {
+    let names: string[];
+    try {
+      names = await readdir(context.backupDir);
+    } catch (error) {
+      if (isMissing(error)) return [];
+      throw error;
+    }
+    const ids = names
+      .filter((name) => name.endsWith(".ytbackup") && !name.startsWith("."))
+      .map((name) => basename(name, ".ytbackup"))
+      .sort()
+      .reverse();
+    const summaries = await Promise.all(ids.map(summarize));
+    return summaries.filter((summary) => summary !== null);
+  }
+
   return {
+    list: listBackups,
+    find(id: string) {
+      return backupIdPattern.test(id) ? summarize(id) : Promise.resolve(null);
+    },
     create(options: { trigger?: BackupTrigger } = {}) {
       return context.serialize(() => createBackup(options.trigger ?? "manual"));
     },
@@ -471,6 +532,26 @@ async function readLimited(stream: Readable, limit: number) {
     }),
   );
   return Buffer.concat(chunks);
+}
+
+function hasErrnoCode(error: unknown) {
+  return typeof (error as NodeJS.ErrnoException | null)?.code === "string";
+}
+
+async function readSidecar(path: string) {
+  let raw: string;
+  try {
+    raw = await readFile(path, "utf8");
+  } catch (error) {
+    if (isMissing(error)) return null;
+    throw error;
+  }
+  try {
+    return sidecarSchema.parse(JSON.parse(raw));
+  } catch (error) {
+    console.warn("backup sidecar is not readable", { path, error });
+    return null;
+  }
 }
 
 function parseJson(bytes: Buffer): unknown {

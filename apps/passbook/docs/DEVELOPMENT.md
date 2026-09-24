@@ -60,11 +60,21 @@ wildcard certificate for `*.tools.local` (configured in dotfiles).
 
 Account documents are managed copies under `DATA_DIR/documents` (`DATA_DIR` defaults to `.data`, or `/data` in Docker). Uploads accept one PDF, image (JPEG, PNG, WebP, HEIC), EML, or audio (MP3, M4A, WAV, OGG) file at a time, up to 25 MB.
 
-A complete backup must include both the SQLite database and the entire documents directory. Restore both from the same backup point so document metadata and managed files remain consistent.
+A backup is one `.ytbackup` archive holding the database and every document it references, verified after it is written. Backups go to `BACKUP_DIR`, which defaults to `DATA_DIR/backups`. `pnpm data` runs the [`yt-data`](../../../docs/phase-4/data-platform.md#command-line) CLI against a running `pnpm dev` server, or against `.data` directly when the server is stopped:
 
 ```sh
-pnpm backup -- /path/to/passbook-backup.db
-pnpm restore -- /path/to/passbook-backup.db
+pnpm data backup
+pnpm data list
+pnpm data restore <backup id>
 ```
+
+In Docker, backups go to `/backups`, the `passbook-backups` volume. Set `PASSBOOK_BACKUP_DIR` to a host path to keep them outside Docker, and `APP_VERSION` to record the version in each backup:
+
+```sh
+PASSBOOK_BACKUP_DIR=/srv/backups/passbook APP_VERSION=1.4.0 docker compose up --build -d
+docker compose exec app yt-data backup
+```
+
+The [recovery runbook](../../../docs/phase-4/data-platform.md#recovery-runbook) covers restoring in Docker and moving data to another computer.
 
 After changing the schema, generate and commit a migration with `pnpm db:generate`. See [`ENGINEERING.md`](ENGINEERING.md) for the full migration workflow and rules.

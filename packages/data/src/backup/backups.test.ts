@@ -178,6 +178,60 @@ describe("backups.verify", () => {
   });
 });
 
+describe("backups.list", () => {
+  it("returns no backups before the backup directory exists", async () => {
+    expect(await platform().backups.list()).toEqual([]);
+  });
+
+  it("lists archives newest first with their verification", async () => {
+    const older = await platform().backups.create();
+    await sleep(2);
+    const newer = await platform().backups.create();
+    await writeFile(join(backupDir(), "stray.ytbackup.partial"), "partial");
+
+    const backups = await platform().backups.list();
+
+    expect(backups.map((b) => b.id)).toEqual([newer.id, older.id]);
+    expect(backups[0]).toEqual({
+      ...newer,
+      size: expect.any(Number) as number,
+    });
+  });
+
+  it("lists an archive without a sidecar as unverified", async () => {
+    const backup = await platform().backups.create();
+    await rm(`${backup.path}.json`);
+
+    expect(await platform().backups.list()).toEqual([
+      expect.objectContaining({
+        id: backup.id,
+        manifest: null,
+        verification: null,
+      }),
+    ]);
+  });
+});
+
+describe("backups.find", () => {
+  it("finds a backup by id", async () => {
+    const backup = await platform().backups.create();
+
+    expect(await platform().backups.find(backup.id)).toMatchObject({
+      id: backup.id,
+      path: backup.path,
+    });
+    expect(await platform().backups.find("test-missing")).toBeNull();
+  });
+
+  it("rejects ids that leave the backup directory", async () => {
+    await platform().backups.create();
+
+    for (const id of ["../test", ".work", "a/b", ""]) {
+      expect(await platform().backups.find(id)).toBeNull();
+    }
+  });
+});
+
 describe("backups.restore", () => {
   it("restores the database and files in place", async () => {
     const kept = await addFile("Kept.pdf");

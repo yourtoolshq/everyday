@@ -18,20 +18,26 @@ COPY --from=prepare /app/out/full/ .
 RUN pnpm turbo build --filter=passbook
 
 FROM node:22-alpine AS runner
+ARG APP_VERSION=
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 ENV DATA_DIR=/data
-RUN apk add --no-cache sqlite su-exec wget && addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+ENV BACKUP_DIR=/backups
+ENV APP_VERSION=${APP_VERSION}
+RUN apk add --no-cache su-exec wget && addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/passbook/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/passbook/.next/static ./apps/passbook/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/passbook/public ./apps/passbook/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/passbook/drizzle ./apps/passbook/drizzle
 COPY --from=builder --chown=nextjs:nodejs /app/apps/passbook/scripts ./apps/passbook/scripts
+COPY --from=builder --chown=nextjs:nodejs /app/packages/data/dist/yt-data.cjs ./apps/passbook/scripts/yt-data.cjs
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/apps/passbook/node_modules ./apps/passbook/node_modules
+
+RUN ln -s /app/apps/passbook/scripts/yt-data /usr/local/bin/yt-data
 
 WORKDIR /app/apps/passbook
 EXPOSE 3000
