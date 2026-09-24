@@ -34,6 +34,7 @@
     "@trpc/server": "catalog:",
     "@yourtoolshq/data": "workspace:*",
     "@yourtoolshq/data-ui": "workspace:*",
+    "@yourtoolshq/ui": "workspace:*",
     "class-variance-authority": "catalog:",
     "cn": "catalog:",
     "drizzle-orm": "catalog:",
