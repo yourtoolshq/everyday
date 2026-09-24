@@ -10,7 +10,8 @@
     "./next": "./src/next/handlers.ts"
   },
   "scripts": {
-    "clean": "git clean -xdf .cache .turbo node_modules",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "build": "esbuild src/cli/index.ts --bundle --platform=node --target=node22 --format=cjs --external:@libsql/client --outfile=dist/yt-data.cjs --log-level=warning",
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -29,6 +30,7 @@
     "@yourtoolshq/prettier-config": "workspace:*",
     "@yourtoolshq/tsconfig": "workspace:*",
     "drizzle-orm": "catalog:",
+    "esbuild": "^0.28.2",
     "eslint": "catalog:",
     "jiti": "^2.7.0",
     "typescript": "catalog:",

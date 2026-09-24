@@ -1,4 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createFileRouter, file } from "../files/router";
 import { createTestPlatform, pdfBytes } from "../test-platform";
@@ -135,7 +137,7 @@ describe("GET files/:id", () => {
   it.each([
     ["an unknown file", ["files", "4f7d3c2a-1b0e-4a9f-8c6d-5e4f3a2b1c0d"]],
     ["a non-uuid id", ["files", "..%2Fpassbook.db"]],
-    ["an unknown resource", ["backups"]],
+    ["an unknown resource", ["settings"]],
     [
       "extra path segments",
       ["files", "4f7d3c2a-1b0e-4a9f-8c6d-5e4f3a2b1c0d", "x"],
@@ -144,6 +146,129 @@ describe("GET files/:id", () => {
     const response = await handlers.GET(
       new Request("http://localhost/api/data/files"),
       params(...path),
+    );
+    expect(response.status).toBe(404);
+  });
+});
+
+function trpc(procedure: string, input?: unknown) {
+  const url = `http://localhost/api/data/trpc/${procedure}`;
+  if (input === undefined) {
+    return handlers.GET(new Request(url), params("trpc", procedure));
+  }
+  return handlers.POST(
+    new Request(url, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(input),
+    }),
+    params("trpc", procedure),
+  );
+}
+
+async function trpcData<T>(response: Response) {
+  expect(response.status).toBe(200);
+  return ((await response.json()) as { result: { data: T } }).result.data;
+}
+
+describe("data router", () => {
+  beforeEach(() => {
+    vi.spyOn(console, "info").mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("creates, lists, verifies, and restores backups", async () => {
+    const kept = await uploadAndClaim("Kept.pdf");
+    const created = await trpcData<{ id: string }>(
+      await trpc("backups.create", {}),
+    );
+    const added = await uploadAndClaim("Added later.pdf");
+
+    const listed = await trpcData<{ app: string; backups: { id: string }[] }>(
+      await trpc("backups.list"),
+    );
+    expect(listed.app).toBe("test");
+    expect(listed.backups.map((b) => b.id)).toEqual([created.id]);
+
+    const verified = await trpcData<{ verification: { status: string } }>(
+      await trpc("backups.verify", { id: created.id }),
+    );
+    expect(verified.verification.status).toBe("verified");
+
+    await trpcData(await trpc("backups.restore", { id: created.id }));
+    expect(await context.platform.files.get(kept.id)).toEqual(kept);
+    expect(await context.platform.files.get(added.id)).toBeNull();
+  });
+
+  it("reports a backup that does not exist", async () => {
+    const response = await trpc("backups.restore", { id: "test-missing" });
+
+    expect(response.status).toBe(404);
+    expect(await response.json()).toMatchObject({
+      error: { message: "Backup test-missing not found" },
+    });
+  });
+
+  it("reports an archive that fails verification as a bad request", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    await mkdir(join(context.dataDir, "backups"), { recursive: true });
+    await writeFile(
+      join(context.dataDir, "backups", "test-broken.ytbackup"),
+      "not a tarball, just some fictional text".repeat(20),
+    );
+
+    const response = await trpc("backups.restore", { id: "test-broken" });
+
+    expect(response.status).toBe(400);
+  });
+
+  it("refuses mutations that are not JSON", async () => {
+    const form = new FormData();
+    form.set("id", "test-anything");
+
+    const response = await handlers.POST(
+      new Request("http://localhost/api/data/trpc/backups.create", {
+        method: "POST",
+        body: form,
+      }),
+      params("trpc", "backups.create"),
+    );
+
+    expect(response.status).toBe(415);
+    expect(await context.platform.backups.list()).toEqual([]);
+  });
+});
+
+describe("GET backups/:id", () => {
+  it("downloads a backup archive", async () => {
+    vi.spyOn(console, "info").mockImplementation(() => undefined);
+    const backup = await context.platform.backups.create();
+
+    const response = await handlers.GET(
+      new Request(`http://localhost/api/data/backups/${backup.id}`),
+      params("backups", backup.id),
+    );
+
+    expect(response.status).toBe(200);
+    expect(Object.fromEntries(response.headers)).toMatchObject({
+      "content-disposition": expect.stringMatching(
+        /^attachment; filename="test-.*\.ytbackup"/,
+      ) as unknown,
+      "content-type": "application/x-tar",
+    });
+    expect(Buffer.from(await response.arrayBuffer())).toEqual(
+      await readFile(backup.path),
+    );
+    vi.restoreAllMocks();
+  });
+
+  it.each(["test-missing", "..", ".work"])("returns 404 for %s", async (id) => {
+    const response = await handlers.GET(
+      new Request(`http://localhost/api/data/backups/${id}`),
+      params("backups", id),
     );
     expect(response.status).toBe(404);
   });

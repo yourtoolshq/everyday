@@ -188,6 +188,10 @@ jobs:
           docker rm -f "${{ matrix.app }}-ci"
           exit 1
 
+      - name: Backup round trip
+        if: matrix.app == 'passbook'
+        run: .github/scripts/passbook-backup-round-trip.sh passbook
+
   required:
     name: required
     needs: [changes, format, quality, e2e, docker]

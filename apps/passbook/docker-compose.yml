@@ -3,14 +3,18 @@ services:
     build:
       context: ../..
       dockerfile: apps/passbook/Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-}
     environment:
       DATA_DIR: /data
+      BACKUP_DIR: /backups
       NODE_ENV: production
     ports:
       - "127.0.0.1:${PASSBOOK_PORT:-3002}:3000"
     restart: unless-stopped
     volumes:
       - passbook-data:/data
+      - ${PASSBOOK_BACKUP_DIR:-passbook-backups}:/backups
     networks:
       - default
       - web
@@ -30,3 +34,5 @@ networks:
 volumes:
   passbook-data:
     name: passbook-data
+  passbook-backups:
+    name: passbook-backups

@@ -1,9 +1,15 @@
+import { createReadStream } from "node:fs";
 import { basename } from "node:path";
+import { Readable } from "node:stream";
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 import type { FileRouter } from "../files/router";
 import type { DataPlatform } from "../platform";
 import { detectFileType } from "../files/detect";
 import { describeAllowedTypes, formatByteLimit } from "../files/router";
+import { createDataRouter } from "../router";
+
+export const trpcEndpoint = "/api/data/trpc";
 
 interface RouteContext {
   params: Promise<{ path?: string[] }>;
@@ -19,17 +25,45 @@ export function createDataHandlers(
   platform: DataPlatform,
   options: { fileRouter: FileRouter },
 ) {
+  const router = createDataRouter(platform);
+
+  function handleTrpc(request: Request) {
+    return fetchRequestHandler({
+      endpoint: trpcEndpoint,
+      req: request,
+      router,
+      createContext: () => ({}),
+      onError({ path, error }) {
+        if (error.code !== "INTERNAL_SERVER_ERROR") return;
+        console.error("data request failed", { path, error });
+      },
+    });
+  }
+
   async function GET(request: Request, context: RouteContext) {
     const [resource, id, ...rest] = (await context.params).path ?? [];
+    if (resource === "trpc") return handleTrpc(request);
     if (resource === "files" && id && rest.length === 0) {
       const download = new URL(request.url).searchParams.get("download");
       return serveFile(platform, id, download === "1");
+    }
+    if (resource === "backups" && id && rest.length === 0) {
+      return serveBackup(platform, id);
     }
     return errorResponse("Not found", 404);
   }
 
   async function POST(request: Request, context: RouteContext) {
     const [resource, endpoint, ...rest] = (await context.params).path ?? [];
+    if (resource === "trpc") {
+      // Only JSON mutations: a cross-site form can send multipart bodies without a
+      // CORS preflight, and tRPC would run the mutation with them.
+      const type = request.headers.get("content-type") ?? "";
+      if (!type.startsWith("application/json")) {
+        return errorResponse("Send data requests as application/json.", 415);
+      }
+      return handleTrpc(request);
+    }
     if (resource === "upload" && endpoint && rest.length === 0) {
       return upload(platform, options.fileRouter, endpoint, request);
     }
@@ -105,6 +139,26 @@ async function serveFile(
       "X-Content-Type-Options": "nosniff",
     },
   });
+}
+
+async function serveBackup(platform: DataPlatform, id: string) {
+  const backup = await platform.backups.find(id);
+  if (!backup) return errorResponse("Backup not found", 404);
+  return new Response(
+    Readable.toWeb(createReadStream(backup.path)) as ReadableStream,
+    {
+      headers: {
+        "Cache-Control": "private, no-store",
+        "Content-Disposition": contentDisposition(
+          `${backup.id}.ytbackup`,
+          "attachment",
+        ),
+        "Content-Length": String(backup.size),
+        "Content-Type": "application/x-tar",
+        "X-Content-Type-Options": "nosniff",
+      },
+    },
+  );
 }
 
 function safeOriginalFilename(filename: string) {

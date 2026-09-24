@@ -33,15 +33,31 @@ export const manifestSchema = z.object({
 });
 export type BackupManifest = z.infer<typeof manifestSchema>;
 
-export interface Verification {
-  status: "verified" | "failed";
-  checkedAt: string;
-  error?: string;
-}
+const verificationSchema = z.object({
+  status: z.enum(["verified", "failed"]),
+  checkedAt: z.string().datetime(),
+  error: z.string().optional(),
+});
+export type Verification = z.infer<typeof verificationSchema>;
+
+export const sidecarSchema = z.object({
+  manifest: manifestSchema.nullable(),
+  verification: verificationSchema,
+});
 
 export interface BackupRecord {
   id: string;
   path: string;
   manifest: BackupManifest | null;
   verification: Verification;
+}
+
+// An archive found in the backup directory; `verification` is null when it has no
+// readable sidecar.
+export interface BackupSummary {
+  id: string;
+  path: string;
+  size: number;
+  manifest: BackupManifest | null;
+  verification: Verification | null;
 }
