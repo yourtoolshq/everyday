@@ -2,6 +2,8 @@
 
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
+import { fileUrl } from "@yourtoolshq/data-ui";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
 import { Button } from "~/components/ui/button";
@@ -88,7 +90,7 @@ export function StatementDetailSheet({
               </Button>
               <Button asChild>
                 <a
-                  href={`/api/documents/${document.id}/file`}
+                  href={fileUrl(document.fileId)}
                   target="_blank"
                   rel="noreferrer"
                 >

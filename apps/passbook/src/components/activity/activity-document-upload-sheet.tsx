@@ -35,7 +35,7 @@ import {
   documentTypeLabels,
   usesSuggestedDocumentTitle,
 } from "~/lib/documents";
-import { uploadEventAttachment } from "~/lib/upload-event-attachment";
+import { uploadFile } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type ActivityDocumentUploadSheetProps = {
@@ -56,6 +56,7 @@ export function ActivityDocumentUploadSheet({
   defaultDocumentDate = "",
 }: ActivityDocumentUploadSheetProps) {
   const utils = api.useUtils();
+  const createDocument = api.documents.create.useMutation();
   const account = api.accounts.get.useQuery(
     { id: accountId },
     { enabled: open },
@@ -126,10 +127,11 @@ export function ActivityDocumentUploadSheet({
 
     setUploading(true);
     try {
-      await uploadEventAttachment({
+      const uploaded = await uploadFile("document", file);
+      await createDocument.mutateAsync({
         accountId,
         eventId,
-        file,
+        file: uploaded.token,
         type,
         title,
         documentDate: documentDate || null,

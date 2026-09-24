@@ -36,6 +36,7 @@ export function DocumentsWorkspace() {
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [emlPreview, setEmlPreview] = useState<{
     id: string;
+    fileId: string;
     title: string;
   } | null>(null);
 
@@ -133,7 +134,7 @@ export function DocumentsWorkspace() {
                 <td className="px-4 py-3">
                   <div className="flex justify-end">
                     <DocumentActionButtons
-                      documentId={document.id}
+                      fileId={document.fileId}
                       title={document.title}
                       mimeType={document.mimeType}
                       onPreview={
@@ -141,6 +142,7 @@ export function DocumentsWorkspace() {
                           ? () =>
                               setEmlPreview({
                                 id: document.id,
+                                fileId: document.fileId,
                                 title: document.title,
                               })
                           : undefined
@@ -176,6 +178,7 @@ export function DocumentsWorkspace() {
       {emlPreview ? (
         <EmlPreviewDialog
           documentId={emlPreview.id}
+          fileId={emlPreview.fileId}
           title={emlPreview.title}
           open={Boolean(emlPreview)}
           onOpenChange={(open) => {

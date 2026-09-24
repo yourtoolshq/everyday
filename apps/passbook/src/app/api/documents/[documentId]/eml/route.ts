@@ -3,9 +3,9 @@ import { z } from "zod";
 
 import { isEmlMimeType } from "~/lib/documents";
 import { parseEml } from "~/lib/eml";
+import { dataPlatform } from "~/server/data";
 import { databaseReady, db } from "~/server/db";
 import { documents } from "~/server/db/schema";
-import { readDocument } from "~/server/documents/storage";
 
 export const runtime = "nodejs";
 
@@ -21,7 +21,7 @@ export async function GET(
 
   const [document] = await db
     .select({
-      storageKey: documents.storageKey,
+      fileId: documents.fileId,
       mimeType: documents.mimeType,
     })
     .from(documents)
@@ -30,18 +30,13 @@ export async function GET(
     return new Response("Not found", { status: 404 });
   }
 
-  try {
-    const bytes = new Uint8Array(await readDocument(document.storageKey));
-    const parsedEml = await parseEml(bytes);
-    return Response.json(parsedEml, {
-      headers: {
-        "Cache-Control": "private, no-store",
-      },
-    });
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return new Response("File not found", { status: 404 });
-    }
-    throw error;
-  }
+  const stored = await dataPlatform.files.read(document.fileId);
+  if (!stored) return new Response("File not found", { status: 404 });
+
+  const parsedEml = await parseEml(new Uint8Array(stored.bytes));
+  return Response.json(parsedEml, {
+    headers: {
+      "Cache-Control": "private, no-store",
+    },
+  });
 }

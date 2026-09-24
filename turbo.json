@@ -42,6 +42,7 @@
     "CI",
     "PORT",
     "DATABASE_URL",
+    "DATA_DIR",
     "DOCUMENTS_DIR",
     "SKIP_ENV_VALIDATION",
     "TAXBOOK_PORT",

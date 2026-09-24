@@ -15,7 +15,7 @@ Optional environment variables:
 
 ```sh
 DATABASE_URL=file:./.data/passbook.db
-DOCUMENTS_DIR=./.data/documents
+DATA_DIR=./.data
 PORT=3002
 ```
 
@@ -59,7 +59,7 @@ wildcard certificate for `*.tools.local` (configured in dotfiles).
 
 ## Documents and backups
 
-Account documents are managed copies under `DOCUMENTS_DIR` (default `.data/documents`, or `/data/documents` in Docker). Uploads are limited to one PDF, JPEG, PNG, WebP, or HEIC file at a time and 25 MiB per file.
+Account documents are managed copies under `DATA_DIR/documents` (`DATA_DIR` defaults to `.data`, or `/data` in Docker). Uploads accept one PDF, image (JPEG, PNG, WebP, HEIC), EML, or audio (MP3, M4A, WAV, OGG) file at a time, up to 25 MB.
 
 A complete backup must include both the SQLite database and the entire documents directory. Restore both from the same backup point so document metadata and managed files remain consistent.
 

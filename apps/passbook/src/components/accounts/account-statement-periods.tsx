@@ -471,7 +471,7 @@ export function AccountStatementPeriods({
                   </div>
                   {completeness === "complete" && document ? (
                     <DocumentActionButtons
-                      documentId={document.id}
+                      fileId={document.fileId}
                       title={document.title}
                       onEdit={() => setEditingStatement(document)}
                       onDelete={() =>

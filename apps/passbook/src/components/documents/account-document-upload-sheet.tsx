@@ -30,7 +30,7 @@ import {
   documentTypeLabels,
   usesSuggestedDocumentTitle,
 } from "~/lib/documents";
-import { uploadAccountDocument } from "~/lib/upload-account-document";
+import { uploadFile } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type AccountDocumentUploadSheetProps = {
@@ -47,6 +47,7 @@ export function AccountDocumentUploadSheet({
   defaultType = "other",
 }: AccountDocumentUploadSheetProps) {
   const utils = api.useUtils();
+  const createDocument = api.documents.create.useMutation();
   const account = api.accounts.get.useQuery({ id: accountId });
   const uploadableTypes = useMemo(
     () =>
@@ -112,9 +113,10 @@ export function AccountDocumentUploadSheet({
 
     setUploading(true);
     try {
-      await uploadAccountDocument({
+      const uploaded = await uploadFile("document", file);
+      await createDocument.mutateAsync({
         accountId,
-        file,
+        file: uploaded.token,
         type,
         title,
         documentDate: documentDate || null,

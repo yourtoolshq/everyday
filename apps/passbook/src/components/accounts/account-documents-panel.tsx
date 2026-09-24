@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Plus } from "lucide-react";
 
+import { fileUrl } from "@yourtoolshq/data-ui";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { EmlPreviewDialog } from "~/components/activity/eml-preview-dialog";
 import { AccountDocumentUploadSheet } from "~/components/documents/account-document-upload-sheet";
@@ -58,6 +60,7 @@ export function AccountDocumentsPanel({
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
   const [emlPreview, setEmlPreview] = useState<{
     id: string;
+    fileId: string;
     title: string;
   } | null>(null);
 
@@ -109,7 +112,7 @@ export function AccountDocumentsPanel({
                   ) : null}
                 </div>
                 <DocumentActionButtons
-                  documentId={document.id}
+                  fileId={document.fileId}
                   title={document.title}
                   mimeType={document.mimeType}
                   onPreview={
@@ -117,6 +120,7 @@ export function AccountDocumentsPanel({
                       ? () =>
                           setEmlPreview({
                             id: document.id,
+                            fileId: document.fileId,
                             title: document.title,
                           })
                       : undefined
@@ -154,6 +158,7 @@ export function AccountDocumentsPanel({
       {emlPreview ? (
         <EmlPreviewDialog
           documentId={emlPreview.id}
+          fileId={emlPreview.fileId}
           title={emlPreview.title}
           open={Boolean(emlPreview)}
           onOpenChange={(open) => {
@@ -219,7 +224,7 @@ export function AccountVoidChequePanel({ accountId }: { accountId: string }) {
               <>
                 <Button variant="outline" size="sm" asChild>
                   <a
-                    href={`/api/documents/${voidCheque.id}/file`}
+                    href={fileUrl(voidCheque.fileId)}
                     target="_blank"
                     rel="noreferrer"
                   >
