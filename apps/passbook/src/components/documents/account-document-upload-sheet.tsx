@@ -30,7 +30,7 @@ import {
   documentTypeLabels,
   usesSuggestedDocumentTitle,
 } from "~/lib/documents";
-import { uploadFile } from "~/lib/uploads";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type AccountDocumentUploadSheetProps = {
@@ -48,6 +48,9 @@ export function AccountDocumentUploadSheet({
 }: AccountDocumentUploadSheetProps) {
   const utils = api.useUtils();
   const createDocument = api.documents.create.useMutation();
+  const fileUpload = useUpload("document");
+  const file = fileUpload.source;
+  const resetUpload = fileUpload.reset;
   const account = api.accounts.get.useQuery({ id: accountId });
   const uploadableTypes = useMemo(
     () =>
@@ -57,22 +60,21 @@ export function AccountDocumentUploadSheet({
     [account.data?.accountType],
   );
   const [type, setType] = useState<AccountDocumentType>(defaultType);
-  const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [titleTouched, setTitleTouched] = useState(false);
   const [documentDate, setDocumentDate] = useState("");
   const [notes, setNotes] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setType(defaultType);
-    setFile(null);
+    resetUpload();
     setTitle("");
     setTitleTouched(false);
     setDocumentDate("");
     setNotes("");
-  }, [defaultType, open]);
+  }, [defaultType, open, resetUpload]);
 
   useEffect(() => {
     if (
@@ -106,14 +108,14 @@ export function AccountDocumentUploadSheet({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!file) {
+    const uploaded = fileUpload.file;
+    if (!uploaded) {
       toast.error("Choose a file to upload.");
       return;
     }
 
-    setUploading(true);
+    setSaving(true);
     try {
-      const uploaded = await uploadFile("document", file);
       await createDocument.mutateAsync({
         accountId,
         file: uploaded.token,
@@ -128,7 +130,7 @@ export function AccountDocumentUploadSheet({
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed.");
     } finally {
-      setUploading(false);
+      setSaving(false);
     }
   }
 
@@ -146,12 +148,10 @@ export function AccountDocumentUploadSheet({
           <div className="flex-1 space-y-6 px-4 py-6">
             <div className="space-y-2">
               <Label htmlFor="account-document-file">File</Label>
-              <Input
+              <FileDropzone
                 id="account-document-file"
-                type="file"
+                upload={fileUpload}
                 accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,.pdf,.jpg,.jpeg,.png,.webp,.heic"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                required
               />
               <p className="text-muted-foreground text-xs">
                 PDF, JPEG, PNG, WebP, or HEIC up to 25 MB.
@@ -219,8 +219,11 @@ export function AccountDocumentUploadSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={uploading}>
-              {uploading ? "Uploading…" : "Save document"}
+            <Button
+              type="submit"
+              disabled={saving || fileUpload.status === "uploading"}
+            >
+              {saving ? "Saving…" : "Save document"}
             </Button>
           </SheetFooter>
         </form>
