@@ -1,22 +1,22 @@
 {
-  "name": "@yourtoolshq/data-ui",
+  "name": "@yourtoolshq/ui",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
-    "./server": "./src/server.ts"
+    "./alert-dialog": "./src/alert-dialog.tsx",
+    "./button": "./src/button.tsx",
+    "./card": "./src/card.tsx"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
     "lint": "eslint .",
-    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@yourtoolshq/data": "workspace:*",
-    "@yourtoolshq/ui": "workspace:*",
-    "lucide-react": "^0.468.0"
+    "class-variance-authority": "catalog:",
+    "cn": "catalog:",
+    "radix-ui": "^1.6.7"
   },
   "peerDependencies": {
     "react": "catalog:",
@@ -32,8 +32,7 @@
     "jiti": "^2.7.0",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
+    "typescript": "catalog:"
   },
   "prettier": "@yourtoolshq/prettier-config"
 }

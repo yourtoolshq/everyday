@@ -52,11 +52,20 @@ The platform owns the database connection so it can close and reopen it around a
 | -------------------------------------- | ------------------------------------------------------------------------------- |
 | `src/instrumentation.ts`               | `await dataPlatform.boot()` in `register()` for the Node.js runtime             |
 | `src/app/api/data/[...path]/route.ts`  | `export const { GET, POST } = createDataHandlers(dataPlatform, { fileRouter })` |
-| `src/app/(app)/layout.tsx`             | Wrap the shell in `<DataGate platform={dataPlatform}>`                          |
+| `src/app/(app)/layout.tsx`             | Wrap the shell and the layout's queries in `<DataGate platform={dataPlatform}>` |
 | `src/app/(app)/settings/data/page.tsx` | Render `<DataSettingsPage />`                                                   |
 | `src/app/files/[fileId]/page.tsx`      | `export { FileViewerPage as default } from "@yourtoolshq/data-ui"`              |
 
 Plus `files: dataPlatform.files` in the tRPC context and the platform readiness middleware on the base procedure.
+
+`DataGate` comes from `@yourtoolshq/data-ui/server`. Pages outside `(app)/` that query the database, such as a setup page, wrap their content in it too.
+
+Tailwind does not scan workspace packages, so `src/styles/globals.css` adds them as sources:
+
+```css
+@source "../../../../packages/ui/src";
+@source "../../../../packages/data-ui/src";
+```
 
 ## Files
 
@@ -203,7 +212,7 @@ Migrations run with foreign keys off because drizzle-kit's SQLite table rebuilds
 
 | Layer  | Behavior when not `ready`                                                                                                                                                                                                                          |
 | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pages  | `DataGate` renders `MaintenanceScreen` (progress, or the blocked reason with compatible backups to restore); reloads on `ready`                                                                                                                    |
+| Pages  | `DataGate` renders `MaintenanceScreen` (progress, or the blocked reason with compatible backups to restore); reloads on `ready`. It guards only its own children, so database queries go inside it                                                 |
 | tRPC   | Readiness middleware throws `SERVICE_UNAVAILABLE`. This is the guard that matters: Next.js renders layouts and pages in parallel                                                                                                                   |
 | Files  | `GET /api/data/files/:id` and `POST /api/data/upload/:endpoint` answer 503; a migration may be changing `yt_files`                                                                                                                                 |
 | Health | `/api/health` answers 200 with `status: "maintenance"` and the state, and skips the database check. Traefik routes only to healthy containers, and the maintenance screen has to stay reachable. When `ready`, a failed database check answers 503 |

@@ -144,7 +144,7 @@ function blockedError(
     : `a newer version of ${app}`;
   return new DataPlatformBlockedError(
     "downgrade",
-    `This database was upgraded by ${migratedBy} and has ${plan.unknown} migration(s) this version does not know. Run that version or newer, or restore a backup made by this version; nothing has been changed.`,
+    `This database was upgraded by ${migratedBy} and has ${plan.unknown} migration(s) this version does not know. Run that version or newer, or restore a backup this version can open; nothing has been changed.`,
   );
 }
 
