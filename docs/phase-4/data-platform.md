@@ -106,7 +106,7 @@ Type groups: `pdf`, `image` (JPEG, PNG, WebP, HEIC), `eml`, `audio` (MP3, M4A, W
                  commit ─► file is permanent        throw ─► file returns to staging, row rolled back
 ```
 
-A file becomes permanent only in the transaction that inserts the row referencing it. `files.remove(fileId)` inside `withFiles` deletes the row and unlinks the file after commit; a running backup holds the unlink until its archive is written.
+A file becomes permanent only in the transaction that inserts the row referencing it. An upload token expires 24 hours after upload: `claim` then fails with `BAD_REQUEST`, and the staged file is deleted when the platform next becomes ready or another file is uploaded. `files.remove(fileId)` inside `withFiles` deletes the row and unlinks the file after commit; a running backup holds the unlink until its archive is written.
 
 ```ts
 // src/lib/uploads.ts
@@ -338,7 +338,6 @@ The integrity scan covers the whole database and every stored file. It runs on r
 | File presence           | `yt_files` row without a file on disk                   | Reported with the referencing record                                                   |
 | Checksum                | File content differs from `sha256`                      | Reported; restore the file from a backup. A missing `sha256` is recorded               |
 | Unreferenced file       | File on disk without a row, or a row nothing references | Reported; moved to `.orphans/` on request, and deleted from there only on confirmation |
-| Stale staging           | Uploads older than 24 hours                             | Reaped automatically                                                                   |
 
 `integrity.quarantine` takes the names of reported unreferenced files, checks each is still unreferenced while no file transaction is running, deletes its `yt_files` row, and moves the file to `.orphans/` with the row's details beside it. `integrity.purge` deletes quarantined files by name. The last report is kept in memory as `integrity.last` until the process restarts or a backup is restored.
 

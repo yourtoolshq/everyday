@@ -1,8 +1,17 @@
-import { access, readdir, rm, writeFile } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  readdir,
+  rm,
+  utimes,
+  writeFile,
+} from "node:fs/promises";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DetectedFileType } from "./detect";
+import { defineDataPlatform } from "../platform";
+import { filesTable } from "../schema";
 import { createTestPlatform, pdfBytes } from "../test-platform";
 import { parseFileToken } from "./router";
 import { createFileCoordinator } from "./store";
@@ -35,6 +44,13 @@ function stagedPath(token: string) {
   const parsed = parseFileToken(token);
   if (!parsed) throw new Error(`Invalid token ${token}`);
   return join(context.documentsDir, ".staging", parsed.id);
+}
+
+const dayAndAnHourAgo = new Date(Date.now() - 25 * 60 * 60 * 1000);
+
+async function age(...paths: string[]) {
+  for (const path of paths)
+    await utimes(path, dayAndAnHourAgo, dayAndAnHourAgo);
 }
 
 beforeEach(async () => {
@@ -131,6 +147,25 @@ describe("withFiles", () => {
     ).rejects.toThrow("The uploaded file is no longer available");
   });
 
+  it("rejects an upload staged more than 24 hours ago", async () => {
+    const staged = await stagePdf();
+    await age(stagedPath(staged.token), `${stagedPath(staged.token)}.json`);
+
+    await expect(
+      files().withFiles(context.db, (_tx, tx) => tx.claim(staged.token)),
+    ).rejects.toThrow("The uploaded file is no longer available");
+  });
+
+  it("rejects an upload whose staged file is gone and keeps no row", async () => {
+    const staged = await stagePdf();
+    await rm(stagedPath(staged.token));
+
+    await expect(
+      files().withFiles(context.db, (_tx, tx) => tx.claim(staged.token)),
+    ).rejects.toThrow("The uploaded file is no longer available");
+    expect(await context.db.select().from(filesTable)).toEqual([]);
+  });
+
   it("removes a file when the transaction commits", async () => {
     const staged = await stagePdf();
     const file = await files().withFiles(context.db, (_tx, tx) =>
@@ -177,6 +212,53 @@ describe("withFiles", () => {
       "removed file was already missing on disk",
       { fileId: file.id, storageKey: file.storageKey },
     );
+  });
+});
+
+describe("expired uploads", () => {
+  it("are removed when a file is staged", async () => {
+    vi.spyOn(console, "info").mockImplementation(() => undefined);
+    const expired = await stagePdf();
+    const incomplete = join(context.documentsDir, ".staging", "incomplete");
+    await writeFile(incomplete, pdfBytes);
+    await age(stagedPath(expired.token), `${stagedPath(expired.token)}.json`);
+    await age(incomplete);
+    const recent = await stagePdf();
+
+    const current = await stagePdf();
+
+    expect(
+      (await readdir(join(context.documentsDir, ".staging"))).sort(),
+    ).toEqual(
+      [
+        parseFileToken(recent.token)?.id,
+        `${parseFileToken(recent.token)?.id}.json`,
+        parseFileToken(current.token)?.id,
+        `${parseFileToken(current.token)?.id}.json`,
+      ].sort(),
+    );
+  });
+
+  it("are removed when the platform becomes ready", async () => {
+    vi.spyOn(console, "info").mockImplementation(() => undefined);
+    const stagingDir = join(context.documentsDir, ".staging");
+    context.platform.close();
+    await mkdir(stagingDir, { recursive: true });
+    await writeFile(join(stagingDir, "expired"), pdfBytes);
+    await writeFile(join(stagingDir, "recent"), pdfBytes);
+    await age(join(stagingDir, "expired"));
+
+    context.platform = defineDataPlatform({
+      app: "test",
+      dataDir: context.dataDir,
+      db: {
+        schema: { filesTable },
+        migrationsFolder: context.migrationsFolder,
+      },
+    });
+    expect(await context.platform.settled()).toEqual({ state: "ready" });
+
+    expect(await readdir(stagingDir)).toEqual(["recent"]);
   });
 });
 

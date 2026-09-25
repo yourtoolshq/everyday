@@ -12,7 +12,11 @@ import type { BlockedReason, JournalMigration } from "./migrations";
 import { createBackups, recoverInterruptedRestore } from "./backup/backups";
 import { parseSchedule, startBackupSchedule } from "./backup/schedule";
 import { PausableClient } from "./connection";
-import { createFileCoordinator, createFileStore } from "./files/store";
+import {
+  createFileCoordinator,
+  createFileStore,
+  removeExpiredUploads,
+} from "./files/store";
 import { createIntegrity } from "./integrity";
 import {
   applyMigrations,
@@ -138,6 +142,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
 
   async function enterReady() {
     connection.state = { state: "ready" };
+    await removeExpiredUploads(documentsDir);
     if (config.backups && !connection.stopSchedule) {
       connection.stopSchedule = await startBackupSchedule({
         app: config.app,
