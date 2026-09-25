@@ -6,6 +6,11 @@ export interface BackupPolicy {
   retention: RetentionPolicy;
 }
 
+export interface BackupScheduleSummary extends BackupPolicy {
+  // Null until the platform is ready and the scheduler has started.
+  nextRunAt: string | null;
+}
+
 interface TimeOfDay {
   hour: number;
   minute: number;
@@ -88,5 +93,10 @@ export async function startBackupSchedule(options: {
     });
   }, checkEveryMs);
   timer.unref();
-  return () => clearInterval(timer);
+  return {
+    stop: () => clearInterval(timer),
+    nextRunAt: () => nextRunAt,
+  };
 }
+
+export type BackupScheduler = Awaited<ReturnType<typeof startBackupSchedule>>;

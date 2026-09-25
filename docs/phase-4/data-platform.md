@@ -54,6 +54,7 @@ The platform owns the database connection so it can close and reopen it around a
 | `src/app/api/data/[...path]/route.ts`  | `export const { GET, POST } = createDataHandlers(dataPlatform, { fileRouter })` |
 | `src/app/(app)/layout.tsx`             | Wrap the shell and the layout's queries in `<DataGate platform={dataPlatform}>` |
 | `src/app/(app)/settings/data/page.tsx` | Render `<DataSettingsPage />`                                                   |
+| The application shell                  | Render `<BackupStatusBanner />` above the page content                          |
 | `src/app/files/[fileId]/page.tsx`      | `export { FileViewerPage as default } from "@yourtoolshq/data-ui"`              |
 
 Plus `files: dataPlatform.files` in the tRPC context and the platform readiness middleware on the base procedure.
@@ -154,7 +155,7 @@ All served by the catch-all route.
 | `GET /api/data/status`            | Platform state; see [Platform state](#boot-sequence-and-platform-state) |
 | `/api/data/trpc/*`                | Platform router: `backups`, `usage`, `integrity`, `schedule`            |
 
-The `backups` router has `list`, `status`, `create`, `verify`, and `restore`; `verify` and `restore` take a backup id in the backup directory. `usage.get` returns [storage usage](#storage-usage). The `integrity` router has `scan`, `last`, `quarantine`, and `purge`; see [Integrity](#integrity). Operations that need `ready` data answer 409 while the platform is upgrading, restoring, or blocked. The platform router accepts POST requests only as `application/json` and answers 415 otherwise. Applications keep their own router at `/api/trpc` for domain procedures.
+The `backups` router has `list`, `status`, `create`, `verify`, and `restore`; `verify` and `restore` take a backup id in the backup directory. `usage.get` returns [storage usage](#storage-usage). `schedule.get` returns the backup policy and `nextRunAt`, or `null` when the platform is defined without `backups`. The `integrity` router has `scan`, `last`, `quarantine`, and `purge`; see [Integrity](#integrity). Operations that need `ready` data answer 409 while the platform is upgrading, restoring, or blocked. The platform router accepts POST requests only as `application/json` and answers 415 otherwise. Applications keep their own router at `/api/trpc` for domain procedures.
 
 ## Storage layout
 
@@ -344,6 +345,10 @@ The integrity scan covers the whole database and every stored file. It runs on r
 ## Storage usage
 
 `usage.get` reports, per application: database size including its write-ahead log; file count and bytes in total and by type group (`pdf`, `image`, `eml`, `audio`, and `other`), from the sizes recorded in `yt_files`; backup count and archive bytes; and free and total bytes on the data and backup volumes. It answers 409 unless the platform is `ready`.
+
+## Data page
+
+`DataSettingsPage` shows storage usage, the backup schedule with its last and next scheduled backup, and the list of backups. Each backup can be downloaded, verified, or restored, and "Back up now" takes a manual one. A restore reloads the page when it finishes. `BackupStatusBanner` appears on every page while backups are stale or failing, or while they share the data directory, and links to `/settings/data`.
 
 ## Recovery expectations
 

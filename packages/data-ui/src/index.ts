@@ -1,5 +1,8 @@
 import type { FileRouter, StagedUpload } from "@yourtoolshq/data/files";
 
+export { BackupStatusBanner } from "./backup-status-banner";
+export { DataSettingsPage } from "./data-settings-page";
+
 export type UploadedFile = StagedUpload;
 
 export function createUploadHelpers<TRouter extends FileRouter>() {

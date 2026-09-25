@@ -69,6 +69,9 @@ export function createDataRouter(platform: DataPlatform) {
     usage: t.router({
       get: t.procedure.query(() => conflictWhenBusy(() => platform.usage())),
     }),
+    schedule: t.router({
+      get: t.procedure.query(() => platform.schedule()),
+    }),
     integrity: t.router({
       last: t.procedure.query(() => platform.integrity.lastReport()),
       scan: t.procedure.mutation(() =>

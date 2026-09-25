@@ -11,7 +11,7 @@ export { BackupVerificationError } from "./backup/backups";
 export { DataPlatformBlockedError, MigrationFailedError } from "./migrations";
 export type { RestoreResult } from "./backup/backups";
 export type { RetentionPolicy } from "./backup/retention";
-export type { BackupPolicy } from "./backup/schedule";
+export type { BackupPolicy, BackupScheduleSummary } from "./backup/schedule";
 export type { BackupStatus } from "./backup/status";
 export type {
   BackupManifest,
