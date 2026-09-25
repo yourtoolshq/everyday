@@ -5,11 +5,13 @@ import { useCallback, useEffect, useState } from "react";
 import type {
   BackupScheduleSummary,
   BackupSummary,
+  IntegrityReport,
   StorageUsage,
 } from "@yourtoolshq/data";
 
 import { BackupsCard } from "./backups-card";
 import { dataClient, describeError } from "./client";
+import { IntegrityCard } from "./integrity-card";
 import { ScheduleCard } from "./schedule-card";
 import { StorageCard } from "./storage-card";
 
@@ -17,6 +19,7 @@ export interface DataSettings {
   usage: StorageUsage;
   schedule: BackupScheduleSummary | null;
   backups: BackupSummary[];
+  integrity: IntegrityReport | null;
 }
 
 export function DataSettingsPage() {
@@ -25,12 +28,13 @@ export function DataSettingsPage() {
 
   const load = useCallback(async () => {
     try {
-      const [usage, schedule, list] = await Promise.all([
+      const [usage, schedule, list, integrity] = await Promise.all([
         dataClient.usage.get.query(),
         dataClient.schedule.get.query(),
         dataClient.backups.list.query(),
+        dataClient.integrity.last.query(),
       ]);
-      setSettings({ usage, schedule, backups: list.backups });
+      setSettings({ usage, schedule, backups: list.backups, integrity });
       setLoadError(null);
     } catch (error) {
       setLoadError(describeError(error));
@@ -70,6 +74,9 @@ export function DataSettingsView({
       <ScheduleCard schedule={settings.schedule} backups={settings.backups} />
       <div className="md:col-span-2">
         <BackupsCard backups={settings.backups} onChanged={onChanged} />
+      </div>
+      <div className="md:col-span-2">
+        <IntegrityCard report={settings.integrity} onChanged={onChanged} />
       </div>
     </div>
   );
