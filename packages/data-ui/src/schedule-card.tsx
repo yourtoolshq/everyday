@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@yourtoolshq/ui/card";
 
-import { BackupTime } from "./backup-time";
+import { LocalTime } from "./local-time";
 import { VerificationBadge } from "./verification-badge";
 
 export function ScheduleCard({
@@ -42,7 +42,7 @@ export function ScheduleCard({
             <dd className="flex flex-wrap items-center gap-2">
               {lastScheduled?.manifest ? (
                 <>
-                  <BackupTime iso={lastScheduled.manifest.createdAt} />
+                  <LocalTime iso={lastScheduled.manifest.createdAt} />
                   <VerificationBadge
                     verification={lastScheduled.verification}
                   />
@@ -54,7 +54,7 @@ export function ScheduleCard({
             <dt>Next</dt>
             <dd>
               {schedule.nextRunAt ? (
-                <BackupTime iso={schedule.nextRunAt} />
+                <LocalTime iso={schedule.nextRunAt} />
               ) : (
                 "Not scheduled"
               )}

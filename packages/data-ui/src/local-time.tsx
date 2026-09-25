@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 const subscribeNever = () => () => undefined;
 
 // The server renders UTC; the browser switches to its own time zone after hydration.
-export function BackupTime({ iso }: { iso: string }) {
+export function LocalTime({ iso }: { iso: string }) {
   const inBrowser = useSyncExternalStore(
     subscribeNever,
     () => true,

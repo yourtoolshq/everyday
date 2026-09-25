@@ -6,8 +6,8 @@ import { TriangleAlert } from "lucide-react";
 
 import type { BackupStatus } from "@yourtoolshq/data";
 
-import { BackupTime } from "./backup-time";
 import { dataClient, describeError, onBackupsChanged } from "./client";
+import { LocalTime } from "./local-time";
 
 const refreshIntervalMs = 60 * 1000;
 
@@ -44,7 +44,7 @@ export function BackupStatusNotice({ status }: { status: BackupStatus }) {
       status.lastVerifiedBackupAt ? (
         <>
           No backup has been verified since{" "}
-          <BackupTime iso={status.lastVerifiedBackupAt} />.
+          <LocalTime iso={status.lastVerifiedBackupAt} />.
         </>
       ) : (
         "No verified backup exists yet."

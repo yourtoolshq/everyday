@@ -31,9 +31,9 @@ import {
   CardTitle,
 } from "@yourtoolshq/ui/card";
 
-import { BackupTime } from "./backup-time";
 import { dataClient, describeError } from "./client";
 import { formatBytes } from "./format";
+import { LocalTime } from "./local-time";
 
 type Action = "scan" | "quarantine" | "purge";
 
@@ -98,7 +98,7 @@ export function IntegrityCard({
         <CardDescription>
           {report ? (
             <>
-              Last scanned <BackupTime iso={report.scannedAt} />.
+              Last scanned <LocalTime iso={report.scannedAt} />.
             </>
           ) : (
             "No scan since the app started."

@@ -29,9 +29,9 @@ import {
   CardTitle,
 } from "@yourtoolshq/ui/card";
 
-import { BackupTime } from "./backup-time";
 import { dataClient, describeError, notifyBackupsChanged } from "./client";
 import { formatBytes } from "./format";
+import { LocalTime } from "./local-time";
 import { VerificationBadge } from "./verification-badge";
 
 const triggerLabels: Record<BackupTrigger, string> = {
@@ -172,7 +172,7 @@ function BackupRow({
   onRestore: () => void;
 }) {
   const { manifest } = backup;
-  const createdAt = manifest ? <BackupTime iso={manifest.createdAt} /> : null;
+  const createdAt = manifest ? <LocalTime iso={manifest.createdAt} /> : null;
   return (
     <li className="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2">
       <div className="min-w-0 flex-1">
