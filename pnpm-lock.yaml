@@ -625,6 +625,9 @@ importers:
 
   packages/data-ui:
     dependencies:
+      '@trpc/client':
+        specifier: 'catalog:'
+        version: 11.19.0(@trpc/server@11.19.0(typescript@5.9.3))(typescript@5.9.3)
       '@yourtoolshq/data':
         specifier: workspace:*
         version: link:../data

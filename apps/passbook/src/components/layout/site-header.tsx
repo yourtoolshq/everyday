@@ -12,6 +12,7 @@ const titles: Record<string, string> = {
   "/institutions": "Institutions",
   "/members": "Members",
   "/documents": "Documents",
+  "/settings/data": "Data & backups",
 };
 
 export function SiteHeader() {

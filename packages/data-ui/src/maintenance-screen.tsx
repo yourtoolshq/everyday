@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { LoaderCircle, TriangleAlert } from "lucide-react";
 
 import type { PlatformStatus, RestorableBackup } from "@yourtoolshq/data";
@@ -23,6 +23,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@yourtoolshq/ui/card";
+
+import { BackupTime } from "./backup-time";
 
 type BlockedStatus = Extract<PlatformStatus, { state: "blocked" }>;
 
@@ -230,26 +232,6 @@ function RestorableBackups({
         ))}
       </ul>
     </>
-  );
-}
-
-const subscribeNever = () => () => undefined;
-
-// The server renders UTC; the browser switches to its own time zone after hydration.
-function BackupTime({ iso }: { iso: string }) {
-  const inBrowser = useSyncExternalStore(
-    subscribeNever,
-    () => true,
-    () => false,
-  );
-  const style = { dateStyle: "medium", timeStyle: "short" } as const;
-  const date = new Date(iso);
-  return (
-    <time dateTime={iso}>
-      {inBrowser
-        ? date.toLocaleString(undefined, style)
-        : `${date.toLocaleString("en-US", { ...style, timeZone: "UTC" })} UTC`}
-    </time>
   );
 }
 

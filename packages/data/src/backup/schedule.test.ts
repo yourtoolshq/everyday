@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BackupPolicy } from "./schedule";
 import { defineDataPlatform } from "../platform";
+import { createDataRouter } from "../router";
 import { filesTable } from "../schema";
 import { platformMigration, writeMigrations } from "../test-platform";
 import { nextRunAfter } from "./schedule";
@@ -166,6 +167,31 @@ describe("backup schedule", () => {
     await vi.advanceTimersByTimeAsync(minutes(24 * 60));
 
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it("reports the policy and the next run", async () => {
+    const platform = await startScheduled();
+    const schedule = () =>
+      createDataRouter(platform).createCaller({}).schedule.get();
+
+    expect(await schedule()).toEqual({
+      ...policy,
+      nextRunAt: new Date(2026, 8, 24, 10, 2).toISOString(),
+    });
+    await vi.advanceTimersByTimeAsync(minutes(2));
+    await waitForScheduledBackup();
+    await vi.waitFor(async () => {
+      expect(await schedule()).toMatchObject({
+        nextRunAt: new Date(2026, 8, 25, 2, 0).toISOString(),
+      });
+    });
+  });
+
+  it("reports no schedule without a backup policy", async () => {
+    const platform = openPlatform();
+    await platform.settled();
+
+    expect(platform.schedule()).toBeNull();
   });
 
   it("rejects a schedule it cannot parse", () => {

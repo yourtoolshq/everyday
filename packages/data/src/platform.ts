@@ -5,7 +5,11 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
 import type { BackupContext } from "./backup/backups";
-import type { BackupPolicy } from "./backup/schedule";
+import type {
+  BackupPolicy,
+  BackupScheduler,
+  BackupScheduleSummary,
+} from "./backup/schedule";
 import type { BackupStatus } from "./backup/status";
 import type { FileCoordinator } from "./files/store";
 import type { IntegrityReport } from "./integrity";
@@ -73,7 +77,7 @@ interface Connection {
   state: PlatformState;
   booted?: Promise<void>;
   upgrade?: Promise<void>;
-  stopSchedule?: () => void;
+  scheduler?: BackupScheduler;
   lastIntegrityReport?: IntegrityReport;
   lastBackupCreateError?: string;
 }
@@ -153,8 +157,8 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
   async function enterReady() {
     connection.state = { state: "ready" };
     await removeExpiredUploads(documentsDir);
-    if (config.backups && !connection.stopSchedule) {
-      connection.stopSchedule = await startBackupSchedule({
+    if (config.backups && !connection.scheduler) {
+      connection.scheduler = await startBackupSchedule({
         app: config.app,
         policy: config.backups,
         backups,
@@ -368,6 +372,13 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
     integrity,
     usage: () =>
       whenReady(async () => readUsage(backupContext, await archives.list())),
+    schedule(): BackupScheduleSummary | null {
+      if (!config.backups) return null;
+      return {
+        ...config.backups,
+        nextRunAt: connection.scheduler?.nextRunAt().toISOString() ?? null,
+      };
+    },
     boot: startBoot,
     async state(): Promise<PlatformState> {
       await startBoot();
@@ -394,7 +405,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
       return connection.state;
     },
     close() {
-      connection.stopSchedule?.();
+      connection.scheduler?.stop();
       connection.client.close();
       connections.delete(databasePath);
     },
