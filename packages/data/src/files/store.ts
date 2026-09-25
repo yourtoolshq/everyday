@@ -2,8 +2,10 @@ import { createHash, randomUUID } from "node:crypto";
 import { createReadStream } from "node:fs";
 import {
   mkdir,
+  readdir,
   readFile,
   rename,
+  rm,
   stat,
   unlink,
   writeFile,
@@ -115,6 +117,42 @@ export function createFileCoordinator(
 
 export const storageKeyPattern = /^[0-9a-f-]{36}\.[a-z0-9]{2,5}$/;
 
+const stagedUploadLifetimeMs = 24 * 60 * 60 * 1000;
+
+// Deletes staged files older than the upload lifetime; `claim` refuses those uploads from
+// the same moment. Failures are logged, not thrown, so they never block an upload or boot.
+export async function removeExpiredUploads(documentsDir: string) {
+  const stagingDir = join(resolve(documentsDir), ".staging");
+  try {
+    let names: string[];
+    try {
+      names = await readdir(stagingDir);
+    } catch (error) {
+      if (isMissing(error)) return;
+      throw error;
+    }
+    let removed = 0;
+    for (const name of names) {
+      const path = join(stagingDir, name);
+      let modifiedAt: number;
+      try {
+        modifiedAt = (await stat(path)).mtimeMs;
+      } catch (error) {
+        if (isMissing(error)) continue;
+        throw error;
+      }
+      if (Date.now() - modifiedAt < stagedUploadLifetimeMs) continue;
+      await rm(path, { force: true });
+      removed += 1;
+    }
+    if (removed > 0) {
+      console.info("expired uploads removed", { stagingDir, removed });
+    }
+  } catch (error) {
+    console.warn("failed to remove expired uploads", { stagingDir, error });
+  }
+}
+
 export type FileStore = ReturnType<typeof createFileStore>;
 
 export function createFileStore(options: {
@@ -149,6 +187,7 @@ export function createFileStore(options: {
     bytes: Uint8Array;
     type: DetectedFileType;
   }): Promise<StagedUpload> {
+    await removeExpiredUploads(root);
     await mkdir(stagingDir, { recursive: true });
     const id = randomUUID();
     const paths = stagedPaths(id);
@@ -240,11 +279,16 @@ export function createFileStore(options: {
         if (!file) throw new Error(`Failed to record claimed file ${id}`);
 
         const path = storedPath(file.storageKey);
-        await rename(paths.data, path);
+        try {
+          await rename(paths.data, path);
+        } catch (error) {
+          if (isMissing(error)) throw expiredUpload();
+          throw error;
+        }
         pending.push({
           path,
           rollback: () => rename(path, paths.data),
-          commit: () => unlink(paths.metadata),
+          commit: () => rm(paths.metadata, { force: true }),
         });
         return file;
       },
@@ -313,8 +357,11 @@ export function createFileStore(options: {
   return { stage, get, read, stream, withFiles };
 }
 
+// Null when the upload was never completed, was already claimed, or has expired.
 async function readStagedMetadata(path: string) {
   try {
+    const { mtimeMs } = await stat(path);
+    if (Date.now() - mtimeMs >= stagedUploadLifetimeMs) return null;
     return JSON.parse(await readFile(path, "utf8")) as StagedMetadata;
   } catch (error) {
     if (isMissing(error)) return null;
