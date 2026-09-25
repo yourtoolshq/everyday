@@ -114,8 +114,16 @@ A file becomes permanent only in the transaction that inserts the row referencin
 export const { FileDropzone, useUpload } = createUploadHelpers<AppFileRouter>();
 ```
 
+The upload starts as soon as a file is picked or dropped, and the dropzone shows its progress while the rest of the form is filled in. `useUpload` holds the state (`status`, `source`, `progress`, `file`, `error`), so the form can disable Save while the upload runs and submit the token once it finishes. `reset()` cancels a running upload and clears the dropzone.
+
 ```tsx
-<FileDropzone endpoint="statement" onUploaded={setFile} />
+const statementFile = useUpload("statement"); // endpoint names are type-checked
+
+<FileDropzone id="statement-file" upload={statementFile} accept="application/pdf" />
+<Button type="submit" disabled={statementFile.status !== "uploaded"}>Save</Button>
+
+// on submit
+if (statementFile.file) create.mutate({ accountId, file: statementFile.file.token });
 ```
 
 ```ts

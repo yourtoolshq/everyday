@@ -35,7 +35,7 @@ import {
   documentTypeLabels,
   usesSuggestedDocumentTitle,
 } from "~/lib/documents";
-import { uploadFile } from "~/lib/uploads";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type ActivityDocumentUploadSheetProps = {
@@ -57,6 +57,9 @@ export function ActivityDocumentUploadSheet({
 }: ActivityDocumentUploadSheetProps) {
   const utils = api.useUtils();
   const createDocument = api.documents.create.useMutation();
+  const fileUpload = useUpload("document");
+  const file = fileUpload.source;
+  const resetUpload = fileUpload.reset;
   const account = api.accounts.get.useQuery(
     { id: accountId },
     { enabled: open },
@@ -65,23 +68,22 @@ export function ActivityDocumentUploadSheet({
     defaultActivityDocumentType(activityType),
   );
   const [typeTouched, setTypeTouched] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [titleTouched, setTitleTouched] = useState(false);
   const [documentDate, setDocumentDate] = useState(defaultDocumentDate);
   const [notes, setNotes] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setType(defaultActivityDocumentType(activityType));
     setTypeTouched(false);
-    setFile(null);
+    resetUpload();
     setTitle("");
     setTitleTouched(false);
     setDocumentDate(defaultDocumentDate);
     setNotes("");
-  }, [activityType, defaultDocumentDate, open]);
+  }, [activityType, defaultDocumentDate, open, resetUpload]);
 
   useEffect(() => {
     if (!file || typeTouched) return;
@@ -120,14 +122,14 @@ export function ActivityDocumentUploadSheet({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!file) {
+    const uploaded = fileUpload.file;
+    if (!uploaded) {
       toast.error("Choose a file to upload.");
       return;
     }
 
-    setUploading(true);
+    setSaving(true);
     try {
-      const uploaded = await uploadFile("document", file);
       await createDocument.mutateAsync({
         accountId,
         eventId,
@@ -146,7 +148,7 @@ export function ActivityDocumentUploadSheet({
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed.");
     } finally {
-      setUploading(false);
+      setSaving(false);
     }
   }
 
@@ -164,12 +166,10 @@ export function ActivityDocumentUploadSheet({
           <div className="flex-1 space-y-6 px-4 py-6">
             <div className="space-y-2">
               <Label htmlFor="activity-document-file">File</Label>
-              <Input
+              <FileDropzone
                 id="activity-document-file"
-                type="file"
+                upload={fileUpload}
                 accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,.pdf,.jpg,.jpeg,.png,.webp,.heic,.eml,message/rfc822,audio/mpeg,audio/mp4,audio/wav,audio/ogg,.mp3,.m4a,.wav,.ogg"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                required
               />
               <p className="text-muted-foreground text-xs">
                 PDF, images, .eml, or common audio files up to 25 MB.
@@ -240,8 +240,11 @@ export function ActivityDocumentUploadSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={uploading}>
-              {uploading ? "Uploading…" : "Save document"}
+            <Button
+              type="submit"
+              disabled={saving || fileUpload.status === "uploading"}
+            >
+              {saving ? "Saving…" : "Save document"}
             </Button>
           </SheetFooter>
         </form>

@@ -32,7 +32,7 @@ import {
   deriveAllUploadablePeriods,
   suggestDefaultPeriodKey,
 } from "~/lib/expected-periods";
-import { uploadFile } from "~/lib/uploads";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type Account = RouterOutputs["accounts"]["list"][number];
@@ -66,6 +66,8 @@ export function StatementUploadSheet({
 }: StatementUploadSheetProps) {
   const utils = api.useUtils();
   const createDocument = api.documents.create.useMutation();
+  const fileUpload = useUpload("document");
+  const resetUpload = fileUpload.reset;
   const accounts = api.accounts.list.useQuery();
   const statementDocuments =
     api.documents.statementDocumentsByAccount.useQuery();
@@ -77,11 +79,10 @@ export function StatementUploadSheet({
 
   const [accountId, setAccountId] = useState(initialAccountId ?? "");
   const [periodKey, setPeriodKey] = useState(initialPeriodKey ?? "");
-  const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [titleTouched, setTitleTouched] = useState(false);
   const [notes, setNotes] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const selectedAccount = uploadableAccounts.find(
     (account) => account.id === accountId,
@@ -116,11 +117,11 @@ export function StatementUploadSheet({
     if (!open) return;
     setAccountId(initialAccountId ?? "");
     setPeriodKey(initialPeriodKey ?? "");
-    setFile(null);
+    resetUpload();
     setTitle("");
     setTitleTouched(false);
     setNotes("");
-  }, [initialAccountId, initialPeriodKey, open]);
+  }, [initialAccountId, initialPeriodKey, open, resetUpload]);
 
   useEffect(() => {
     if (!open || initialAccountId) return;
@@ -164,6 +165,7 @@ export function StatementUploadSheet({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const uploaded = fileUpload.file;
     if (!accountId) {
       toast.error("Choose an account.");
       return;
@@ -172,7 +174,7 @@ export function StatementUploadSheet({
       toast.error("Choose a statement period.");
       return;
     }
-    if (!file) {
+    if (!uploaded) {
       toast.error("Choose a file to upload.");
       return;
     }
@@ -181,9 +183,8 @@ export function StatementUploadSheet({
       return;
     }
 
-    setUploading(true);
+    setSaving(true);
     try {
-      const uploaded = await uploadFile("document", file);
       await createDocument.mutateAsync({
         accountId,
         file: uploaded.token,
@@ -201,7 +202,7 @@ export function StatementUploadSheet({
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed.");
     } finally {
-      setUploading(false);
+      setSaving(false);
     }
   }
 
@@ -222,12 +223,10 @@ export function StatementUploadSheet({
           <div className="flex-1 space-y-6 px-4 py-6">
             <div className="space-y-2">
               <Label htmlFor="statement-file">File</Label>
-              <Input
+              <FileDropzone
                 id="statement-file"
-                type="file"
+                upload={fileUpload}
                 accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,.pdf,.jpg,.jpeg,.png,.webp,.heic"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                required
               />
               <p className="text-muted-foreground text-xs">
                 PDF, JPEG, PNG, WebP, or HEIC up to 25 MB.
@@ -327,10 +326,13 @@ export function StatementUploadSheet({
             <Button
               type="submit"
               disabled={
-                uploading || uploadableAccounts.length === 0 || !selectedAccount
+                saving ||
+                fileUpload.status === "uploading" ||
+                uploadableAccounts.length === 0 ||
+                !selectedAccount
               }
             >
-              {uploading ? "Uploading…" : "Save statement"}
+              {saving ? "Saving…" : "Save statement"}
             </Button>
           </SheetFooter>
         </form>
