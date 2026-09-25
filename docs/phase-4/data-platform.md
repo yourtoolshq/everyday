@@ -348,7 +348,7 @@ The integrity scan covers the whole database and every stored file. It runs on r
 
 ## Data page
 
-`DataSettingsPage` shows storage usage, the backup schedule with its last and next scheduled backup, and the list of backups. Each backup can be downloaded, verified, or restored, and "Back up now" takes a manual one. A restore reloads the page when it finishes. `BackupStatusBanner` appears on every page while backups are stale or failing, or while they share the data directory, and links to `/settings/data`.
+`DataSettingsPage` shows storage usage, the backup schedule with its last and next scheduled backup, and the list of backups. Each backup can be downloaded, verified, or restored, and "Back up now" takes a manual one. A restore reloads the page when it finishes. The Integrity card shows the last integrity report and "Scan now" runs a new one; it lists database problems, broken relationships, and missing or changed files with the records that use them. Unreferenced files can be moved to quarantine, and quarantined files deleted after a confirmation; the card scans again after either. `BackupStatusBanner` appears on every page while backups are stale or failing, or while they share the data directory, and links to `/settings/data`.
 
 ## Recovery expectations
 
