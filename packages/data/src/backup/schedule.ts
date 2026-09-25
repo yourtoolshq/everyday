@@ -11,7 +11,7 @@ interface TimeOfDay {
   minute: number;
 }
 
-const intervalMs = 24 * 60 * 60 * 1000;
+export const backupIntervalMs = 24 * 60 * 60 * 1000;
 const catchUpDelayMs = 2 * 60 * 1000;
 // Comparing the wall clock every minute keeps the schedule after the host sleeps or its
 // clock changes, which a single long timer would not.
@@ -49,7 +49,7 @@ export async function startBackupSchedule(options: {
   );
   const newestAt = newest?.manifest ? Date.parse(newest.manifest.createdAt) : 0;
   let nextRunAt =
-    Date.now() - newestAt < intervalMs
+    Date.now() - newestAt < backupIntervalMs
       ? nextRunAfter(time, new Date())
       : new Date(Date.now() + catchUpDelayMs);
   console.info("backup schedule started", {

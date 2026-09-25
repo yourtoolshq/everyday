@@ -4,7 +4,8 @@ import { checkDatabaseConnection } from "~/server/db";
 type HealthCheck = () => Promise<void>;
 
 // Upgrading, restoring, and blocked answer 200: Traefik routes only to healthy
-// containers, and the maintenance screen has to stay reachable.
+// containers, and the maintenance screen has to stay reachable. Backup status is
+// reported but never fails the check, for the same reason.
 export async function createHealthResponse(
   healthCheck: HealthCheck = checkDatabaseConnection,
 ) {
@@ -14,7 +15,16 @@ export async function createHealthResponse(
   }
   try {
     await healthCheck();
-    return Response.json({ status: "ok" as const, state });
+    const backup = await dataPlatform.backups.status();
+    return Response.json({
+      status: "ok" as const,
+      state,
+      backup: {
+        status: backup.status,
+        lastVerifiedBackupAt: backup.lastVerifiedBackupAt,
+        sharesDataDir: backup.sharesDataDir,
+      },
+    });
   } catch (error) {
     console.error("health check failed", {
       error: error instanceof Error ? error.message : String(error),
