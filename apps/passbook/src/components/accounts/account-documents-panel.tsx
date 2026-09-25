@@ -4,10 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Plus } from "lucide-react";
 
-import { fileUrl } from "@yourtoolshq/data-ui";
+import { FilePreview } from "@yourtoolshq/data-ui";
 
 import type { RouterOutputs } from "~/trpc/react";
-import { EmlPreviewDialog } from "~/components/activity/eml-preview-dialog";
 import { AccountDocumentUploadSheet } from "~/components/documents/account-document-upload-sheet";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
 import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
@@ -15,11 +14,7 @@ import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import {
-  documentTypeLabels,
-  formatFileSize,
-  isEmlMimeType,
-} from "~/lib/documents";
+import { documentTypeLabels, formatFileSize } from "~/lib/documents";
 import { formatDateLabel } from "~/lib/format-date";
 import { api } from "~/trpc/react";
 
@@ -58,11 +53,6 @@ export function AccountDocumentsPanel({
     onUploadOpenChange?.(open);
   }
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
-  const [emlPreview, setEmlPreview] = useState<{
-    id: string;
-    fileId: string;
-    title: string;
-  } | null>(null);
 
   const accountDocuments = useMemo(
     () => sortDocuments(documents.data ?? []),
@@ -115,16 +105,6 @@ export function AccountDocumentsPanel({
                   fileId={document.fileId}
                   title={document.title}
                   mimeType={document.mimeType}
-                  onPreview={
-                    isEmlMimeType(document.mimeType)
-                      ? () =>
-                          setEmlPreview({
-                            id: document.id,
-                            fileId: document.fileId,
-                            title: document.title,
-                          })
-                      : undefined
-                  }
                   onEdit={() => setEditingDocument(document)}
                   onDelete={() =>
                     requestDelete({ id: document.id, title: document.title })
@@ -152,17 +132,6 @@ export function AccountDocumentsPanel({
           open={Boolean(editingDocument)}
           onOpenChange={(open) => {
             if (!open) setEditingDocument(null);
-          }}
-        />
-      ) : null}
-      {emlPreview ? (
-        <EmlPreviewDialog
-          documentId={emlPreview.id}
-          fileId={emlPreview.fileId}
-          title={emlPreview.title}
-          open={Boolean(emlPreview)}
-          onOpenChange={(open) => {
-            if (!open) setEmlPreview(null);
           }}
         />
       ) : null}
@@ -223,14 +192,15 @@ export function AccountVoidChequePanel({ accountId }: { accountId: string }) {
             {voidCheque ? (
               <>
                 <Button variant="outline" size="sm" asChild>
-                  <a
-                    href={fileUrl(voidCheque.fileId)}
-                    target="_blank"
-                    rel="noreferrer"
+                  <FilePreview
+                    file={{
+                      id: voidCheque.fileId,
+                      mimeType: voidCheque.mimeType,
+                    }}
                   >
                     <ExternalLink />
                     Open
-                  </a>
+                  </FilePreview>
                 </Button>
                 <Button
                   variant="outline"

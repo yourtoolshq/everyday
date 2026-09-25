@@ -2,7 +2,7 @@
 
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
-import { fileUrl } from "@yourtoolshq/data-ui";
+import { FilePreview } from "@yourtoolshq/data-ui";
 
 import type { RouterOutputs } from "~/trpc/react";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
@@ -89,14 +89,12 @@ export function StatementDetailSheet({
                 Edit
               </Button>
               <Button asChild>
-                <a
-                  href={fileUrl(document.fileId)}
-                  target="_blank"
-                  rel="noreferrer"
+                <FilePreview
+                  file={{ id: document.fileId, mimeType: document.mimeType }}
                 >
                   <ExternalLink />
                   Open
-                </a>
+                </FilePreview>
               </Button>
             </div>
           </DialogFooter>

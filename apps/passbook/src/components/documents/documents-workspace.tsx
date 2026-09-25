@@ -4,16 +4,11 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import type { RouterOutputs } from "~/trpc/react";
-import { EmlPreviewDialog } from "~/components/activity/eml-preview-dialog";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
 import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
 import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
 import { Badge } from "~/components/ui/badge";
-import {
-  documentTypeLabels,
-  formatFileSize,
-  isEmlMimeType,
-} from "~/lib/documents";
+import { documentTypeLabels, formatFileSize } from "~/lib/documents";
 import { formatDateLabel } from "~/lib/format-date";
 import { api } from "~/trpc/react";
 
@@ -34,11 +29,6 @@ export function DocumentsWorkspace() {
   const accounts = api.accounts.list.useQuery();
   const { requestDelete, dialog: deleteDialog } = useDeleteDocumentDialog();
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
-  const [emlPreview, setEmlPreview] = useState<{
-    id: string;
-    fileId: string;
-    title: string;
-  } | null>(null);
 
   const sortedDocuments = useMemo(
     () => sortDocuments(documents.data ?? []),
@@ -137,16 +127,6 @@ export function DocumentsWorkspace() {
                       fileId={document.fileId}
                       title={document.title}
                       mimeType={document.mimeType}
-                      onPreview={
-                        isEmlMimeType(document.mimeType)
-                          ? () =>
-                              setEmlPreview({
-                                id: document.id,
-                                fileId: document.fileId,
-                                title: document.title,
-                              })
-                          : undefined
-                      }
                       onEdit={() => setEditingDocument(document)}
                       onDelete={() =>
                         requestDelete({
@@ -171,18 +151,6 @@ export function DocumentsWorkspace() {
           open={Boolean(editingDocument)}
           onOpenChange={(open) => {
             if (!open) setEditingDocument(null);
-          }}
-        />
-      ) : null}
-
-      {emlPreview ? (
-        <EmlPreviewDialog
-          documentId={emlPreview.id}
-          fileId={emlPreview.fileId}
-          title={emlPreview.title}
-          open={Boolean(emlPreview)}
-          onOpenChange={(open) => {
-            if (!open) setEmlPreview(null);
           }}
         />
       ) : null}

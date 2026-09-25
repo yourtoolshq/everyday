@@ -106,15 +106,21 @@ test("account documents upload, open, preview, and delete", async ({
   await sheet.getByRole("button", { name: "Save document" }).click();
   await expect(sheet).toBeHidden();
 
-  await page.getByRole("button", { name: "Preview fee-update" }).click();
-  const preview = page.getByRole("dialog", { name: "Fee schedule update" });
+  const popup = page.waitForEvent("popup");
+  await page.getByRole("link", { name: "Open fee-update" }).click();
+  const viewer = await popup;
+  await expect(viewer).toHaveURL(/\/files\/[0-9a-f-]{36}$/);
   await expect(
-    preview.getByText("Your fee schedule changes on October 1."),
+    viewer.getByRole("heading", { name: "Fee schedule update" }),
   ).toBeVisible();
   await expect(
-    preview.getByRole("link", { name: "Open original" }),
-  ).toHaveAttribute("href", /^\/api\/data\/files\/[0-9a-f-]{36}$/);
-  await page.keyboard.press("Escape");
+    viewer.getByText("Your fee schedule changes on October 1."),
+  ).toBeVisible();
+  await expect(viewer.getByRole("link", { name: "Download" })).toHaveAttribute(
+    "href",
+    /^\/api\/data\/files\/[0-9a-f-]{36}\?download=1$/,
+  );
+  await viewer.close();
 
   await page.getByRole("button", { name: "Delete welcome-letter" }).click();
   await page

@@ -44,10 +44,6 @@ export const statementMetadataSchema = documentMetadataSchema.extend({
   periodKey: z.string().trim().min(1),
 });
 
-export function isEmlMimeType(mimeType: string) {
-  return mimeType === "message/rfc822";
-}
-
 export function titleFromFilename(filename: string) {
   const withoutExtension = filename.replace(/\.[^.]+$/, "").trim();
   return (withoutExtension || filename.trim() || "Document").slice(0, 160);

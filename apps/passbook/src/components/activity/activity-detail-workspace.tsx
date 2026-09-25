@@ -3,24 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ArrowLeft,
-  ExternalLink,
-  Mail,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { fileUrl } from "@yourtoolshq/data-ui";
+import { FilePreview } from "@yourtoolshq/data-ui";
 
 import type { AccountEventType } from "~/lib/account-events";
 import type { DocumentType } from "~/lib/documents";
 import { AccountEventSheet } from "~/components/accounts/account-event-sheet";
 import { AccountTermsSnapshotDetailSheet } from "~/components/accounts/account-terms-snapshot-detail-sheet";
 import { ActivityDocumentUploadSheet } from "~/components/activity/activity-document-upload-sheet";
-import { EmlPreviewDialog } from "~/components/activity/eml-preview-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,11 +33,7 @@ import {
   accountTermsFieldLabels,
   listAccountTermsEntries,
 } from "~/lib/account-terms";
-import {
-  documentTypeLabels,
-  formatFileSize,
-  isEmlMimeType,
-} from "~/lib/documents";
+import { documentTypeLabels, formatFileSize } from "~/lib/documents";
 import { formatDateLabel } from "~/lib/format-date";
 import { formatTermValue } from "~/lib/format-term-value";
 import { api } from "~/trpc/react";
@@ -62,11 +50,6 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
   const [editOpen, setEditOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const [emlPreview, setEmlPreview] = useState<{
-    id: string;
-    fileId: string;
-    title: string;
-  } | null>(null);
   const [snapshotDetailOpen, setSnapshotDetailOpen] = useState(false);
 
   const deleteEvent = api.accountEvents.delete.useMutation({
@@ -290,32 +273,16 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
                       ) : null}
                     </div>
                     <div className="flex shrink-0 gap-1">
-                      {isEmlMimeType(document.mimeType) ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Preview ${document.title}`}
-                          onClick={() =>
-                            setEmlPreview({
-                              id: document.id,
-                              fileId: document.fileId,
-                              title: document.title,
-                            })
-                          }
-                        >
-                          <Mail />
-                        </Button>
-                      ) : null}
                       <Button variant="ghost" size="icon-sm" asChild>
-                        <a
-                          href={fileUrl(document.fileId)}
-                          target="_blank"
-                          rel="noreferrer"
+                        <FilePreview
+                          file={{
+                            id: document.fileId,
+                            mimeType: document.mimeType,
+                          }}
                           aria-label={`Open ${document.title}`}
                         >
                           <ExternalLink />
-                        </a>
+                        </FilePreview>
                       </Button>
                       <Button
                         type="button"
@@ -371,18 +338,6 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
           snapshot={linkedSnapshot}
           open={snapshotDetailOpen}
           onOpenChange={setSnapshotDetailOpen}
-        />
-      ) : null}
-
-      {emlPreview ? (
-        <EmlPreviewDialog
-          documentId={emlPreview.id}
-          fileId={emlPreview.fileId}
-          title={emlPreview.title}
-          open={Boolean(emlPreview)}
-          onOpenChange={(nextOpen) => {
-            if (!nextOpen) setEmlPreview(null);
-          }}
         />
       ) : null}
 

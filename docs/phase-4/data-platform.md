@@ -55,11 +55,11 @@ The platform owns the database connection so it can close and reopen it around a
 | `src/app/(app)/layout.tsx`             | Wrap the shell and the layout's queries in `<DataGate platform={dataPlatform}>` |
 | `src/app/(app)/settings/data/page.tsx` | Render `<DataSettingsPage />`                                                   |
 | The application shell                  | Render `<BackupStatusBanner />` above the page content                          |
-| `src/app/files/[fileId]/page.tsx`      | `export { FileViewerPage as default } from "@yourtoolshq/data-ui"`              |
+| `src/app/files/[fileId]/page.tsx`      | Render `<FileViewerPage platform={dataPlatform} fileId={fileId} />`             |
 
 Plus `files: dataPlatform.files` in the tRPC context and the platform readiness middleware on the base procedure.
 
-`DataGate` comes from `@yourtoolshq/data-ui/server`. Pages outside `(app)/` that query the database, such as a setup page, wrap their content in it too.
+`DataGate` and `FileViewerPage` are server components from `@yourtoolshq/data-ui/server`. Pages outside `(app)/` that query the database, such as a setup page, wrap their content in `DataGate` too; `FileViewerPage` applies it itself.
 
 Tailwind does not scan workspace packages, so `src/styles/globals.css` adds them as sources:
 
@@ -139,13 +139,20 @@ create: publicProcedure
 
 ### Retrieval and preview
 
-`FilePreview` opens every file in a new tab:
+```tsx
+<FilePreview file={{ id: doc.fileId, mimeType: doc.mimeType }}>{doc.title}</FilePreview>
+<a href={fileUrl(doc.fileId, { download: true })}>Download</a>
+```
 
-| Type              | New tab                                                                                              |
-| ----------------- | ---------------------------------------------------------------------------------------------------- |
-| PDF, image, audio | `/api/data/files/:id`, served inline for the browser's native viewer                                 |
-| EML               | `/files/:id`, rendering `EmlViewer`: headers, sanitized HTML body in a sandboxed iframe, attachments |
-| Anything else     | Download                                                                                             |
+`FilePreview` renders a link that opens the file in a new tab:
+
+| Type              | New tab                                                                                      |
+| ----------------- | -------------------------------------------------------------------------------------------- |
+| PDF, image, audio | `/api/data/files/:id`, served inline for the browser's native viewer                         |
+| EML               | `/files/:id`: `FileViewerPage` parses the email on the server and shows its headers and body |
+| Anything else     | Download                                                                                     |
+
+The email viewer renders an HTML body in an iframe with an empty `sandbox`, so the email cannot run scripts, submit forms, open windows, or reach the page around it, and it lists attachments by name and size; the Download button saves the `.eml` file. `/files/:id` redirects any other file type to `/api/data/files/:id` and answers 404 for an unknown id.
 
 `fileUrl(id, { download: true })` returns a download link. Server code uses `ctx.files.read(id)` and `ctx.files.stream(id)`. Responses send `Cache-Control: private, no-store`, `X-Content-Type-Options: nosniff`, and an RFC 5987 `Content-Disposition`.
 
@@ -157,7 +164,6 @@ All served by the catch-all route.
 | --------------------------------- | ----------------------------------------------------------------------- |
 | `POST /api/data/upload/:endpoint` | Validate and stage an upload; returns a token                           |
 | `GET /api/data/files/:id`         | Stream a file (`?download=1` for attachment disposition)                |
-| `GET /api/data/files/:id/eml`     | Parsed EML for the viewer                                               |
 | `GET /api/data/backups/:id`       | Stream a backup archive                                                 |
 | `POST /api/data/backups/upload`   | Upload an archive to restore                                            |
 | `GET /api/data/status`            | Platform state; see [Platform state](#boot-sequence-and-platform-state) |
