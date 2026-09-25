@@ -19,4 +19,10 @@ export type {
   BackupTrigger,
   Verification,
 } from "./backup/manifest";
+export type {
+  FileFinding,
+  IntegrityReport,
+  QuarantinedFile,
+  UnreferencedFile,
+} from "./integrity";
 export type { DataRouter } from "./router";

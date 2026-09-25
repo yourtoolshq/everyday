@@ -7,17 +7,20 @@ import { drizzle } from "drizzle-orm/libsql";
 import type { BackupContext } from "./backup/backups";
 import type { BackupPolicy } from "./backup/schedule";
 import type { FileCoordinator } from "./files/store";
+import type { IntegrityReport } from "./integrity";
 import type { BlockedReason, JournalMigration } from "./migrations";
 import { createBackups, recoverInterruptedRestore } from "./backup/backups";
 import { parseSchedule, startBackupSchedule } from "./backup/schedule";
 import { PausableClient } from "./connection";
 import { createFileCoordinator, createFileStore } from "./files/store";
+import { createIntegrity } from "./integrity";
 import {
   applyMigrations,
   DataPlatformBlockedError,
   readJournal,
   readMigrationPlan,
 } from "./migrations";
+import { describeUnavailable } from "./readiness";
 
 export interface DataPlatformConfig<TSchema extends Record<string, unknown>> {
   app: string;
@@ -64,6 +67,7 @@ interface Connection {
   booted?: Promise<void>;
   upgrade?: Promise<void>;
   stopSchedule?: () => void;
+  lastIntegrityReport?: IntegrityReport;
 }
 
 // Next.js evaluates instrumentation and route bundles as separate module graphs, and dev
@@ -123,6 +127,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
   };
 
   const archives = createBackups(backupContext);
+  const checks = createIntegrity(backupContext);
   // The scheduler and the upgrade use the same object the platform exposes.
   const backups = { ...archives, restore };
   const planOptions = {
@@ -250,9 +255,31 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
       connection.state = previous;
       throw error;
     }
+    connection.lastIntegrityReport = undefined;
     await enterReady();
     return result;
   }
+
+  // The scan records checksums and quarantine deletes rows, so neither runs on data
+  // that is upgrading, restoring, or blocked.
+  async function whenReady<T>(operation: () => Promise<T>) {
+    await startBoot();
+    const unavailable = describeUnavailable(config.app, connection.state);
+    if (unavailable) throw new DataPlatformBusyError(unavailable);
+    return operation();
+  }
+
+  const integrity = {
+    scan: () =>
+      whenReady(async () => {
+        const report = await checks.scan();
+        connection.lastIntegrityReport = report;
+        return report;
+      }),
+    lastReport: () => connection.lastIntegrityReport ?? null,
+    quarantine: (names: string[]) => whenReady(() => checks.quarantine(names)),
+    purge: (names: string[]) => whenReady(() => checks.purge(names)),
+  };
 
   async function listRestorableBackups(): Promise<RestorableBackup[]> {
     const known = new Set(
@@ -284,6 +311,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
       coordinator: connection.coordinator,
     }),
     backups,
+    integrity,
     boot: startBoot,
     async state(): Promise<PlatformState> {
       await startBoot();
