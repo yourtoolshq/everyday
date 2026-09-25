@@ -152,9 +152,9 @@ All served by the catch-all route.
 | `GET /api/data/backups/:id`       | Stream a backup archive                                                 |
 | `POST /api/data/backups/upload`   | Upload an archive to restore                                            |
 | `GET /api/data/status`            | Platform state; see [Platform state](#boot-sequence-and-platform-state) |
-| `/api/data/trpc/*`                | Platform router: `backups`, `usage`, `integrity`, `schedule`, `health`  |
+| `/api/data/trpc/*`                | Platform router: `backups`, `usage`, `integrity`, `schedule`            |
 
-The `backups` router has `list`, `create`, `verify`, and `restore`; `verify` and `restore` take a backup id in the backup directory. The `integrity` router has `scan`, `last`, `quarantine`, and `purge`; see [Integrity](#integrity). Operations that need `ready` data answer 409 while the platform is upgrading, restoring, or blocked. The platform router accepts POST requests only as `application/json` and answers 415 otherwise. Applications keep their own router at `/api/trpc` for domain procedures.
+The `backups` router has `list`, `status`, `create`, `verify`, and `restore`; `verify` and `restore` take a backup id in the backup directory. `usage.get` returns [storage usage](#storage-usage). The `integrity` router has `scan`, `last`, `quarantine`, and `purge`; see [Integrity](#integrity). Operations that need `ready` data answer 409 while the platform is upgrading, restoring, or blocked. The platform router accepts POST requests only as `application/json` and answers 415 otherwise. Applications keep their own router at `/api/trpc` for domain procedures.
 
 ## Storage layout
 
@@ -169,7 +169,7 @@ The `backups` router has `list`, `create`, `verify`, and `restore`; `verify` and
 <backupDir>/<app>-<UTC timestamp>.ytbackup.json   manifest and verification result
 ```
 
-`BACKUP_DIR` is a separate mount (host path or NAS) so backups survive loss of the data volume. Without it, backups are written to `<dataDir>/backups` and the data page, banner, and health report show a warning.
+`BACKUP_DIR` is a separate mount (host path or NAS) so backups survive loss of the data volume. Without it, backups are written to `<dataDir>/backups`. When the backup directory is inside the data directory, backup status reports `sharesDataDir: true` and the data page, banner, and health report show a warning.
 
 ## Boot sequence and platform state
 
@@ -296,7 +296,7 @@ The scheduler runs in the application process once `boot()` succeeds, when the p
 - On `ready`, a backup runs within two minutes when the newest verified backup is more than a day old.
 - A failed backup is logged as an error and retried at the next scheduled time.
 - Retention runs after every scheduled backup. Each count keeps the newest backup of that many of the most recent local calendar days, weeks starting Monday, and months that have a backup. Every trigger counts toward retention; pre-migration backups are kept for 30 days regardless. Retention prunes only verified backups and always keeps the newest verified backup.
-- Health reports `backup: ok | stale | failing` and `lastVerifiedBackupAt`. Stale means no verified backup within twice the interval. Backup status does not change the HTTP status.
+- `backups.status` reports `status: ok | stale | failing`, `lastVerifiedBackupAt`, `lastError`, and `sharesDataDir`. Failing means the newest backup failed verification or the last backup attempt threw; stale means no verified backup within twice the interval. `/api/health` includes the same fields except `lastError` as `backup` when `ready`. Backup status does not change the HTTP status.
 
 ### Command line
 
@@ -343,7 +343,7 @@ The integrity scan covers the whole database and every stored file. It runs on r
 
 ## Storage usage
 
-Reported per application: database size, file count and bytes by type group, backup count and bytes, and free space on the data and backup volumes.
+`usage.get` reports, per application: database size including its write-ahead log; file count and bytes in total and by type group (`pdf`, `image`, `eml`, `audio`, and `other`), from the sizes recorded in `yt_files`; backup count and archive bytes; and free and total bytes on the data and backup volumes. It answers 409 unless the platform is `ready`.
 
 ## Recovery expectations
 

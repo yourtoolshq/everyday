@@ -1,4 +1,5 @@
-export type FileTypeGroup = "pdf" | "image" | "eml" | "audio";
+export const fileTypeGroups = ["pdf", "image", "eml", "audio"] as const;
+export type FileTypeGroup = (typeof fileTypeGroups)[number];
 
 export interface DetectedFileType {
   group: FileTypeGroup;
@@ -78,6 +79,17 @@ const byExtension: Record<string, DetectedFileType> = {
     audioSignatures.map(({ type }) => [type.extension, type]),
   ),
 };
+
+const groupsByMimeType = new Map<string, FileTypeGroup>([
+  ...[...signatures, ...audioSignatures].map(
+    ({ type }) => [type.mimeType, type.group] as const,
+  ),
+  [eml.mimeType, eml.group],
+]);
+
+export function groupOfMimeType(mimeType: string): FileTypeGroup | "other" {
+  return groupsByMimeType.get(mimeType) ?? "other";
+}
 
 export function detectFileType(
   bytes: Uint8Array,

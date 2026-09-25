@@ -1,16 +1,18 @@
 import { mkdirSync } from "node:fs";
 import { mkdir } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
 import type { BackupContext } from "./backup/backups";
 import type { BackupPolicy } from "./backup/schedule";
+import type { BackupStatus } from "./backup/status";
 import type { FileCoordinator } from "./files/store";
 import type { IntegrityReport } from "./integrity";
 import type { BlockedReason, JournalMigration } from "./migrations";
 import { createBackups, recoverInterruptedRestore } from "./backup/backups";
 import { parseSchedule, startBackupSchedule } from "./backup/schedule";
+import { describeBackupStatus } from "./backup/status";
 import { PausableClient } from "./connection";
 import {
   createFileCoordinator,
@@ -25,6 +27,7 @@ import {
   readMigrationPlan,
 } from "./migrations";
 import { describeUnavailable } from "./readiness";
+import { readUsage } from "./usage";
 
 export interface DataPlatformConfig<TSchema extends Record<string, unknown>> {
   app: string;
@@ -72,6 +75,7 @@ interface Connection {
   upgrade?: Promise<void>;
   stopSchedule?: () => void;
   lastIntegrityReport?: IntegrityReport;
+  lastBackupCreateError?: string;
 }
 
 // Next.js evaluates instrumentation and route bundles as separate module graphs, and dev
@@ -117,13 +121,19 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
   if (config.backups) parseSchedule(config.backups.schedule);
   const connection = openConnection(databasePath);
   const db = drizzle(connection.client, { schema: config.db.schema });
+  const backupDir = resolve(config.backupDir ?? join(dataDir, "backups"));
+  const backupDirFromData = relative(dataDir, backupDir);
+  const backupsShareDataDir =
+    backupDirFromData !== ".." &&
+    !backupDirFromData.startsWith(`..${sep}`) &&
+    !isAbsolute(backupDirFromData);
   const backupContext: BackupContext = {
     app: config.app,
     appVersion: config.version ?? null,
     dataDir,
     databasePath,
     documentsDir,
-    backupDir: resolve(config.backupDir ?? join(dataDir, "backups")),
+    backupDir,
     migrationsFolder: config.db.migrationsFolder,
     client: connection.client,
     coordinator: connection.coordinator,
@@ -133,7 +143,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
   const archives = createBackups(backupContext);
   const checks = createIntegrity(backupContext);
   // The scheduler and the upgrade use the same object the platform exposes.
-  const backups = { ...archives, restore };
+  const backups = { ...archives, create, restore, status: backupStatus };
   const planOptions = {
     app: config.app,
     databasePath,
@@ -265,6 +275,45 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
     return result;
   }
 
+  // A backup that throws leaves no archive behind, so its error is kept here for the status.
+  async function create(options?: Parameters<typeof archives.create>[0]) {
+    try {
+      const record = await archives.create(options);
+      connection.lastBackupCreateError = undefined;
+      return record;
+    } catch (error) {
+      connection.lastBackupCreateError =
+        error instanceof Error ? error.message : String(error);
+      throw error;
+    }
+  }
+
+  async function backupStatus(): Promise<BackupStatus> {
+    const status = {
+      lastCreateError: connection.lastBackupCreateError ?? null,
+      sharesDataDir: backupsShareDataDir,
+      now: new Date(),
+    };
+    try {
+      return describeBackupStatus({
+        ...status,
+        backups: await archives.list(),
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error("failed to list backups", {
+        app: config.app,
+        backupDir,
+        error: message,
+      });
+      return describeBackupStatus({
+        ...status,
+        backups: [],
+        lastCreateError: message,
+      });
+    }
+  }
+
   // The scan records checksums and quarantine deletes rows, so neither runs on data
   // that is upgrading, restoring, or blocked.
   async function whenReady<T>(operation: () => Promise<T>) {
@@ -317,6 +366,8 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
     }),
     backups,
     integrity,
+    usage: () =>
+      whenReady(async () => readUsage(backupContext, await archives.list())),
     boot: startBoot,
     async state(): Promise<PlatformState> {
       await startBoot();

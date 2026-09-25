@@ -43,6 +43,7 @@ export function createDataRouter(platform: DataPlatform) {
         app: platform.app,
         backups: await platform.backups.list(),
       })),
+      status: t.procedure.query(() => platform.backups.status()),
       create: t.procedure.mutation(() => platform.backups.create()),
       verify: t.procedure
         .input(backupInput)
@@ -64,6 +65,9 @@ export function createDataRouter(platform: DataPlatform) {
           });
         }
       }),
+    }),
+    usage: t.router({
+      get: t.procedure.query(() => conflictWhenBusy(() => platform.usage())),
     }),
     integrity: t.router({
       last: t.procedure.query(() => platform.integrity.lastReport()),
