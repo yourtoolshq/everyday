@@ -154,7 +154,7 @@ All served by the catch-all route.
 | `GET /api/data/status`            | Platform state; see [Platform state](#boot-sequence-and-platform-state) |
 | `/api/data/trpc/*`                | Platform router: `backups`, `usage`, `integrity`, `schedule`, `health`  |
 
-The `backups` router has `list`, `create`, `verify`, and `restore`; `verify` and `restore` take a backup id in the backup directory. The platform router accepts POST requests only as `application/json` and answers 415 otherwise. Applications keep their own router at `/api/trpc` for domain procedures.
+The `backups` router has `list`, `create`, `verify`, and `restore`; `verify` and `restore` take a backup id in the backup directory. The `integrity` router has `scan`, `last`, `quarantine`, and `purge`; see [Integrity](#integrity). Operations that need `ready` data answer 409 while the platform is upgrading, restoring, or blocked. The platform router accepts POST requests only as `application/json` and answers 415 otherwise. Applications keep their own router at `/api/trpc` for domain procedures.
 
 ## Storage layout
 
@@ -328,17 +328,19 @@ The platform state is `restoring` for the whole restore. A restore requested whi
 
 ## Integrity
 
-The integrity scan covers the whole database and every stored file:
+The integrity scan covers the whole database and every stored file. It runs on request, only while the platform is `ready`, and queues behind backups and restores:
 
-| Check                   | Finding                                                 | Action                                            |
-| ----------------------- | ------------------------------------------------------- | ------------------------------------------------- |
-| `integrity_check`       | Page or index corruption in any table                   | Restore the newest verified backup                |
-| `foreign_key_check`     | Broken relationship in any table                        | Reported with table and row                       |
-| Migration version guard | Schema mismatch                                         | `blocked` state                                   |
-| File presence           | `yt_files` row without a file on disk                   | Reported with the referencing record              |
-| Checksum                | File content differs from `sha256`                      | Reported; restore the file from a backup          |
-| Unreferenced file       | File on disk without a row, or a row nothing references | Moved to `.orphans/`; purged only on confirmation |
-| Stale staging           | Uploads older than 24 hours                             | Reaped automatically                              |
+| Check                   | Finding                                                 | Action                                                                                 |
+| ----------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `integrity_check`       | Page or index corruption in any table                   | Restore the newest verified backup                                                     |
+| `foreign_key_check`     | Broken relationship in any table                        | Reported with table and row                                                            |
+| Migration version guard | Schema mismatch                                         | `blocked` state                                                                        |
+| File presence           | `yt_files` row without a file on disk                   | Reported with the referencing record                                                   |
+| Checksum                | File content differs from `sha256`                      | Reported; restore the file from a backup. A missing `sha256` is recorded               |
+| Unreferenced file       | File on disk without a row, or a row nothing references | Reported; moved to `.orphans/` on request, and deleted from there only on confirmation |
+| Stale staging           | Uploads older than 24 hours                             | Reaped automatically                                                                   |
+
+`integrity.quarantine` takes the names of reported unreferenced files, checks each is still unreferenced while no file transaction is running, deletes its `yt_files` row, and moves the file to `.orphans/` with the row's details beside it. `integrity.purge` deletes quarantined files by name. The last report is kept in memory as `integrity.last` until the process restarts or a backup is restored.
 
 ## Storage usage
 
