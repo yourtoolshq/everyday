@@ -270,9 +270,6 @@ importers:
       next:
         specifier: 'catalog:'
         version: 15.5.25(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      postal-mime:
-        specifier: ^3.0.0
-        version: 3.0.0
       radix-ui:
         specifier: ^1.6.7
         version: 1.6.7(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -579,6 +576,9 @@ importers:
 
   packages/data:
     dependencies:
+      postal-mime:
+        specifier: ^3.0.0
+        version: 3.0.0
       tar-stream:
         specifier: ^3.2.1
         version: 3.2.1
@@ -659,6 +659,9 @@ importers:
       jiti:
         specifier: ^2.7.0
         version: 2.7.0
+      next:
+        specifier: 'catalog:'
+        version: 15.5.25(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react:
         specifier: 'catalog:'
         version: 19.3.0

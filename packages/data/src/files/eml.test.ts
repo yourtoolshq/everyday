@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { listParsedEmlAddressFields, parseEml } from "~/lib/eml";
+import { listParsedEmlAddressFields, parseEml } from "./eml";
 
 describe("parseEml", () => {
   it("parses a simple plain-text message", async () => {
@@ -80,6 +80,40 @@ describe("parseEml", () => {
       { label: "To", value: "You <you@example.com>" },
       { label: "Cc", value: "Manager <manager@example.com>" },
       { label: "Reply-To", value: "Support <support@example.com>" },
+    ]);
+  });
+  it("lists attachments but not images the html body embeds", async () => {
+    const raw = [
+      "From: Bank <noreply@example.com>",
+      "Subject: Statement ready",
+      'Content-Type: multipart/mixed; boundary="outer"',
+      "",
+      "--outer",
+      'Content-Type: multipart/related; boundary="inner"',
+      "",
+      "--inner",
+      "Content-Type: text/html; charset=utf-8",
+      "",
+      '<p>See attached</p><img src="cid:logo">',
+      "--inner",
+      "Content-Type: image/png",
+      "Content-ID: <logo>",
+      "Content-Transfer-Encoding: base64",
+      "",
+      "iVBORw0KGgo=",
+      "--inner--",
+      "--outer",
+      'Content-Type: application/pdf; name="statement.pdf"',
+      'Content-Disposition: attachment; filename="statement.pdf"',
+      "Content-Transfer-Encoding: base64",
+      "",
+      "JVBERi0xLjQ=",
+      "--outer--",
+    ].join("\n");
+
+    const parsed = await parseEml(raw);
+    expect(parsed.attachments).toEqual([
+      { filename: "statement.pdf", mimeType: "application/pdf", sizeBytes: 8 },
     ]);
   });
 });

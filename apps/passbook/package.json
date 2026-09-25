@@ -40,7 +40,6 @@
     "drizzle-orm": "catalog:",
     "lucide-react": "^0.468.0",
     "next": "catalog:",
-    "postal-mime": "^3.0.0",
     "radix-ui": "^1.6.7",
     "react": "catalog:",
     "react-dom": "catalog:",

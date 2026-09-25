@@ -1,6 +1,6 @@
 import PostalMime from "postal-mime";
 
-export type ParsedEml = {
+export interface ParsedEml {
   from: string | null;
   to: string | null;
   cc: string | null;
@@ -10,12 +10,25 @@ export type ParsedEml = {
   date: string | null;
   body: string;
   bodyContentType: "text" | "html";
-};
+  attachments: EmlAttachment[];
+}
 
-type PostalAddress = {
+export interface EmlAttachment {
+  filename: string | null;
+  mimeType: string;
+  sizeBytes: number;
+}
+
+interface PostalAddress {
   name?: string;
   address?: string;
-};
+}
+
+function nonEmpty(value: string | undefined) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return trimmed;
+}
 
 function formatAddress(address?: PostalAddress) {
   if (!address) return null;
@@ -24,7 +37,7 @@ function formatAddress(address?: PostalAddress) {
       ? `${address.name} <${address.address}>`
       : address.address;
   }
-  return address.name || null;
+  return nonEmpty(address.name);
 }
 
 function formatAddresses(addresses?: PostalAddress[]) {
@@ -41,8 +54,8 @@ export async function parseEml(raw: string | Uint8Array): Promise<ParsedEml> {
   const input = typeof raw === "string" ? new TextEncoder().encode(raw) : raw;
   const email = await PostalMime.parse(input);
 
-  const html = email.html?.trim();
-  const text = email.text?.trim();
+  const html = nonEmpty(email.html);
+  const text = nonEmpty(email.text);
 
   return {
     from: formatAddress(email.from),
@@ -50,10 +63,21 @@ export async function parseEml(raw: string | Uint8Array): Promise<ParsedEml> {
     cc: formatAddresses(email.cc),
     bcc: formatAddresses(email.bcc),
     replyTo: formatAddresses(email.replyTo),
-    subject: email.subject?.trim() || null,
-    date: email.date?.trim() || null,
-    body: html || text || "",
+    subject: nonEmpty(email.subject),
+    date: nonEmpty(email.date),
+    body: html ?? text ?? "",
     bodyContentType: html ? "html" : "text",
+    // Related parts are the images an HTML body embeds.
+    attachments: email.attachments
+      .filter((attachment) => !attachment.related)
+      .map((attachment) => ({
+        filename: attachment.filename,
+        mimeType: attachment.mimeType,
+        sizeBytes:
+          typeof attachment.content === "string"
+            ? attachment.content.length
+            : attachment.content.byteLength,
+      })),
   };
 }
 

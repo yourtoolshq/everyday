@@ -24,7 +24,7 @@ import {
   CardTitle,
 } from "@yourtoolshq/ui/card";
 
-import { BackupTime } from "./backup-time";
+import { LocalTime } from "./local-time";
 
 type BlockedStatus = Extract<PlatformStatus, { state: "blocked" }>;
 
@@ -199,7 +199,7 @@ function RestorableBackups({
           >
             <div>
               <p className="font-medium">
-                <BackupTime iso={backup.createdAt} />
+                <LocalTime iso={backup.createdAt} />
               </p>
               <p className="text-muted-foreground text-xs">
                 {backup.trigger}
@@ -217,7 +217,7 @@ function RestorableBackups({
                   <AlertDialogTitle>Restore this backup?</AlertDialogTitle>
                   <AlertDialogDescription>
                     The current data is backed up first, then replaced by the
-                    backup from <BackupTime iso={backup.createdAt} />.
+                    backup from <LocalTime iso={backup.createdAt} />.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

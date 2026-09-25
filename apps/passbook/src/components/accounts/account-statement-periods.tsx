@@ -473,6 +473,7 @@ export function AccountStatementPeriods({
                     <DocumentActionButtons
                       fileId={document.fileId}
                       title={document.title}
+                      mimeType={document.mimeType}
                       onEdit={() => setEditingStatement(document)}
                       onDelete={() =>
                         requestDelete({
