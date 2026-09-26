@@ -89,14 +89,27 @@ Changelogs live at the repository root and under each app (`CHANGELOG.md`). Main
 
 ## Shared-candidate discovery
 
-When reusable functionality appears but is not ready to extract, open an Issue with the `shared-candidate` label. Include:
+When reusable functionality appears but is not ready to extract, record it in
+the active architecture audit or phase implementation notes. Include:
 
 - Current location in the codebase
+- Strongest current reference and why it is strongest
 - Demonstrated need
 - Possible consumers
 - Validation state
+- Target roadmap phase
+- Explicit non-goals
 
 Agents must **flag** candidates, not automatically extract shared packages.
+
+Do not create one issue per future candidate. Open issues only for work that is
+needed now, can proceed independently in the active phase, or requires a
+separately reviewable change. When a phase starts, group related candidates
+into a small number of substantial implementation issues, assign them to the
+active milestone, and link each issue back to the audit. Every issue should
+include the current implementations, strongest reference and weaknesses,
+scope, app-local behavior, non-goals, acceptance criteria, validation, and
+dependencies. The roadmap owns phase outcomes; issues track active work.
 
 ## Agents
 

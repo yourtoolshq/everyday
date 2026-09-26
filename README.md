@@ -55,13 +55,14 @@ turbo/       Package generator (`pnpm gen`)
 
 ## Documentation
 
-| Document                             | Purpose                                   |
-| ------------------------------------ | ----------------------------------------- |
-| [PRODUCT.md](./PRODUCT.md)           | Platform purpose and boundaries           |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Monorepo structure and app isolation      |
-| [DEVELOPMENT.md](./DEVELOPMENT.md)   | Workflow, checks, and production boundary |
-| [AGENTS.md](./AGENTS.md)             | Entry point for coding agents             |
-| [ROADMAP.md](./ROADMAP.md)           | Phased consolidation plan                 |
+| Document                                              | Purpose                                        |
+| ----------------------------------------------------- | ---------------------------------------------- |
+| [PRODUCT.md](./PRODUCT.md)                            | Platform purpose and boundaries                |
+| [ARCHITECTURE.md](./ARCHITECTURE.md)                  | Monorepo structure and app isolation           |
+| [DEVELOPMENT.md](./DEVELOPMENT.md)                    | Workflow, checks, and production boundary      |
+| [AGENTS.md](./AGENTS.md)                              | Entry point for coding agents                  |
+| [ROADMAP.md](./ROADMAP.md)                            | Phased consolidation plan                      |
+| [Phase 3 audit](./docs/phase-3/architecture-audit.md) | Architecture decisions and candidate inventory |
 
 ## Philosophy
 
@@ -69,4 +70,6 @@ See the [Your Tools manifesto](https://your-tools.dev/) for the motivation and p
 
 ## Status
 
-**Phase 1** (workspace consolidation) is complete. **Phase 2** (development workflow and governance) is current. See [ROADMAP.md](./ROADMAP.md) and [docs/phase-1/](./docs/phase-1/) for details.
+**Phases 1 and 2** are complete. **Phase 3** (architecture inventory) is under
+review. See [ROADMAP.md](./ROADMAP.md), [docs/phase-1/](./docs/phase-1/), and the
+[Phase 3 audit](./docs/phase-3/architecture-audit.md) for details.

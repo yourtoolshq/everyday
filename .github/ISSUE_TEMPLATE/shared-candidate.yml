@@ -1,13 +1,28 @@
-name: Shared candidate
-description: Reusable pattern worth tracking before extraction
+name: Actionable shared candidate
+description: Reusable work that needs independent tracking in the active phase
 title: "[shared-candidate]: "
 labels: ["shared-candidate"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form only when work is needed now, can proceed independently,
+        or needs a separately reviewable change. Keep future candidates in the
+        architecture audit, then group related candidates when their phase begins.
+
   - type: textarea
     id: location
     attributes:
       label: Current location
       description: File paths or app where this exists today
+    validations:
+      required: true
+
+  - type: textarea
+    id: reference
+    attributes:
+      label: Strongest reference
+      description: Which current implementation is strongest, why, and what weaknesses remain?
     validations:
       required: true
 
@@ -32,5 +47,26 @@ body:
     attributes:
       label: Validation state
       description: Has this been proven in real use? What remains to validate?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Target roadmap phase
+      description: Assign this issue to that phase's milestone when the work becomes active.
+      options:
+        - Phase 4 — Data durability and storage
+        - Phase 5 — UI commonality and design system
+        - Phase 6 — Shared technical foundations
+        - Phase 7 — Unified deployment
+    validations:
+      required: true
+
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: What should remain app-specific or explicitly stay outside this candidate?
     validations:
       required: true
