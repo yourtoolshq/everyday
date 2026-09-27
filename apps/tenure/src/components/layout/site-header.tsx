@@ -3,7 +3,8 @@
 import { usePathname } from "next/navigation";
 import { LockKeyhole } from "lucide-react";
 
-import { Separator } from "~/components/ui/separator";
+import { Separator } from "@yourtoolshq/ui/separator";
+
 import { SidebarTrigger } from "~/components/ui/sidebar";
 
 const titles: Record<string, string> = {

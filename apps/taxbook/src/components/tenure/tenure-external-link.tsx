@@ -2,7 +2,8 @@
 
 import { IconExternalLink } from "@tabler/icons-react";
 
-import { Button } from "~/components/ui/button";
+import { Button } from "@yourtoolshq/ui/button";
+
 import { tenureEmploymentUrl, tenureHomeUrl } from "~/lib/tenure-url";
 import { api } from "~/trpc/react";
 import { TenureTag } from "./tenure-tag";

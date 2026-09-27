@@ -5,20 +5,16 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import type { AccountEventType } from "~/lib/account-events";
-import type { AccountTerms } from "~/lib/account-terms";
-import type { RouterOutputs } from "~/trpc/react";
-import { AccountTermsFormFields } from "~/components/accounts/account-terms-form-fields";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -26,8 +22,13 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/sheet";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type { AccountEventType } from "~/lib/account-events";
+import type { AccountTerms } from "~/lib/account-terms";
+import type { RouterOutputs } from "~/trpc/react";
+import { AccountTermsFormFields } from "~/components/accounts/account-terms-form-fields";
 import {
   accountEventTypeLabels,
   accountEventTypes,

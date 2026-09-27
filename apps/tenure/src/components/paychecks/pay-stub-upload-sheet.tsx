@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -13,7 +13,8 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
+} from "@yourtoolshq/ui/sheet";
+
 import { documentAccept } from "~/lib/documents";
 import { suggestPayStubTitle } from "~/lib/pay-stubs";
 import { FileDropzone, useUpload } from "~/lib/uploads";

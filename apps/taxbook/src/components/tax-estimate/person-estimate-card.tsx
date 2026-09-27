@@ -1,11 +1,12 @@
-import type { PersonResult } from "./types";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "~/components/ui/card";
+} from "@yourtoolshq/ui/card";
+
+import type { PersonResult } from "./types";
 import { formatCad } from "~/domain/money";
 import { resultLabel } from "./types";
 

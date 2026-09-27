@@ -8,4 +8,6 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Changed
 
+- File upload progress uses a thinner bar.
+
 ### Fixed

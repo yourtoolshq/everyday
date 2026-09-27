@@ -5,8 +5,6 @@ import { cn } from "cn";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import type { RouterOutputs } from "~/trpc/react";
-import { CompensationChangeFormSheet } from "~/components/compensation/compensation-change-form-sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,10 +14,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
+import type { RouterOutputs } from "~/trpc/react";
+import { CompensationChangeFormSheet } from "~/components/compensation/compensation-change-form-sheet";
 import {
   compensationTypeLabels,
   formatCompensationRate,

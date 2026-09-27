@@ -732,6 +732,9 @@ importers:
       jiti:
         specifier: ^2.7.0
         version: 2.7.0
+      lucide-react:
+        specifier: ^0.468.0
+        version: 0.468.0(react@19.3.0)
       react:
         specifier: 'catalog:'
         version: 19.3.0

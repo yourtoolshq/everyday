@@ -7,22 +7,23 @@ import { cn } from "cn";
 import { PanelLeftIcon } from "lucide-react";
 import { Slot } from "radix-ui";
 
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Separator } from "~/components/ui/separator";
+import { Button } from "@yourtoolshq/ui/button";
+import { Input } from "@yourtoolshq/ui/input";
+import { Separator } from "@yourtoolshq/ui/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
-import { Skeleton } from "~/components/ui/skeleton";
+} from "@yourtoolshq/ui/sheet";
+import { Skeleton } from "@yourtoolshq/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "~/components/ui/tooltip";
+} from "@yourtoolshq/ui/tooltip";
+
 import { useIsMobile } from "~/hooks/use-mobile";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";

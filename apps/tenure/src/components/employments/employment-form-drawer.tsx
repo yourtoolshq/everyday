@@ -3,20 +3,22 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import type {
-  CompensationCurrency,
-  CompensationType,
-} from "~/lib/compensation";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { Input } from "@yourtoolshq/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@yourtoolshq/ui/input-group";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -24,8 +26,13 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/sheet";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type {
+  CompensationCurrency,
+  CompensationType,
+} from "~/lib/compensation";
 import {
   commissionPercentToBasisPoints,
   compensationCurrencies,
@@ -435,14 +442,19 @@ export function EmploymentFormDrawer({
                       <Label htmlFor="starting-compensation-percent">
                         Commission percentage
                       </Label>
-                      <Input
-                        id="starting-compensation-percent"
-                        inputMode="decimal"
-                        value={compensationPercent}
-                        onChange={(event) =>
-                          setCompensationPercent(event.target.value)
-                        }
-                      />
+                      <InputGroup>
+                        <InputGroupInput
+                          id="starting-compensation-percent"
+                          inputMode="decimal"
+                          value={compensationPercent}
+                          onChange={(event) =>
+                            setCompensationPercent(event.target.value)
+                          }
+                        />
+                        <InputGroupAddon>
+                          <InputGroupText>%</InputGroupText>
+                        </InputGroupAddon>
+                      </InputGroup>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -451,14 +463,19 @@ export function EmploymentFormDrawer({
                           ? "Annual salary"
                           : "Hourly rate"}
                       </Label>
-                      <Input
-                        id="starting-compensation-amount"
-                        inputMode="decimal"
-                        value={compensationAmount}
-                        onChange={(event) =>
-                          setCompensationAmount(event.target.value)
-                        }
-                      />
+                      <InputGroup>
+                        <InputGroupInput
+                          id="starting-compensation-amount"
+                          inputMode="decimal"
+                          value={compensationAmount}
+                          onChange={(event) =>
+                            setCompensationAmount(event.target.value)
+                          }
+                        />
+                        <InputGroupAddon>
+                          <InputGroupText>$</InputGroupText>
+                        </InputGroupAddon>
+                      </InputGroup>
                     </div>
                   )}
                 </div>

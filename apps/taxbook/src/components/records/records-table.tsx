@@ -8,9 +8,9 @@ import {
 } from "@tabler/icons-react";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
 
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,

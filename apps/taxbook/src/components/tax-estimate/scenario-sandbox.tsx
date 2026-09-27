@@ -5,18 +5,24 @@ import { useState } from "react";
 import { IconCalculator } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-import type { EstimateData } from "./types";
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+} from "@yourtoolshq/ui/card";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@yourtoolshq/ui/input-group";
+import { Label } from "@yourtoolshq/ui/label";
+
+import type { EstimateData } from "./types";
+import type { RouterOutputs } from "~/trpc/react";
 import { dollarsToCents, formatCad } from "~/domain/money";
 import { api } from "~/trpc/react";
 import { resultLabel } from "./types";
@@ -185,18 +191,17 @@ function MoneyField({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <div className="relative">
-        <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-          $
-        </span>
-        <Input
+      <InputGroup>
+        <InputGroupInput
           aria-label={label}
-          className="pl-7"
           inputMode="decimal"
           value={value}
           onChange={(event) => setValue(event.target.value)}
         />
-      </div>
+        <InputGroupAddon>
+          <InputGroupText>$</InputGroupText>
+        </InputGroupAddon>
+      </InputGroup>
     </div>
   );
 }

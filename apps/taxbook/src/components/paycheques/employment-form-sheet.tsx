@@ -5,23 +5,22 @@ import { useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import type {
-  DeductionAmountField,
-  DeductionEnabledField,
-  EmploymentStatus,
-  PayFrequency,
-} from "~/domain/employment";
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { Input } from "@yourtoolshq/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@yourtoolshq/ui/input-group";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -29,7 +28,15 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
+} from "@yourtoolshq/ui/sheet";
+
+import type {
+  DeductionAmountField,
+  DeductionEnabledField,
+  EmploymentStatus,
+  PayFrequency,
+} from "~/domain/employment";
+import type { RouterOutputs } from "~/trpc/react";
 import {
   deductionFields,
   employmentStatuses,
@@ -338,19 +345,19 @@ export function EmploymentFormSheet({
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="typical-gross">Typical gross pay override</Label>
-              <div className="relative">
-                <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-                  $
-                </span>
-                <Input
+              <InputGroup>
+                <InputGroupInput
                   id="typical-gross"
-                  className="pl-7 tabular-nums"
+                  className="tabular-nums"
                   inputMode="decimal"
                   placeholder="Use average pay"
                   value={typicalGross}
                   onChange={(event) => setTypicalGross(event.target.value)}
                 />
-              </div>
+                <InputGroupAddon>
+                  <InputGroupText>$</InputGroupText>
+                </InputGroupAddon>
+              </InputGroup>
               <p className="text-muted-foreground text-xs">
                 Leave blank to project from the average gross pay for this
                 employment.

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
 import { formatCad } from "~/lib/money";
 import { api } from "~/trpc/react";
 

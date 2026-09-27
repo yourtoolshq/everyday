@@ -3,8 +3,9 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 
+import { Button } from "@yourtoolshq/ui/button";
+
 import { TenureHomeButton } from "~/components/tenure/tenure-external-link";
-import { Button } from "~/components/ui/button";
 import { api } from "~/trpc/react";
 
 const SYNC_INTERVAL_MS = 5 * 60 * 1000;

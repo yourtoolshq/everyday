@@ -4,18 +4,22 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import type { DeductionAmountField } from "~/domain/employment";
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { Input } from "@yourtoolshq/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@yourtoolshq/ui/input-group";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -23,7 +27,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
+} from "@yourtoolshq/ui/sheet";
+
+import type { DeductionAmountField } from "~/domain/employment";
+import type { RouterOutputs } from "~/trpc/react";
 import {
   calculateNetPay,
   deductionFields,
@@ -219,13 +226,10 @@ export function PaychequeFormSheet({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="grossPayCents">Gross pay</Label>
-                <div className="relative">
-                  <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-                    $
-                  </span>
-                  <Input
+                <InputGroup>
+                  <InputGroupInput
                     id="grossPayCents"
-                    className="pl-7 tabular-nums"
+                    className="tabular-nums"
                     inputMode="decimal"
                     value={amounts.grossPayCents}
                     onChange={(event) =>
@@ -236,7 +240,10 @@ export function PaychequeFormSheet({
                     }
                     required
                   />
-                </div>
+                  <InputGroupAddon>
+                    <InputGroupText>$</InputGroupText>
+                  </InputGroupAddon>
+                </InputGroup>
               </div>
               {visibleDeductionFields.map((field) => {
                 const computedIncomeTax =
@@ -244,13 +251,10 @@ export function PaychequeFormSheet({
                 return (
                   <div key={field.amountField} className="space-y-2">
                     <Label htmlFor={field.amountField}>{field.label}</Label>
-                    <div className="relative">
-                      <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-                        $
-                      </span>
-                      <Input
+                    <InputGroup>
+                      <InputGroupInput
                         id={field.amountField}
-                        className="pl-7 tabular-nums"
+                        className="tabular-nums"
                         inputMode="decimal"
                         value={
                           computedIncomeTax
@@ -268,7 +272,10 @@ export function PaychequeFormSheet({
                         readOnly={computedIncomeTax}
                         required={!computedIncomeTax}
                       />
-                    </div>
+                      <InputGroupAddon>
+                        <InputGroupText>$</InputGroupText>
+                      </InputGroupAddon>
+                    </InputGroup>
                     {computedIncomeTax ? (
                       <p className="text-muted-foreground text-xs">
                         Sum of federal and Manitoba tax withheld.
@@ -279,13 +286,10 @@ export function PaychequeFormSheet({
               })}
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="calculated-net-pay">Net pay (calculated)</Label>
-                <div className="relative">
-                  <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-                    $
-                  </span>
-                  <Input
+                <InputGroup>
+                  <InputGroupInput
                     id="calculated-net-pay"
-                    className="pl-7 tabular-nums"
+                    className="tabular-nums"
                     value={
                       netPayCents === null || netPayCents < 0
                         ? ""
@@ -293,7 +297,10 @@ export function PaychequeFormSheet({
                     }
                     readOnly
                   />
-                </div>
+                  <InputGroupAddon>
+                    <InputGroupText>$</InputGroupText>
+                  </InputGroupAddon>
+                </InputGroup>
                 <p className="text-muted-foreground text-xs">
                   Compare this amount with the pay statement. A difference
                   usually means a deduction is missing or incorrect.

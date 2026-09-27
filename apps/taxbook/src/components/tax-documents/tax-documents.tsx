@@ -12,8 +12,6 @@ import {
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-import type { TaxDocumentStatus } from "~/domain/tax-document";
-import type { RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,24 +21,27 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "~/components/ui/card";
+} from "@yourtoolshq/ui/card";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
-import { Skeleton } from "~/components/ui/skeleton";
+} from "@yourtoolshq/ui/select";
+import { Skeleton } from "@yourtoolshq/ui/skeleton";
+
+import type { TaxDocumentStatus } from "~/domain/tax-document";
+import type { RouterOutputs } from "~/trpc/react";
 import {
   buildTaxDocumentReadiness,
   taxDocumentDisplayType,

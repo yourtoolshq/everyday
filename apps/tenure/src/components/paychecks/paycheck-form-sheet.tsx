@@ -5,17 +5,15 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import type { ExpectedPayPeriod } from "~/lib/expected-pay-periods";
-import type { PayFrequency } from "~/lib/pay-frequency";
-import type {
-  DeductionAmountField,
-  DeductionSettings,
-} from "~/lib/paycheck-deductions";
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { Input } from "@yourtoolshq/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@yourtoolshq/ui/input-group";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Select,
   SelectContent,
@@ -24,7 +22,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -32,7 +30,15 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
+} from "@yourtoolshq/ui/sheet";
+
+import type { ExpectedPayPeriod } from "~/lib/expected-pay-periods";
+import type { PayFrequency } from "~/lib/pay-frequency";
+import type {
+  DeductionAmountField,
+  DeductionSettings,
+} from "~/lib/paycheck-deductions";
+import type { RouterOutputs } from "~/trpc/react";
 import { documentAccept } from "~/lib/documents";
 import {
   canDerivePayPeriods,
@@ -661,20 +667,20 @@ function DollarInput({
   required?: boolean;
 }) {
   return (
-    <div className="relative">
-      <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-        $
-      </span>
-      <Input
+    <InputGroup>
+      <InputGroupInput
         id={id}
-        className="pl-7 tabular-nums"
+        className="tabular-nums"
         inputMode="decimal"
         value={value}
         onChange={(event) => onChange?.(event.target.value)}
         readOnly={readOnly}
         required={required}
       />
-    </div>
+      <InputGroupAddon>
+        <InputGroupText>$</InputGroupText>
+      </InputGroupAddon>
+    </InputGroup>
   );
 }
 

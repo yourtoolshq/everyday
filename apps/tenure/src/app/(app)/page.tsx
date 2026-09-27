@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Briefcase, Building2, Users } from "lucide-react";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
 import { HouseholdPaySummaryPanel } from "~/components/employment-records/household-pay-summary-panel";
 import { MissingEmploymentRecordsPanel } from "~/components/employment-records/missing-employment-records-panel";
 import { MissingPayStubsPanel } from "~/components/paychecks/missing-pay-stubs-panel";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { api } from "~/trpc/server";
 
 export const dynamic = "force-dynamic";

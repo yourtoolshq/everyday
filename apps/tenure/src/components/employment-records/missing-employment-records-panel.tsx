@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 
-import { Badge } from "~/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
 import { api } from "~/trpc/react";
 
 export function MissingEmploymentRecordsPanel() {

@@ -16,7 +16,7 @@ Quiet, readable, local-first tools for personal records. Show the record's conte
 
 - Use a sheet for bounded create/edit/upload tasks while the parent context matters. Use a dialog for a short decision or read-only preview. Use a page when the task needs sustained space or multiple sections. A destructive action uses an alert dialog naming the record and consequence.
 - Every field has a visible label; required and optional meaning is clear. Put help and validation beside the field. Keep entered data during a failed save, disable duplicate submit while pending, and show the result where the user can act on it. A toast can confirm a completed action.
-- Use native date inputs for calendar dates. Do not reinterpret a date-only value as an instant. Money/decimal fields should allow natural typing, normalize on commit, and show invalid expressions plainly; the app still decides allowed range and rounding.
+- Use native date inputs for calendar dates. Do not reinterpret a date-only value as an instant. Money/decimal fields should allow natural typing, normalize on commit, and show invalid expressions plainly; the app still decides allowed range and rounding. Show a short adornment such as `$` or `%` with `InputGroup` and `InputGroupText`. The adornment is presentation only and is not part of the value.
 - Documents are opened from their owning record. Show file identity and available open/download/edit/delete actions. Keep original files and domain relationships visible; use the existing shared file UI where it fits.
 
 ## States and status

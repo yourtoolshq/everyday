@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil } from "lucide-react";
 
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { EmploymentCompensationPanel } from "~/components/compensation/employment-compensation-panel";
 import { EmploymentDiscussionsPanel } from "~/components/discussions/employment-discussions-panel";
@@ -13,9 +17,6 @@ import { EmploymentRecordCompletenessPanel } from "~/components/employment-recor
 import { EmploymentDocumentsPanel } from "~/components/employments/employment-documents-panel";
 import { EmploymentFormDrawer } from "~/components/employments/employment-form-drawer";
 import { EmploymentPaychecksPanel } from "~/components/paychecks/employment-paychecks-panel";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { formatCompensationRate } from "~/lib/compensation";
 import { employmentStatusLabels } from "~/lib/employment-status";
 import { api } from "~/trpc/react";

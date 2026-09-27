@@ -4,11 +4,9 @@ import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { RichTextEditor } from "~/components/ui/rich-text-editor";
+import { Button } from "@yourtoolshq/ui/button";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -16,7 +14,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
+} from "@yourtoolshq/ui/sheet";
+
+import type { RouterOutputs } from "~/trpc/react";
+import { RichTextEditor } from "~/components/ui/rich-text-editor";
 import { api } from "~/trpc/react";
 
 type Discussion = RouterOutputs["discussions"]["listByEmployment"][number];

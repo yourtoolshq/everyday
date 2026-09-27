@@ -3,7 +3,8 @@
 import { useMemo } from "react";
 import Link from "next/link";
 
-import { Badge } from "~/components/ui/badge";
+import { Badge } from "@yourtoolshq/ui/badge";
+
 import { accountEventTypeLabels } from "~/lib/account-events";
 import { formatDateLabel } from "~/lib/format-date";
 import { api } from "~/trpc/react";

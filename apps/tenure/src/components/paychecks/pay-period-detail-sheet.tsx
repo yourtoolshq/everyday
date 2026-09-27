@@ -3,10 +3,8 @@
 import { ExternalLink, Paperclip, Pencil, Plus } from "lucide-react";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import type { RouterOutputs } from "~/trpc/react";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +12,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
+} from "@yourtoolshq/ui/dialog";
+
+import type { RouterOutputs } from "~/trpc/react";
 import { formatDateLabel } from "~/lib/documents";
 import { formatCad } from "~/lib/money";
 import { payStubCompletenessLabels } from "~/lib/pay-stub-completeness";

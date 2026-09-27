@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
 import type { RouterOutputs } from "~/trpc/react";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
 type StatementStatus = RouterOutputs["overview"]["statementStatus"];
 

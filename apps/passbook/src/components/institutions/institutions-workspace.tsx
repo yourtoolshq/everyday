@@ -4,11 +4,12 @@ import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
+import { Skeleton } from "@yourtoolshq/ui/skeleton";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { InstitutionFormSheet } from "~/components/institutions/institution-form-sheet";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
-import { Skeleton } from "~/components/ui/skeleton";
 import { api } from "~/trpc/react";
 
 type Institution = RouterOutputs["institutions"]["list"][number];

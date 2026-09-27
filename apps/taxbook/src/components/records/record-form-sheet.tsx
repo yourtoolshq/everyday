@@ -4,7 +4,6 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import type { RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,17 +13,23 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Button } from "@yourtoolshq/ui/button";
+import { Input } from "@yourtoolshq/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@yourtoolshq/ui/input-group";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -32,8 +37,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/sheet";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type { RouterOutputs } from "~/trpc/react";
 import { centsToDollars, dollarsToCents, formatCad } from "~/domain/money";
 import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
@@ -185,20 +192,20 @@ export function RecordFormSheet({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="record-amount">Amount counted</Label>
-                <div className="relative">
-                  <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-                    $
-                  </span>
-                  <Input
+                <InputGroup>
+                  <InputGroupInput
                     id="record-amount"
-                    className="pl-7 tabular-nums"
+                    className="tabular-nums"
                     inputMode="decimal"
                     placeholder="0.00"
                     value={amount}
                     onChange={(event) => setAmount(event.target.value)}
                     required
                   />
-                </div>
+                  <InputGroupAddon>
+                    <InputGroupText>$</InputGroupText>
+                  </InputGroupAddon>
+                </InputGroup>
                 <p className="text-muted-foreground text-xs">
                   Enter the amount that should be included in the Tax Item
                   total.

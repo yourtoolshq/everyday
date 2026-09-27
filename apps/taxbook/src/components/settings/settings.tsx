@@ -5,7 +5,6 @@ import { useState } from "react";
 import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-import type { RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,15 +14,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-import { Button } from "~/components/ui/button";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "~/components/ui/card";
+} from "@yourtoolshq/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -31,10 +30,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Skeleton } from "~/components/ui/skeleton";
+} from "@yourtoolshq/ui/dialog";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
+import { Skeleton } from "@yourtoolshq/ui/skeleton";
+
+import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 import { PersonRow } from "./person-row";
 import { TenureIntegrationSetting } from "./tenure-integration-setting";

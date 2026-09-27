@@ -8,7 +8,17 @@
     "./badge": "./src/badge.tsx",
     "./button": "./src/button.tsx",
     "./card": "./src/card.tsx",
-    "./progress": "./src/progress.tsx"
+    "./dialog": "./src/dialog.tsx",
+    "./input": "./src/input.tsx",
+    "./input-group": "./src/input-group.tsx",
+    "./label": "./src/label.tsx",
+    "./progress": "./src/progress.tsx",
+    "./select": "./src/select.tsx",
+    "./separator": "./src/separator.tsx",
+    "./sheet": "./src/sheet.tsx",
+    "./skeleton": "./src/skeleton.tsx",
+    "./textarea": "./src/textarea.tsx",
+    "./tooltip": "./src/tooltip.tsx"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
@@ -21,6 +31,7 @@
     "radix-ui": "^1.6.7"
   },
   "peerDependencies": {
+    "lucide-react": ">=0.468.0",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
@@ -32,6 +43,7 @@
     "@yourtoolshq/tsconfig": "workspace:*",
     "eslint": "catalog:",
     "jiti": "^2.7.0",
+    "lucide-react": "^0.468.0",
     "react": "catalog:",
     "react-dom": "catalog:",
     "typescript": "catalog:"

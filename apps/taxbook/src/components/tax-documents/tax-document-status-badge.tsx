@@ -1,5 +1,6 @@
+import { Badge } from "@yourtoolshq/ui/badge";
+
 import type { TaxDocumentStatus } from "~/domain/tax-document";
-import { Badge } from "~/components/ui/badge";
 import { taxDocumentStatusLabels } from "~/domain/tax-document";
 
 const styles: Record<TaxDocumentStatus, string> = {

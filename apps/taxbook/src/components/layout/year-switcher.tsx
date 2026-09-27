@@ -5,8 +5,7 @@ import { useState } from "react";
 import { IconCalendar, IconChevronDown, IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +13,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
+} from "@yourtoolshq/ui/dialog";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@yourtoolshq/ui/select";
+
+import type { RouterOutputs } from "~/trpc/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,15 +33,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
 import {
   SidebarMenu,
   SidebarMenuButton,

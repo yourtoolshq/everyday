@@ -2,7 +2,8 @@ import "~/styles/globals.css";
 
 import { type Metadata } from "next";
 
-import { TooltipProvider } from "~/components/ui/tooltip";
+import { TooltipProvider } from "@yourtoolshq/ui/tooltip";
+
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {

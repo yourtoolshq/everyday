@@ -5,12 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus } from "lucide-react";
 
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { EmployerFormDrawer } from "~/components/employers/employer-form-drawer";
 import { EmploymentFormDrawer } from "~/components/employments/employment-form-drawer";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { employmentStatusLabels } from "~/lib/employment-status";
 
 type EmployerDetailProps = {

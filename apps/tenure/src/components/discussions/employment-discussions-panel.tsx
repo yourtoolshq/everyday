@@ -5,10 +5,6 @@ import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import type { RouterOutputs } from "~/trpc/react";
-import { DiscussionFormSheet } from "~/components/discussions/discussion-form-sheet";
-import { EmploymentDocumentUploadSheet } from "~/components/documents/employment-document-upload-sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,9 +14,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
+import type { RouterOutputs } from "~/trpc/react";
+import { DiscussionFormSheet } from "~/components/discussions/discussion-form-sheet";
+import { EmploymentDocumentUploadSheet } from "~/components/documents/employment-document-upload-sheet";
 import { RichTextContent } from "~/components/ui/rich-text-editor";
 import { formatDateLabel } from "~/lib/documents";
 import { api } from "~/trpc/react";

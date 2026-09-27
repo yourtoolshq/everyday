@@ -15,14 +15,6 @@ import {
   Users,
 } from "lucide-react";
 
-import type {
-  CareCadence,
-  CareCategory,
-  CareSource,
-  TimingKind,
-} from "~/lib/care-planning";
-import type { CareProgressState } from "~/lib/visits";
-import type { RouterInputs, RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,16 +25,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "~/components/ui/card";
+} from "@yourtoolshq/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -51,17 +43,26 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+} from "@yourtoolshq/ui/dialog";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/select";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type {
+  CareCadence,
+  CareCategory,
+  CareSource,
+  TimingKind,
+} from "~/lib/care-planning";
+import type { CareProgressState } from "~/lib/visits";
+import type { RouterInputs, RouterOutputs } from "~/trpc/react";
 import { VisitDialog } from "~/components/visits/visit-dialog";
 import {
   careCadenceLabels,

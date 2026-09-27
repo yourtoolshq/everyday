@@ -5,20 +5,20 @@ import Link from "next/link";
 import { FileSearch, FileText } from "lucide-react";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import type { RouterOutputs } from "~/trpc/react";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
+
+import type { RouterOutputs } from "~/trpc/react";
 import { formatDateTime } from "~/lib/date-time";
 import {
   documentTypeLabels,

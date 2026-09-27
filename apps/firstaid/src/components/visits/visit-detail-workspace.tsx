@@ -5,9 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Check, Pencil, Trash2, X } from "lucide-react";
 
-import type { VisitStatus } from "~/lib/visits";
-import type { RouterOutputs } from "~/trpc/react";
-import { DocumentManager } from "~/components/documents/document-manager";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,10 +15,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
+
+import type { VisitStatus } from "~/lib/visits";
+import type { RouterOutputs } from "~/trpc/react";
+import { DocumentManager } from "~/components/documents/document-manager";
 import { VisitDialog } from "~/components/visits/visit-dialog";
 import { VisitFinancials } from "~/components/visits/visit-financials";
 import { formatDateTime } from "~/lib/date-time";

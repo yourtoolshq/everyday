@@ -11,18 +11,19 @@ import {
   Paperclip,
 } from "lucide-react";
 
-import type { PayFrequency } from "~/lib/pay-frequency";
-import type { PayStubCompletenessStatus } from "~/lib/pay-stub-completeness";
-import type { RouterOutputs } from "~/trpc/react";
-import { PayPeriodDetailSheet } from "~/components/paychecks/pay-period-detail-sheet";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "~/components/ui/tooltip";
+} from "@yourtoolshq/ui/tooltip";
+
+import type { PayFrequency } from "~/lib/pay-frequency";
+import type { PayStubCompletenessStatus } from "~/lib/pay-stub-completeness";
+import type { RouterOutputs } from "~/trpc/react";
+import { PayPeriodDetailSheet } from "~/components/paychecks/pay-period-detail-sheet";
 import { payYearRange } from "~/lib/expected-pay-periods";
 import { payFrequencyLabels } from "~/lib/pay-frequency";
 import { payStubCompletenessLabels } from "~/lib/pay-stub-completeness";

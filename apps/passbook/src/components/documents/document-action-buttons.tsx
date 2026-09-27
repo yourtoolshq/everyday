@@ -3,8 +3,7 @@
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import { Button } from "~/components/ui/button";
+import { Button } from "@yourtoolshq/ui/button";
 
 type DocumentActionButtonsProps = {
   fileId: string;

@@ -5,15 +5,6 @@ import { Plus, Settings2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import type { PayFrequency } from "~/lib/pay-frequency";
-import type { DeductionSettings } from "~/lib/paycheck-deductions";
-import type { RouterOutputs } from "~/trpc/react";
-import { EmploymentPayPeriods } from "~/components/paychecks/employment-pay-periods";
-import { EmploymentPaySettingsSheet } from "~/components/paychecks/employment-pay-settings-sheet";
-import { PayStubUploadSheet } from "~/components/paychecks/pay-stub-upload-sheet";
-import { PaycheckFormSheet } from "~/components/paychecks/paycheck-form-sheet";
-import { PaycheckImportSheet } from "~/components/paychecks/paycheck-import-sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,10 +14,19 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
+import type { PayFrequency } from "~/lib/pay-frequency";
+import type { DeductionSettings } from "~/lib/paycheck-deductions";
+import type { RouterOutputs } from "~/trpc/react";
+import { EmploymentPayPeriods } from "~/components/paychecks/employment-pay-periods";
+import { EmploymentPaySettingsSheet } from "~/components/paychecks/employment-pay-settings-sheet";
+import { PayStubUploadSheet } from "~/components/paychecks/pay-stub-upload-sheet";
+import { PaycheckFormSheet } from "~/components/paychecks/paycheck-form-sheet";
+import { PaycheckImportSheet } from "~/components/paychecks/paycheck-import-sheet";
 import { formatDateLabel } from "~/lib/documents";
 import { formatCad } from "~/lib/money";
 import { payFrequencyLabels } from "~/lib/pay-frequency";
