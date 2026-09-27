@@ -143,6 +143,15 @@ importers:
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.19.0(typescript@5.9.3)
+      '@yourtoolshq/data':
+        specifier: workspace:*
+        version: link:../../packages/data
+      '@yourtoolshq/data-ui':
+        specifier: workspace:*
+        version: link:../../packages/data-ui
+      '@yourtoolshq/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1

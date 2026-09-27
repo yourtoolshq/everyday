@@ -1,0 +1,8 @@
+#!/bin/sh
+set -eu
+
+cd /app/apps/firstaid
+if [ "$(id -u)" = "0" ]; then
+  exec su-exec nextjs node scripts/yt-data.cjs --app firstaid --migrations drizzle "$@"
+fi
+exec node scripts/yt-data.cjs --app firstaid --migrations drizzle "$@"

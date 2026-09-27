@@ -6,14 +6,24 @@ import { LockKeyhole } from "lucide-react";
 import { Separator } from "~/components/ui/separator";
 import { SidebarTrigger } from "~/components/ui/sidebar";
 
+const titles: Record<string, string> = {
+  "/": "Care Plan",
+  "/visits": "Visits",
+  "/care-providers": "Care Providers",
+  "/documents": "Documents",
+  "/benefits": "Benefits",
+  "/settings/data": "Data & backups",
+};
+
 export function SiteHeader() {
   const pathname = usePathname();
   const title =
-    pathname === "/visits"
+    titles[pathname] ??
+    (pathname.startsWith("/visits")
       ? "Visits"
-      : pathname === "/care-providers"
-        ? "Care Providers"
-        : "Care Plan";
+      : pathname.startsWith("/benefits")
+        ? "Benefits"
+        : "Care Plan");
 
   return (
     <header className="bg-background/85 flex h-(--header-height) shrink-0 items-center border-b backdrop-blur-sm">

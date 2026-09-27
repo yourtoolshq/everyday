@@ -4,6 +4,8 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { Download, FileText, Pencil, Plus, Trash2 } from "lucide-react";
 
+import { FilePreview } from "@yourtoolshq/data-ui";
+
 import type { ClaimStatus } from "~/lib/benefits";
 import type { RouterInputs, RouterOutputs } from "~/trpc/react";
 import { UploadDocumentDialog } from "~/components/documents/document-manager";
@@ -188,14 +190,15 @@ export function VisitFinancials({
                             </p>
                           </div>
                           <Button asChild size="sm" variant="ghost">
-                            <a
-                              href={`/api/documents/${document.id}/file`}
-                              target="_blank"
-                              rel="noreferrer"
+                            <FilePreview
+                              file={{
+                                id: document.fileId,
+                                mimeType: document.mimeType,
+                              }}
                             >
                               <Download />
                               Open
-                            </a>
+                            </FilePreview>
                           </Button>
                         </div>
                       ))}

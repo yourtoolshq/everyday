@@ -7,6 +7,8 @@ import {
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
+import { filesTable, platformMetaTable } from "@yourtoolshq/data/schema";
+
 import type { BenefitCoverageScope, ClaimStatus } from "~/lib/benefits";
 import type {
   CareCadence,
@@ -19,6 +21,8 @@ import type {
 } from "~/lib/care-planning";
 import type { DocumentType } from "~/lib/documents";
 import type { VisitStatus } from "~/lib/visits";
+
+export { filesTable, platformMetaTable };
 
 const id = () =>
   text("id")
@@ -185,20 +189,26 @@ export const claims = sqliteTable(
   ],
 );
 
-export const documents = sqliteTable("documents", {
-  id: id(),
-  visitId: text("visit_id")
-    .notNull()
-    .references(() => visits.id, { onDelete: "cascade" }),
-  claimId: text("claim_id").references(() => claims.id, {
-    onDelete: "set null",
-  }),
-  type: text("type").$type<DocumentType>().notNull(),
-  title: text("title").notNull(),
-  originalFilename: text("original_filename").notNull(),
-  storageKey: text("storage_key").notNull().unique(),
-  mimeType: text("mime_type").notNull(),
-  sizeBytes: integer("size_bytes").notNull(),
-  createdAt: createdAt(),
-  updatedAt: updatedAt(),
-});
+export const documents = sqliteTable(
+  "documents",
+  {
+    id: id(),
+    visitId: text("visit_id")
+      .notNull()
+      .references(() => visits.id, { onDelete: "cascade" }),
+    claimId: text("claim_id").references(() => claims.id, {
+      onDelete: "set null",
+    }),
+    type: text("type").$type<DocumentType>().notNull(),
+    title: text("title").notNull(),
+    fileId: text("file_id")
+      .notNull()
+      .references(() => filesTable.id),
+    originalFilename: text("original_filename").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [uniqueIndex("documents_file_unique").on(table.fileId)],
+);

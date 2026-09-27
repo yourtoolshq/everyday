@@ -4,10 +4,10 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
+    fileParallelism: false,
     exclude: ["e2e/**", "node_modules/**"],
     env: {
-      DATABASE_URL: "file::memory:",
-      DOCUMENTS_DIR: "./.data/test-documents",
+      DATA_DIR: "./.data/test",
     },
     coverage: {
       provider: "v8",

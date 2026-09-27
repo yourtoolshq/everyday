@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { FileSearch, FileText } from "lucide-react";
 
+import { FilePreview } from "@yourtoolshq/data-ui";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -157,13 +159,14 @@ export function DocumentsWorkspace({
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <Button asChild size="sm" variant="outline">
-                      <a
-                        href={`/api/documents/${document.id}/file`}
-                        target="_blank"
-                        rel="noreferrer"
+                      <FilePreview
+                        file={{
+                          id: document.fileId,
+                          mimeType: document.mimeType,
+                        }}
                       >
                         Open
-                      </a>
+                      </FilePreview>
                     </Button>
                     <Button asChild size="sm">
                       <Link href={`/visits/${document.visitId}`}>

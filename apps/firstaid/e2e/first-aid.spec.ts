@@ -290,7 +290,9 @@ test("renders the responsive private application shell", async ({
   await expect(page.getByRole("link", { name: "Documents" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Benefits" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Claims" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Settings" })).toBeDisabled();
+  await expect(
+    page.getByRole("link", { name: "Data & backups" }),
+  ).toBeVisible();
 });
 
 test("tracks benefits, visit costs, and claims", async ({ page }, testInfo) => {
@@ -436,5 +438,19 @@ test("tracks benefits, visit costs, and claims", async ({ page }, testInfo) => {
 test("exposes a database-backed health check", async ({ request }) => {
   const response = await request.get("/api/health");
   expect(response.ok()).toBe(true);
-  await expect(response.json()).resolves.toEqual({ status: "ok" });
+  const body: {
+    backup: { lastVerifiedBackupAt: string | null };
+  } = await response.json();
+  expect(body).toMatchObject({
+    status: "ok",
+    state: "ready",
+    backup: {
+      status: expect.stringMatching(/^(ok|stale|failing)$/),
+      sharesDataDir: expect.any(Boolean),
+    },
+  });
+  expect(
+    body.backup.lastVerifiedBackupAt === null ||
+      typeof body.backup.lastVerifiedBackupAt === "string",
+  ).toBe(true);
 });
