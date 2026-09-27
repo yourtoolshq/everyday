@@ -16,3 +16,5 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 - General in the sidebar holds appearance, household members, and the Tenure connection. Data & backups stays storage, backups, and restores.
 
 ### Fixed
+
+- Restore the sidebar link for household members and Tenure sync controls.
