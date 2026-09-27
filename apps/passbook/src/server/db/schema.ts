@@ -208,7 +208,6 @@ export const documents = sqliteTable(
       .notNull()
       .references(() => filesTable.id),
     originalFilename: text("original_filename").notNull(),
-    storageKey: text("storage_key").notNull().unique(),
     mimeType: text("mime_type").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
     createdAt: createdAt(),
