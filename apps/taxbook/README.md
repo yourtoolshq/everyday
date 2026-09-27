@@ -71,35 +71,15 @@ Ideas and bug reports are welcome.
 
 Because this project is primarily driven by a real personal workflow, proposed features may be kept small, deferred, or declined if they push the app away from that focus.
 
-## Run the local production app
+## Run Tax Book
 
-Tax Book runs as a private local container and is available only from the same
-computer at <http://localhost:3000> or, when Traefik is running,
-<https://taxbook.tools.local>.
+Use `command pnpm dev` for local development at <http://localhost:3000>. Local
+database and documents live under `.data/` by default. Production Compose has
+no published host port and is served through Traefik at
+<https://taxbook.tools.local> with persistent `taxbook-data` and
+`taxbook-backups` volumes.
 
-    docker compose up --build -d
-
-The SQLite database is stored in the persistent Docker volume
-`taxbook-data`. Stopping, rebuilding, or replacing the app container does not
-remove it.
-
-### Back up and restore
-
-Create a consistent backup while the app is running:
-
-    pnpm backup -- /path/to/taxbook-backup.db
-
-Restore a backup (this replaces the current database and restarts the app):
-
-    pnpm restore -- /path/to/taxbook-backup.db
-
-### Upgrade from main
-
-    pnpm backup -- /path/to/pre-upgrade-backup.db
-    git pull --ff-only origin main
-    docker compose up --build -d
-    docker compose ps
-
-Committed database migrations run before the new application starts. See
-[`docs/development.md`](./docs/development.md) for development and release
-conventions.
+Use **Data & backups** in the app, or run `command pnpm data backup` from the
+app directory, to create a verified backup. See
+[`docs/development.md`](./docs/development.md) for local development, data
+isolation, Docker, and host upgrade guidance.

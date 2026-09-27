@@ -3,6 +3,13 @@ import { expect, test } from "@playwright/test";
 test.setTimeout(process.env.CI ? 180_000 : 60_000);
 
 test("sets up a household and tracks an item", async ({ page }) => {
+  const receiptPdf = Buffer.from(
+    "%PDF-1.4\n% fictional receipt fixture\n%%EOF\n",
+  );
+  const taxDocumentPdf = Buffer.from(
+    "%PDF-1.4\n% fictional T4 fixture\n%%EOF\n",
+  );
+
   await page.goto("/");
   await expect(page).toHaveURL(/\/setup$/);
   await expect(
@@ -41,8 +48,9 @@ test("sets up a household and tracks an item", async ({ page }) => {
   await page.getByLabel("Attachment").setInputFiles({
     name: "fictional-receipt.pdf",
     mimeType: "application/pdf",
-    buffer: Buffer.from("fictional PDF content"),
+    buffer: receiptPdf,
   });
+  await expect(page.getByText(/· Uploaded$/)).toBeVisible();
   await page.getByRole("button", { name: "Add Record" }).last().click();
   await expect(
     page.getByRole("heading", { name: "Use Records for the actual amount?" }),
@@ -62,7 +70,7 @@ test("sets up a household and tracks an item", async ({ page }) => {
   expect(attachmentResponse.headers()["content-disposition"]).toContain(
     "inline",
   );
-  expect(await attachmentResponse.text()).toBe("fictional PDF content");
+  expect(await attachmentResponse.body()).toEqual(receiptPdf);
   const downloadResponse = await page.request.get(
     `${attachmentHref}?download=1`,
   );
@@ -90,8 +98,9 @@ test("sets up a household and tracks an item", async ({ page }) => {
   await page.getByLabel("Attachment").setInputFiles({
     name: "fictional-t4.pdf",
     mimeType: "application/pdf",
-    buffer: Buffer.from("fictional T4 content"),
+    buffer: taxDocumentPdf,
   });
+  await expect(page.getByText(/· Uploaded$/)).toBeVisible();
   await page.getByRole("button", { name: "Add Tax Document" }).last().click();
   await expect(page.getByText("Tax Document added.")).toBeVisible();
   await expect(page.getByText("Received", { exact: true })).toBeVisible();
@@ -111,9 +120,7 @@ test("sets up a household and tracks an item", async ({ page }) => {
   expect(
     taxDocumentAttachmentResponse.headers()["content-disposition"],
   ).toContain("inline");
-  expect(await taxDocumentAttachmentResponse.text()).toBe(
-    "fictional T4 content",
-  );
+  expect(await taxDocumentAttachmentResponse.body()).toEqual(taxDocumentPdf);
   const taxDocumentDownloadResponse = await page.request.get(
     `${taxDocumentAttachmentHref}?download=1`,
   );

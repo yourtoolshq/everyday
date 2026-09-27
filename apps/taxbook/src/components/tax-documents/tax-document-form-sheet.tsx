@@ -26,12 +26,12 @@ import {
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
 import {
-  MAX_TAX_DOCUMENT_ATTACHMENT_BYTES,
   taxDocumentStatuses,
   taxDocumentStatusLabels,
   taxDocumentTypeLabels,
   taxDocumentTypes,
 } from "~/domain/tax-document";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type TaxItem = {
@@ -70,7 +70,7 @@ export function TaxDocumentFormSheet({
     document?.status ?? "expected",
   );
   const [notes, setNotes] = useState(document?.notes ?? "");
-  const [file, setFile] = useState<File | null>(null);
+  const fileUpload = useUpload("document");
   const [removeAttachment, setRemoveAttachment] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -84,8 +84,10 @@ export function TaxDocumentFormSheet({
       toast.error("Enter the issuer.");
       return;
     }
-    if (file && file.size > MAX_TAX_DOCUMENT_ATTACHMENT_BYTES) {
-      toast.error("Attachment must be 20 MB or smaller.");
+    if (fileUpload.status === "uploading" || fileUpload.status === "failed") {
+      toast.error(
+        fileUpload.error ?? "Wait for the attachment upload to finish.",
+      );
       return;
     }
 
@@ -107,10 +109,10 @@ export function TaxDocumentFormSheet({
       form.set("status", status);
       form.set(
         "attachmentAction",
-        file ? "replace" : removeAttachment ? "remove" : "keep",
+        fileUpload.file ? "replace" : removeAttachment ? "remove" : "keep",
       );
     }
-    if (file) form.set("attachment", file);
+    if (fileUpload.file) form.set("attachment", fileUpload.file.token);
 
     setPending(true);
     try {
@@ -273,21 +275,17 @@ export function TaxDocumentFormSheet({
                     variant="ghost"
                     onClick={() => {
                       setRemoveAttachment(true);
-                      setFile(null);
+                      fileUpload.reset();
                     }}
                   >
                     Remove
                   </Button>
                 </div>
               ) : null}
-              <Input
+              <FileDropzone
                 id="tax-document-attachment"
-                type="file"
+                upload={fileUpload}
                 accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
-                onChange={(event) => {
-                  setFile(event.target.files?.[0] ?? null);
-                  setRemoveAttachment(false);
-                }}
               />
               <p className="text-muted-foreground text-xs">
                 Optional PDF or image, up to 20 MB. Adding a file to an Expected

@@ -7,6 +7,8 @@ import {
   IconPlus,
 } from "@tabler/icons-react";
 
+import { FilePreview } from "@yourtoolshq/data-ui";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
@@ -85,14 +87,15 @@ export function TaxDocumentsTable({
                   <TableCell>
                     {document.attachmentFileName ? (
                       <div className="flex max-w-60 items-center gap-1">
-                        <a
+                        <FilePreview
+                          file={{
+                            id: document.attachmentFileId!,
+                            mimeType: document.attachmentMimeType!,
+                          }}
                           className="text-primary truncate text-sm hover:underline"
-                          href={`/api/tax-documents/${document.id}/attachment`}
-                          target="_blank"
-                          rel="noreferrer"
                         >
                           {document.attachmentFileName}
-                        </a>
+                        </FilePreview>
                         <span className="text-muted-foreground text-xs whitespace-nowrap">
                           {formatSize(document.attachmentSizeBytes!)}
                         </span>
@@ -122,17 +125,18 @@ export function TaxDocumentsTable({
                         {document.attachmentFileName ? (
                           <>
                             <DropdownMenuItem asChild>
-                              <a
-                                href={`/api/tax-documents/${document.id}/attachment`}
-                                target="_blank"
-                                rel="noreferrer"
+                              <FilePreview
+                                file={{
+                                  id: document.attachmentFileId!,
+                                  mimeType: document.attachmentMimeType!,
+                                }}
                               >
                                 <IconExternalLink /> Open attachment
-                              </a>
+                              </FilePreview>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <a
-                                href={`/api/tax-documents/${document.id}/attachment?download=1`}
+                                href={`/api/data/files/${encodeURIComponent(document.attachmentFileId!)}?download=1`}
                               >
                                 <IconDownload /> Download attachment
                               </a>

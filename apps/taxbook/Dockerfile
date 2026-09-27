@@ -1,4 +1,4 @@
-FROM node:22-alpine3.22 AS base
+FROM node:22-alpine AS base
 RUN corepack enable && corepack prepare pnpm@10.28.2 --activate
 WORKDIR /app
 
@@ -12,26 +12,32 @@ RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
 ENV SKIP_ENV_VALIDATION=1
-ENV DATABASE_URL=file:/tmp/taxbook-build.db
+ENV DATA_DIR=/tmp/taxbook-build-data
 COPY --from=deps /app/ .
 COPY --from=prepare /app/out/full/ .
 RUN pnpm turbo build --filter=taxbook
 
-FROM node:22-alpine3.22 AS runner
+FROM node:22-alpine AS runner
+ARG APP_VERSION=
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
-ENV DATABASE_URL=file:/data/taxbook.db
-RUN apk add --no-cache sqlite su-exec wget && addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
+ENV DATA_DIR=/data
+ENV BACKUP_DIR=/backups
+ENV APP_VERSION=${APP_VERSION}
+RUN apk add --no-cache su-exec wget && addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/taxbook/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/taxbook/.next/static ./apps/taxbook/.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/apps/taxbook/public ./apps/taxbook/public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/taxbook/drizzle ./apps/taxbook/drizzle
 COPY --from=builder --chown=nextjs:nodejs /app/apps/taxbook/scripts ./apps/taxbook/scripts
+COPY --from=builder --chown=nextjs:nodejs /app/packages/data/dist/yt-data.cjs ./apps/taxbook/scripts/yt-data.cjs
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/apps/taxbook/node_modules ./apps/taxbook/node_modules
+
+RUN ln -s /app/apps/taxbook/scripts/yt-data /usr/local/bin/yt-data
 
 WORKDIR /app/apps/taxbook
 EXPOSE 3000

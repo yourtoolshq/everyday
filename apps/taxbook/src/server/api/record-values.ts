@@ -1,6 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { and, count, desc, eq, sum } from "drizzle-orm";
 
+import type { FileTransaction } from "@yourtoolshq/data/files";
+
 import type { Database } from "./helpers";
 import type {
   AttachmentAction,
@@ -8,6 +10,7 @@ import type {
   RecordInput,
   RecordUpdateInput,
 } from "~/domain/record";
+import { dataPlatform } from "~/server/data";
 import {
   people,
   recordAttachments,
@@ -88,10 +91,18 @@ async function normalizePerson(
 
 async function insertAttachment(
   db: QueryDatabase,
+  files: FileTransaction,
   recordId: number,
   attachment: AttachmentInput,
 ) {
-  await db.insert(recordAttachments).values({ recordId, ...attachment });
+  const file = await files.claim(attachment.token);
+  await db.insert(recordAttachments).values({
+    recordId,
+    fileName: file.originalFilename,
+    mimeType: file.mimeType as AttachmentInput["mimeType"],
+    sizeBytes: file.sizeBytes,
+    fileId: file.id,
+  });
 }
 
 async function syncRecordTotal(db: QueryDatabase, taxItemId: number) {
@@ -128,6 +139,7 @@ export async function listActiveRecords(db: Database, taxItemId: number) {
       attachmentFileName: recordAttachments.fileName,
       attachmentMimeType: recordAttachments.mimeType,
       attachmentSizeBytes: recordAttachments.sizeBytes,
+      attachmentFileId: recordAttachments.fileId,
       createdAt: records.createdAt,
       updatedAt: records.updatedAt,
     })
@@ -144,7 +156,7 @@ export async function createRecord(
   input: RecordInput,
   attachment: AttachmentInput | null,
 ) {
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const { household, item } = await requireEditableActiveTaxItem(
       tx,
       input.taxItemId,
@@ -186,7 +198,7 @@ export async function createRecord(
         notes: input.notes,
       })
       .returning();
-    if (attachment) await insertAttachment(tx, created!.id, attachment);
+    if (attachment) await insertAttachment(tx, files, created!.id, attachment);
     await syncRecordTotal(tx, input.taxItemId);
     return created!;
   });
@@ -227,7 +239,7 @@ export async function updateRecord(
   input: RecordUpdateInput,
   attachmentAction: AttachmentAction,
 ) {
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const { household, record, item } = await requireEditableActiveRecord(
       tx,
       recordId,
@@ -244,12 +256,17 @@ export async function updateRecord(
       .where(eq(records.id, recordId))
       .returning();
     if (attachmentAction.type !== "keep") {
+      const [oldAttachment] = await tx
+        .select({ fileId: recordAttachments.fileId })
+        .from(recordAttachments)
+        .where(eq(recordAttachments.recordId, recordId));
+      if (oldAttachment) await files.remove(oldAttachment.fileId);
       await tx
         .delete(recordAttachments)
         .where(eq(recordAttachments.recordId, recordId));
     }
     if (attachmentAction.type === "replace") {
-      await insertAttachment(tx, recordId, attachmentAction.attachment);
+      await insertAttachment(tx, files, recordId, attachmentAction.attachment);
     }
     await syncRecordTotal(tx, record.taxItemId);
     return updated!;
@@ -257,8 +274,13 @@ export async function updateRecord(
 }
 
 export async function deleteRecord(db: Database, recordId: number) {
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const { record } = await requireEditableActiveRecord(tx, recordId);
+    const [attachment] = await tx
+      .select({ fileId: recordAttachments.fileId })
+      .from(recordAttachments)
+      .where(eq(recordAttachments.recordId, recordId));
+    if (attachment) await files.remove(attachment.fileId);
     await tx.delete(records).where(eq(records.id, recordId));
     await syncRecordTotal(tx, record.taxItemId);
     return { success: true };

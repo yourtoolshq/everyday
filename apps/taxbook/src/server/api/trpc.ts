@@ -10,7 +10,10 @@ import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { db } from "~/server/db";
+import { requireReady } from "@yourtoolshq/data";
+
+import { dataPlatform } from "~/server/data";
+import { checkDatabaseConnection, db } from "~/server/db";
 
 /**
  * 1. CONTEXT
@@ -27,6 +30,8 @@ import { db } from "~/server/db";
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   return {
     db,
+    files: dataPlatform.files,
+    checkDatabaseConnection,
     ...opts,
   };
 };
@@ -94,4 +99,6 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure.use(timingMiddleware);
+export const publicProcedure = t.procedure
+  .use(requireReady(dataPlatform))
+  .use(timingMiddleware);

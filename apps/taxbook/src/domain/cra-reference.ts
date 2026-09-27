@@ -1,4 +1,3 @@
-import type { Buffer } from "node:buffer";
 import { z } from "zod";
 
 export const craReferenceCategories = [
@@ -24,13 +23,13 @@ export const allowedCraReferenceAttachmentTypes = [
   "image/heif",
 ] as const;
 
-export const MAX_CRA_REFERENCE_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+export const MAX_CRA_REFERENCE_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
 export type CraReferenceAttachmentInput = {
+  token: string;
   fileName: string;
   mimeType: (typeof allowedCraReferenceAttachmentTypes)[number];
   sizeBytes: number;
-  data: Buffer;
 };
 
 export type CraReferenceAttachmentAction =

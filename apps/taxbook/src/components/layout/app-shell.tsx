@@ -1,5 +1,7 @@
 "use client";
 
+import { BackupStatusBanner } from "@yourtoolshq/data-ui";
+
 import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 import { AppSidebar } from "./app-sidebar";
 import { SiteHeader } from "./site-header";
@@ -18,6 +20,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <AppSidebar variant="inset" />
       <SidebarInset>
         <SiteHeader />
+        <BackupStatusBanner />
         <TenureConnectionBanner />
         <main className="flex flex-1 flex-col">{children}</main>
       </SidebarInset>

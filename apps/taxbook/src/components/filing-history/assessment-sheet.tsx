@@ -24,11 +24,9 @@ import {
   SheetTitle,
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
-import {
-  assessmentKindLabels,
-  MAX_FILING_ATTACHMENT_BYTES,
-} from "~/domain/filing";
+import { assessmentKindLabels } from "~/domain/filing";
 import { signedDollarsToCents } from "~/domain/money";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 
 type Filing = RouterOutputs["filing"]["timeline"]["filings"][number];
 
@@ -70,7 +68,7 @@ export function AssessmentSheet({
     filing.refundOrPaymentDate ?? "",
   );
   const [notes, setNotes] = useState(filing.assessmentNotes ?? "");
-  const [file, setFile] = useState<File | null>(null);
+  const fileUpload = useUpload("document");
   const [removeAttachment, setRemoveAttachment] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -80,8 +78,10 @@ export function AssessmentSheet({
       toast.error("Enter the assessment date.");
       return;
     }
-    if (file && file.size > MAX_FILING_ATTACHMENT_BYTES) {
-      toast.error("Attachment must be 20 MB or smaller.");
+    if (fileUpload.status === "uploading" || fileUpload.status === "failed") {
+      toast.error(
+        fileUpload.error ?? "Wait for the attachment upload to finish.",
+      );
       return;
     }
     if (resultDirection !== "none" && resultAmount.trim() === "") {
@@ -115,10 +115,10 @@ export function AssessmentSheet({
     if (editing) {
       form.set(
         "attachmentAction",
-        file ? "replace" : removeAttachment ? "remove" : "keep",
+        fileUpload.file ? "replace" : removeAttachment ? "remove" : "keep",
       );
     }
-    if (file) form.set("attachment", file);
+    if (fileUpload.file) form.set("attachment", fileUpload.file.token);
 
     setPending(true);
     try {
@@ -226,11 +226,10 @@ export function AssessmentSheet({
                   ? "NOR attachment"
                   : "NOA attachment"}
               </Label>
-              <Input
+              <FileDropzone
                 id="assessment-attachment"
-                type="file"
+                upload={fileUpload}
                 accept=".pdf,image/jpeg,image/png,image/heic,image/heif"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               />
               {filing.assessmentAttachmentFileName ? (
                 <label className="text-muted-foreground flex items-center gap-2 text-sm">

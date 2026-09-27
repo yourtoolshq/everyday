@@ -1,6 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 
+import type { FileTransaction } from "@yourtoolshq/data/files";
+
 import type { Database } from "./helpers";
 import type {
   AdjustmentInput,
@@ -21,6 +23,7 @@ import {
   assessmentKindForFiling,
   buildTaxYearLifecycleWarnings,
 } from "~/domain/filing";
+import { dataPlatform } from "~/server/data";
 import {
   assessmentAttachments,
   assessments,
@@ -99,23 +102,37 @@ async function filingHasAttachment(db: QueryDatabase, filingId: number) {
 
 async function insertFilingAttachment(
   db: QueryDatabase,
+  files: FileTransaction,
   filingId: number,
   attachment: FilingAttachmentInput,
 ) {
-  await db.insert(filingAttachments).values({ filingId, ...attachment });
+  const file = await files.claim(attachment.token);
+  await db.insert(filingAttachments).values({
+    filingId,
+    fileName: file.originalFilename,
+    mimeType: file.mimeType,
+    sizeBytes: file.sizeBytes,
+    fileId: file.id,
+  });
 }
 
 async function applyFilingAttachmentAction(
   db: QueryDatabase,
+  files: FileTransaction,
   filingId: number,
   action: FilingAttachmentAction,
 ) {
   if (action.type === "keep") return;
+  const [oldAttachment] = await db
+    .select({ fileId: filingAttachments.fileId })
+    .from(filingAttachments)
+    .where(eq(filingAttachments.filingId, filingId));
+  if (oldAttachment) await files.remove(oldAttachment.fileId);
   await db
     .delete(filingAttachments)
     .where(eq(filingAttachments.filingId, filingId));
   if (action.type === "replace") {
-    await insertFilingAttachment(db, filingId, action.attachment);
+    await insertFilingAttachment(db, files, filingId, action.attachment);
   }
 }
 
@@ -288,6 +305,7 @@ export async function listFilingTimeline(db: Database, taxYearId: number) {
       attachmentFileName: filingAttachments.fileName,
       attachmentMimeType: filingAttachments.mimeType,
       attachmentSizeBytes: filingAttachments.sizeBytes,
+      attachmentFileId: filingAttachments.fileId,
       assessmentId: assessments.id,
       assessmentKind: assessments.kind,
       assessmentDate: assessments.assessmentDate,
@@ -297,6 +315,7 @@ export async function listFilingTimeline(db: Database, taxYearId: number) {
       assessmentAttachmentFileName: assessmentAttachments.fileName,
       assessmentAttachmentMimeType: assessmentAttachments.mimeType,
       assessmentAttachmentSizeBytes: assessmentAttachments.sizeBytes,
+      assessmentAttachmentFileId: assessmentAttachments.fileId,
       createdAt: filings.createdAt,
       updatedAt: filings.updatedAt,
     })
@@ -419,7 +438,7 @@ export async function createOriginalReturn(
     attachment !== null ? "attached" : input.returnCopyStatus;
   assertSubmittedCopyStatus(returnCopyStatus, attachment !== null);
 
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const [created] = await tx
       .insert(filings)
       .values({
@@ -434,7 +453,7 @@ export async function createOriginalReturn(
       })
       .returning();
     if (attachment) {
-      await insertFilingAttachment(tx, created!.id, attachment);
+      await insertFilingAttachment(tx, files, created!.id, attachment);
     }
     await replaceFilingItemValues(tx, created!.id, input.itemValues);
     return created!;
@@ -481,8 +500,8 @@ export async function updateOriginalReturn(
     "submitted T1",
   );
 
-  return db.transaction(async (tx) => {
-    await applyFilingAttachmentAction(tx, filingId, attachmentAction);
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
+    await applyFilingAttachmentAction(tx, files, filingId, attachmentAction);
     const [updated] = await tx
       .update(filings)
       .set({
@@ -517,7 +536,7 @@ export async function createAdjustment(
     "submitted adjustment",
   );
 
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const [created] = await tx
       .insert(filings)
       .values({
@@ -533,7 +552,7 @@ export async function createAdjustment(
       })
       .returning();
     if (attachment) {
-      await insertFilingAttachment(tx, created!.id, attachment);
+      await insertFilingAttachment(tx, files, created!.id, attachment);
     }
     await syncAffectedTaxItems(
       tx,
@@ -585,8 +604,8 @@ export async function updateAdjustment(
     "submitted adjustment",
   );
 
-  return db.transaction(async (tx) => {
-    await applyFilingAttachmentAction(tx, filingId, attachmentAction);
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
+    await applyFilingAttachmentAction(tx, files, filingId, attachmentAction);
     const [updated] = await tx
       .update(filings)
       .set({
@@ -621,8 +640,15 @@ export async function deleteAdjustment(db: Database, filingId: number) {
       message: "Remove the reassessment before deleting this adjustment.",
     });
   }
-  await db.delete(filings).where(eq(filings.id, filingId));
-  return { success: true as const };
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
+    const [attachment] = await tx
+      .select({ fileId: filingAttachments.fileId })
+      .from(filingAttachments)
+      .where(eq(filingAttachments.filingId, filingId));
+    if (attachment) await files.remove(attachment.fileId);
+    await tx.delete(filings).where(eq(filings.id, filingId));
+    return { success: true as const };
+  });
 }
 
 export async function deleteOriginalReturn(db: Database, filingId: number) {
@@ -642,8 +668,15 @@ export async function deleteOriginalReturn(db: Database, filingId: number) {
       message: "Remove the assessment before deleting this filing.",
     });
   }
-  await db.delete(filings).where(eq(filings.id, filingId));
-  return { success: true as const };
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
+    const [attachment] = await tx
+      .select({ fileId: filingAttachments.fileId })
+      .from(filingAttachments)
+      .where(eq(filingAttachments.filingId, filingId));
+    if (attachment) await files.remove(attachment.fileId);
+    await tx.delete(filings).where(eq(filings.id, filingId));
+    return { success: true as const };
+  });
 }
 
 export async function createAssessment(
@@ -665,7 +698,7 @@ export async function createAssessment(
 
   const kind = assessmentKindForFiling(filing.kind);
 
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const [created] = await tx
       .insert(assessments)
       .values({
@@ -678,9 +711,13 @@ export async function createAssessment(
       })
       .returning();
     if (attachment) {
+      const file = await files.claim(attachment.token);
       await tx.insert(assessmentAttachments).values({
         assessmentId: created!.id,
-        ...attachment,
+        fileName: file.originalFilename,
+        mimeType: file.mimeType,
+        sizeBytes: file.sizeBytes,
+        fileId: file.id,
       });
     }
     await tx
@@ -716,15 +753,24 @@ export async function updateAssessment(
     });
   }
 
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     if (attachmentAction.type !== "keep") {
+      const [oldAttachment] = await tx
+        .select({ fileId: assessmentAttachments.fileId })
+        .from(assessmentAttachments)
+        .where(eq(assessmentAttachments.assessmentId, assessmentId));
+      if (oldAttachment) await files.remove(oldAttachment.fileId);
       await tx
         .delete(assessmentAttachments)
         .where(eq(assessmentAttachments.assessmentId, assessmentId));
       if (attachmentAction.type === "replace") {
+        const file = await files.claim(attachmentAction.attachment.token);
         await tx.insert(assessmentAttachments).values({
           assessmentId,
-          ...attachmentAction.attachment,
+          fileName: file.originalFilename,
+          mimeType: file.mimeType,
+          sizeBytes: file.sizeBytes,
+          fileId: file.id,
         });
       }
     }
@@ -762,7 +808,12 @@ export async function deleteAssessment(db: Database, assessmentId: number) {
     });
   }
 
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
+    const [attachment] = await tx
+      .select({ fileId: assessmentAttachments.fileId })
+      .from(assessmentAttachments)
+      .where(eq(assessmentAttachments.assessmentId, assessmentId));
+    if (attachment) await files.remove(attachment.fileId);
     await tx.delete(assessments).where(eq(assessments.id, assessmentId));
     await tx
       .update(filings)

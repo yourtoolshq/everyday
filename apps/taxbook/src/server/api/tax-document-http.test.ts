@@ -22,7 +22,9 @@ describe("Tax Document multipart input", () => {
     const form = validForm();
     form.set(
       "attachment",
-      new File(["fictional"], "fictional-t4.pdf", { type: "application/pdf" }),
+      new File(["%PDF-1.4\nfictional"], "fictional-t4.pdf", {
+        type: "application/pdf",
+      }),
     );
     const parsed = await parseCreateTaxDocumentForm(form);
     expect(parsed.input).toMatchObject({
@@ -35,7 +37,7 @@ describe("Tax Document multipart input", () => {
     expect(parsed.attachment).toMatchObject({
       fileName: "fictional-t4.pdf",
       mimeType: "application/pdf",
-      sizeBytes: 9,
+      sizeBytes: 18,
     });
   });
 

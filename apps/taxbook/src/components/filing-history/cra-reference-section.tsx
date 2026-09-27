@@ -147,7 +147,7 @@ export function CraReferenceSection({
                         <>
                           <Button asChild size="sm" variant="outline">
                             <a
-                              href={`/api/cra-reference-documents/${document.id}/attachment`}
+                              href={`/api/data/files/${encodeURIComponent(document.attachmentFileId!)}`}
                               target="_blank"
                               rel="noreferrer"
                             >
@@ -156,7 +156,7 @@ export function CraReferenceSection({
                           </Button>
                           <Button asChild size="sm" variant="outline">
                             <a
-                              href={`/api/cra-reference-documents/${document.id}/attachment?download=1`}
+                              href={`/api/data/files/${encodeURIComponent(document.attachmentFileId!)}?download=1`}
                             >
                               Download <IconDownload />
                             </a>

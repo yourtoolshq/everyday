@@ -1,7 +1,6 @@
-import type { Buffer } from "node:buffer";
 import { z } from "zod";
 
-export const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+export const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 export const allowedAttachmentTypes = [
   "application/pdf",
   "image/jpeg",
@@ -38,10 +37,10 @@ export const recordUpdateInput = recordInput.omit({
 export type RecordInput = z.infer<typeof recordInput>;
 export type RecordUpdateInput = z.infer<typeof recordUpdateInput>;
 export type AttachmentInput = {
+  token: string;
   fileName: string;
   mimeType: (typeof allowedAttachmentTypes)[number];
   sizeBytes: number;
-  data: Buffer;
 };
 export type AttachmentAction =
   | { type: "keep" }

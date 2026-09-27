@@ -1,10 +1,7 @@
-import { db } from "~/server/db";
+import { createHealthResponse } from "~/server/health";
+
+export const runtime = "nodejs";
 
 export async function GET() {
-  try {
-    await db.query.households.findFirst();
-    return Response.json({ status: "ok" });
-  } catch {
-    return Response.json({ status: "error" }, { status: 503 });
-  }
+  return createHealthResponse();
 }

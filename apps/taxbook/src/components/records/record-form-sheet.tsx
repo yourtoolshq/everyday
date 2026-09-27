@@ -35,7 +35,7 @@ import {
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
 import { centsToDollars, dollarsToCents, formatCad } from "~/domain/money";
-import { MAX_ATTACHMENT_BYTES } from "~/domain/record";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type TaxItem = RouterOutputs["taxItem"]["get"]["item"];
@@ -65,7 +65,7 @@ export function RecordFormSheet({
     String(record?.personId ?? item.personId ?? "none"),
   );
   const [notes, setNotes] = useState(record?.notes ?? "");
-  const [file, setFile] = useState<File | null>(null);
+  const fileUpload = useUpload("document");
   const [removeAttachment, setRemoveAttachment] = useState(false);
   const [pending, setPending] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -81,8 +81,10 @@ export function RecordFormSheet({
       toast.error("Amount must be greater than zero.");
       return;
     }
-    if (file && file.size > MAX_ATTACHMENT_BYTES) {
-      toast.error("Attachment must be 20 MB or smaller.");
+    if (fileUpload.status === "uploading" || fileUpload.status === "failed") {
+      toast.error(
+        fileUpload.error ?? "Wait for the attachment upload to finish.",
+      );
       return;
     }
     const form = new FormData();
@@ -100,11 +102,11 @@ export function RecordFormSheet({
     );
     form.set("notes", notes);
     if (!record) form.set("confirmReplaceActual", String(confirmReplaceActual));
-    if (file) form.set("attachment", file);
+    if (fileUpload.file) form.set("attachment", fileUpload.file.token);
     if (record) {
       form.set(
         "attachmentAction",
-        file ? "replace" : removeAttachment ? "remove" : "keep",
+        fileUpload.file ? "replace" : removeAttachment ? "remove" : "keep",
       );
     }
 
@@ -249,21 +251,17 @@ export function RecordFormSheet({
                       variant="ghost"
                       onClick={() => {
                         setRemoveAttachment(true);
-                        setFile(null);
+                        fileUpload.reset();
                       }}
                     >
                       Remove
                     </Button>
                   </div>
                 ) : null}
-                <Input
+                <FileDropzone
                   id="record-attachment"
-                  type="file"
+                  upload={fileUpload}
                   accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
-                  onChange={(event) => {
-                    setFile(event.target.files?.[0] ?? null);
-                    setRemoveAttachment(false);
-                  }}
                 />
                 <p className="text-muted-foreground text-xs">
                   Optional PDF or image, up to 20 MB. Choosing a file replaces

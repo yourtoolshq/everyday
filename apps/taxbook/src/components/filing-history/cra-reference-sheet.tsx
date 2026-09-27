@@ -28,8 +28,8 @@ import { Textarea } from "~/components/ui/textarea";
 import {
   craReferenceCategories,
   craReferenceCategoryLabels,
-  MAX_CRA_REFERENCE_ATTACHMENT_BYTES,
 } from "~/domain/cra-reference";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type Person = RouterOutputs["settings"]["get"]["people"][number];
@@ -65,7 +65,7 @@ export function CraReferenceSheet({
     document?.reportingPeriodLabel ?? "",
   );
   const [notes, setNotes] = useState(document?.notes ?? "");
-  const [file, setFile] = useState<File | null>(null);
+  const fileUpload = useUpload("document");
   const [removeAttachment, setRemoveAttachment] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -75,8 +75,10 @@ export function CraReferenceSheet({
       toast.error("Enter a title.");
       return;
     }
-    if (file && file.size > MAX_CRA_REFERENCE_ATTACHMENT_BYTES) {
-      toast.error("Attachment must be 20 MB or smaller.");
+    if (fileUpload.status === "uploading" || fileUpload.status === "failed") {
+      toast.error(
+        fileUpload.error ?? "Wait for the attachment upload to finish.",
+      );
       return;
     }
 
@@ -91,10 +93,10 @@ export function CraReferenceSheet({
     if (document) {
       form.set(
         "attachmentAction",
-        file ? "replace" : removeAttachment ? "remove" : "keep",
+        fileUpload.file ? "replace" : removeAttachment ? "remove" : "keep",
       );
     }
-    if (file) form.set("attachment", file);
+    if (fileUpload.file) form.set("attachment", fileUpload.file.token);
 
     setPending(true);
     try {
@@ -213,11 +215,10 @@ export function CraReferenceSheet({
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="cra-attachment">Attachment</Label>
-              <Input
+              <FileDropzone
                 id="cra-attachment"
-                type="file"
+                upload={fileUpload}
                 accept=".pdf,image/jpeg,image/png,image/heic,image/heif"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               />
               {document?.attachmentFileName ? (
                 <label className="text-muted-foreground flex items-center gap-2 text-sm">
