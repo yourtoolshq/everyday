@@ -4,12 +4,13 @@ Read this file first, then the authoritative docs for every application you touc
 
 ## Required reading
 
-| Document                             | When                                                    |
-| ------------------------------------ | ------------------------------------------------------- |
-| [PRODUCT.md](./PRODUCT.md)           | Platform purpose and boundaries                         |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Monorepo layout and app isolation                       |
-| [DEVELOPMENT.md](./DEVELOPMENT.md)   | Workflow, checks, changelog policy, production boundary |
-| [ROADMAP.md](./ROADMAP.md)           | Current platform phase and what comes next              |
+| Document                                   | When                                                    |
+| ------------------------------------------ | ------------------------------------------------------- |
+| [PRODUCT.md](./PRODUCT.md)                 | Platform purpose and boundaries                         |
+| [ARCHITECTURE.md](./ARCHITECTURE.md)       | Monorepo layout and app isolation                       |
+| [DEVELOPMENT.md](./DEVELOPMENT.md)         | Workflow, checks, changelog policy, production boundary |
+| [ROADMAP.md](./ROADMAP.md)                 | Current platform phase and what comes next              |
+| [DESIGN_LANGUAGE.md](./DESIGN_LANGUAGE.md) | UI and interaction choices when working on an app       |
 
 ## Per-application instructions
 
