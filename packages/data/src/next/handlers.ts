@@ -16,8 +16,7 @@ interface RouteContext {
   params: Promise<{ path?: string[] }>;
 }
 
-const uuidPattern =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+const fileIdPattern = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/;
 
 // Multipart framing and form fields around the file.
 const formOverheadBytes = 1024 * 1024;
@@ -145,7 +144,7 @@ async function serveFile(
   fileId: string,
   download: boolean,
 ) {
-  if (!uuidPattern.test(fileId)) return errorResponse("Not found", 404);
+  if (!fileIdPattern.test(fileId)) return errorResponse("Not found", 404);
   const found = await platform.files.stream(fileId);
   if (!found) return errorResponse("File not found", 404);
   return new Response(found.body, {
