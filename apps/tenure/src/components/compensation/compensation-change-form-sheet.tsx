@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Input } from "@yourtoolshq/ui/input";
 import {
   InputGroup,
@@ -13,6 +14,7 @@ import {
   InputGroupText,
 } from "@yourtoolshq/ui/input-group";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -325,11 +327,10 @@ export function CompensationChangeFormSheet({
               <Label htmlFor="compensation-effective-date">
                 Effective date
               </Label>
-              <Input
+              <DateField
                 id="compensation-effective-date"
-                type="date"
                 value={effectiveDate}
-                onChange={(event) => setEffectiveDate(event.target.value)}
+                onChange={(value) => setEffectiveDate(value)}
                 required
               />
             </div>
@@ -359,18 +360,12 @@ export function CompensationChangeFormSheet({
                 <Label htmlFor="compensation-amount">
                   {type === "annual_salary" ? "Annual salary" : "Hourly rate"}
                 </Label>
-                <InputGroup>
-                  <InputGroupInput
-                    id="compensation-amount"
-                    inputMode="decimal"
-                    value={amount}
-                    onChange={(event) => setAmount(event.target.value)}
-                    placeholder={type === "annual_salary" ? "85000" : "45.00"}
-                  />
-                  <InputGroupAddon>
-                    <InputGroupText>$</InputGroupText>
-                  </InputGroupAddon>
-                </InputGroup>
+                <MoneyField
+                  id="compensation-amount"
+                  value={amount}
+                  onValueChange={setAmount}
+                  placeholder={type === "annual_salary" ? "85000" : "45.00"}
+                />
               </div>
             )}
 

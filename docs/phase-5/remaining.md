@@ -1,32 +1,30 @@
 # Phase 5 — remaining UI work
 
-The migrations in [ui-plan.md](./ui-plan.md) are adopted. This is the handoff for what that plan left open. Do not repeat the primitive, theme, period-coverage, document-action, route-state, or money-expression work.
+Adopted. The collapsing frame is `@yourtoolshq/ui/app-frame` and `@yourtoolshq/ui/sidebar`. Money fields are `@yourtoolshq/ui/money-field`. Calendar dates are `@yourtoolshq/ui/date-field`. This page records the decisions those components follow.
 
 ## Sidebar frame
 
-Optional. Do this only if a shared frame stays smaller than the four shells it replaces.
+Extract the shell behavior every app already relies on. Each app still decides what is inside the sidebar and the header.
 
-The four `layout/app-shell.tsx` files already use `SidebarProvider`, `--sidebar-width: 17rem`, and `--header-height: 3.5rem`. Passbook, Tenure, and First Aid then render sidebar, header, and `BackupStatusBanner`. Taxbook adds `TenureConnectionBanner` and wraps children in `<main>`. The sidebars differ in nav items, group labels, icons, and active-route rules. The headers differ in title maps and the private-storage label.
+Share the collapsing sidebar frame: `SidebarProvider`, `--sidebar-width: 17rem`, `--header-height: 3.5rem`, inset layout, sidebar trigger, and the backup banner slot. Pass children for the sidebar body, the header body, and any extra banners. Taxbook's Tenure connection banner stays a Taxbook slot, not a condition inside the frame.
 
-Share a frame that accepts the sidebar, the header, and optional banners. Apps keep nav items, route titles, banners, and contextual controls. Do not share a nav config, breadcrumbs, or one header title helper. Breadcrumbs stay guidance.
+Do not share nav items, group labels, icons, active-route rules, or header title maps. Do not add breadcrumbs.
 
-Proof: desktop and narrow nav, active item, focus and escape, page title, backup banner, Taxbook's Tenure banner, and the header on a narrow viewport. Stop if the shared component needs app conditionals for those differences.
+Proof: collapse and expand on desktop and a narrow viewport, keyboard focus and escape, the active item, the page title, the backup banner, and Taxbook's extra banner. The shared frame should not branch on which app it is rendering.
 
-## Percent expressions
+## Typed fields and money calculator
 
-Wait until a percent field needs the same on-blur commit as money. The `%` prefix is already in place. `normalizeDecimalEntry` in `@yourtoolshq/ui/decimal-entry` is the parser; do not add a second one.
+The stored value never includes `$`, `%`, or other adornment text. `InputGroup` with `InputGroupText` only shows what kind of field it is.
 
-Candidates, still prefix-only today:
+- Money and percent fields use a leading `$` or `%` addon. That text is not part of the input value.
+- A date field uses the shadcn date picker input: a typeable date with a trailing calendar button. It is not a native `type="date"` input and not a text addon.
 
-- Tenure commission percentage on the compensation change sheet and the employment form.
-- Passbook interest rate and promotional interest rate on account terms.
+Money fields that allow arithmetic show a trailing icon so the calculator is visible. With that icon, the field accepts a number or a simple `+ - * /` expression such as `10+12+34.5`. On commit, show the total formatted as money. While the expression is being edited, keep the expression visible. Empty stays empty. A bad expression or division by zero is an inline message. Do not use `eval`. Reuse `normalizeDecimalEntry`; do not add a second parser.
 
-Adopt in one of those forms, then the other, only if both want expressions. Keep the 0–100 commission check, basis-point conversion, and any Passbook rate range in the app. Empty stays empty. Show the same inline failure for a bad expression or division by zero. Do not use `eval`.
+The icon is how a field opts in. Percent fields do not get the calculator unless a later change turns that icon on for them. Range, cents, basis points, and rounding stay in the app.
 
-## Dates and one-off visuals
+## Dates
 
-Leave these in the apps.
+Replace native date inputs with the official shadcn date picker input for this repo's `radix-nova` style: type a date, or open the calendar from the trailing button. Arrow Down opens the calendar. Use it wherever a screen asks for a calendar date. Keep the saved value a calendar date, not an instant, so the day does not shift with timezone.
 
-Date fields stay native `type="date"`. Extract a picker only after a repeated calendar-date problem shows up in two apps. Saved dates must not shift timezone.
-
-Tenure's compensation timeline and First Aid's care and benefit panels answer different questions. Reuse typography, status color, and empty-state guidance. Do not add a chart or timeline package for one screen.
+Tenure's compensation timeline and First Aid's care and benefit panels are separate domain screens, not date pickers. Leave those layouts in the apps. Reuse typography, status color, and empty-state guidance there. Do not add a chart or timeline package for one screen.

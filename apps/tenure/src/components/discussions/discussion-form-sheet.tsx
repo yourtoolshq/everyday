@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Input } from "@yourtoolshq/ui/input";
 import { Label } from "@yourtoolshq/ui/label";
 import {
@@ -126,11 +127,10 @@ export function DiscussionFormSheet({
 
             <div className="space-y-2">
               <Label htmlFor="discussion-date">Date</Label>
-              <Input
+              <DateField
                 id="discussion-date"
-                type="date"
                 value={discussionDate}
-                onChange={(event) => setDiscussionDate(event.target.value)}
+                onChange={(value) => setDiscussionDate(value)}
               />
             </div>
 

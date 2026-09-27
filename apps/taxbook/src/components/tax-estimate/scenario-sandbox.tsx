@@ -13,13 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@yourtoolshq/ui/card";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@yourtoolshq/ui/input-group";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField as MoneyEntry } from "@yourtoolshq/ui/money-field";
 
 import type { EstimateData } from "./types";
 import type { RouterOutputs } from "~/trpc/react";
@@ -191,17 +186,7 @@ function MoneyField({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      <InputGroup>
-        <InputGroupInput
-          aria-label={label}
-          inputMode="decimal"
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-        />
-        <InputGroupAddon>
-          <InputGroupText>$</InputGroupText>
-        </InputGroupAddon>
-      </InputGroup>
+      <MoneyEntry aria-label={label} value={value} onValueChange={setValue} />
     </div>
   );
 }

@@ -1,3 +1,5 @@
+import { normalizeDecimalEntry } from "@yourtoolshq/ui/decimal-entry";
+
 export function formatCad(cents: number | null) {
   if (cents === null) return "—";
   return new Intl.NumberFormat("en-CA", {
@@ -8,9 +10,9 @@ export function formatCad(cents: number | null) {
 }
 
 export function dollarsToCents(value: string): number | null {
-  const normalized = value.trim().replaceAll(",", "");
-  if (normalized === "") return null;
-  const amount = Number(normalized);
+  const result = normalizeDecimalEntry(value);
+  if (!result.ok || result.value === "") return null;
+  const amount = Number(result.value);
   if (!Number.isFinite(amount) || amount < 0) return null;
   return Math.round(amount * 100);
 }
@@ -20,9 +22,9 @@ export function centsToDollars(value: number | null) {
 }
 
 export function signedDollarsToCents(value: string): number | null {
-  const normalized = value.trim().replaceAll(",", "");
-  if (normalized === "") return null;
-  const amount = Number(normalized);
+  const result = normalizeDecimalEntry(value);
+  if (!result.ok || result.value === "") return null;
+  const amount = Number(result.value);
   if (!Number.isFinite(amount) || amount === 0) return null;
   return Math.round(amount * 100);
 }

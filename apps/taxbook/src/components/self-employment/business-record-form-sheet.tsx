@@ -5,8 +5,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Input } from "@yourtoolshq/ui/input";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -166,11 +168,10 @@ export function BusinessRecordFormSheet({
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="business-date">Date</Label>
-              <Input
+              <DateField
                 id="business-date"
-                type="date"
                 value={date}
-                onChange={(event) => setDate(event.target.value)}
+                onChange={(value) => setDate(value)}
                 required
               />
             </div>
@@ -187,11 +188,10 @@ export function BusinessRecordFormSheet({
               <Label htmlFor="business-amount">
                 {kind === "expense" ? "Deductible amount" : "Revenue amount"}
               </Label>
-              <Input
+              <MoneyField
                 id="business-amount"
-                inputMode="decimal"
                 value={amount}
-                onChange={(event) => setAmount(event.target.value)}
+                onValueChange={setAmount}
                 required
               />
             </div>

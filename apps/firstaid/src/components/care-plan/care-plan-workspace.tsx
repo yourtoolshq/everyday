@@ -35,6 +35,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@yourtoolshq/ui/card";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import {
   Dialog,
   DialogContent,
@@ -1049,10 +1050,9 @@ function CareItemDialog({
               <>
                 <div className="space-y-2">
                   <Label htmlFor="target-date">Date</Label>
-                  <Input
+                  <DateField
                     id="target-date"
                     name="targetDate"
-                    type="date"
                     defaultValue={item?.targetDate ?? ""}
                     required
                   />

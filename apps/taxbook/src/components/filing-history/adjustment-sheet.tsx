@@ -5,8 +5,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
-import { Input } from "@yourtoolshq/ui/input";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -254,11 +255,10 @@ export function AdjustmentSheet({
             </div>
             <div className="space-y-2">
               <Label htmlFor="adjustment-date">Submission date</Label>
-              <Input
+              <DateField
                 id="adjustment-date"
-                type="date"
                 value={submissionDate}
-                onChange={(event) => setSubmissionDate(event.target.value)}
+                onChange={(value) => setSubmissionDate(value)}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -286,13 +286,12 @@ export function AdjustmentSheet({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="adjustment-change-amount">Amount</Label>
-                <Input
+                <MoneyField
                   id="adjustment-change-amount"
-                  inputMode="decimal"
                   placeholder="0.00"
                   value={changeAmount}
                   disabled={changeDirection === "none"}
-                  onChange={(event) => setChangeAmount(event.target.value)}
+                  onValueChange={setChangeAmount}
                 />
               </div>
             </div>

@@ -6,7 +6,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
-import { Input } from "@yourtoolshq/ui/input";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Label } from "@yourtoolshq/ui/label";
 import {
   Select,
@@ -156,11 +156,10 @@ export function EmploymentPaySettingsSheet({
           {payFrequency === "weekly" || payFrequency === "biweekly" ? (
             <div className="space-y-2">
               <Label htmlFor="pay-anchor-date">Schedule anchor date</Label>
-              <Input
+              <DateField
                 id="pay-anchor-date"
-                type="date"
                 value={biweeklyAnchorDate}
-                onChange={(event) => setBiweeklyAnchorDate(event.target.value)}
+                onChange={(value) => setBiweeklyAnchorDate(value)}
               />
               <p className="text-muted-foreground text-xs">
                 First day of a pay period on this schedule. Defaults to

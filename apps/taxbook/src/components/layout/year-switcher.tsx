@@ -23,6 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@yourtoolshq/ui/select";
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@yourtoolshq/ui/sidebar";
 
 import type { RouterOutputs } from "~/trpc/react";
 import {
@@ -33,11 +38,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "~/components/ui/sidebar";
 import { api } from "~/trpc/react";
 
 type TaxYear = RouterOutputs["taxYear"]["list"][number];

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Input } from "@yourtoolshq/ui/input";
 import { Label } from "@yourtoolshq/ui/label";
 import {
@@ -194,11 +195,10 @@ export function CraReferenceSheet({
             </div>
             <div className="space-y-2">
               <Label htmlFor="cra-document-date">Document date</Label>
-              <Input
+              <DateField
                 id="cra-document-date"
-                type="date"
                 value={documentDate}
-                onChange={(event) => setDocumentDate(event.target.value)}
+                onChange={(value) => setDocumentDate(value)}
               />
             </div>
             {category === "gst_hst_return" ? (

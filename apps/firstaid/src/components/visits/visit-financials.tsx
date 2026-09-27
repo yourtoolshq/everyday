@@ -28,13 +28,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@yourtoolshq/ui/dialog";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@yourtoolshq/ui/input-group";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -323,20 +318,14 @@ function ClaimDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="claim-amount">Amount</Label>
-              <InputGroup>
-                <InputGroupInput
-                  id="claim-amount"
-                  name="amount"
-                  inputMode="decimal"
-                  defaultValue={
-                    claim ? formatCents(claim.amountCents).replace("$", "") : ""
-                  }
-                  required
-                />
-                <InputGroupAddon>
-                  <InputGroupText>$</InputGroupText>
-                </InputGroupAddon>
-              </InputGroup>
+              <MoneyField
+                id="claim-amount"
+                name="amount"
+                defaultValue={
+                  claim ? formatCents(claim.amountCents).replace("$", "") : ""
+                }
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="claim-status">Status</Label>

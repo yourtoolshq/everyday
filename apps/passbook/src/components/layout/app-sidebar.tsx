@@ -25,7 +25,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "~/components/ui/sidebar";
+} from "@yourtoolshq/ui/sidebar";
 
 function isNavActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";

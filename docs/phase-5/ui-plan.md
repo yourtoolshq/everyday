@@ -35,9 +35,9 @@ Adopted since that starting point:
 - Period coverage: `@yourtoolshq/ui/period-coverage` supplies the year control, grid/list, cell, and legend. Tenure pay periods and Passbook statement periods pass cells, tones, and actions. Derivation, status rules, N/A mutations, and sheets stay in the apps.
 - Document actions: the identical open/edit/delete row lives in `@yourtoolshq/data-ui` as `DocumentActionButtons`. Confirm, invalidation, and labels stay in the apps.
 - Route states: each app has `loading`, `error`, `global-error`, and `not-found` with its own copy and a retry or overview link.
-- Numeric entry: `@yourtoolshq/ui/decimal-entry` normalizes `.89`, `147.3`, and simple `+ - * /` expressions on blur. Taxbook paycheque amounts and Tenure paycheck amounts use it. Range and rounding stay in the apps. A percent variant is still guidance until a second percent form needs the same commit behavior.
+- Numeric entry: `@yourtoolshq/ui/money-field` shows a `$` addon and a trailing calculator. On blur, `normalizeDecimalEntry` turns `.89`, `147.3`, and `10+12+34.5` into a dollar amount. `%` fields stay an addon only. Calendar dates use `@yourtoolshq/ui/date-field`, which can be typed or picked.
 
-Sheet, dialog, and alert-dialog choices are already in the design language. What is still open is in [remaining.md](./remaining.md): an optional sidebar frame, percent expressions only if a percent field needs the money commit behavior, and dates plus one-off visuals that stay in the apps.
+Sheet, dialog, and alert-dialog choices are already in the design language. The collapsing sidebar frame is `@yourtoolshq/ui/app-frame`; each app still fills the sidebar and header. The decisions are recorded in [remaining.md](./remaining.md).
 
 ## Representative screens and exit test
 

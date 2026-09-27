@@ -6,15 +6,11 @@ import { toast } from "sonner";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { normalizeDecimalEntry } from "@yourtoolshq/ui/decimal-entry";
 import { Input } from "@yourtoolshq/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@yourtoolshq/ui/input-group";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -465,25 +461,19 @@ export function PaycheckFormSheet({
                     <Label htmlFor="paycheck-period-start">
                       Pay period start
                     </Label>
-                    <Input
+                    <DateField
                       id="paycheck-period-start"
-                      type="date"
                       value={manualPeriodStart}
-                      onChange={(event) =>
-                        setManualPeriodStart(event.target.value)
-                      }
+                      onChange={(value) => setManualPeriodStart(value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="paycheck-period-end">Pay period end</Label>
-                    <Input
+                    <DateField
                       id="paycheck-period-end"
-                      type="date"
                       value={manualPeriodEnd}
-                      onChange={(event) =>
-                        setManualPeriodEnd(event.target.value)
-                      }
+                      onChange={(value) => setManualPeriodEnd(value)}
                       required
                     />
                   </div>
@@ -491,11 +481,10 @@ export function PaycheckFormSheet({
               )}
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="paycheck-pay-date">Pay date</Label>
-                <Input
+                <DateField
                   id="paycheck-pay-date"
-                  type="date"
                   value={payDate}
-                  onChange={(event) => setPayDate(event.target.value)}
+                  onChange={(value) => setPayDate(value)}
                   required
                 />
               </div>
@@ -673,40 +662,15 @@ function DollarInput({
   readOnly?: boolean;
   required?: boolean;
 }) {
-  const [error, setError] = useState<string | null>(null);
-
   return (
-    <div className="space-y-1">
-      <InputGroup>
-        <InputGroupInput
-          id={id}
-          className="tabular-nums"
-          inputMode="decimal"
-          value={value}
-          onChange={(event) => {
-            setError(null);
-            onChange?.(event.target.value);
-          }}
-          onBlur={() => {
-            if (readOnly || !onChange) return;
-            const result = normalizeDecimalEntry(value);
-            if (result.ok) {
-              onChange(result.value);
-              setError(null);
-              return;
-            }
-            setError(result.message);
-          }}
-          readOnly={readOnly}
-          aria-invalid={Boolean(error)}
-          required={required}
-        />
-        <InputGroupAddon>
-          <InputGroupText>$</InputGroupText>
-        </InputGroupAddon>
-      </InputGroup>
-      {error ? <p className="text-destructive text-xs">{error}</p> : null}
-    </div>
+    <MoneyField
+      id={id}
+      value={value}
+      onValueChange={onChange}
+      readOnly={readOnly}
+      required={required}
+      arithmetic={!readOnly && Boolean(onChange)}
+    />
   );
 }
 

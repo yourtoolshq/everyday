@@ -26,7 +26,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "~/components/ui/sidebar";
+} from "@yourtoolshq/ui/sidebar";
+
 import { api } from "~/trpc/react";
 import { YearSwitcher } from "./year-switcher";
 

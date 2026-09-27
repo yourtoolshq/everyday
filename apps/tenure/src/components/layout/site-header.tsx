@@ -4,8 +4,7 @@ import { usePathname } from "next/navigation";
 import { LockKeyhole } from "lucide-react";
 
 import { Separator } from "@yourtoolshq/ui/separator";
-
-import { SidebarTrigger } from "~/components/ui/sidebar";
+import { SidebarTrigger } from "@yourtoolshq/ui/sidebar";
 
 const titles: Record<string, string> = {
   "/": "Overview",

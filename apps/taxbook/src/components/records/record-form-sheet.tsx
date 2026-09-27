@@ -15,14 +15,10 @@ import {
   AlertDialogTitle,
 } from "@yourtoolshq/ui/alert-dialog";
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Input } from "@yourtoolshq/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@yourtoolshq/ui/input-group";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -168,11 +164,10 @@ export function RecordFormSheet({
             <div className="flex-1 space-y-6 px-4 py-6">
               <div className="space-y-2">
                 <Label htmlFor="record-date">Date</Label>
-                <Input
+                <DateField
                   id="record-date"
-                  type="date"
                   value={date}
-                  onChange={(event) => setDate(event.target.value)}
+                  onChange={(value) => setDate(value)}
                   required
                 />
                 <p className="text-muted-foreground text-xs">
@@ -192,20 +187,13 @@ export function RecordFormSheet({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="record-amount">Amount counted</Label>
-                <InputGroup>
-                  <InputGroupInput
-                    id="record-amount"
-                    className="tabular-nums"
-                    inputMode="decimal"
-                    placeholder="0.00"
-                    value={amount}
-                    onChange={(event) => setAmount(event.target.value)}
-                    required
-                  />
-                  <InputGroupAddon>
-                    <InputGroupText>$</InputGroupText>
-                  </InputGroupAddon>
-                </InputGroup>
+                <MoneyField
+                  id="record-amount"
+                  placeholder="0.00"
+                  value={amount}
+                  onValueChange={setAmount}
+                  required
+                />
                 <p className="text-muted-foreground text-xs">
                   Enter the amount that should be included in the Tax Item
                   total.

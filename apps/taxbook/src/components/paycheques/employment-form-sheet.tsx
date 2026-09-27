@@ -6,14 +6,10 @@ import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Input } from "@yourtoolshq/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@yourtoolshq/ui/input-group";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -299,13 +295,12 @@ export function EmploymentFormSheet({
             {status === "ended" ? (
               <div className="space-y-2">
                 <Label htmlFor="employment-end-date">End date</Label>
-                <Input
+                <DateField
                   id="employment-end-date"
-                  type="date"
                   min={`${year}-01-01`}
                   max={`${year}-12-31`}
                   value={endDate}
-                  onChange={(event) => setEndDate(event.target.value)}
+                  onChange={(value) => setEndDate(value)}
                   required
                 />
               </div>
@@ -345,19 +340,12 @@ export function EmploymentFormSheet({
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="typical-gross">Typical gross pay override</Label>
-              <InputGroup>
-                <InputGroupInput
-                  id="typical-gross"
-                  className="tabular-nums"
-                  inputMode="decimal"
-                  placeholder="Use average pay"
-                  value={typicalGross}
-                  onChange={(event) => setTypicalGross(event.target.value)}
-                />
-                <InputGroupAddon>
-                  <InputGroupText>$</InputGroupText>
-                </InputGroupAddon>
-              </InputGroup>
+              <MoneyField
+                id="typical-gross"
+                placeholder="Use average pay"
+                value={typicalGross}
+                onValueChange={setTypicalGross}
+              />
               <p className="text-muted-foreground text-xs">
                 Leave blank to project from the average gross pay for this
                 employment.

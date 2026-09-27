@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
-import { Input } from "@yourtoolshq/ui/input";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Label } from "@yourtoolshq/ui/label";
 import {
   Sheet,
@@ -140,11 +140,10 @@ export function AccountTermsSnapshotSheet({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="snapshot-effective-date">Effective date</Label>
-                <Input
+                <DateField
                   id="snapshot-effective-date"
-                  type="date"
                   value={effectiveDate}
-                  onChange={(event) => setEffectiveDate(event.target.value)}
+                  onChange={(value) => setEffectiveDate(value)}
                   required
                 />
               </div>

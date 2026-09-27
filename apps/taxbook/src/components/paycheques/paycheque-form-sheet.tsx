@@ -5,15 +5,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { normalizeDecimalEntry } from "@yourtoolshq/ui/decimal-entry";
-import { Input } from "@yourtoolshq/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@yourtoolshq/ui/input-group";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -158,16 +153,6 @@ export function PaychequeFormSheet({
     onError: (error) => toast.error(error.message),
   });
 
-  function commitAmount(field: AmountField, value: string) {
-    const result = normalizeDecimalEntry(value);
-    if (result.ok) {
-      setAmounts((current) => ({ ...current, [field]: result.value }));
-      setAmountErrors((current) => ({ ...current, [field]: undefined }));
-      return;
-    }
-    setAmountErrors((current) => ({ ...current, [field]: result.message }));
-  }
-
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const expressionErrors: Partial<Record<AmountField, string>> = {};
@@ -243,13 +228,12 @@ export function PaychequeFormSheet({
             </div>
             <div className="space-y-2">
               <Label htmlFor="pay-date">Pay date</Label>
-              <Input
+              <DateField
                 id="pay-date"
-                type="date"
                 min={`${year}-01-01`}
                 max={`${year}-12-31`}
                 value={payDate}
-                onChange={(event) => setPayDate(event.target.value)}
+                onChange={(value) => setPayDate(value)}
                 required
               />
               <p className="text-muted-foreground text-xs">
@@ -259,37 +243,22 @@ export function PaychequeFormSheet({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="grossPayCents">Gross pay</Label>
-                <InputGroup>
-                  <InputGroupInput
-                    id="grossPayCents"
-                    className="tabular-nums"
-                    inputMode="decimal"
-                    value={amounts.grossPayCents}
-                    onChange={(event) => {
-                      setAmounts((current) => ({
-                        ...current,
-                        grossPayCents: event.target.value,
-                      }));
-                      setAmountErrors((current) => ({
-                        ...current,
-                        grossPayCents: undefined,
-                      }));
-                    }}
-                    onBlur={(event) =>
-                      commitAmount("grossPayCents", event.target.value)
-                    }
-                    aria-invalid={Boolean(amountErrors.grossPayCents)}
-                    required
-                  />
-                  <InputGroupAddon>
-                    <InputGroupText>$</InputGroupText>
-                  </InputGroupAddon>
-                </InputGroup>
-                {amountErrors.grossPayCents ? (
-                  <p className="text-destructive text-xs">
-                    {amountErrors.grossPayCents}
-                  </p>
-                ) : null}
+                <MoneyField
+                  id="grossPayCents"
+                  value={amounts.grossPayCents}
+                  error={amountErrors.grossPayCents}
+                  onValueChange={(next) => {
+                    setAmounts((current) => ({
+                      ...current,
+                      grossPayCents: next,
+                    }));
+                    setAmountErrors((current) => ({
+                      ...current,
+                      grossPayCents: undefined,
+                    }));
+                  }}
+                  required
+                />
               </div>
               {visibleDeductionFields.map((field) => {
                 const computedIncomeTax =
@@ -297,45 +266,30 @@ export function PaychequeFormSheet({
                 return (
                   <div key={field.amountField} className="space-y-2">
                     <Label htmlFor={field.amountField}>{field.label}</Label>
-                    <InputGroup>
-                      <InputGroupInput
-                        id={field.amountField}
-                        className="tabular-nums"
-                        inputMode="decimal"
-                        value={
-                          computedIncomeTax
-                            ? parsedAmounts.incomeTaxCents === null
-                              ? ""
-                              : centsToDollars(parsedAmounts.incomeTaxCents)
-                            : amounts[field.amountField]
-                        }
-                        onChange={(event) => {
-                          setAmounts((current) => ({
-                            ...current,
-                            [field.amountField]: event.target.value,
-                          }));
-                          setAmountErrors((current) => ({
-                            ...current,
-                            [field.amountField]: undefined,
-                          }));
-                        }}
-                        onBlur={(event) => {
-                          if (computedIncomeTax) return;
-                          commitAmount(field.amountField, event.target.value);
-                        }}
-                        readOnly={computedIncomeTax}
-                        aria-invalid={Boolean(amountErrors[field.amountField])}
-                        required={!computedIncomeTax}
-                      />
-                      <InputGroupAddon>
-                        <InputGroupText>$</InputGroupText>
-                      </InputGroupAddon>
-                    </InputGroup>
-                    {amountErrors[field.amountField] ? (
-                      <p className="text-destructive text-xs">
-                        {amountErrors[field.amountField]}
-                      </p>
-                    ) : null}
+                    <MoneyField
+                      id={field.amountField}
+                      value={
+                        computedIncomeTax
+                          ? parsedAmounts.incomeTaxCents === null
+                            ? ""
+                            : centsToDollars(parsedAmounts.incomeTaxCents)
+                          : amounts[field.amountField]
+                      }
+                      error={amountErrors[field.amountField]}
+                      readOnly={computedIncomeTax}
+                      arithmetic={!computedIncomeTax}
+                      required={!computedIncomeTax}
+                      onValueChange={(next) => {
+                        setAmounts((current) => ({
+                          ...current,
+                          [field.amountField]: next,
+                        }));
+                        setAmountErrors((current) => ({
+                          ...current,
+                          [field.amountField]: undefined,
+                        }));
+                      }}
+                    />
                     {computedIncomeTax ? (
                       <p className="text-muted-foreground text-xs">
                         Sum of federal and Manitoba tax withheld.
@@ -346,21 +300,16 @@ export function PaychequeFormSheet({
               })}
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="calculated-net-pay">Net pay (calculated)</Label>
-                <InputGroup>
-                  <InputGroupInput
-                    id="calculated-net-pay"
-                    className="tabular-nums"
-                    value={
-                      netPayCents === null || netPayCents < 0
-                        ? ""
-                        : centsToDollars(netPayCents)
-                    }
-                    readOnly
-                  />
-                  <InputGroupAddon>
-                    <InputGroupText>$</InputGroupText>
-                  </InputGroupAddon>
-                </InputGroup>
+                <MoneyField
+                  id="calculated-net-pay"
+                  value={
+                    netPayCents === null || netPayCents < 0
+                      ? ""
+                      : centsToDollars(netPayCents)
+                  }
+                  readOnly
+                  arithmetic={false}
+                />
                 <p className="text-muted-foreground text-xs">
                   Compare this amount with the pay statement. A difference
                   usually means a deduction is missing or incorrect.

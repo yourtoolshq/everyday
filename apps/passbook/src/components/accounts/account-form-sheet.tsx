@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Input } from "@yourtoolshq/ui/input";
 import { Label } from "@yourtoolshq/ui/label";
 import {
@@ -267,24 +268,20 @@ export function AccountFormSheet({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="opened-date">Opened date</Label>
-                <Input
+                <DateField
                   id="opened-date"
-                  type="date"
                   value={form.openedDate}
-                  onChange={(event) =>
-                    setForm({ ...form, openedDate: event.target.value })
-                  }
+                  onChange={(value) => setForm({ ...form, openedDate: value })}
                 />
               </div>
               {form.status === "closed" ? (
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="closed-date">Closed date</Label>
-                  <Input
+                  <DateField
                     id="closed-date"
-                    type="date"
                     value={form.closedDate}
-                    onChange={(event) =>
-                      setForm({ ...form, closedDate: event.target.value })
+                    onChange={(value) =>
+                      setForm({ ...form, closedDate: value })
                     }
                     required
                   />

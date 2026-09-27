@@ -15,11 +15,15 @@ describe("parseDollarsToCents", () => {
     expect(parseDollarsToCents("0.99")).toBe(99);
   });
 
+  it("rounds extra cents and accepts a simple total", () => {
+    expect(parseDollarsToCents("10.999")).toBe(1100);
+    expect(parseDollarsToCents("10+12+34.5")).toBe(5650);
+  });
+
   it("returns null for empty or invalid input", () => {
     expect(parseDollarsToCents("")).toBeNull();
     expect(parseDollarsToCents("   ")).toBeNull();
     expect(parseDollarsToCents("abc")).toBeNull();
-    expect(parseDollarsToCents("10.999")).toBeNull();
     expect(parseDollarsToCents("-5")).toBeNull();
   });
 });

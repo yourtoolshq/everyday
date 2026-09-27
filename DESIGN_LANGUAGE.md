@@ -9,14 +9,14 @@ Quiet, readable, local-first tools for personal records. Show the record's conte
 ## Surface and navigation
 
 - Use `background`, `foreground`, `card`, `muted`, `border`, `primary`, `destructive`, and sidebar tokens for meaning. Each app owns accent values; all tokens must work in light and dark. Appearance is light, dark, or system, and that choice persists. Color never carries status alone: include text or an accessible label.
-- Keep the sidebar for primary app areas and the header for the current page. Put records under their owning person, employment, account, tax item, or visit. Use breadcrumbs only when the hierarchy is deep enough that a page title and back action are unclear.
+- Keep the sidebar for primary app areas and the header for the current page. The collapsing shell is shared; each app fills the sidebar and header. Put records under their owning person, employment, account, tax item, or visit. Use breadcrumbs only when the hierarchy is deep enough that a page title and back action are unclear.
 - Use a compact card or section for one related task. Prefer a list/table for scannable records and a grid only when position itself conveys meaning, as with period coverage. Preserve a usable list view on narrow screens.
 
 ## Entry and actions
 
 - Use a sheet for bounded create/edit/upload tasks while the parent context matters. Use a dialog for a short decision or read-only preview. Use a page when the task needs sustained space or multiple sections. A destructive action uses an alert dialog naming the record and consequence.
 - Every field has a visible label; required and optional meaning is clear. Put help and validation beside the field. Keep entered data during a failed save, disable duplicate submit while pending, and show the result where the user can act on it. A toast can confirm a completed action.
-- Use native date inputs for calendar dates. Do not reinterpret a date-only value as an instant. Money/decimal fields should allow natural typing, normalize on commit, and show invalid expressions plainly. A commit may be a number or a simple `+ - * /` expression such as `10+20+30`; it is not arbitrary code. The app still decides allowed range and rounding. Show a short adornment such as `$` or `%` with `InputGroup` and `InputGroupText`. The adornment is presentation only and is not part of the value.
+- Pick a calendar date with the shadcn date picker input: type a date such as June 01, 2025, or open the calendar. Do not reinterpret a date-only value as an instant. Show money and percent with `InputGroup` and `InputGroupText` (`$`, `%`). The adornment is presentation only and is not stored in the value. A money field that allows arithmetic shows a trailing icon and accepts a number or a simple `+ - * /` expression such as `10+12+34.5`; on commit, show the total formatted as money. It is not arbitrary code. The app still decides allowed range and rounding.
 - Documents are opened from their owning record. Show file identity and available open, edit, and delete actions with the shared document action row when the file is already stored. Keep original files and domain relationships visible; use the existing shared file UI where it fits.
 
 ## States and status

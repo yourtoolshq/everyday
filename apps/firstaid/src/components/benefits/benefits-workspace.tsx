@@ -29,13 +29,8 @@ import {
   DialogTrigger,
 } from "@yourtoolshq/ui/dialog";
 import { Input } from "@yourtoolshq/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@yourtoolshq/ui/input-group";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -564,40 +559,28 @@ function BenefitDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="benefit-limit">Annual limit</Label>
-              <InputGroup>
-                <InputGroupInput
-                  id="benefit-limit"
-                  name="annualLimit"
-                  inputMode="decimal"
-                  defaultValue={
-                    benefit
-                      ? formatCents(benefit.annualLimitCents).replace("$", "")
-                      : ""
-                  }
-                  required
-                />
-                <InputGroupAddon>
-                  <InputGroupText>$</InputGroupText>
-                </InputGroupAddon>
-              </InputGroup>
+              <MoneyField
+                id="benefit-limit"
+                name="annualLimit"
+                defaultValue={
+                  benefit
+                    ? formatCents(benefit.annualLimitCents).replace("$", "")
+                    : ""
+                }
+                required
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="benefit-opening">Opening used</Label>
-              <InputGroup>
-                <InputGroupInput
-                  id="benefit-opening"
-                  name="openingUsed"
-                  inputMode="decimal"
-                  defaultValue={
-                    benefit && benefit.openingUsedCents > 0
-                      ? formatCents(benefit.openingUsedCents).replace("$", "")
-                      : "0"
-                  }
-                />
-                <InputGroupAddon>
-                  <InputGroupText>$</InputGroupText>
-                </InputGroupAddon>
-              </InputGroup>
+              <MoneyField
+                id="benefit-opening"
+                name="openingUsed"
+                defaultValue={
+                  benefit && benefit.openingUsedCents > 0
+                    ? formatCents(benefit.openingUsedCents).replace("$", "")
+                    : "0"
+                }
+              />
             </div>
           </div>
           <div className="space-y-2">

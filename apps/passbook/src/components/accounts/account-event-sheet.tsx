@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Input } from "@yourtoolshq/ui/input";
 import { Label } from "@yourtoolshq/ui/label";
 import {
@@ -247,25 +248,19 @@ export function AccountEventSheet({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="event-start-date">Start date</Label>
-                <Input
+                <DateField
                   id="event-start-date"
-                  type="date"
                   value={startDate}
-                  onChange={(inputEvent) =>
-                    setStartDate(inputEvent.target.value)
-                  }
+                  onChange={(value) => setStartDate(value)}
                   required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="event-resolved-date">Resolved date</Label>
-                <Input
+                <DateField
                   id="event-resolved-date"
-                  type="date"
                   value={resolvedDate}
-                  onChange={(inputEvent) =>
-                    setResolvedDate(inputEvent.target.value)
-                  }
+                  onChange={(value) => setResolvedDate(value)}
                 />
               </div>
             </div>
@@ -311,13 +306,10 @@ export function AccountEventSheet({
                       <Label htmlFor="event-terms-effective-date">
                         Terms effective date
                       </Label>
-                      <Input
+                      <DateField
                         id="event-terms-effective-date"
-                        type="date"
                         value={termsEffectiveDate}
-                        onChange={(inputEvent) =>
-                          setTermsEffectiveDate(inputEvent.target.value)
-                        }
+                        onChange={(value) => setTermsEffectiveDate(value)}
                         required
                       />
                     </div>

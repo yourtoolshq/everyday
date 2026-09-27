@@ -5,8 +5,9 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
-import { Input } from "@yourtoolshq/ui/input";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -171,12 +172,11 @@ export function AssessmentSheet({
           <div className="flex-1 space-y-6 px-4 py-6">
             <div className="space-y-2">
               <Label htmlFor="assessment-date">Assessment date</Label>
-              <Input
+              <DateField
                 id="assessment-date"
-                type="date"
                 value={assessmentDate}
                 required
-                onChange={(event) => setAssessmentDate(event.target.value)}
+                onChange={(value) => setAssessmentDate(value)}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -200,13 +200,12 @@ export function AssessmentSheet({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="assessment-result-amount">Amount</Label>
-                <Input
+                <MoneyField
                   id="assessment-result-amount"
-                  inputMode="decimal"
                   placeholder="0.00"
                   value={resultAmount}
                   disabled={resultDirection === "none"}
-                  onChange={(event) => setResultAmount(event.target.value)}
+                  onValueChange={setResultAmount}
                 />
               </div>
             </div>
@@ -214,11 +213,10 @@ export function AssessmentSheet({
               <Label htmlFor="assessment-payment-date">
                 Refund or payment date
               </Label>
-              <Input
+              <DateField
                 id="assessment-payment-date"
-                type="date"
                 value={refundOrPaymentDate}
-                onChange={(event) => setRefundOrPaymentDate(event.target.value)}
+                onChange={(value) => setRefundOrPaymentDate(value)}
               />
             </div>
             <div className="space-y-2">

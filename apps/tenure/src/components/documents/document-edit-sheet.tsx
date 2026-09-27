@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Input } from "@yourtoolshq/ui/input";
 import { Label } from "@yourtoolshq/ui/label";
 import {
@@ -134,11 +135,10 @@ export function DocumentEditSheet({
 
             <div className="space-y-2">
               <Label htmlFor="edit-document-date">Document date</Label>
-              <Input
+              <DateField
                 id="edit-document-date"
-                type="date"
                 value={documentDate}
-                onChange={(event) => setDocumentDate(event.target.value)}
+                onChange={(value) => setDocumentDate(value)}
               />
             </div>
 

@@ -27,7 +27,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "~/components/ui/sidebar";
+} from "@yourtoolshq/ui/sidebar";
 
 type FutureNavigationItem = {
   title: string;

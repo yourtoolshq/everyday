@@ -16,13 +16,8 @@ import {
   DialogTrigger,
 } from "@yourtoolshq/ui/dialog";
 import { Input } from "@yourtoolshq/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-  InputGroupText,
-} from "@yourtoolshq/ui/input-group";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -327,22 +322,16 @@ export function VisitDialog({
                     (optional)
                   </span>
                 </Label>
-                <InputGroup>
-                  <InputGroupInput
-                    id={`visit-cost-${visit?.id ?? "new"}`}
-                    name="cost"
-                    inputMode="decimal"
-                    placeholder="e.g. 110.00"
-                    defaultValue={
-                      visit?.costCents != null
-                        ? formatCents(visit.costCents).replace("$", "")
-                        : ""
-                    }
-                  />
-                  <InputGroupAddon>
-                    <InputGroupText>$</InputGroupText>
-                  </InputGroupAddon>
-                </InputGroup>
+                <MoneyField
+                  id={`visit-cost-${visit?.id ?? "new"}`}
+                  name="cost"
+                  placeholder="e.g. 110.00"
+                  defaultValue={
+                    visit?.costCents != null
+                      ? formatCents(visit.costCents).replace("$", "")
+                      : ""
+                  }
+                />
               </div>
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor={`visit-notes-${visit?.id ?? "new"}`}>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
 import { Input } from "@yourtoolshq/ui/input";
 import {
   InputGroup,
@@ -12,6 +13,7 @@ import {
   InputGroupText,
 } from "@yourtoolshq/ui/input-group";
 import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -334,20 +336,18 @@ export function EmploymentFormDrawer({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="employment-start-date">Start date</Label>
-              <Input
+              <DateField
                 id="employment-start-date"
-                type="date"
                 value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
+                onChange={(value) => setStartDate(value)}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="employment-end-date">End date</Label>
-              <Input
+              <DateField
                 id="employment-end-date"
-                type="date"
                 value={endDate}
-                onChange={(event) => setEndDate(event.target.value)}
+                onChange={(value) => setEndDate(value)}
               />
             </div>
           </div>
@@ -424,13 +424,10 @@ export function EmploymentFormDrawer({
                     <Label htmlFor="starting-compensation-effective-date">
                       Effective date
                     </Label>
-                    <Input
+                    <DateField
                       id="starting-compensation-effective-date"
-                      type="date"
                       value={compensationEffectiveDate}
-                      onChange={(event) =>
-                        setCompensationEffectiveDate(event.target.value)
-                      }
+                      onChange={(value) => setCompensationEffectiveDate(value)}
                       placeholder={
                         startDate ? `Defaults to ${startDate}` : undefined
                       }
@@ -463,19 +460,11 @@ export function EmploymentFormDrawer({
                           ? "Annual salary"
                           : "Hourly rate"}
                       </Label>
-                      <InputGroup>
-                        <InputGroupInput
-                          id="starting-compensation-amount"
-                          inputMode="decimal"
-                          value={compensationAmount}
-                          onChange={(event) =>
-                            setCompensationAmount(event.target.value)
-                          }
-                        />
-                        <InputGroupAddon>
-                          <InputGroupText>$</InputGroupText>
-                        </InputGroupAddon>
-                      </InputGroup>
+                      <MoneyField
+                        id="starting-compensation-amount"
+                        value={compensationAmount}
+                        onValueChange={setCompensationAmount}
+                      />
                     </div>
                   )}
                 </div>
