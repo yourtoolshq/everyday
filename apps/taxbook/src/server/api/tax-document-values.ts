@@ -1,6 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq } from "drizzle-orm";
 
+import type { FileTransaction } from "@yourtoolshq/data/files";
+
 import type { Database } from "./helpers";
 import type {
   TaxDocumentAttachmentAction,
@@ -9,6 +11,7 @@ import type {
   TaxDocumentUpdateInput,
 } from "~/domain/tax-document";
 import { buildTaxDocumentReadiness } from "~/domain/tax-document";
+import { dataPlatform } from "~/server/data";
 import {
   people,
   taxDocumentAttachments,
@@ -88,12 +91,18 @@ async function normalizePerson(
 
 async function insertAttachment(
   db: QueryDatabase,
+  files: FileTransaction,
   taxDocumentId: number,
   attachment: TaxDocumentAttachmentInput,
 ) {
-  await db
-    .insert(taxDocumentAttachments)
-    .values({ taxDocumentId, ...attachment });
+  const file = await files.claim(attachment.token);
+  await db.insert(taxDocumentAttachments).values({
+    taxDocumentId,
+    fileName: file.originalFilename,
+    mimeType: file.mimeType as TaxDocumentAttachmentInput["mimeType"],
+    sizeBytes: file.sizeBytes,
+    fileId: file.id,
+  });
 }
 
 export async function listActiveTaxDocuments(db: Database, taxItemId?: number) {
@@ -122,6 +131,7 @@ export async function listActiveTaxDocuments(db: Database, taxItemId?: number) {
       attachmentFileName: taxDocumentAttachments.fileName,
       attachmentMimeType: taxDocumentAttachments.mimeType,
       attachmentSizeBytes: taxDocumentAttachments.sizeBytes,
+      attachmentFileId: taxDocumentAttachments.fileId,
       createdAt: taxDocuments.createdAt,
       updatedAt: taxDocuments.updatedAt,
     })
@@ -147,7 +157,7 @@ export async function createTaxDocument(
   input: TaxDocumentInput,
   attachment: TaxDocumentAttachmentInput | null,
 ) {
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const { household, item } = await requireEditableActiveTaxItem(
       tx,
       input.taxItemId,
@@ -170,7 +180,7 @@ export async function createTaxDocument(
         notes: input.notes,
       })
       .returning();
-    if (attachment) await insertAttachment(tx, created!.id, attachment);
+    if (attachment) await insertAttachment(tx, files, created!.id, attachment);
     return created!;
   });
 }
@@ -223,7 +233,7 @@ export async function updateTaxDocument(
   input: TaxDocumentUpdateInput,
   attachmentAction: TaxDocumentAttachmentAction,
 ) {
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const { household, document, item } =
       await requireEditableActiveTaxDocument(tx, taxDocumentId);
     const personId = await normalizePerson(
@@ -242,23 +252,38 @@ export async function updateTaxDocument(
       .where(eq(taxDocuments.id, document.id))
       .returning();
     if (attachmentAction.type !== "keep") {
+      const [oldAttachment] = await tx
+        .select({ fileId: taxDocumentAttachments.fileId })
+        .from(taxDocumentAttachments)
+        .where(eq(taxDocumentAttachments.taxDocumentId, document.id));
+      if (oldAttachment) await files.remove(oldAttachment.fileId);
       await tx
         .delete(taxDocumentAttachments)
         .where(eq(taxDocumentAttachments.taxDocumentId, document.id));
     }
     if (attachmentAction.type === "replace") {
-      await insertAttachment(tx, document.id, attachmentAction.attachment);
+      await insertAttachment(
+        tx,
+        files,
+        document.id,
+        attachmentAction.attachment,
+      );
     }
     return updated!;
   });
 }
 
 export async function deleteTaxDocument(db: Database, taxDocumentId: number) {
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const { document } = await requireEditableActiveTaxDocument(
       tx,
       taxDocumentId,
     );
+    const [attachment] = await tx
+      .select({ fileId: taxDocumentAttachments.fileId })
+      .from(taxDocumentAttachments)
+      .where(eq(taxDocumentAttachments.taxDocumentId, document.id));
+    if (attachment) await files.remove(attachment.fileId);
     await tx.delete(taxDocuments).where(eq(taxDocuments.id, document.id));
     return { success: true };
   });

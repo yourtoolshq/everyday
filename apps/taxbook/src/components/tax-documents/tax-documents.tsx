@@ -294,7 +294,7 @@ export function TaxDocuments() {
                               <Button asChild variant="ghost" size="icon">
                                 <a
                                   aria-label={`Open ${document.attachmentFileName}`}
-                                  href={`/api/tax-documents/${document.id}/attachment`}
+                                  href={`/api/data/files/${encodeURIComponent(document.attachmentFileId!)}`}
                                   target="_blank"
                                   rel="noreferrer"
                                 >
@@ -304,7 +304,7 @@ export function TaxDocuments() {
                               <Button asChild variant="ghost" size="icon">
                                 <a
                                   aria-label={`Download ${document.attachmentFileName}`}
-                                  href={`/api/tax-documents/${document.id}/attachment?download=1`}
+                                  href={`/api/data/files/${encodeURIComponent(document.attachmentFileId!)}?download=1`}
                                 >
                                   <IconDownload />
                                 </a>

@@ -6,7 +6,7 @@ export default defineConfig({
     environment: "node",
     exclude: ["e2e/**", "node_modules/**"],
     env: {
-      DATABASE_URL: "file::memory:",
+      DATA_DIR: "./.data/test",
     },
     coverage: {
       provider: "v8",

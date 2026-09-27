@@ -11,6 +11,7 @@ const titles: Record<string, string> = {
   "/paycheques": "Paycheques",
   "/documents": "Tax Documents",
   "/settings": "Settings",
+  "/settings/data": "Data & backups",
 };
 
 export function SiteHeader() {

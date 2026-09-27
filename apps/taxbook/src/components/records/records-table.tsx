@@ -7,6 +7,8 @@ import {
   IconPlus,
 } from "@tabler/icons-react";
 
+import { FilePreview } from "@yourtoolshq/data-ui";
+
 import { Button } from "~/components/ui/button";
 import { Card, CardContent } from "~/components/ui/card";
 import {
@@ -93,14 +95,15 @@ export function RecordsTable({
                   <TableCell>
                     {record.attachmentFileName ? (
                       <div className="flex max-w-60 items-center gap-1">
-                        <a
+                        <FilePreview
+                          file={{
+                            id: record.attachmentFileId!,
+                            mimeType: record.attachmentMimeType!,
+                          }}
                           className="text-primary truncate text-sm hover:underline"
-                          href={`/api/records/${record.id}/attachment`}
-                          target="_blank"
-                          rel="noreferrer"
                         >
                           {record.attachmentFileName}
-                        </a>
+                        </FilePreview>
                         <span className="text-muted-foreground text-xs whitespace-nowrap">
                           {formatSize(record.attachmentSizeBytes!)}
                         </span>
@@ -130,17 +133,18 @@ export function RecordsTable({
                         {record.attachmentFileName ? (
                           <>
                             <DropdownMenuItem asChild>
-                              <a
-                                href={`/api/records/${record.id}/attachment`}
-                                target="_blank"
-                                rel="noreferrer"
+                              <FilePreview
+                                file={{
+                                  id: record.attachmentFileId!,
+                                  mimeType: record.attachmentMimeType!,
+                                }}
                               >
                                 <IconExternalLink /> Open attachment
-                              </a>
+                              </FilePreview>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <a
-                                href={`/api/records/${record.id}/attachment?download=1`}
+                                href={`/api/data/files/${encodeURIComponent(record.attachmentFileId!)}?download=1`}
                               >
                                 <IconDownload /> Download attachment
                               </a>

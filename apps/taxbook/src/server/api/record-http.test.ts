@@ -19,7 +19,7 @@ describe("Record multipart input", () => {
     const form = validForm();
     form.set(
       "attachment",
-      new File(["fictional"], "fictional-receipt.pdf", {
+      new File(["%PDF-1.4\nfictional"], "fictional-receipt.pdf", {
         type: "application/pdf",
       }),
     );
@@ -33,7 +33,7 @@ describe("Record multipart input", () => {
     expect(parsed.attachment).toMatchObject({
       fileName: "fictional-receipt.pdf",
       mimeType: "application/pdf",
-      sizeBytes: 9,
+      sizeBytes: 18,
     });
   });
 

@@ -1,4 +1,3 @@
-import type { Buffer } from "node:buffer";
 import { z } from "zod";
 
 export const filingKinds = ["original_return", "adjustment"] as const;
@@ -64,7 +63,7 @@ export const allowedFilingAttachmentTypes = [
   "image/heif",
 ] as const;
 
-export const MAX_FILING_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+export const MAX_FILING_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
 const isoDate = z
   .string()
@@ -171,10 +170,10 @@ export type AdjustmentUpdateInput = z.infer<typeof adjustmentUpdateInput>;
 export type AssessmentInput = z.infer<typeof assessmentInput>;
 
 export type FilingAttachmentInput = {
+  token: string;
   fileName: string;
   mimeType: (typeof allowedFilingAttachmentTypes)[number];
   sizeBytes: number;
-  data: Buffer;
 };
 
 export type FilingAttachmentAction =

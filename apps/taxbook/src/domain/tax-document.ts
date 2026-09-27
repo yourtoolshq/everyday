@@ -1,4 +1,3 @@
-import type { Buffer } from "node:buffer";
 import { z } from "zod";
 
 export const taxDocumentTypes = [
@@ -42,7 +41,7 @@ export const allowedTaxDocumentAttachmentTypes = [
   "image/heif",
 ] as const;
 
-export const MAX_TAX_DOCUMENT_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+export const MAX_TAX_DOCUMENT_ATTACHMENT_BYTES = 25 * 1024 * 1024;
 
 const commonInput = z
   .object({
@@ -83,10 +82,10 @@ export type TaxDocumentInput = z.infer<typeof taxDocumentInput>;
 export type TaxDocumentUpdateInput = z.infer<typeof taxDocumentUpdateInput>;
 
 export type TaxDocumentAttachmentInput = {
+  token: string;
   fileName: string;
   mimeType: (typeof allowedTaxDocumentAttachmentTypes)[number];
   sizeBytes: number;
-  data: Buffer;
 };
 
 export type TaxDocumentAttachmentAction =

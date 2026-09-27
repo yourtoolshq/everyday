@@ -1,4 +1,3 @@
-import { Buffer } from "node:buffer";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -12,10 +11,10 @@ import {
   allowedFilingAttachmentTypes,
   assessmentInput,
   filingItemValuesInput,
-  MAX_FILING_ATTACHMENT_BYTES,
   originalReturnInput,
   originalReturnUpdateInput,
 } from "~/domain/filing";
+import { stageAttachment } from "~/server/api/upload";
 
 function textValue(form: FormData, name: string) {
   const value = form.get(name);
@@ -33,33 +32,7 @@ function positiveInteger(form: FormData, name: string) {
 }
 
 async function attachmentFromForm(form: FormData) {
-  const entry = form.get("attachment");
-  if (!(entry instanceof File) || entry.size === 0) return null;
-  if (entry.size > MAX_FILING_ATTACHMENT_BYTES) {
-    throw new TRPCError({
-      code: "PAYLOAD_TOO_LARGE",
-      message: "Attachment must be 20 MB or smaller.",
-    });
-  }
-  if (!allowedFilingAttachmentTypes.includes(entry.type as never)) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Use a PDF, JPEG, PNG, HEIC, or HEIF attachment.",
-    });
-  }
-  const fileName = entry.name.split(/[\\/]/).pop()?.trim() || "attachment";
-  if (fileName.length > 255) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Attachment filename must be 255 characters or fewer.",
-    });
-  }
-  return {
-    fileName,
-    mimeType: entry.type as FilingAttachmentInput["mimeType"],
-    sizeBytes: entry.size,
-    data: Buffer.from(await entry.arrayBuffer()),
-  } satisfies FilingAttachmentInput;
+  return stageAttachment(form);
 }
 
 function nullableSignedResultCents(form: FormData, name: string) {

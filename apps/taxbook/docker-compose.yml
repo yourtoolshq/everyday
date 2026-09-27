@@ -3,21 +3,21 @@ services:
     build:
       context: ../..
       dockerfile: apps/taxbook/Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-}
     environment:
-      DATABASE_URL: file:/data/taxbook.db
+      DATA_DIR: /data
+      BACKUP_DIR: /backups
       NODE_ENV: production
-    ports:
-      - "127.0.0.1:${TAXBOOK_PORT:-3000}:3000"
     restart: unless-stopped
     volumes:
       - taxbook-data:/data
-    extra_hosts:
-      - "tenure.tools.local:host-gateway"
+      - ${TAXBOOK_BACKUP_DIR:-taxbook-backups}:/backups
     networks:
-      - default
       - web
     labels:
       - traefik.enable=true
+      - traefik.docker.network=web
       - traefik.http.routers.taxbook.rule=Host(`taxbook.tools.local`)
       - traefik.http.routers.taxbook.entrypoints=web
       - traefik.http.routers.taxbook-secure.rule=Host(`taxbook.tools.local`)
@@ -32,3 +32,5 @@ networks:
 volumes:
   taxbook-data:
     name: taxbook-data
+  taxbook-backups:
+    name: taxbook-backups

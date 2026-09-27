@@ -32,11 +32,11 @@ import { Textarea } from "~/components/ui/textarea";
 import {
   filingStatuses,
   filingStatusLabels,
-  MAX_FILING_ATTACHMENT_BYTES,
   returnCopyStatuses,
   returnCopyStatusLabels,
 } from "~/domain/filing";
 import { formatCad, signedDollarsToCents } from "~/domain/money";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type Person = RouterOutputs["settings"]["get"]["people"][number];
@@ -142,7 +142,7 @@ export function OriginalReturnSheet({
   const [selectedHouseholdIds, setSelectedHouseholdIds] = useState<number[]>(
     [],
   );
-  const [file, setFile] = useState<File | null>(null);
+  const fileUpload = useUpload("document");
   const [markUnavailable, setMarkUnavailable] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -193,8 +193,10 @@ export function OriginalReturnSheet({
       toast.error("Choose a household member.");
       return;
     }
-    if (file && file.size > MAX_FILING_ATTACHMENT_BYTES) {
-      toast.error("Attachment must be 20 MB or smaller.");
+    if (fileUpload.status === "uploading" || fileUpload.status === "failed") {
+      toast.error(
+        fileUpload.error ?? "Wait for the attachment upload to finish.",
+      );
       return;
     }
     if (resultDirection !== "none" && resultAmount.trim() === "") {
@@ -212,7 +214,7 @@ export function OriginalReturnSheet({
     }
     if (
       (status === "submitted" || status === "assessed") &&
-      !file &&
+      !fileUpload.file &&
       returnCopyStatus === "not_added_yet"
     ) {
       toast.error(
@@ -248,17 +250,20 @@ export function OriginalReturnSheet({
       "expectedResultCents",
       expectedResultCents === null ? "" : String(expectedResultCents),
     );
-    form.set("returnCopyStatus", file ? "attached" : returnCopyStatus);
+    form.set(
+      "returnCopyStatus",
+      fileUpload.file ? "attached" : returnCopyStatus,
+    );
     form.set("notes", notes);
     form.set("itemValues", JSON.stringify(serialized));
     if (filing) {
       form.set("status", status);
       form.set(
         "attachmentAction",
-        file ? "replace" : markUnavailable ? "unavailable" : "keep",
+        fileUpload.file ? "replace" : markUnavailable ? "unavailable" : "keep",
       );
     }
-    if (file) form.set("attachment", file);
+    if (fileUpload.file) form.set("attachment", fileUpload.file.token);
 
     setPending(true);
     try {
@@ -473,7 +478,7 @@ export function OriginalReturnSheet({
                 />
               </div>
             </div>
-            {!file && !filing?.attachmentFileName ? (
+            {!fileUpload.file && !filing?.attachmentFileName ? (
               <div className="space-y-2">
                 <Label htmlFor="filing-copy-status">Submitted T1</Label>
                 <Select
@@ -517,11 +522,10 @@ export function OriginalReturnSheet({
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="filing-attachment">T1 attachment</Label>
-              <Input
+              <FileDropzone
                 id="filing-attachment"
-                type="file"
+                upload={fileUpload}
                 accept=".pdf,image/jpeg,image/png,image/heic,image/heif"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               />
               {filing?.attachmentFileName ? (
                 <div className="text-muted-foreground flex items-center gap-2 text-sm">

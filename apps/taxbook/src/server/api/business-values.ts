@@ -1,12 +1,15 @@
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq } from "drizzle-orm";
 
+import type { FileTransaction } from "@yourtoolshq/data/files";
+
 import type { Database } from "./helpers";
 import type { AttachmentAction, AttachmentInput } from "~/domain/record";
 import type {
   BusinessRecordInput,
   BusinessRecordUpdateInput,
 } from "~/domain/self-employment";
+import { dataPlatform } from "~/server/data";
 import {
   businessActivities,
   businessRecordAttachments,
@@ -158,6 +161,7 @@ export async function listBusinessRecords(
       attachmentFileName: businessRecordAttachments.fileName,
       attachmentMimeType: businessRecordAttachments.mimeType,
       attachmentSizeBytes: businessRecordAttachments.sizeBytes,
+      attachmentFileId: businessRecordAttachments.fileId,
       createdAt: businessRecords.createdAt,
       updatedAt: businessRecords.updatedAt,
     })
@@ -183,7 +187,7 @@ export async function createBusinessRecord(
   input: BusinessRecordInput,
   attachment: AttachmentInput | null,
 ) {
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const { year } = await requireEditableActiveBusiness(
       tx,
       input.businessActivityId,
@@ -193,10 +197,16 @@ export async function createBusinessRecord(
       .insert(businessRecords)
       .values(input)
       .returning();
-    if (attachment)
-      await tx
-        .insert(businessRecordAttachments)
-        .values({ businessRecordId: created!.id, ...attachment });
+    if (attachment) {
+      const file = await files.claim(attachment.token);
+      await tx.insert(businessRecordAttachments).values({
+        businessRecordId: created!.id,
+        fileName: file.originalFilename,
+        mimeType: file.mimeType,
+        sizeBytes: file.sizeBytes,
+        fileId: file.id,
+      });
+    }
     await syncBusinessTaxItem(tx, input.businessActivityId);
     return created!;
   });
@@ -253,7 +263,7 @@ export async function updateBusinessRecord(
   input: BusinessRecordUpdateInput,
   attachmentAction: AttachmentAction,
 ) {
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const { year, record } = await requireEditableActiveBusinessRecord(tx, id);
     validateYear(input.date, year.year);
     const [updated] = await tx
@@ -261,21 +271,38 @@ export async function updateBusinessRecord(
       .set(input)
       .where(eq(businessRecords.id, id))
       .returning();
-    if (attachmentAction.type !== "keep")
+    if (attachmentAction.type !== "keep") {
+      const [oldAttachment] = await tx
+        .select({ fileId: businessRecordAttachments.fileId })
+        .from(businessRecordAttachments)
+        .where(eq(businessRecordAttachments.businessRecordId, id));
+      if (oldAttachment) await files.remove(oldAttachment.fileId);
       await tx
         .delete(businessRecordAttachments)
         .where(eq(businessRecordAttachments.businessRecordId, id));
-    if (attachmentAction.type === "replace")
-      await tx
-        .insert(businessRecordAttachments)
-        .values({ businessRecordId: id, ...attachmentAction.attachment });
+    }
+    if (attachmentAction.type === "replace") {
+      const file = await files.claim(attachmentAction.attachment.token);
+      await tx.insert(businessRecordAttachments).values({
+        businessRecordId: id,
+        fileName: file.originalFilename,
+        mimeType: file.mimeType,
+        sizeBytes: file.sizeBytes,
+        fileId: file.id,
+      });
+    }
     await syncBusinessTaxItem(tx, record.businessActivityId);
     return updated!;
   });
 }
 export async function deleteBusinessRecord(db: Database, id: number) {
-  return db.transaction(async (tx) => {
+  return dataPlatform.files.withFiles(db, async (tx, files) => {
     const { record } = await requireEditableActiveBusinessRecord(tx, id);
+    const [attachment] = await tx
+      .select({ fileId: businessRecordAttachments.fileId })
+      .from(businessRecordAttachments)
+      .where(eq(businessRecordAttachments.businessRecordId, id));
+    if (attachment) await files.remove(attachment.fileId);
     await tx.delete(businessRecords).where(eq(businessRecords.id, id));
     await syncBusinessTaxItem(tx, record.businessActivityId);
     return { success: true };

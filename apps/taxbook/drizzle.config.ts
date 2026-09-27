@@ -6,6 +6,6 @@ export default {
   schema: "./src/server/db/schema/index.ts",
   dialect: "sqlite",
   dbCredentials: {
-    url: env.DATABASE_URL,
+    url: `file:${env.DATA_DIR}/taxbook.db`,
   },
 } satisfies Config;

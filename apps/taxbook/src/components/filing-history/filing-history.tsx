@@ -166,7 +166,7 @@ function TimelineEntryCard({
             <>
               <Button asChild size="sm" variant="outline">
                 <a
-                  href={`/api/filings/${filing.id}/attachment`}
+                  href={`/api/data/files/${encodeURIComponent(filing.attachmentFileId!)}`}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -174,7 +174,9 @@ function TimelineEntryCard({
                 </a>
               </Button>
               <Button asChild size="sm" variant="outline">
-                <a href={`/api/filings/${filing.id}/attachment?download=1`}>
+                <a
+                  href={`/api/data/files/${encodeURIComponent(filing.attachmentFileId!)}?download=1`}
+                >
                   Download <IconDownload />
                 </a>
               </Button>
@@ -228,7 +230,7 @@ function TimelineEntryCard({
                 <>
                   <Button asChild size="sm" variant="outline">
                     <a
-                      href={`/api/assessments/${filing.assessmentId}/attachment`}
+                      href={`/api/data/files/${encodeURIComponent(filing.assessmentAttachmentFileId!)}`}
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -237,7 +239,7 @@ function TimelineEntryCard({
                   </Button>
                   <Button asChild size="sm" variant="outline">
                     <a
-                      href={`/api/assessments/${filing.assessmentId}/attachment?download=1`}
+                      href={`/api/data/files/${encodeURIComponent(filing.assessmentAttachmentFileId!)}?download=1`}
                     >
                       Download <IconDownload />
                     </a>

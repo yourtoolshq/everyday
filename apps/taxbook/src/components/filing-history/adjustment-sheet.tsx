@@ -28,11 +28,11 @@ import { Textarea } from "~/components/ui/textarea";
 import {
   filingStatuses,
   filingStatusLabels,
-  MAX_FILING_ATTACHMENT_BYTES,
   returnCopyStatuses,
   returnCopyStatusLabels,
 } from "~/domain/filing";
 import { signedDollarsToCents } from "~/domain/money";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type Person = RouterOutputs["settings"]["get"]["people"][number];
@@ -97,7 +97,7 @@ export function AdjustmentSheet({
   const [selectedTaxItemIds, setSelectedTaxItemIds] = useState<number[]>(
     filing?.affectedTaxItems.map((item) => item.id) ?? [],
   );
-  const [file, setFile] = useState<File | null>(null);
+  const fileUpload = useUpload("document");
   const [markUnavailable, setMarkUnavailable] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -119,8 +119,10 @@ export function AdjustmentSheet({
       toast.error("Enter a reason for the adjustment.");
       return;
     }
-    if (file && file.size > MAX_FILING_ATTACHMENT_BYTES) {
-      toast.error("Attachment must be 20 MB or smaller.");
+    if (fileUpload.status === "uploading" || fileUpload.status === "failed") {
+      toast.error(
+        fileUpload.error ?? "Wait for the attachment upload to finish.",
+      );
       return;
     }
     if (changeDirection !== "none" && changeAmount.trim() === "") {
@@ -136,7 +138,7 @@ export function AdjustmentSheet({
     }
     if (
       (status === "submitted" || status === "assessed") &&
-      !file &&
+      !fileUpload.file &&
       returnCopyStatus === "not_added_yet"
     ) {
       toast.error(
@@ -161,7 +163,10 @@ export function AdjustmentSheet({
       "expectedChangeCents",
       expectedChangeCents === null ? "" : String(expectedChangeCents),
     );
-    form.set("returnCopyStatus", file ? "attached" : returnCopyStatus);
+    form.set(
+      "returnCopyStatus",
+      fileUpload.file ? "attached" : returnCopyStatus,
+    );
     form.set("notes", notes);
     for (const taxItemId of selectedTaxItemIds) {
       form.append("affectedTaxItemIds", String(taxItemId));
@@ -170,10 +175,10 @@ export function AdjustmentSheet({
       form.set("status", status);
       form.set(
         "attachmentAction",
-        file ? "replace" : markUnavailable ? "unavailable" : "keep",
+        fileUpload.file ? "replace" : markUnavailable ? "unavailable" : "keep",
       );
     }
-    if (file) form.set("attachment", file);
+    if (fileUpload.file) form.set("attachment", fileUpload.file.token);
 
     setPending(true);
     try {
@@ -317,7 +322,7 @@ export function AdjustmentSheet({
                 </div>
               )}
             </div>
-            {!file && !filing?.attachmentFileName ? (
+            {!fileUpload.file && !filing?.attachmentFileName ? (
               <div className="space-y-2">
                 <Label htmlFor="adjustment-copy-status">
                   Submitted adjustment
@@ -365,11 +370,10 @@ export function AdjustmentSheet({
               <Label htmlFor="adjustment-attachment">
                 Adjustment attachment
               </Label>
-              <Input
+              <FileDropzone
                 id="adjustment-attachment"
-                type="file"
+                upload={fileUpload}
                 accept=".pdf,image/jpeg,image/png,image/heic,image/heif"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
               />
               {filing?.attachmentFileName ? (
                 <div className="text-muted-foreground flex items-center gap-2 text-sm">

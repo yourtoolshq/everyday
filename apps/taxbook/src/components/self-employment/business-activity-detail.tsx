@@ -202,7 +202,7 @@ export function BusinessActivityDetail({ id }: { id: number }) {
                       {record.attachmentFileName ? (
                         <a
                           className="text-primary hover:underline"
-                          href={`/api/business-records/${record.id}/attachment`}
+                          href={`/api/data/files/${encodeURIComponent(record.attachmentFileId!)}`}
                           target="_blank"
                           rel="noreferrer"
                         >

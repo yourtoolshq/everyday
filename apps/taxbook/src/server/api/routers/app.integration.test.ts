@@ -1,11 +1,15 @@
 import { Buffer } from "node:buffer";
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Client } from "@libsql/client";
 import { createClient } from "@libsql/client";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/libsql";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+import { detectFileType } from "@yourtoolshq/data/files";
 
 import type { Database } from "~/server/api/helpers";
 import {
@@ -40,7 +44,9 @@ import {
   getActiveTaxDocumentAttachment,
   updateTaxDocument,
 } from "~/server/api/tax-document-values";
+import { dataPlatform } from "~/server/data";
 import * as schema from "~/server/db/schema";
+import { filesTable } from "~/server/db/schema";
 
 const migrationsDirectory = new URL("../../../../drizzle/", import.meta.url);
 const migration = readdirSync(migrationsDirectory)
@@ -50,6 +56,34 @@ const migration = readdirSync(migrationsDirectory)
   .join("\n")
   .replaceAll("--> statement-breakpoint", "");
 
+async function stagedAttachment(fileName: string) {
+  const bytes = fileName.endsWith(".png")
+    ? new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+    : new TextEncoder().encode("%PDF-1.4\nfictional fixture\n");
+  const type = detectFileType(bytes)!;
+  const staged = await dataPlatform.files.stage({
+    endpoint: "document",
+    originalFilename: fileName,
+    bytes,
+    type,
+  });
+  return {
+    token: staged.token,
+    fileName: staged.name,
+    mimeType: staged.mimeType as "application/pdf" | "image/png",
+    sizeBytes: staged.size,
+  };
+}
+
+async function readStoredFile(db: Database, fileId: string) {
+  const [file] = await db
+    .select()
+    .from(filesTable)
+    .where(eq(filesTable.id, fileId));
+  if (!file) return null;
+  return readFile(join(process.cwd(), ".data/test/documents", file.storageKey));
+}
+
 describe("Tax Book API", () => {
   let client: Client;
   let caller: ReturnType<typeof createCaller>;
@@ -57,13 +91,20 @@ describe("Tax Book API", () => {
   let testDirectory: string;
 
   beforeEach(async () => {
+    await dataPlatform.boot();
+    await dataPlatform.settled();
     testDirectory = mkdtempSync(join(tmpdir(), "taxbook-test-"));
     client = createClient({ url: `file:${join(testDirectory, "test.db")}` });
     // Throwaway database: skipping fsyncs keeps libsql's synchronous calls from stalling the worker on slow CI disks.
     await client.execute("PRAGMA synchronous = OFF");
     await client.executeMultiple(migration);
-    database = drizzle(client, { schema });
-    caller = createCaller({ db: database, headers: new Headers() });
+    database = drizzle(client, { schema }) as unknown as Database;
+    caller = createCaller({
+      db: database as typeof dataPlatform.db,
+      files: dataPlatform.files,
+      checkDatabaseConnection: async () => undefined,
+      headers: new Headers(),
+    });
   });
 
   afterEach(() => {
@@ -607,12 +648,7 @@ describe("Tax Book API", () => {
         notes: "Fictional supporting note",
         confirmReplaceActual: true,
       },
-      {
-        fileName: "fictional-receipt.pdf",
-        mimeType: "application/pdf",
-        sizeBytes: 8,
-        data: Buffer.from("example"),
-      },
+      await stagedAttachment("fictional-receipt.pdf"),
     );
     const second = await createRecord(
       database,
@@ -646,8 +682,13 @@ describe("Tax Book API", () => {
       },
     );
     expect(
-      (await getActiveAttachment(database, first.id)).data.toString(),
-    ).toBe("example");
+      (
+        await readStoredFile(
+          database,
+          (await getActiveAttachment(database, first.id)).fileId,
+        )
+      )?.toString(),
+    ).toContain("%PDF-1.4");
     await expect(
       caller.settings.deletePerson({ id: personA!.id }),
     ).rejects.toMatchObject({ code: "CONFLICT" });
@@ -664,12 +705,7 @@ describe("Tax Book API", () => {
       },
       {
         type: "replace",
-        attachment: {
-          fileName: "replacement.png",
-          mimeType: "image/png",
-          sizeBytes: 11,
-          data: Buffer.from("replacement"),
-        },
+        attachment: await stagedAttachment("replacement.png"),
       },
     );
     detail = await caller.taxItem.get({ id: item!.id });
@@ -715,10 +751,7 @@ describe("Tax Book API", () => {
         confirmReplaceActual: false,
       },
       {
-        fileName: "cascade.pdf",
-        mimeType: "application/pdf",
-        sizeBytes: 7,
-        data: Buffer.from("cascade"),
+        ...(await stagedAttachment("cascade.pdf")),
       },
     );
     await caller.taxItem.delete({ id: item!.id });
@@ -848,10 +881,7 @@ describe("Tax Book API", () => {
         notes: "Fictional document note",
       },
       {
-        fileName: "fictional-slip.pdf",
-        mimeType: "application/pdf",
-        sizeBytes: 8,
-        data: Buffer.from("example"),
+        ...(await stagedAttachment("fictional-slip.pdf")),
       },
     );
 
@@ -878,9 +908,12 @@ describe("Tax Book API", () => {
     });
     expect(
       (
-        await getActiveTaxDocumentAttachment(database, received.id)
-      ).data.toString(),
-    ).toBe("example");
+        await readStoredFile(
+          database,
+          (await getActiveTaxDocumentAttachment(database, received.id)).fileId,
+        )
+      )?.toString(),
+    ).toContain("%PDF-1.4");
 
     await updateTaxDocument(
       database,
@@ -896,10 +929,7 @@ describe("Tax Book API", () => {
       {
         type: "replace",
         attachment: {
-          fileName: "fictional-t4.png",
-          mimeType: "image/png",
-          sizeBytes: 11,
-          data: Buffer.from("replacement"),
+          ...(await stagedAttachment("fictional-t4.png")),
         },
       },
     );
@@ -1168,10 +1198,7 @@ describe("Tax Book API", () => {
         notes: null,
       },
       {
-        fileName: "fictional-expense.pdf",
-        mimeType: "application/pdf",
-        sizeBytes: 7,
-        data: Buffer.from("example"),
+        ...(await stagedAttachment("fictional-expense.pdf")),
       },
     );
     await createBusinessRecord(
@@ -1199,8 +1226,13 @@ describe("Tax Book API", () => {
       taxTreatment: "self_employment_income",
     });
     expect(
-      (await getBusinessRecordAttachment(database, expense.id)).data.toString(),
-    ).toBe("example");
+      (
+        await readStoredFile(
+          database,
+          (await getBusinessRecordAttachment(database, expense.id)).fileId,
+        )
+      )?.toString(),
+    ).toContain("%PDF-1.4");
     await expect(
       caller.taxItem.update({
         id: webItem.id,
@@ -1299,10 +1331,7 @@ describe("Tax Book API", () => {
         notes: null,
       },
       {
-        fileName: "fictional-noa.pdf",
-        mimeType: "application/pdf",
-        sizeBytes: 7,
-        data: Buffer.from("example"),
+        ...(await stagedAttachment("fictional-noa.pdf")),
       },
     );
 
@@ -1547,10 +1576,7 @@ describe("Tax Book API", () => {
         notes: null,
       },
       {
-        fileName: "fictional-gst.pdf",
-        mimeType: "application/pdf",
-        sizeBytes: 8,
-        data: Buffer.from("example"),
+        ...(await stagedAttachment("fictional-gst.pdf")),
       },
     );
 

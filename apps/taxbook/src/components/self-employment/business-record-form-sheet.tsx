@@ -25,11 +25,11 @@ import {
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
 import { centsToDollars, dollarsToCents } from "~/domain/money";
-import { MAX_ATTACHMENT_BYTES } from "~/domain/record";
 import {
   businessExpenseCategories,
   businessExpenseCategoryDetails,
 } from "~/domain/self-employment";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type RecordItem = RouterOutputs["business"]["records"]["items"][number];
@@ -55,7 +55,7 @@ export function BusinessRecordFormSheet({
     centsToDollars(record?.amountCents ?? null),
   );
   const [notes, setNotes] = useState(record?.notes ?? "");
-  const [file, setFile] = useState<File | null>(null);
+  const fileUpload = useUpload("document");
   const [removeAttachment, setRemoveAttachment] = useState(false);
   const [pending, setPending] = useState(false);
   async function submit(event: FormEvent) {
@@ -63,8 +63,10 @@ export function BusinessRecordFormSheet({
     const amountCents = dollarsToCents(amount);
     if (amountCents === null || amountCents <= 0)
       return toast.error("Amount must be greater than zero.");
-    if (file && file.size > MAX_ATTACHMENT_BYTES)
-      return toast.error("Attachment must be 20 MB or smaller.");
+    if (fileUpload.status === "uploading" || fileUpload.status === "failed")
+      return toast.error(
+        fileUpload.error ?? "Wait for the attachment upload to finish.",
+      );
     const form = new FormData();
     form.set("businessActivityId", String(activityId));
     form.set("kind", kind);
@@ -73,11 +75,11 @@ export function BusinessRecordFormSheet({
     form.set("description", description);
     form.set("amountCents", String(amountCents));
     form.set("notes", notes);
-    if (file) form.set("attachment", file);
+    if (fileUpload.file) form.set("attachment", fileUpload.file.token);
     if (record)
       form.set(
         "attachmentAction",
-        file ? "replace" : removeAttachment ? "remove" : "keep",
+        fileUpload.file ? "replace" : removeAttachment ? "remove" : "keep",
       );
     setPending(true);
     try {
@@ -212,21 +214,17 @@ export function BusinessRecordFormSheet({
                     variant="ghost"
                     onClick={() => {
                       setRemoveAttachment(true);
-                      setFile(null);
+                      fileUpload.reset();
                     }}
                   >
                     Remove
                   </Button>
                 </div>
               ) : null}
-              <Input
+              <FileDropzone
                 id="business-attachment"
-                type="file"
+                upload={fileUpload}
                 accept="application/pdf,image/jpeg,image/png,image/heic,image/heif,.heic,.heif"
-                onChange={(event) => {
-                  setFile(event.target.files?.[0] ?? null);
-                  setRemoveAttachment(false);
-                }}
               />
             </div>
           </div>

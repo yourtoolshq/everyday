@@ -19,3 +19,4 @@ export { filingItemValues } from "./filing-item-values";
 export { filingAttachments, filings } from "./filings";
 export { taxDocumentAttachments, taxDocuments } from "./tax-documents";
 export { taxYears } from "./tax-years";
+export { filesTable, platformMetaTable } from "@yourtoolshq/data/schema";

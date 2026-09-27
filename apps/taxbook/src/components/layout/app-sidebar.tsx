@@ -11,8 +11,8 @@ import {
   IconLayoutDashboard,
   IconListDetails,
   IconReceiptDollar,
-  IconSettings,
 } from "@tabler/icons-react";
+import { DatabaseBackup } from "lucide-react";
 
 import {
   Sidebar,
@@ -37,7 +37,6 @@ const navigation = [
   { title: "Tax Estimate", href: "/estimate", icon: IconCalculator },
   { title: "Tax Documents", href: "/documents", icon: IconFileDescription },
   { title: "Tax Filing", href: "/filing", icon: IconFileCheck },
-  { title: "Settings", href: "/settings", icon: IconSettings },
 ];
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
@@ -85,6 +84,25 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Settings</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/settings/data"}
+                  tooltip="Data & backups"
+                >
+                  <Link href="/settings/data">
+                    <DatabaseBackup aria-hidden="true" />
+                    <span>Data &amp; backups</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

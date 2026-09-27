@@ -1,6 +1,5 @@
 import { sql } from "drizzle-orm";
 import {
-  blob,
   check,
   index,
   integer,
@@ -8,6 +7,8 @@ import {
   text,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+
+import { filesTable } from "@yourtoolshq/data/schema";
 
 import {
   businessExpenseCategories,
@@ -78,7 +79,9 @@ export const businessRecordAttachments = sqliteTable(
     fileName: text("file_name").notNull(),
     mimeType: text("mime_type").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
-    data: blob("data", { mode: "buffer" }).notNull(),
+    fileId: text("file_id")
+      .notNull()
+      .references(() => filesTable.id, { onDelete: "cascade" }),
     ...timestamps,
   },
   (table) => [

@@ -2,73 +2,48 @@
 
 ## Local development
 
-Tax Book uses pnpm and Node.js 22 or newer.
+Tax Book uses pnpm and Node.js 22 or newer. The platform stores local data under `.data` by default:
 
-    cp .env.example .env
-    mkdir -p .data
-    pnpm install
-    pnpm dev
+```sh
+cp .env.example .env
+command pnpm install
+command pnpm dev
+```
 
-Open <http://localhost:3000>.
+Open <http://localhost:3000>. The development server keeps port 3000 and reads `DATA_DIR=./.data`; database migrations run during platform boot. Set `DATA_DIR` to another isolated directory when you need a separate local dataset. Tests use `.data/test`, and Playwright uses `.data/e2e`. Neither development nor tests mount production volumes.
 
-The development command applies committed database migrations before starting
-Next.js. This keeps an existing local database aligned with the checked-out
-application version.
+Set `BACKUP_DIR` only when local backups should live outside `DATA_DIR`. When omitted, backups are stored under `DATA_DIR/backups`.
 
-## Main is releasable
+## Data and backups
 
-The **main** branch is always expected to build and run as the current
-production version. Make changes on short-lived branches, open a pull request,
-and squash-merge only after CI passes. Do not use main as an integration branch
-for incomplete work.
+Tax Book's database is `<DATA_DIR>/taxbook.db`; uploaded PDFs and images are under `<DATA_DIR>/documents/`. The app takes verified scheduled backups daily at 02:00 and retains 7 daily, 4 weekly, and 12 monthly backups.
 
-Version tags and published container images are intentionally deferred.
+Use the app's **Data & backups** page for backup, restore, and integrity operations. From the app directory, the CLI can list and create backups, and verify or restore one:
 
-## Database changes
+```sh
+command pnpm data list
+command pnpm data backup
+command pnpm data verify <backup-id>
+command pnpm data restore <backup-id>
+```
 
-Change the appropriate file under `src/server/db/schema`, then generate and
-review a committed migration:
-
-    pnpm db:generate
-    pnpm db:migrate
-
-Never use `db:push` against the production database. Production starts by
-applying committed migrations and refuses to start if migration fails.
-
-Tests, screenshots, documentation, and examples must use fictional data only.
+A successful backup reports `Created backup <id>: verified`. In Docker, use `docker compose exec app yt-data <command>`.
 
 ## Self-hosting with Docker
 
-```sh
-docker compose up --build -d
-```
-
-The service binds to `127.0.0.1:3000` by default and stores its SQLite file in
-the `taxbook-data` Docker volume.
-
-Set `TAXBOOK_PORT` when port 3000 is already in use:
+Production Compose has no published host port. It listens on port 3000 inside the external `web` network and Traefik serves <https://taxbook.tools.local>. Compose mounts the named `taxbook-data` volume at `/data` and the separate `taxbook-backups` volume at `/backups`. Set `TAXBOOK_BACKUP_DIR` in the app's `.env` only when a host backup directory should replace the named backup volume.
 
 ```sh
-TAXBOOK_PORT=3200 docker compose up --build -d
+docker compose build
+docker compose up -d
 ```
 
-## Traefik
+The Compose file expects an existing external Docker network named `web`. The app sets `traefik.docker.network=web` and does not publish `3000` to the host.
 
-Tax Book joins the external `web` Docker network and registers with Traefik at
-`taxbook.tools.local`.
+Production and local development can run on the same computer because production uses the named volumes while `pnpm dev` uses `.data`. Do not set local `DATA_DIR` or test configuration to `/data`, `taxbook-data`, or a production volume.
 
-Add hosts entries if needed (`/etc/hosts` does not support wildcards):
+## Host upgrades and cutover
 
-```sh
-echo "127.0.0.1 taxbook.tools.local tenure.tools.local passbook.tools.local tools.local" | sudo tee -a /etc/hosts
-```
+The host manager checks out the reviewed commit and builds its candidate image before asking the running app for a verified backup. It leaves the current container in place if either the build or backup fails. The host manager pins the deployed commit; a routine host rebuild does not advance production automatically.
 
-Then open https://taxbook.tools.local. Traefik serves a locally-trusted mkcert
-wildcard certificate for `*.tools.local` (configured in dotfiles).
-
-When Tenure is also running behind Traefik, set the Tenure base URL in Settings
-to `https://tenure.tools.local`. The Docker Compose file maps that hostname to
-the host gateway so server-side sync works from inside the container.
-
-If your household was created before this hostname convention, update the Tenure
-URL once in Settings.
+Machine-specific service files and secrets stay outside this repository. Follow the complete [Taxbook Phase 4 host cutover checklist](../../../docs/phase-4/taxbook-cutover.md) when moving the existing Taxbook data volume to this Compose configuration. That procedure runs only on the computer that owns the production data, after the adoption change is merged and reviewed.
