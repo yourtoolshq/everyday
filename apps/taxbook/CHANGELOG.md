@@ -9,3 +9,5 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 ### Changed
 
 ### Fixed
+
+- Opening migrated document attachments now accepts their record-based file IDs.
