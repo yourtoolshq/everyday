@@ -37,17 +37,7 @@ Adopted since that starting point:
 - Route states: each app has `loading`, `error`, `global-error`, and `not-found` with its own copy and a retry or overview link.
 - Numeric entry: `@yourtoolshq/ui/decimal-entry` normalizes `.89`, `147.3`, and simple `+ - * /` expressions on blur. Taxbook paycheque amounts and Tenure paycheck amounts use it. Range and rounding stay in the apps. A percent variant is still guidance until a second percent form needs the same commit behavior.
 
-Sheet, dialog, and alert-dialog choices are already in the design language. Dates and one-off visuals stay app-local. Sidebar frame extraction is still optional; the four shells differ in nav, banners, and titles.
-
-## Migration sequence for the next chat
-
-1. **Baseline and contract.** Re-read current app instructions, the root design language, and code; record screenshots or browser checks of the representative screens below. Inventory the existing `packages/ui` exports and `packages/data-ui` ownership so the same primitive is not introduced twice.
-2. **Theme and primitives.** Bring the semantic tokens and theme mechanics to one other app, then a second. Adopt the existing shared primitives through small app groups. Keep app colors. Verify light/dark/system, focus, and overlays before broad adoption.
-3. **Interaction conventions and feedback.** Align one create/edit form and one delete flow in each app, then add route states. Promote only presentation wrappers that remain genuinely repeated. Avoid changing domain copy or validation in the same PR.
-4. **Two concrete extractions.** Split Tenure and Passbook period coverage into adapters and shared presentation. Consolidate their identical document action row against the existing file UI. These are the strongest cross-app proofs; separate them into reviewable changes.
-5. **Numeric input pilot.** Implement in the highest-use money form, validate real entry behavior, then adopt in a second app. Promote only after both agree on the editing contract. Keep date and one-off visuals as guidance.
-
-Suggested review slices: (A) theme contract, (B) primitive/shell adoption, (C) form/feedback conventions, (D) coverage presentation, (E) document actions, (F) numeric pilot. Each slice should cite the current files, record any visual/interaction change, and run affected `pnpm check:<app>`; run `pnpm check` when changing shared package or platform docs. Use focused E2E/browser checks for changed user journeys. Do not make an issue per table row; group active work as described in [DEVELOPMENT.md](../../DEVELOPMENT.md).
+Sheet, dialog, and alert-dialog choices are already in the design language. What is still open is in [remaining.md](./remaining.md): an optional sidebar frame, percent expressions only if a percent field needs the money commit behavior, and dates plus one-off visuals that stay in the apps.
 
 ## Representative screens and exit test
 
