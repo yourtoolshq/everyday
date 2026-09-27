@@ -2,6 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
+import { fileToken } from "@yourtoolshq/data/files";
+
 import type { PaycheckColumnMapping } from "~/lib/paycheck-csv-import";
 import {
   deriveExpectedPayPeriodsForYear,
@@ -13,6 +15,7 @@ import {
   countPayCompletenessForYear,
   derivePayStubCompleteness,
 } from "~/lib/pay-stub-completeness";
+import { suggestPayStubTitle } from "~/lib/pay-stubs";
 import {
   buildPaycheckImportPreview,
   detectPaycheckColumnMapping,
@@ -122,6 +125,8 @@ export const paychecksRouter = createTRPCRouter({
           documentId: paychecks.documentId,
           documentTitle: documents.title,
           documentFilename: documents.originalFilename,
+          documentFileId: documents.fileId,
+          documentMimeType: documents.mimeType,
           createdAt: paychecks.createdAt,
           updatedAt: paychecks.updatedAt,
         })
@@ -284,6 +289,89 @@ export const paychecksRouter = createTRPCRouter({
       if (!paycheck) throw new Error("Paycheck creation failed.");
       return paycheck;
     }),
+
+  attachStub: publicProcedure
+    .input(
+      z.object({
+        paycheckId: z.string().uuid(),
+        file: fileToken("document"),
+        title: z.string().trim().max(160).optional(),
+      }),
+    )
+    .mutation(({ ctx, input }) =>
+      ctx.files.withFiles(ctx.db, async (tx, files) => {
+        const [paycheck] = await tx
+          .select({
+            id: paychecks.id,
+            employmentId: paychecks.employmentId,
+            documentId: paychecks.documentId,
+            payDate: paychecks.payDate,
+            periodStartDate: paychecks.periodStartDate,
+            periodEndDate: paychecks.periodEndDate,
+            employerName: employers.name,
+            personName: people.displayName,
+          })
+          .from(paychecks)
+          .innerJoin(employments, eq(paychecks.employmentId, employments.id))
+          .innerJoin(employers, eq(employments.employerId, employers.id))
+          .innerJoin(people, eq(employments.personId, people.id))
+          .where(eq(paychecks.id, input.paycheckId));
+        if (!paycheck) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Paycheck not found.",
+          });
+        }
+
+        const file = await files.claim(input.file);
+        const title = (
+          input.title?.trim() ||
+          suggestPayStubTitle({
+            employerName: paycheck.employerName,
+            personName: paycheck.personName,
+            periodStartDate: paycheck.periodStartDate,
+            periodEndDate: paycheck.periodEndDate,
+            payDate: paycheck.payDate,
+          })
+        ).slice(0, 160);
+        const [document] = await tx
+          .insert(documents)
+          .values({
+            employmentId: paycheck.employmentId,
+            type: "pay_stub",
+            title,
+            documentDate: paycheck.payDate,
+            notes: null,
+            fileId: file.id,
+            originalFilename: file.originalFilename,
+            mimeType: file.mimeType,
+            sizeBytes: file.sizeBytes,
+          })
+          .returning({
+            id: documents.id,
+            title: documents.title,
+            fileId: documents.fileId,
+            originalFilename: documents.originalFilename,
+            mimeType: documents.mimeType,
+          });
+        if (!document) throw new Error("Pay stub creation failed.");
+
+        await tx
+          .update(paychecks)
+          .set({ documentId: document.id, updatedAt: now() })
+          .where(eq(paychecks.id, paycheck.id));
+
+        if (paycheck.documentId) {
+          const [previous] = await tx
+            .delete(documents)
+            .where(eq(documents.id, paycheck.documentId))
+            .returning({ fileId: documents.fileId });
+          if (previous) await files.remove(previous.fileId);
+        }
+
+        return { paycheckId: paycheck.id, document };
+      }),
+    ),
 
   update: publicProcedure
     .input(idInput.and(paycheckInput))

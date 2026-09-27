@@ -37,17 +37,17 @@ import {
   compensationTypes,
 } from "~/lib/compensation";
 import {
+  documentAccept,
   documentTypeLabels,
   documentTypes,
   titleFromFilename,
 } from "~/lib/documents";
 import { centsToDollars, dollarsToCents } from "~/lib/money";
-import { uploadEmploymentDocument } from "~/lib/upload-employment-document";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type CompensationChange =
   RouterOutputs["compensationChanges"]["listByEmployment"][number];
-type Document = RouterOutputs["documents"]["listByEmployment"][number];
 
 type CompensationChangeFormSheetProps = {
   open: boolean;
@@ -71,6 +71,9 @@ export function CompensationChangeFormSheet({
     { employmentId },
     { enabled: open },
   );
+  const createDocument = api.documents.create.useMutation();
+  const fileUpload = useUpload("document");
+  const resetUpload = fileUpload.reset;
   const discussions = api.discussions.listByEmployment.useQuery(
     { employmentId },
     { enabled: open },
@@ -87,7 +90,6 @@ export function CompensationChangeFormSheet({
     "none" | "existing" | "upload"
   >("none");
   const [existingDocumentId, setExistingDocumentId] = useState("none");
-  const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [documentTitle, setDocumentTitle] = useState("");
   const [documentTitleTouched, setDocumentTitleTouched] = useState(false);
   const [documentType, setDocumentType] = useState<
@@ -124,7 +126,7 @@ export function CompensationChangeFormSheet({
       setDiscussionId(change.discussionId ?? "none");
       setDocumentMode(change.documentId ? "existing" : "none");
       setExistingDocumentId(change.documentId ?? "none");
-      setDocumentFile(null);
+      resetUpload();
       setDocumentTitle("");
       setDocumentTitleTouched(false);
       setDocumentType("salary_letter");
@@ -140,16 +142,16 @@ export function CompensationChangeFormSheet({
     setDiscussionId("none");
     setDocumentMode("none");
     setExistingDocumentId("none");
-    setDocumentFile(null);
+    resetUpload();
     setDocumentTitle("");
     setDocumentTitleTouched(false);
     setDocumentType("salary_letter");
-  }, [change, defaultEffectiveDate, mode, open]);
+  }, [change, defaultEffectiveDate, mode, open, resetUpload]);
 
   useEffect(() => {
-    if (!documentFile || documentTitleTouched) return;
-    setDocumentTitle(titleFromFilename(documentFile.name));
-  }, [documentFile, documentTitleTouched]);
+    if (!fileUpload.source || documentTitleTouched) return;
+    setDocumentTitle(titleFromFilename(fileUpload.source.name));
+  }, [documentTitleTouched, fileUpload.source]);
 
   const createChange = api.compensationChanges.create.useMutation();
   const updateChange = api.compensationChanges.update.useMutation();
@@ -176,7 +178,7 @@ export function CompensationChangeFormSheet({
       toast.error("Enter a valid amount.");
       return;
     }
-    if (documentMode === "upload" && !documentFile) {
+    if (documentMode === "upload" && !fileUpload.file) {
       toast.error("Choose a file to upload.");
       return;
     }
@@ -198,15 +200,16 @@ export function CompensationChangeFormSheet({
         payload.documentId = existingDocumentId;
       }
 
-      if (documentMode === "upload" && documentFile) {
-        const uploaded = (await uploadEmploymentDocument({
+      if (documentMode === "upload" && fileUpload.file) {
+        const uploaded = await createDocument.mutateAsync({
           employmentId,
-          file: documentFile,
+          file: fileUpload.file.token,
           type: documentType,
-          title: documentTitle.trim() || undefined,
+          title:
+            documentTitle.trim() || titleFromFilename(fileUpload.file.name),
           documentDate: effectiveDate,
           discussionId: payload.discussionId,
-        })) as Document;
+        });
         payload.documentId = uploaded.id;
       }
 
@@ -247,7 +250,10 @@ export function CompensationChangeFormSheet({
   }
 
   const pending =
-    submitting || createChange.isPending || updateChange.isPending;
+    submitting ||
+    createChange.isPending ||
+    updateChange.isPending ||
+    fileUpload.status === "uploading";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -424,14 +430,14 @@ export function CompensationChangeFormSheet({
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="compensation-document-file">File</Label>
-                    <Input
+                    <FileDropzone
                       id="compensation-document-file"
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png,.webp,.heic,.eml"
-                      onChange={(event) =>
-                        setDocumentFile(event.target.files?.[0] ?? null)
-                      }
+                      upload={fileUpload}
+                      accept={documentAccept}
                     />
+                    <p className="text-muted-foreground text-xs">
+                      PDF, JPEG, PNG, WebP, HEIC, or EML up to 25 MB.
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label>Document type</Label>

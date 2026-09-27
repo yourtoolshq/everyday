@@ -20,8 +20,7 @@ export default defineConfig({
     url: "http://127.0.0.1:3100/api/health",
     reuseExistingServer: !process.env.CI,
     env: {
-      DATABASE_URL: "file:./.data/e2e.db",
-      DOCUMENTS_DIR: "./.data/e2e-documents",
+      DATA_DIR: "./.data/e2e",
     },
     timeout: 120_000,
   },

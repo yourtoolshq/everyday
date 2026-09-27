@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ExternalLink, Mail, Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+
+import { FilePreview } from "@yourtoolshq/data-ui";
 
 import type { RouterOutputs } from "~/trpc/react";
 import { DiscussionFormSheet } from "~/components/discussions/discussion-form-sheet";
-import { EmlPreviewDialog } from "~/components/documents/eml-preview-dialog";
 import { EmploymentDocumentUploadSheet } from "~/components/documents/employment-document-upload-sheet";
 import {
   AlertDialog,
@@ -21,7 +22,7 @@ import {
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { RichTextContent } from "~/components/ui/rich-text-editor";
-import { formatDateLabel, isEmlMimeType } from "~/lib/documents";
+import { formatDateLabel } from "~/lib/documents";
 import { api } from "~/trpc/react";
 
 type Discussion = RouterOutputs["discussions"]["listByEmployment"][number];
@@ -54,10 +55,6 @@ export function EmploymentDiscussionsPanel({
   const [uploadDiscussionId, setUploadDiscussionId] = useState<string | null>(
     null,
   );
-  const [emlPreview, setEmlPreview] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
 
   const sortedDiscussions = useMemo(
     () => sortDiscussions(discussions.data ?? []),
@@ -183,33 +180,17 @@ export function EmploymentDiscussionsPanel({
                             className="flex items-center justify-between gap-2 rounded-md border px-3 py-2"
                           >
                             <p className="truncate text-sm">{document.title}</p>
-                            <div className="flex shrink-0 gap-1">
-                              {isEmlMimeType(document.mimeType) ? (
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  aria-label={`Preview ${document.title}`}
-                                  onClick={() =>
-                                    setEmlPreview({
-                                      id: document.id,
-                                      title: document.title,
-                                    })
-                                  }
-                                >
-                                  <Mail />
-                                </Button>
-                              ) : null}
-                              <Button variant="ghost" size="icon-sm" asChild>
-                                <a
-                                  href={`/api/documents/${document.id}/file`}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  aria-label={`Open ${document.title}`}
-                                >
-                                  <ExternalLink />
-                                </a>
-                              </Button>
-                            </div>
+                            <Button variant="ghost" size="icon-sm" asChild>
+                              <FilePreview
+                                file={{
+                                  id: document.fileId,
+                                  mimeType: document.mimeType,
+                                }}
+                                aria-label={`Open ${document.title}`}
+                              >
+                                <ExternalLink />
+                              </FilePreview>
+                            </Button>
                           </li>
                         ))}
                       </ul>
@@ -238,17 +219,6 @@ export function EmploymentDiscussionsPanel({
           }}
           employmentId={employmentId}
           defaultDiscussionId={uploadDiscussionId}
-        />
-      ) : null}
-
-      {emlPreview ? (
-        <EmlPreviewDialog
-          documentId={emlPreview.id}
-          title={emlPreview.title}
-          open={Boolean(emlPreview)}
-          onOpenChange={(open) => {
-            if (!open) setEmlPreview(null);
-          }}
         />
       ) : null}
 

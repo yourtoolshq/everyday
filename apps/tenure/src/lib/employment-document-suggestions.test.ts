@@ -57,19 +57,19 @@ describe("employment document suggestions", () => {
   it("only suggests a title once file and date are present", () => {
     expect(
       canSuggestRequiredDocumentTitle({
-        file: null,
+        hasFile: false,
         documentDate: "2024-03-01",
       }),
     ).toBe(false);
     expect(
       canSuggestRequiredDocumentTitle({
-        file: new File(["x"], "offer.pdf"),
+        hasFile: true,
         documentDate: "",
       }),
     ).toBe(false);
     expect(
       canSuggestRequiredDocumentTitle({
-        file: new File(["x"], "offer.pdf"),
+        hasFile: true,
         documentDate: "2024-03-01",
       }),
     ).toBe(true);

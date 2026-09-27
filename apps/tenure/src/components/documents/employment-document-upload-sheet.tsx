@@ -25,11 +25,12 @@ import {
 } from "~/components/ui/sheet";
 import { Textarea } from "~/components/ui/textarea";
 import {
+  documentAccept,
   documentTypeLabels,
   documentTypes,
   titleFromFilename,
 } from "~/lib/documents";
-import { uploadEmploymentDocument } from "~/lib/upload-employment-document";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type EmploymentDocumentUploadSheetProps = {
@@ -50,47 +51,51 @@ export function EmploymentDocumentUploadSheet({
   onUploaded,
 }: EmploymentDocumentUploadSheetProps) {
   const utils = api.useUtils();
+  const createDocument = api.documents.create.useMutation();
+  const fileUpload = useUpload("document");
+  const resetUpload = fileUpload.reset;
   const discussions = api.discussions.listByEmployment.useQuery(
     { employmentId },
     { enabled: open },
   );
   const [type, setType] = useState<DocumentType>("other");
-  const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [titleTouched, setTitleTouched] = useState(false);
   const [documentDate, setDocumentDate] = useState("");
   const [notes, setNotes] = useState("");
   const [discussionId, setDiscussionId] = useState<string>("none");
   const [uploading, setUploading] = useState(false);
+  const pickedFile = fileUpload.source;
 
   useEffect(() => {
     if (!open) return;
     setType(defaultType ?? "other");
-    setFile(null);
+    resetUpload();
     setTitle("");
     setTitleTouched(false);
     setDocumentDate("");
     setNotes("");
     setDiscussionId(defaultDiscussionId ?? "none");
-  }, [defaultDiscussionId, defaultType, open]);
+  }, [defaultDiscussionId, defaultType, open, resetUpload]);
 
   useEffect(() => {
-    if (!file || titleTouched) return;
-    setTitle(titleFromFilename(file.name));
-  }, [file, titleTouched]);
+    if (!pickedFile || titleTouched) return;
+    setTitle(titleFromFilename(pickedFile.name));
+  }, [pickedFile, titleTouched]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!file) {
+    const uploaded = fileUpload.file;
+    if (!uploaded) {
       toast.error("Choose a file to upload.");
       return;
     }
 
     setUploading(true);
     try {
-      await uploadEmploymentDocument({
+      await createDocument.mutateAsync({
         employmentId,
-        file,
+        file: uploaded.token,
         type,
         title,
         documentDate: documentDate || null,
@@ -130,12 +135,10 @@ export function EmploymentDocumentUploadSheet({
           <div className="flex-1 space-y-6 px-4 py-6">
             <div className="space-y-2">
               <Label htmlFor="employment-document-file">File</Label>
-              <Input
+              <FileDropzone
                 id="employment-document-file"
-                type="file"
-                accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,message/rfc822,.pdf,.jpg,.jpeg,.png,.webp,.heic,.eml"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                required
+                upload={fileUpload}
+                accept={documentAccept}
               />
               <p className="text-muted-foreground text-xs">
                 PDF, JPEG, PNG, WebP, HEIC, or EML up to 25 MB.
@@ -220,7 +223,10 @@ export function EmploymentDocumentUploadSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={uploading}>
+            <Button
+              type="submit"
+              disabled={uploading || fileUpload.status === "uploading"}
+            >
               {uploading ? "Uploading…" : "Save document"}
             </Button>
           </SheetFooter>

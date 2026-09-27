@@ -1,15 +1,14 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Briefcase,
   Building2,
   ClipboardCheck,
+  DatabaseBackup,
   FileCheck,
   LayoutDashboard,
-  Settings,
   Users,
 } from "lucide-react";
 
@@ -21,20 +20,10 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
 } from "~/components/ui/sidebar";
-
-type FutureNavigationItem = {
-  title: string;
-  icon: LucideIcon;
-};
-
-const futureNavigation: FutureNavigationItem[] = [
-  { title: "Settings", icon: Settings },
-];
 
 function isNavActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -85,19 +74,25 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              {futureNavigation.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    aria-disabled="true"
-                    disabled
-                    tooltip={`${item.title} — coming later`}
-                  >
-                    <item.icon aria-hidden="true" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                  <SidebarMenuBadge>Later</SidebarMenuBadge>
-                </SidebarMenuItem>
-              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Settings</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isNavActive(pathname, "/settings/data")}
+                  tooltip="Data & backups"
+                >
+                  <Link href="/settings/data">
+                    <DatabaseBackup aria-hidden="true" />
+                    <span>Data &amp; backups</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

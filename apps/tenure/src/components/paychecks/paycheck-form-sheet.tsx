@@ -4,6 +4,8 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { FilePreview } from "@yourtoolshq/data-ui";
+
 import type { ExpectedPayPeriod } from "~/lib/expected-pay-periods";
 import type { PayFrequency } from "~/lib/pay-frequency";
 import type {
@@ -31,6 +33,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
+import { documentAccept } from "~/lib/documents";
 import {
   canDerivePayPeriods,
   deriveAllSelectablePayPeriods,
@@ -47,7 +50,7 @@ import {
   isIncomeTaxSplit,
   orderedDeductionFields,
 } from "~/lib/paycheck-deductions";
-import { uploadPayStub } from "~/lib/upload-pay-stub";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type Paycheck = RouterOutputs["paychecks"]["listByEmployment"][number];
@@ -89,6 +92,9 @@ export function PaycheckFormSheet({
   onSuccess,
 }: PaycheckFormSheetProps) {
   const utils = api.useUtils();
+  const attachStub = api.paychecks.attachStub.useMutation();
+  const stubUpload = useUpload("document");
+  const resetStubUpload = stubUpload.reset;
   const [payDate, setPayDate] = useState("");
   const [periodKey, setPeriodKey] = useState("");
   const [manualPeriodStart, setManualPeriodStart] = useState("");
@@ -96,7 +102,6 @@ export function PaycheckFormSheet({
   const [amounts, setAmounts] = useState<Record<AmountField, string>>(() =>
     emptyAmounts(paycheck),
   );
-  const [stubFile, setStubFile] = useState<File | null>(null);
   const [stubTitle, setStubTitle] = useState("");
   const [stubTitleTouched, setStubTitleTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -181,9 +186,9 @@ export function PaycheckFormSheet({
     setManualPeriodStart(paycheck?.periodStartDate ?? "");
     setManualPeriodEnd(paycheck?.periodEndDate ?? "");
     setAmounts(emptyAmounts(paycheck));
-    setStubFile(null);
+    resetStubUpload();
     setStubTitleTouched(false);
-  }, [open, paycheck]);
+  }, [open, paycheck, resetStubUpload]);
 
   useEffect(() => {
     if (!open || !usePeriodDropdown) return;
@@ -361,17 +366,22 @@ export function PaycheckFormSheet({
         ? await updatePaycheck.mutateAsync({ id: paycheck.id, ...payload })
         : await createPaycheck.mutateAsync(payload);
 
-      if (stubFile) {
-        await uploadPayStub(saved.id, stubFile, stubTitle);
+      const uploadedStub = stubUpload.file;
+      if (uploadedStub) {
+        await attachStub.mutateAsync({
+          paycheckId: saved.id,
+          file: uploadedStub.token,
+          title: stubTitle,
+        });
       }
 
       await invalidate();
       toast.success(
         paycheck
-          ? stubFile
+          ? uploadedStub
             ? "Paycheck updated and pay stub attached."
             : "Paycheck updated."
-          : stubFile
+          : uploadedStub
             ? "Paycheck added and pay stub attached."
             : "Paycheck added.",
       );
@@ -554,7 +564,10 @@ export function PaycheckFormSheet({
                 </p>
               </div>
 
-              {paycheck?.documentId && !stubFile ? (
+              {paycheck?.documentId &&
+              paycheck.documentFileId &&
+              paycheck.documentMimeType &&
+              !stubUpload.source ? (
                 <div className="bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm">
                   <span className="truncate">
                     {paycheck.documentTitle ??
@@ -562,12 +575,14 @@ export function PaycheckFormSheet({
                       "Attached pay stub"}
                   </span>
                   <Button type="button" size="sm" variant="outline" asChild>
-                    <a
-                      href={`/api/documents/${paycheck.documentId}/file`}
-                      target="_blank"
+                    <FilePreview
+                      file={{
+                        id: paycheck.documentFileId,
+                        mimeType: paycheck.documentMimeType,
+                      }}
                     >
                       View
-                    </a>
+                    </FilePreview>
                   </Button>
                 </div>
               ) : null}
@@ -576,17 +591,17 @@ export function PaycheckFormSheet({
                 <Label htmlFor="paycheck-stub-file">
                   {paycheck?.documentId ? "Replace pay stub" : "Pay stub file"}
                 </Label>
-                <Input
+                <FileDropzone
                   id="paycheck-stub-file"
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
-                  onChange={(event) =>
-                    setStubFile(event.target.files?.[0] ?? null)
-                  }
+                  upload={stubUpload}
+                  accept={documentAccept}
                 />
+                <p className="text-muted-foreground text-xs">
+                  PDF, JPEG, PNG, WebP, HEIC, or EML up to 25 MB.
+                </p>
               </div>
 
-              {stubFile ? (
+              {stubUpload.source ? (
                 <div className="space-y-2">
                   <Label htmlFor="paycheck-stub-title">Stub title</Label>
                   <Input
@@ -615,7 +630,10 @@ export function PaycheckFormSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={submitting}>
+            <Button
+              type="submit"
+              disabled={submitting || stubUpload.status === "uploading"}
+            >
               {submitting
                 ? "Saving…"
                 : paycheck
