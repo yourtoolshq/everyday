@@ -334,7 +334,6 @@ export const documentsRouter = createTRPCRouter({
             termsSnapshotId,
             fileId: file.id,
             originalFilename: file.originalFilename,
-            storageKey: file.storageKey,
             mimeType: file.mimeType,
             sizeBytes: file.sizeBytes,
           })

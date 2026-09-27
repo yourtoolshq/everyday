@@ -4,6 +4,8 @@ A checklist for the computer that runs Passbook. It moves Passbook from the imag
 
 The rollback point is a tar of the volume taken while Passbook is stopped. If anything goes wrong, the tar goes back into the volume and the legacy image starts again.
 
+Production and feature development may run on the same local computer, but they must use separate data. The production container keeps the named `passbook-data` and `passbook-backups` volumes and is reachable through Traefik at `https://passbook.tools.local`; it does not publish an application port on the host. Run the development server against its local `.data` directory, or use isolated test volumes for a development container. Never point development or test code at the production volumes.
+
 ## 1. Prepare
 
 Passbook keeps running during this section.
@@ -84,8 +86,8 @@ Passbook is down from here until section 3 finishes.
 - [ ] Wait for the upgrade to finish. While it runs, https://passbook.tools.local shows "Upgrading your data".
 
   ```sh
-  until curl -fs http://127.0.0.1:3002/api/health | grep -q '"status":"ok"'; do sleep 2; done
-  curl -s http://127.0.0.1:3002/api/health
+  until curl -fsS https://passbook.tools.local/api/health | grep -q '"status":"ok"'; do sleep 2; done
+  curl -fsS https://passbook.tools.local/api/health
   ```
 
   If the response shows `"state":"blocked"`, or the container keeps restarting, run `docker compose logs app` and go to section 4.
@@ -262,7 +264,7 @@ Run the commands in `~/everyday/apps/passbook`.
 ### Restarts and the command line
 
 - [ ] `docker compose restart`. Passbook comes back with its data, and `yt-data list` shows no new `pre-migration` backup.
-- [ ] `curl -s http://127.0.0.1:3002/api/health` shows `"status":"ok"`, `"backup":{"status":"ok"` and `"sharesDataDir":false`.
+- [ ] `curl -fsS https://passbook.tools.local/api/health` shows `"status":"ok"`, `"backup":{"status":"ok"` and `"sharesDataDir":false`.
 - [ ] `docker compose exec app yt-data backup` prints "Created backup <id>: verified", and `yt-data list` shows it.
 - [ ] `docker compose exec app yt-data verify <id>` reports the backup verified.
 - [ ] Optional: restart the computer. Passbook starts by itself. If the computer was off at 02:00, a catch-up backup runs within a few minutes.

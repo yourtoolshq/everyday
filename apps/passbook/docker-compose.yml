@@ -9,17 +9,15 @@ services:
       DATA_DIR: /data
       BACKUP_DIR: /backups
       NODE_ENV: production
-    ports:
-      - "127.0.0.1:${PASSBOOK_PORT:-3002}:3000"
     restart: unless-stopped
     volumes:
       - passbook-data:/data
       - ${PASSBOOK_BACKUP_DIR:-passbook-backups}:/backups
     networks:
-      - default
       - web
     labels:
       - traefik.enable=true
+      - traefik.docker.network=web
       - traefik.http.routers.passbook.rule=Host(`passbook.tools.local`)
       - traefik.http.routers.passbook.entrypoints=web
       - traefik.http.routers.passbook-secure.rule=Host(`passbook.tools.local`)
