@@ -3,27 +3,15 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { createCaller } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
-import { databaseReady, db } from "~/server/db";
-import {
-  benefits,
-  careItems,
-  careOrganizations,
-  carePlans,
-  claims,
-  documents,
-  insurancePlans,
-  people,
-  providers,
-  visits,
-} from "~/server/db/schema";
-import {
-  documentPath,
-  readDocument,
-  writeDocument,
-} from "~/server/documents/storage";
+import { dataPlatform } from "~/server/data";
+import { db } from "~/server/db";
+import { resetDatabase } from "~/server/db/reset";
+import { documents } from "~/server/db/schema";
+
+const pdfBytes = new TextEncoder().encode("%PDF-1.4\nTest document\n");
 
 async function caller() {
-  return createCaller(await createTRPCContext({ headers: new Headers() }));
+  return createCaller(createTRPCContext({ headers: new Headers() }));
 }
 
 async function createVisit() {
@@ -52,38 +40,31 @@ async function createVisit() {
 
 async function attachDocument(
   visitId: string,
-  values: Partial<typeof documents.$inferInsert> = {},
+  values: {
+    type?: "receipt" | "claim_record";
+    title?: string;
+    claimId?: string;
+  } = {},
 ) {
-  const id = crypto.randomUUID();
-  const storageKey = `${crypto.randomUUID()}.pdf`;
-  await writeDocument(storageKey, new TextEncoder().encode("%PDF-test"));
-  await db.insert(documents).values({
-    id,
-    visitId,
-    type: "receipt",
-    title: "Visit receipt",
+  const api = await caller();
+  const staged = await dataPlatform.files.stage({
+    endpoint: "document",
     originalFilename: "receipt.pdf",
-    storageKey,
-    mimeType: "application/pdf",
-    sizeBytes: 9,
-    ...values,
+    bytes: pdfBytes,
+    type: { group: "pdf", mimeType: "application/pdf", extension: "pdf" },
   });
-  return { id, storageKey };
+  return api.documents.create({
+    visitId,
+    file: staged.token,
+    type: values.type ?? "receipt",
+    title: values.title ?? "Visit receipt",
+    claimId: values.claimId ?? null,
+  });
 }
 
 describe("documents router", () => {
   beforeEach(async () => {
-    await databaseReady;
-    await db.delete(documents);
-    await db.delete(claims);
-    await db.delete(visits);
-    await db.delete(benefits);
-    await db.delete(insurancePlans);
-    await db.delete(providers);
-    await db.delete(careOrganizations);
-    await db.delete(careItems);
-    await db.delete(carePlans);
-    await db.delete(people);
+    await resetDatabase();
   });
 
   it("lists, updates, and deletes visit-owned document metadata", async () => {
@@ -106,6 +87,9 @@ describe("documents router", () => {
       (await api.visits.detail({ id: visit.id }))?.visit.documentCount,
     ).toBe(1);
 
+    const stored = await dataPlatform.files.read(attached.fileId);
+    expect(Buffer.from(stored?.bytes ?? [])).toEqual(Buffer.from(pdfBytes));
+
     await api.documents.update({
       id: attached.id,
       title: "Paid receipt",
@@ -120,9 +104,7 @@ describe("documents router", () => {
     expect(
       await db.select().from(documents).where(eq(documents.id, attached.id)),
     ).toEqual([]);
-    await expect(readDocument(attached.storageKey)).rejects.toMatchObject({
-      code: "ENOENT",
-    });
+    expect(await dataPlatform.files.read(attached.fileId)).toBeNull();
   });
 
   it("deletes managed document files with their visit", async () => {
@@ -136,9 +118,7 @@ describe("documents router", () => {
     expect(
       await db.select().from(documents).where(eq(documents.visitId, visit.id)),
     ).toEqual([]);
-    await expect(readDocument(attached.storageKey)).rejects.toMatchObject({
-      code: "ENOENT",
-    });
+    expect(await dataPlatform.files.read(attached.fileId)).toBeNull();
   });
 
   it("links claim paperwork to a visit claim", async () => {
@@ -196,11 +176,5 @@ describe("documents router", () => {
         claimId: claim.id,
       }),
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-  });
-
-  it("never resolves traversal outside the configured storage directory", () => {
-    expect(() => documentPath("../receipt.pdf")).toThrow(
-      "Invalid document storage key",
-    );
   });
 });

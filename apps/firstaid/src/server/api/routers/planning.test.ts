@@ -2,15 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { createCaller } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
-import { databaseReady, db } from "~/server/db";
-import {
-  careItems,
-  careOrganizations,
-  carePlans,
-  people,
-  providers,
-  visits,
-} from "~/server/db/schema";
+import { resetDatabase } from "~/server/db/reset";
 
 async function caller() {
   return createCaller(await createTRPCContext({ headers: new Headers() }));
@@ -36,13 +28,7 @@ const itemFields = (personId: string) => ({
 
 describe("planning router", () => {
   beforeEach(async () => {
-    await databaseReady;
-    await db.delete(visits);
-    await db.delete(providers);
-    await db.delete(careOrganizations);
-    await db.delete(careItems);
-    await db.delete(carePlans);
-    await db.delete(people);
+    await resetDatabase();
   });
 
   it("creates a household year and manages its care items", async () => {

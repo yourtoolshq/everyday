@@ -2,18 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { createCaller } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
-import { databaseReady, db } from "~/server/db";
-import {
-  benefits,
-  careItems,
-  careOrganizations,
-  carePlans,
-  claims,
-  insurancePlans,
-  people,
-  providers,
-  visits,
-} from "~/server/db/schema";
+import { resetDatabase } from "~/server/db/reset";
 
 async function caller() {
   return createCaller(await createTRPCContext({ headers: new Headers() }));
@@ -21,16 +10,7 @@ async function caller() {
 
 describe("benefits router", () => {
   beforeEach(async () => {
-    await databaseReady;
-    await db.delete(claims);
-    await db.delete(visits);
-    await db.delete(benefits);
-    await db.delete(insurancePlans);
-    await db.delete(providers);
-    await db.delete(careOrganizations);
-    await db.delete(careItems);
-    await db.delete(carePlans);
-    await db.delete(people);
+    await resetDatabase();
   });
 
   it("creates plans and benefits with usage totals", async () => {

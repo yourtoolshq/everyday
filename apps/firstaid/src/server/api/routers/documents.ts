@@ -2,6 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 
+import { fileToken } from "@yourtoolshq/data/files";
+
 import { documentMetadataSchema } from "~/lib/documents";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
@@ -12,11 +14,6 @@ import {
   visits,
 } from "~/server/db/schema";
 import { resolveDocumentClaimId } from "~/server/documents/claim-link";
-import {
-  discardStagedDocuments,
-  restoreStagedDocuments,
-  stageDocumentsForDeletion,
-} from "~/server/documents/storage";
 
 const idInput = z.object({ id: z.string().uuid() });
 const now = () => new Date().toISOString();
@@ -27,6 +24,7 @@ const publicDocumentFields = {
   claimId: documents.claimId,
   type: documents.type,
   title: documents.title,
+  fileId: documents.fileId,
   originalFilename: documents.originalFilename,
   mimeType: documents.mimeType,
   sizeBytes: documents.sizeBytes,
@@ -52,6 +50,53 @@ export const documentsRouter = createTRPCRouter({
       .leftJoin(benefits, eq(claims.benefitId, benefits.id))
       .orderBy(desc(visits.startsAt), desc(documents.createdAt));
   }),
+
+  create: publicProcedure
+    .input(
+      documentMetadataSchema.and(
+        z.object({
+          visitId: z.string().uuid(),
+          file: fileToken("document"),
+        }),
+      ),
+    )
+    .mutation(({ ctx, input }) =>
+      ctx.files.withFiles(ctx.db, async (tx, files) => {
+        const [visit] = await tx
+          .select({ id: visits.id })
+          .from(visits)
+          .where(eq(visits.id, input.visitId));
+        if (!visit) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Visit not found.",
+          });
+        }
+
+        const claimId = await resolveDocumentClaimId(
+          tx,
+          visit.id,
+          input.type,
+          input.claimId,
+        );
+        const file = await files.claim(input.file);
+        const [document] = await tx
+          .insert(documents)
+          .values({
+            visitId: visit.id,
+            claimId,
+            title: input.title,
+            type: input.type,
+            fileId: file.id,
+            originalFilename: file.originalFilename,
+            mimeType: file.mimeType,
+            sizeBytes: file.sizeBytes,
+          })
+          .returning(publicDocumentFields);
+        if (!document) throw new Error("Document creation failed.");
+        return document;
+      }),
+    ),
 
   update: publicProcedure
     .input(idInput.and(documentMetadataSchema))
@@ -91,22 +136,21 @@ export const documentsRouter = createTRPCRouter({
       return document;
     }),
 
-  delete: publicProcedure.input(idInput).mutation(async ({ ctx, input }) => {
-    const [document] = await ctx.db
-      .select({ id: documents.id, storageKey: documents.storageKey })
-      .from(documents)
-      .where(eq(documents.id, input.id));
-    if (!document)
-      throw new TRPCError({ code: "NOT_FOUND", message: "Document not found" });
+  delete: publicProcedure.input(idInput).mutation(({ ctx, input }) =>
+    ctx.files.withFiles(ctx.db, async (tx, files) => {
+      const [document] = await tx
+        .delete(documents)
+        .where(eq(documents.id, input.id))
+        .returning({ id: documents.id, fileId: documents.fileId });
+      if (!document) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Document not found",
+        });
+      }
 
-    const staged = await stageDocumentsForDeletion([document.storageKey]);
-    try {
-      await ctx.db.delete(documents).where(eq(documents.id, input.id));
-    } catch (error) {
-      await restoreStagedDocuments(staged);
-      throw error;
-    }
-    await discardStagedDocuments(staged);
-    return { id: document.id };
-  }),
+      await files.remove(document.fileId);
+      return { id: document.id };
+    }),
+  ),
 });

@@ -290,7 +290,9 @@ test("renders the responsive private application shell", async ({
   await expect(page.getByRole("link", { name: "Documents" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Benefits" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Claims" })).toBeDisabled();
-  await expect(page.getByRole("button", { name: "Settings" })).toBeDisabled();
+  await expect(
+    page.getByRole("link", { name: "Data & backups" }),
+  ).toBeVisible();
 });
 
 test("tracks benefits, visit costs, and claims", async ({ page }, testInfo) => {

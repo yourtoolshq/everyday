@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 import {
   Building2,
   CalendarRange,
+  DatabaseBackup,
   FileText,
   HeartPulse,
   ReceiptText,
-  Settings,
   ShieldCheck,
   Stethoscope,
 } from "lucide-react";
@@ -35,7 +35,6 @@ type FutureNavigationItem = {
 
 const futureNavigation: FutureNavigationItem[] = [
   { title: "Claims", icon: ReceiptText },
-  { title: "Settings", icon: Settings },
 ];
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
@@ -90,6 +89,25 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuBadge>Later</SidebarMenuBadge>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Settings</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/settings/data"}
+                  tooltip="Data & backups"
+                >
+                  <Link href="/settings/data">
+                    <DatabaseBackup aria-hidden="true" />
+                    <span>Data &amp; backups</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

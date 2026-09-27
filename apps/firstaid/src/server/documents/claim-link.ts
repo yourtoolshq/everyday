@@ -6,7 +6,7 @@ import { validateDocumentClaimLink } from "~/lib/documents";
 import { claims } from "~/server/db/schema";
 
 export async function resolveDocumentClaimId(
-  db: typeof import("~/server/db").db,
+  db: Pick<typeof import("~/server/db").db, "select">,
   visitId: string,
   type: DocumentType,
   claimId: string | null | undefined,

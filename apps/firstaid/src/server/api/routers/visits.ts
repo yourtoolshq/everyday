@@ -22,11 +22,6 @@ import {
   providers,
   visits,
 } from "~/server/db/schema";
-import {
-  discardStagedDocuments,
-  restoreStagedDocuments,
-  stageDocumentsForDeletion,
-} from "~/server/documents/storage";
 
 const idInput = z.object({ id: z.string().uuid() });
 const now = () => new Date().toISOString();
@@ -245,6 +240,7 @@ export const visitsRouter = createTRPCRouter({
           claimId: documents.claimId,
           type: documents.type,
           title: documents.title,
+          fileId: documents.fileId,
           originalFilename: documents.originalFilename,
           mimeType: documents.mimeType,
           sizeBytes: documents.sizeBytes,
@@ -381,33 +377,26 @@ export const visitsRouter = createTRPCRouter({
       return visit;
     }),
 
-  delete: publicProcedure.input(idInput).mutation(async ({ ctx, input }) => {
-    const [visit, visitDocuments] = await Promise.all([
-      ctx.db
+  delete: publicProcedure.input(idInput).mutation(({ ctx, input }) =>
+    ctx.files.withFiles(ctx.db, async (tx, files) => {
+      const [visit] = await tx
         .select()
         .from(visits)
-        .where(eq(visits.id, input.id))
-        .then((rows) => rows[0]),
-      ctx.db
-        .select({ storageKey: documents.storageKey })
-        .from(documents)
-        .where(eq(documents.visitId, input.id)),
-    ]);
-    if (!visit)
-      throw new TRPCError({ code: "NOT_FOUND", message: "Visit not found" });
+        .where(eq(visits.id, input.id));
+      if (!visit)
+        throw new TRPCError({ code: "NOT_FOUND", message: "Visit not found" });
 
-    const staged = await stageDocumentsForDeletion(
-      visitDocuments.map((document) => document.storageKey),
-    );
-    try {
-      await ctx.db.delete(visits).where(eq(visits.id, input.id));
-    } catch (error) {
-      await restoreStagedDocuments(staged);
-      throw error;
-    }
-    await discardStagedDocuments(staged);
-    return visit;
-  }),
+      const visitDocuments = await tx
+        .select({ fileId: documents.fileId })
+        .from(documents)
+        .where(eq(documents.visitId, input.id));
+      await tx.delete(visits).where(eq(visits.id, input.id));
+      for (const document of visitDocuments) {
+        await files.remove(document.fileId);
+      }
+      return visit;
+    }),
+  ),
 
   createClaim: publicProcedure
     .input(claimFieldsSchema)
