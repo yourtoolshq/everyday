@@ -176,11 +176,11 @@ export function DateField({
               <InputGroupButton
                 variant="ghost"
                 size="icon-xs"
-                aria-label="Select date"
+                aria-label="Open calendar"
                 disabled={disabled}
               >
                 <CalendarIcon />
-                <span className="sr-only">Select date</span>
+                <span className="sr-only">Open calendar</span>
               </InputGroupButton>
             </PopoverTrigger>
             <PopoverContent
