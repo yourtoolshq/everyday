@@ -7,7 +7,6 @@ import type { RouterOutputs } from "~/trpc/react";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
 import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
 import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
-import { EmlPreviewDialog } from "~/components/documents/eml-preview-dialog";
 import { EmploymentDocumentUploadSheet } from "~/components/documents/employment-document-upload-sheet";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -16,7 +15,6 @@ import {
   documentTypeLabels,
   formatDateLabel,
   formatFileSize,
-  isEmlMimeType,
 } from "~/lib/documents";
 import { api } from "~/trpc/react";
 
@@ -39,10 +37,6 @@ export function EmploymentDocumentsPanel({
   const { requestDelete, dialog: deleteDialog } = useDeleteDocumentDialog();
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editingDocument, setEditingDocument] = useState<Document | null>(null);
-  const [emlPreview, setEmlPreview] = useState<{
-    id: string;
-    title: string;
-  } | null>(null);
 
   const employmentDocuments = useMemo(
     () => sortDocuments(documents.data ?? []),
@@ -89,17 +83,9 @@ export function EmploymentDocumentsPanel({
                   ) : null}
                 </div>
                 <DocumentActionButtons
-                  documentId={document.id}
+                  fileId={document.fileId}
+                  mimeType={document.mimeType}
                   title={document.title}
-                  onPreview={
-                    isEmlMimeType(document.mimeType)
-                      ? () =>
-                          setEmlPreview({
-                            id: document.id,
-                            title: document.title,
-                          })
-                      : undefined
-                  }
                   onEdit={() => setEditingDocument(document)}
                   onDelete={() =>
                     requestDelete({ id: document.id, title: document.title })
@@ -127,17 +113,6 @@ export function EmploymentDocumentsPanel({
           open={Boolean(editingDocument)}
           onOpenChange={(open) => {
             if (!open) setEditingDocument(null);
-          }}
-        />
-      ) : null}
-
-      {emlPreview ? (
-        <EmlPreviewDialog
-          documentId={emlPreview.id}
-          title={emlPreview.title}
-          open={Boolean(emlPreview)}
-          onOpenChange={(open) => {
-            if (!open) setEmlPreview(null);
           }}
         />
       ) : null}

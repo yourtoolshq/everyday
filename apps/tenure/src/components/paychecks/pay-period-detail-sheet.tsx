@@ -2,6 +2,8 @@
 
 import { ExternalLink, Paperclip, Pencil, Plus } from "lucide-react";
 
+import { FilePreview } from "@yourtoolshq/data-ui";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -107,15 +109,17 @@ export function PayPeriodDetailSheet({
                   </p>
                 ) : null}
                 <div className="flex flex-wrap gap-2">
-                  {paycheck.documentId ? (
+                  {paycheck.documentFileId && paycheck.documentMimeType ? (
                     <Button type="button" size="sm" variant="outline" asChild>
-                      <a
-                        href={`/api/documents/${paycheck.documentId}/file`}
-                        target="_blank"
+                      <FilePreview
+                        file={{
+                          id: paycheck.documentFileId,
+                          mimeType: paycheck.documentMimeType,
+                        }}
                       >
                         <ExternalLink />
                         View stub
-                      </a>
+                      </FilePreview>
                     </Button>
                   ) : (
                     <Button

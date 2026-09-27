@@ -3,16 +3,18 @@ import { z } from "zod";
 
 export const env = createEnv({
   server: {
-    DATABASE_URL: z.string().url().default("file:./.data/tenure.db"),
-    DOCUMENTS_DIR: z.string().min(1).default("./.data/documents"),
+    APP_VERSION: z.string().min(1).optional(),
+    BACKUP_DIR: z.string().min(1).optional(),
+    DATA_DIR: z.string().min(1).default("./.data"),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
   },
   client: {},
   runtimeEnv: {
-    DATABASE_URL: process.env.DATABASE_URL,
-    DOCUMENTS_DIR: process.env.DOCUMENTS_DIR,
+    APP_VERSION: process.env.APP_VERSION,
+    BACKUP_DIR: process.env.BACKUP_DIR,
+    DATA_DIR: process.env.DATA_DIR,
     NODE_ENV: process.env.NODE_ENV,
   },
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

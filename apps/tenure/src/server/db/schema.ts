@@ -5,7 +5,10 @@ import {
   primaryKey,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
+
+import { filesTable, platformMetaTable } from "@yourtoolshq/data/schema";
 
 import type {
   CompensationCurrency,
@@ -14,6 +17,8 @@ import type {
 import type { DocumentType } from "~/lib/documents";
 import type { EmploymentStatus } from "~/lib/employment-status";
 import type { PayFrequency } from "~/lib/pay-frequency";
+
+export { filesTable, platformMetaTable };
 
 const id = () =>
   text("id")
@@ -125,8 +130,10 @@ export const documents = sqliteTable(
     title: text("title").notNull(),
     documentDate: text("document_date"),
     notes: text("notes"),
+    fileId: text("file_id")
+      .notNull()
+      .references(() => filesTable.id),
     originalFilename: text("original_filename").notNull(),
-    storageKey: text("storage_key").notNull().unique(),
     mimeType: text("mime_type").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
     createdAt: createdAt(),
@@ -135,6 +142,7 @@ export const documents = sqliteTable(
   (table) => [
     index("documents_employment_idx").on(table.employmentId),
     index("documents_discussion_idx").on(table.discussionId),
+    uniqueIndex("documents_file_unique").on(table.fileId),
   ],
 );
 

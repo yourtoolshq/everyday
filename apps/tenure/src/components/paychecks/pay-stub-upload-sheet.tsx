@@ -14,8 +14,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
+import { documentAccept } from "~/lib/documents";
 import { suggestPayStubTitle } from "~/lib/pay-stubs";
-import { uploadPayStub } from "~/lib/upload-pay-stub";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type PayStubUploadSheetProps = {
@@ -44,14 +45,16 @@ export function PayStubUploadSheet({
   onSuccess,
 }: PayStubUploadSheetProps) {
   const utils = api.useUtils();
-  const [file, setFile] = useState<File | null>(null);
+  const attachStub = api.paychecks.attachStub.useMutation();
+  const fileUpload = useUpload("document");
+  const resetUpload = fileUpload.reset;
   const [title, setTitle] = useState("");
   const [titleTouched, setTitleTouched] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setFile(null);
+    resetUpload();
     setTitleTouched(false);
     if (paycheck) {
       setTitle(
@@ -66,7 +69,7 @@ export function PayStubUploadSheet({
       return;
     }
     setTitle("");
-  }, [open, paycheck, employerName, personName]);
+  }, [open, paycheck, employerName, personName, resetUpload]);
 
   useEffect(() => {
     if (!open || titleTouched || !paycheck) return;
@@ -82,14 +85,19 @@ export function PayStubUploadSheet({
   }, [open, paycheck, employerName, personName, titleTouched]);
 
   async function submitUpload() {
-    if (!paycheckId || !file) {
+    const uploaded = fileUpload.file;
+    if (!paycheckId || !uploaded) {
       toast.error("Choose a file to upload.");
       return;
     }
 
     setUploading(true);
     try {
-      await uploadPayStub(paycheckId, file, title);
+      await attachStub.mutateAsync({
+        paycheckId,
+        file: uploaded.token,
+        title,
+      });
       await Promise.all([
         utils.paychecks.listByEmployment.invalidate({ employmentId }),
         utils.paychecks.periodCompleteness.invalidate({ employmentId }),
@@ -125,13 +133,14 @@ export function PayStubUploadSheet({
         >
           <div className="space-y-2">
             <Label htmlFor="pay-stub-file">File</Label>
-            <Input
+            <FileDropzone
               id="pay-stub-file"
-              type="file"
-              accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              required
+              upload={fileUpload}
+              accept={documentAccept}
             />
+            <p className="text-muted-foreground text-xs">
+              PDF, JPEG, PNG, WebP, HEIC, or EML up to 25 MB.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -159,7 +168,12 @@ export function PayStubUploadSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={uploading || !paycheckId}>
+            <Button
+              type="submit"
+              disabled={
+                uploading || !paycheckId || fileUpload.status === "uploading"
+              }
+            >
               {uploading ? "Uploading…" : "Attach pay stub"}
             </Button>
           </SheetFooter>

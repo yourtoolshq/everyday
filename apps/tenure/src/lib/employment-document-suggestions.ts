@@ -59,8 +59,8 @@ export function suggestRequiredDocumentTitle(input: {
 }
 
 export function canSuggestRequiredDocumentTitle(input: {
-  file: File | null;
+  hasFile: boolean;
   documentDate: string;
 }): boolean {
-  return Boolean(input.file && input.documentDate.trim());
+  return Boolean(input.hasFile && input.documentDate.trim());
 }

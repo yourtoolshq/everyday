@@ -14,10 +14,12 @@ Open http://localhost:3003. Local SQLite data and managed documents are stored u
 Optional environment variables:
 
 ```sh
-DATABASE_URL=file:./.data/tenure.db
-DOCUMENTS_DIR=./.data/documents
+DATA_DIR=./.data
+BACKUP_DIR=./.data/backups
 PORT=3003
 ```
+
+`DATA_DIR` holds `tenure.db` and `documents/`. Leave `BACKUP_DIR` unset in development and backups are written under `.data/backups`, with a warning that they share the data directory. Set `BACKUP_DIR` to a separate directory when you want that warning gone.
 
 Run the verification suite with:
 
@@ -36,13 +38,15 @@ pnpm test:e2e
 docker compose up --build -d
 ```
 
-The service binds to `127.0.0.1:3003` by default and stores its SQLite file and managed documents in the `tenure-data` Docker volume.
+Production Compose mounts the named `tenure-data` volume at `/data` and a separate `tenure-backups` volume at `/backups`. It does not publish a host port. Traefik serves https://tenure.tools.local. Development stays on port 3003 with `pnpm dev` and `DATA_DIR=./.data`. Never mount `tenure-data` or `tenure-backups` into a development or test process.
 
-Set `TENURE_PORT` when port 3003 is already in use:
+Set `TENURE_BACKUP_DIR` to a host directory when backups should live outside the `tenure-backups` volume:
 
 ```sh
-TENURE_PORT=3200 docker compose up --build -d
+TENURE_BACKUP_DIR=/path/to/backups/tenure docker compose up --build -d
 ```
+
+The host manager builds the candidate image, then asks the running app for a verified backup. If the build or the backup fails, it leaves the running container in place. Machine-specific service files and secrets stay outside this repository.
 
 ## Traefik
 
@@ -59,13 +63,16 @@ wildcard certificate for `*.tools.local` (configured in dotfiles).
 
 ## Documents and backups
 
-Employment documents are managed copies under `DOCUMENTS_DIR` (default `.data/documents`, or `/data/documents` in Docker). Uploads are limited to one PDF, JPEG, PNG, WebP, HEIC, or EML file at a time and 25 MiB per file.
+Employment documents are stored under `DATA_DIR/documents` (default `.data/documents`, or `/data/documents` in Docker). Uploads are limited to one PDF, JPEG, PNG, WebP, HEIC, or EML file at a time and 25 MB per file.
 
-A complete backup must include both the SQLite database and the entire documents directory. Restore both from the same backup point so document metadata and managed files remain consistent.
+Backups are verified archives of the database and the files it references. From the app directory:
 
 ```sh
-pnpm backup -- /path/to/tenure-backup.db
-pnpm restore -- /path/to/tenure-backup.db
+pnpm data backup
+pnpm data list
+pnpm data restore <backup>
 ```
 
-After changing the schema, generate and commit a migration with `pnpm db:generate`.
+Inside the running container the same commands are `yt-data backup`, `yt-data list`, and `yt-data restore <backup>`. The CLI talks to the running app when it is listening, and opens the data directory directly when the app is stopped.
+
+After changing the schema, generate and commit a migration with `pnpm db:generate`, then run `pnpm migrations:check`.

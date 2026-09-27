@@ -16,14 +16,14 @@ import {
   SheetHeader,
   SheetTitle,
 } from "~/components/ui/sheet";
-import { documentTypeLabels } from "~/lib/documents";
+import { documentAccept, documentTypeLabels } from "~/lib/documents";
 import {
   canSuggestRequiredDocumentTitle,
   suggestRequiredDocumentDate,
   suggestRequiredDocumentTitle,
   suggestRequiredDocumentType,
 } from "~/lib/employment-document-suggestions";
-import { uploadEmploymentDocument } from "~/lib/upload-employment-document";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type CompensationChange =
@@ -65,8 +65,10 @@ export function RequiredDocumentUploadSheet({
   compensationChange,
 }: RequiredDocumentUploadSheetProps) {
   const utils = api.useUtils();
+  const createDocument = api.documents.create.useMutation();
   const updateChange = api.compensationChanges.update.useMutation();
-  const [file, setFile] = useState<File | null>(null);
+  const fileUpload = useUpload("document");
+  const resetUpload = fileUpload.reset;
   const [documentDate, setDocumentDate] = useState("");
   const [title, setTitle] = useState("");
   const [titleTouched, setTitleTouched] = useState(false);
@@ -75,7 +77,13 @@ export function RequiredDocumentUploadSheet({
   const documentType = kind ? suggestRequiredDocumentType(kind) : "other";
 
   const suggestedTitle = useMemo(() => {
-    if (!kind || !canSuggestRequiredDocumentTitle({ file, documentDate }))
+    if (
+      !kind ||
+      !canSuggestRequiredDocumentTitle({
+        hasFile: fileUpload.source !== null,
+        documentDate,
+      })
+    )
       return "";
     return suggestRequiredDocumentTitle({
       kind,
@@ -84,11 +92,18 @@ export function RequiredDocumentUploadSheet({
       documentDate,
       compensationChange: compensationChange ?? null,
     });
-  }, [compensationChange, documentDate, employerName, file, kind, personName]);
+  }, [
+    compensationChange,
+    documentDate,
+    employerName,
+    fileUpload.source,
+    kind,
+    personName,
+  ]);
 
   useEffect(() => {
     if (!open) return;
-    setFile(null);
+    resetUpload();
     setTitle("");
     setTitleTouched(false);
     setDocumentDate(
@@ -99,7 +114,7 @@ export function RequiredDocumentUploadSheet({
           })
         : "",
     );
-  }, [compensationChange, kind, open]);
+  }, [compensationChange, kind, open, resetUpload]);
 
   useEffect(() => {
     if (!open || titleTouched || !suggestedTitle) return;
@@ -107,20 +122,21 @@ export function RequiredDocumentUploadSheet({
   }, [open, suggestedTitle, titleTouched]);
 
   async function submitUpload() {
-    if (!kind || !file) {
+    const uploaded = fileUpload.file;
+    if (!kind || !uploaded) {
       toast.error("Choose a file to upload.");
       return;
     }
 
     setUploading(true);
     try {
-      const uploaded = (await uploadEmploymentDocument({
+      const created = await createDocument.mutateAsync({
         employmentId,
-        file,
+        file: uploaded.token,
         type: documentType,
         title: title.trim() || suggestedTitle,
         documentDate: documentDate.trim() || null,
-      })) as { id: string };
+      });
 
       if (kind === "compensation_change" && compensationChange) {
         await updateChange.mutateAsync({
@@ -132,7 +148,7 @@ export function RequiredDocumentUploadSheet({
           commissionBasisPoints: compensationChange.commissionBasisPoints,
           notes: compensationChange.notes,
           discussionId: compensationChange.discussionId,
-          documentId: uploaded.id,
+          documentId: created.id,
         });
       }
 
@@ -179,13 +195,14 @@ export function RequiredDocumentUploadSheet({
         >
           <div className="space-y-2">
             <Label htmlFor="required-document-file">File</Label>
-            <Input
+            <FileDropzone
               id="required-document-file"
-              type="file"
-              accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,message/rfc822,.pdf,.jpg,.jpeg,.png,.webp,.heic,.eml"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              required
+              upload={fileUpload}
+              accept={documentAccept}
             />
+            <p className="text-muted-foreground text-xs">
+              PDF, JPEG, PNG, WebP, HEIC, or EML up to 25 MB.
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -208,7 +225,10 @@ export function RequiredDocumentUploadSheet({
                 setTitle(event.target.value);
               }}
               placeholder={
-                canSuggestRequiredDocumentTitle({ file, documentDate })
+                canSuggestRequiredDocumentTitle({
+                  hasFile: fileUpload.source !== null,
+                  documentDate,
+                })
                   ? undefined
                   : "Choose a file and date to suggest a title"
               }
@@ -234,7 +254,10 @@ export function RequiredDocumentUploadSheet({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={uploading || !kind}>
+            <Button
+              type="submit"
+              disabled={uploading || !kind || fileUpload.status === "uploading"}
+            >
               {uploading ? "Uploading…" : "Upload"}
             </Button>
           </SheetFooter>

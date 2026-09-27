@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Plus, Settings2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
+import { FilePreview } from "@yourtoolshq/data-ui";
+
 import type { PayFrequency } from "~/lib/pay-frequency";
 import type { DeductionSettings } from "~/lib/paycheck-deductions";
 import type { RouterOutputs } from "~/trpc/react";
@@ -225,16 +227,18 @@ export function EmploymentPaychecksPanel({
                     >
                       Attach stub
                     </Button>
-                  ) : (
+                  ) : paycheck.documentFileId && paycheck.documentMimeType ? (
                     <Button size="sm" variant="outline" asChild>
-                      <a
-                        href={`/api/documents/${paycheck.documentId}/file`}
-                        target="_blank"
+                      <FilePreview
+                        file={{
+                          id: paycheck.documentFileId,
+                          mimeType: paycheck.documentMimeType,
+                        }}
                       >
                         View stub
-                      </a>
+                      </FilePreview>
                     </Button>
-                  )}
+                  ) : null}
                   <Button
                     size="sm"
                     variant="ghost"
