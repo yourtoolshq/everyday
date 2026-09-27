@@ -27,7 +27,17 @@ The Phase 3 [audit](../phase-3/architecture-audit.md) selected Taxbook for theme
 
 ## Progress
 
-Shared form primitives now live in `packages/ui` (`input`, `label`, `textarea`, `select`, `separator`, `sheet`, `dialog`, `tooltip`, `skeleton`, plus the primitives already there). Apps import them from `@yourtoolshq/ui/<component>` directly. Money and percent fields use shadcn `InputGroup` text addons (`$`, `%`). Theme mechanics, route states, period coverage, document actions, and numeric expression parsing are still open.
+Shared form primitives live in `packages/ui`. Apps import them from `@yourtoolshq/ui/<component>` directly. Money and percent fields use shadcn `InputGroup` text addons (`$`, `%`).
+
+Adopted since that starting point:
+
+- Theme: Taxbook's light/dark/system provider is shared. Passbook, Tenure, and First Aid keep their own accent hues and now have matching dark tokens, a persisted theme control on General, and theme-aware toasters where a toaster already exists. Data & backups stays storage only.
+- Period coverage: `@yourtoolshq/ui/period-coverage` supplies the year control, grid/list, cell, and legend. Tenure pay periods and Passbook statement periods pass cells, tones, and actions. Derivation, status rules, N/A mutations, and sheets stay in the apps.
+- Document actions: the identical open/edit/delete row lives in `@yourtoolshq/data-ui` as `DocumentActionButtons`. Confirm, invalidation, and labels stay in the apps.
+- Route states: each app has `loading`, `error`, `global-error`, and `not-found` with its own copy and a retry or overview link.
+- Numeric entry: `@yourtoolshq/ui/decimal-entry` normalizes `.89`, `147.3`, and simple `+ - * /` expressions on blur. Taxbook paycheque amounts and Tenure paycheck amounts use it. Range and rounding stay in the apps. A percent variant is still guidance until a second percent form needs the same commit behavior.
+
+Sheet, dialog, and alert-dialog choices are already in the design language. Dates and one-off visuals stay app-local. Sidebar frame extraction is still optional; the four shells differ in nav, banners, and titles.
 
 ## Migration sequence for the next chat
 

@@ -11,7 +11,7 @@ const titles: Record<string, string> = {
   "/items": "Tax Items",
   "/paycheques": "Paycheques",
   "/documents": "Tax Documents",
-  "/settings": "Settings",
+  "/settings": "General",
   "/settings/data": "Data & backups",
 };
 

@@ -3,11 +3,11 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
+import { DocumentActionButtons } from "@yourtoolshq/data-ui";
 import { Badge } from "@yourtoolshq/ui/badge";
 
 import type { RouterOutputs } from "~/trpc/react";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
-import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
 import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
 import { documentTypeLabels, formatFileSize } from "~/lib/documents";
 import { formatDateLabel } from "~/lib/format-date";

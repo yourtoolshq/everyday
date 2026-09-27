@@ -2,6 +2,7 @@ import "~/styles/globals.css";
 
 import { type Metadata } from "next";
 
+import { ThemeProvider } from "@yourtoolshq/ui/theme-provider";
 import { TooltipProvider } from "@yourtoolshq/ui/tooltip";
 
 import { Toaster } from "~/components/ui/sonner";
@@ -16,13 +17,15 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen antialiased">
         <TRPCReactProvider>
-          <TooltipProvider>
-            {children}
-            <Toaster />
-          </TooltipProvider>
+          <ThemeProvider>
+            <TooltipProvider>
+              {children}
+              <Toaster />
+            </TooltipProvider>
+          </ThemeProvider>
         </TRPCReactProvider>
       </body>
     </html>

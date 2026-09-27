@@ -2,17 +2,18 @@
 
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
-import { FilePreview } from "@yourtoolshq/data-ui";
 import { Button } from "@yourtoolshq/ui/button";
 
-type DocumentActionButtonsProps = {
+import { FilePreview } from "./file-preview";
+
+interface DocumentActionButtonsProps {
   fileId: string;
   title: string;
   mimeType: string;
   onEdit?: () => void;
   onDelete?: () => void;
   size?: "icon" | "icon-sm";
-};
+}
 
 export function DocumentActionButtons({
   fileId,

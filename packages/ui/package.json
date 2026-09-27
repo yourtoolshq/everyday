@@ -8,16 +8,21 @@
     "./badge": "./src/badge.tsx",
     "./button": "./src/button.tsx",
     "./card": "./src/card.tsx",
+    "./decimal-entry": "./src/decimal-entry.ts",
     "./dialog": "./src/dialog.tsx",
     "./input": "./src/input.tsx",
     "./input-group": "./src/input-group.tsx",
     "./label": "./src/label.tsx",
+    "./period-coverage": "./src/period-coverage.tsx",
     "./progress": "./src/progress.tsx",
     "./select": "./src/select.tsx",
     "./separator": "./src/separator.tsx",
     "./sheet": "./src/sheet.tsx",
     "./skeleton": "./src/skeleton.tsx",
+    "./status-message": "./src/status-message.tsx",
     "./textarea": "./src/textarea.tsx",
+    "./theme-provider": "./src/theme-provider.tsx",
+    "./theme-setting": "./src/theme-setting.tsx",
     "./tooltip": "./src/tooltip.tsx"
   },
   "scripts": {
@@ -28,6 +33,7 @@
   "dependencies": {
     "class-variance-authority": "catalog:",
     "cn": "catalog:",
+    "next-themes": "^0.4.6",
     "radix-ui": "^1.6.7"
   },
   "peerDependencies": {

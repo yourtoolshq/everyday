@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 
@@ -50,6 +51,7 @@ export function EmploymentPaySettingsSheet({
   deductionSettings: initialDeductionSettings,
   onSuccess,
 }: EmploymentPaySettingsSheetProps) {
+  const router = useRouter();
   const utils = api.useUtils();
   const [payFrequency, setPayFrequency] =
     useState<(typeof payFrequencies)[number]>(initialPayFrequency);
@@ -82,6 +84,7 @@ export function EmploymentPaySettingsSheet({
       toast.success("Pay settings updated.");
       onOpenChange(false);
       onSuccess?.();
+      router.refresh();
     },
     onError: (error) => toast.error(error.message),
   });

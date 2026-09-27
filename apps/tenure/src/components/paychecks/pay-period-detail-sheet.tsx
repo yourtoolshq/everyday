@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Paperclip, Pencil, Plus } from "lucide-react";
+import { ExternalLink, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
 import { Badge } from "@yourtoolshq/ui/badge";
@@ -31,6 +31,7 @@ type PayPeriodDetailSheetProps = {
   onAddPaycheck: (periodKey: string) => void;
   onEditPaycheck: (paycheckId: string) => void;
   onAttachStub: (paycheckId: string) => void;
+  onDeletePaycheck: (paycheckId: string) => void;
   onMarkNotApplicable?: (periodKey: string) => void;
   onUndoNotApplicable?: (periodKey: string) => void;
 };
@@ -43,6 +44,7 @@ export function PayPeriodDetailSheet({
   onAddPaycheck,
   onEditPaycheck,
   onAttachStub,
+  onDeletePaycheck,
   onMarkNotApplicable,
   onUndoNotApplicable,
 }: PayPeriodDetailSheetProps) {
@@ -140,6 +142,18 @@ export function PayPeriodDetailSheet({
                   >
                     <Pencil />
                     Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Delete paycheck from ${formatDateLabel(paycheck.payDate) ?? paycheck.payDate}`}
+                    onClick={() =>
+                      runAction(() => onDeletePaycheck(paycheck.id))
+                    }
+                  >
+                    <Trash2 />
+                    Delete
                   </Button>
                 </div>
               </li>

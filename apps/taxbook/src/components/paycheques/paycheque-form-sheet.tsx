@@ -5,6 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
+import { normalizeDecimalEntry } from "@yourtoolshq/ui/decimal-entry";
 import { Input } from "@yourtoolshq/ui/input";
 import {
   InputGroup,
@@ -45,6 +46,12 @@ type Paycheque = RouterOutputs["paycheque"]["list"]["items"][number];
 
 type AmountField = "grossPayCents" | DeductionAmountField;
 
+function entryToCents(value: string) {
+  const result = normalizeDecimalEntry(value);
+  if (!result.ok) return null;
+  return dollarsToCents(result.value);
+}
+
 export function PaychequeFormSheet({
   paycheque,
   employments,
@@ -70,6 +77,9 @@ export function PaychequeFormSheet({
     ),
   );
   const [payDate, setPayDate] = useState(paycheque?.payDate ?? "");
+  const [amountErrors, setAmountErrors] = useState<
+    Partial<Record<AmountField, string>>
+  >({});
   const [amounts, setAmounts] = useState<Record<AmountField, string>>(
     () =>
       ({
@@ -102,7 +112,7 @@ export function PaychequeFormSheet({
     }
     return (
       Boolean(selectedEmployment?.[field.enabledField]) ||
-      (dollarsToCents(amounts[field.amountField]) ?? 0) > 0
+      (entryToCents(amounts[field.amountField]) ?? 0) > 0
     );
   });
   const parsedAmounts = Object.fromEntries(
@@ -111,7 +121,7 @@ export function PaychequeFormSheet({
         "grossPayCents",
         ...deductionFields.map((field) => field.amountField),
       ] as const
-    ).map((field) => [field, dollarsToCents(amounts[field])]),
+    ).map((field) => [field, entryToCents(amounts[field])]),
   ) as Record<AmountField, number | null>;
   if (
     splitIncomeTax &&
@@ -148,8 +158,31 @@ export function PaychequeFormSheet({
     onError: (error) => toast.error(error.message),
   });
 
+  function commitAmount(field: AmountField, value: string) {
+    const result = normalizeDecimalEntry(value);
+    if (result.ok) {
+      setAmounts((current) => ({ ...current, [field]: result.value }));
+      setAmountErrors((current) => ({ ...current, [field]: undefined }));
+      return;
+    }
+    setAmountErrors((current) => ({ ...current, [field]: result.message }));
+  }
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const expressionErrors: Partial<Record<AmountField, string>> = {};
+    for (const field of [
+      "grossPayCents",
+      ...deductionFields.map((item) => item.amountField),
+    ] as const) {
+      if (field === "incomeTaxCents" && splitIncomeTax) continue;
+      const result = normalizeDecimalEntry(amounts[field]);
+      if (!result.ok) expressionErrors[field] = result.message;
+    }
+    if (Object.values(expressionErrors).some(Boolean)) {
+      setAmountErrors(expressionErrors);
+      return;
+    }
     const invalid = (
       [
         ["grossPayCents", "Gross pay"],
@@ -232,18 +265,31 @@ export function PaychequeFormSheet({
                     className="tabular-nums"
                     inputMode="decimal"
                     value={amounts.grossPayCents}
-                    onChange={(event) =>
+                    onChange={(event) => {
                       setAmounts((current) => ({
                         ...current,
                         grossPayCents: event.target.value,
-                      }))
+                      }));
+                      setAmountErrors((current) => ({
+                        ...current,
+                        grossPayCents: undefined,
+                      }));
+                    }}
+                    onBlur={(event) =>
+                      commitAmount("grossPayCents", event.target.value)
                     }
+                    aria-invalid={Boolean(amountErrors.grossPayCents)}
                     required
                   />
                   <InputGroupAddon>
                     <InputGroupText>$</InputGroupText>
                   </InputGroupAddon>
                 </InputGroup>
+                {amountErrors.grossPayCents ? (
+                  <p className="text-destructive text-xs">
+                    {amountErrors.grossPayCents}
+                  </p>
+                ) : null}
               </div>
               {visibleDeductionFields.map((field) => {
                 const computedIncomeTax =
@@ -263,19 +309,33 @@ export function PaychequeFormSheet({
                               : centsToDollars(parsedAmounts.incomeTaxCents)
                             : amounts[field.amountField]
                         }
-                        onChange={(event) =>
+                        onChange={(event) => {
                           setAmounts((current) => ({
                             ...current,
                             [field.amountField]: event.target.value,
-                          }))
-                        }
+                          }));
+                          setAmountErrors((current) => ({
+                            ...current,
+                            [field.amountField]: undefined,
+                          }));
+                        }}
+                        onBlur={(event) => {
+                          if (computedIncomeTax) return;
+                          commitAmount(field.amountField, event.target.value);
+                        }}
                         readOnly={computedIncomeTax}
+                        aria-invalid={Boolean(amountErrors[field.amountField])}
                         required={!computedIncomeTax}
                       />
                       <InputGroupAddon>
                         <InputGroupText>$</InputGroupText>
                       </InputGroupAddon>
                     </InputGroup>
+                    {amountErrors[field.amountField] ? (
+                      <p className="text-destructive text-xs">
+                        {amountErrors[field.amountField]}
+                      </p>
+                    ) : null}
                     {computedIncomeTax ? (
                       <p className="text-muted-foreground text-xs">
                         Sum of federal and Manitoba tax withheld.

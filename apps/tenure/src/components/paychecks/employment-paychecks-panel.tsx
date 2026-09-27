@@ -1,10 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Plus, Settings2, Trash2, Upload } from "lucide-react";
+import { Plus, Settings2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
-import { FilePreview } from "@yourtoolshq/data-ui";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,7 +14,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@yourtoolshq/ui/alert-dialog";
-import { Badge } from "@yourtoolshq/ui/badge";
 import { Button } from "@yourtoolshq/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
 
@@ -27,8 +25,6 @@ import { EmploymentPaySettingsSheet } from "~/components/paychecks/employment-pa
 import { PayStubUploadSheet } from "~/components/paychecks/pay-stub-upload-sheet";
 import { PaycheckFormSheet } from "~/components/paychecks/paycheck-form-sheet";
 import { PaycheckImportSheet } from "~/components/paychecks/paycheck-import-sheet";
-import { formatDateLabel } from "~/lib/documents";
-import { formatCad } from "~/lib/money";
 import { payFrequencyLabels } from "~/lib/pay-frequency";
 import { api } from "~/trpc/react";
 
@@ -176,88 +172,13 @@ export function EmploymentPaychecksPanel({
             );
             if (paycheck) openStubUpload(paycheck);
           }}
+          onDeletePaycheck={(paycheckId) => {
+            const paycheck = sortedPaychecks.find(
+              (item) => item.id === paycheckId,
+            );
+            if (paycheck) setDeleteTarget(paycheck);
+          }}
         />
-
-        {sortedPaychecks.length === 0 ? (
-          <p className="text-muted-foreground text-sm">
-            No paychecks yet. Add the first one to start building pay history.
-          </p>
-        ) : (
-          <ul className="divide-y rounded-lg border">
-            {sortedPaychecks.map((paycheck) => (
-              <li
-                key={paycheck.id}
-                className="flex items-start justify-between gap-3 px-3 py-3"
-              >
-                <div className="min-w-0 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-medium">
-                      {formatDateLabel(paycheck.payDate) ?? paycheck.payDate}
-                    </p>
-                    {!paycheck.documentId ? (
-                      <Badge variant="destructive">Missing stub</Badge>
-                    ) : (
-                      <Badge variant="secondary">Stub attached</Badge>
-                    )}
-                  </div>
-                  <p className="text-muted-foreground text-xs">
-                    Period{" "}
-                    {formatDateLabel(paycheck.periodStartDate) ??
-                      paycheck.periodStartDate}
-                    {" – "}
-                    {formatDateLabel(paycheck.periodEndDate) ??
-                      paycheck.periodEndDate}
-                  </p>
-                  <p className="text-sm">
-                    Gross {formatCad(paycheck.grossPayCents)} · Net{" "}
-                    {formatCad(paycheck.netPayCents)}
-                  </p>
-                  {paycheck.documentTitle ? (
-                    <p className="text-muted-foreground text-xs">
-                      {paycheck.documentTitle}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="flex shrink-0 flex-wrap gap-1">
-                  {!paycheck.documentId ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => openStubUpload(paycheck)}
-                    >
-                      Attach stub
-                    </Button>
-                  ) : paycheck.documentFileId && paycheck.documentMimeType ? (
-                    <Button size="sm" variant="outline" asChild>
-                      <FilePreview
-                        file={{
-                          id: paycheck.documentFileId,
-                          mimeType: paycheck.documentMimeType,
-                        }}
-                      >
-                        View stub
-                      </FilePreview>
-                    </Button>
-                  ) : null}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => openEdit(paycheck)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setDeleteTarget(paycheck)}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
       </CardContent>
 
       <PaycheckFormSheet

@@ -9,6 +9,7 @@ import {
   DatabaseBackup,
   FileCheck,
   LayoutDashboard,
+  Settings2,
   Users,
 } from "lucide-react";
 
@@ -81,6 +82,18 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Settings</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/settings"}
+                  tooltip="General"
+                >
+                  <Link href="/settings">
+                    <Settings2 aria-hidden="true" />
+                    <span>General</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild

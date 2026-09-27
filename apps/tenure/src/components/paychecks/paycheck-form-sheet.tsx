@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
 import { Button } from "@yourtoolshq/ui/button";
+import { normalizeDecimalEntry } from "@yourtoolshq/ui/decimal-entry";
 import { Input } from "@yourtoolshq/ui/input";
 import {
   InputGroup,
@@ -61,6 +62,12 @@ import { api } from "~/trpc/react";
 
 type Paycheck = RouterOutputs["paychecks"]["listByEmployment"][number];
 type AmountField = "grossPayCents" | DeductionAmountField;
+
+function entryToCents(value: string) {
+  const result = normalizeDecimalEntry(value);
+  if (!result.ok) return null;
+  return dollarsToCents(result.value);
+}
 
 type PaycheckFormSheetProps = {
   open: boolean;
@@ -261,7 +268,7 @@ export function PaycheckFormSheet({
         }
         return (
           deductionSettings[field.enabledField] ||
-          (dollarsToCents(amounts[field.amountField]) ?? 0) > 0
+          (entryToCents(amounts[field.amountField]) ?? 0) > 0
         );
       },
     );
@@ -274,7 +281,7 @@ export function PaycheckFormSheet({
           "grossPayCents",
           ...deductionFields.map((field) => field.amountField),
         ] as const
-      ).map((field) => [field, dollarsToCents(amounts[field])]),
+      ).map((field) => [field, entryToCents(amounts[field])]),
     ) as Record<AmountField, number | null>;
 
     if (
@@ -666,21 +673,40 @@ function DollarInput({
   readOnly?: boolean;
   required?: boolean;
 }) {
+  const [error, setError] = useState<string | null>(null);
+
   return (
-    <InputGroup>
-      <InputGroupInput
-        id={id}
-        className="tabular-nums"
-        inputMode="decimal"
-        value={value}
-        onChange={(event) => onChange?.(event.target.value)}
-        readOnly={readOnly}
-        required={required}
-      />
-      <InputGroupAddon>
-        <InputGroupText>$</InputGroupText>
-      </InputGroupAddon>
-    </InputGroup>
+    <div className="space-y-1">
+      <InputGroup>
+        <InputGroupInput
+          id={id}
+          className="tabular-nums"
+          inputMode="decimal"
+          value={value}
+          onChange={(event) => {
+            setError(null);
+            onChange?.(event.target.value);
+          }}
+          onBlur={() => {
+            if (readOnly || !onChange) return;
+            const result = normalizeDecimalEntry(value);
+            if (result.ok) {
+              onChange(result.value);
+              setError(null);
+              return;
+            }
+            setError(result.message);
+          }}
+          readOnly={readOnly}
+          aria-invalid={Boolean(error)}
+          required={required}
+        />
+        <InputGroupAddon>
+          <InputGroupText>$</InputGroupText>
+        </InputGroupAddon>
+      </InputGroup>
+      {error ? <p className="text-destructive text-xs">{error}</p> : null}
+    </div>
   );
 }
 

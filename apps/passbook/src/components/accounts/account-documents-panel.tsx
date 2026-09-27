@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Plus } from "lucide-react";
 
-import { FilePreview } from "@yourtoolshq/data-ui";
+import { DocumentActionButtons, FilePreview } from "@yourtoolshq/data-ui";
 import { Badge } from "@yourtoolshq/ui/badge";
 import { Button } from "@yourtoolshq/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
 import type { RouterOutputs } from "~/trpc/react";
 import { AccountDocumentUploadSheet } from "~/components/documents/account-document-upload-sheet";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
-import { DocumentActionButtons } from "~/components/documents/document-action-buttons";
 import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
 import { documentTypeLabels, formatFileSize } from "~/lib/documents";
 import { formatDateLabel } from "~/lib/format-date";

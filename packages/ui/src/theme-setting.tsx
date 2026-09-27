@@ -9,16 +9,16 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@yourtoolshq/ui/card";
-import { Label } from "@yourtoolshq/ui/label";
+} from "./card";
+import { Label } from "./label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@yourtoolshq/ui/select";
-import { Skeleton } from "@yourtoolshq/ui/skeleton";
+} from "./select";
+import { Skeleton } from "./skeleton";
 
 const themes = [
   { value: "light", label: "Light" },
