@@ -370,6 +370,10 @@ explicitly accepted backup interval.
 
 **Goal:** Establish consistent UI components and interaction patterns across applications.
 
+The code-backed [Phase 5 implementation plan](./docs/phase-5/ui-plan.md) records
+candidate locations, boundaries, migration order, and validation. The compact
+[design language](./DESIGN_LANGUAGE.md) records repeatable UI choices.
+
 This is more than extracting shadcn components. We also want documented guidance explaining **when and why** particular patterns should be used.
 
 **Initial candidates:**
