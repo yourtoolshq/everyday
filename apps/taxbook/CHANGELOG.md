@@ -9,3 +9,5 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 ### Changed
 
 ### Fixed
+
+- Restore the Settings link for household members and Tenure sync controls.
