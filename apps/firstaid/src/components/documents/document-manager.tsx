@@ -4,6 +4,8 @@ import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { Download, FileText, Pencil, Plus, Trash2 } from "lucide-react";
 
+import { FilePreview } from "@yourtoolshq/data-ui";
+
 import type { DocumentType } from "~/lib/documents";
 import type { RouterOutputs } from "~/trpc/react";
 import {
@@ -40,12 +42,14 @@ import {
 } from "~/components/ui/select";
 import { claimStatusLabels } from "~/lib/benefits";
 import {
+  documentAccept,
   documentTypeLabels,
   documentTypes,
   formatFileSize,
   isClaimDocumentType,
   titleFromFilename,
 } from "~/lib/documents";
+import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type VisitDetail = NonNullable<RouterOutputs["visits"]["detail"]>;
@@ -149,14 +153,12 @@ function DocumentCard({
         </div>
         <div className="flex shrink-0 gap-2">
           <Button asChild size="sm" variant="outline">
-            <a
-              href={`/api/documents/${document.id}/file`}
-              target="_blank"
-              rel="noreferrer"
+            <FilePreview
+              file={{ id: document.fileId, mimeType: document.mimeType }}
             >
               <Download />
               Open
-            </a>
+            </FilePreview>
           </Button>
           <Button
             size="icon-sm"
@@ -223,55 +225,61 @@ export function UploadDocumentDialog({
   trigger?: React.ReactNode;
 }) {
   const utils = api.useUtils();
+  const createDocument = api.documents.create.useMutation();
+  const fileUpload = useUpload("document");
+  const resetUpload = fileUpload.reset;
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
+  const [titleTouched, setTitleTouched] = useState(false);
   const [type, setType] = useState<DocumentType>();
   const [claimId, setClaimId] = useState(defaultClaimId ?? "none");
-  const [file, setFile] = useState<File>();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string>();
+  const pickedFile = fileUpload.source;
 
   useEffect(() => {
     if (!open) return;
+    resetUpload();
+    setTitle("");
+    setTitleTouched(false);
+    setType(defaultClaimId ? "claim_record" : undefined);
     setClaimId(defaultClaimId ?? "none");
-    if (defaultClaimId) setType("claim_record");
-  }, [defaultClaimId, open]);
+    setError(undefined);
+  }, [defaultClaimId, open, resetUpload]);
+
+  useEffect(() => {
+    if (!pickedFile || titleTouched) return;
+    setTitle(titleFromFilename(pickedFile.name));
+  }, [pickedFile, titleTouched]);
 
   function reset() {
+    resetUpload();
     setTitle("");
-    setType(undefined);
+    setTitleTouched(false);
+    setType(defaultClaimId ? "claim_record" : undefined);
     setClaimId(defaultClaimId ?? "none");
-    setFile(undefined);
     setError(undefined);
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!file || !type) {
+    const uploaded = fileUpload.file;
+    if (!uploaded || !type) {
       setError("Choose a file and document type.");
       return;
     }
     setPending(true);
     setError(undefined);
-    const body = new FormData();
-    body.set("file", file);
-    body.set("title", title);
-    body.set("type", type);
-    if (isClaimDocumentType(type) && claimId !== "none") {
-      body.set("claimId", claimId);
-    }
 
     try {
-      const response = await fetch(`/api/visits/${visitId}/documents`, {
-        method: "POST",
-        body,
+      await createDocument.mutateAsync({
+        visitId,
+        file: uploaded.token,
+        title,
+        type,
+        claimId:
+          isClaimDocumentType(type) && claimId !== "none" ? claimId : null,
       });
-      if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        throw new Error(result?.error ?? "The document could not be uploaded.");
-      }
       await Promise.all([
         utils.visits.detail.invalidate({ id: visitId }),
         utils.visits.overview.invalidate(),
@@ -317,24 +325,24 @@ export function UploadDocumentDialog({
         <form className="space-y-5" onSubmit={submit}>
           <div className="space-y-2">
             <Label htmlFor="document-file">File</Label>
-            <Input
+            <FileDropzone
               id="document-file"
-              type="file"
-              accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-              required
-              onChange={(event) => {
-                const nextFile = event.target.files?.[0];
-                setFile(nextFile);
-                if (nextFile) setTitle(titleFromFilename(nextFile.name));
-              }}
+              upload={fileUpload}
+              accept={documentAccept}
             />
+            <p className="text-muted-foreground text-xs">
+              PDF, JPEG, PNG, WebP, or HEIC up to 25 MB.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="document-title">Title</Label>
             <Input
               id="document-title"
               value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) => {
+                setTitleTouched(true);
+                setTitle(event.target.value);
+              }}
               maxLength={160}
               required
             />
@@ -354,10 +362,21 @@ export function UploadDocumentDialog({
               onValueChange={setClaimId}
             />
           ) : null}
-          {error ? <p className="text-destructive text-sm">{error}</p> : null}
+          {error || fileUpload.error ? (
+            <p className="text-destructive text-sm">
+              {error ?? fileUpload.error}
+            </p>
+          ) : null}
           <DialogFooter>
-            <Button type="submit" disabled={pending}>
-              {pending ? "Uploading…" : "Add document"}
+            <Button
+              type="submit"
+              disabled={
+                pending || fileUpload.status !== "uploaded" || !type || !title
+              }
+            >
+              {fileUpload.status === "uploading" || pending
+                ? "Uploading…"
+                : "Add document"}
             </Button>
           </DialogFooter>
         </form>
