@@ -109,6 +109,28 @@ describe("POST upload/:endpoint", () => {
 });
 
 describe("GET files/:id", () => {
+  it("serves a migrated file with its owning record id", async () => {
+    const id = "tax-document-31";
+    const storageKey = "00000000-0000-4000-8000-00020000001f.pdf";
+    await writeFile(join(context.documentsDir, storageKey), pdfBytes);
+    await context.db.insert(filesTable).values({
+      id,
+      storageKey,
+      originalFilename: "Tax document.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: pdfBytes.byteLength,
+      endpoint: "document",
+    });
+
+    const response = await handlers.GET(
+      new Request(`http://localhost/api/data/files/${id}`),
+      params("files", id),
+    );
+
+    expect(response.status).toBe(200);
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(pdfBytes);
+  });
+
   it("serves a stored file inline", async () => {
     const stored = await uploadAndClaim("Relevé März.pdf");
 
@@ -143,7 +165,7 @@ describe("GET files/:id", () => {
 
   it.each([
     ["an unknown file", ["files", "4f7d3c2a-1b0e-4a9f-8c6d-5e4f3a2b1c0d"]],
-    ["a non-uuid id", ["files", "..%2Fpassbook.db"]],
+    ["an unsafe file id", ["files", "..%2Fpassbook.db"]],
     ["an unknown resource", ["settings"]],
     [
       "extra path segments",
