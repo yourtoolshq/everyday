@@ -46,6 +46,18 @@ export const db = dataPlatform.db;
 
 The platform owns the database connection so it can close and reopen it around a restore.
 
+## Local production and development
+
+Phase 4 cutovers move applications that contain personal data onto the shared data platform on the computer that owns that data. That computer may also be used to develop and test new features. The production path must remain separate from the development path:
+
+- Production uses its established named data and backup volumes. Development uses the app's local `.data` directory; disposable Docker tests use separate volumes. Never mount production volumes into a development or test process.
+- Production app containers do not publish host ports. Attach them to the shared external `web` network and expose them through Traefik at the app's `*.tools.local` hostname. Set `traefik.docker.network=web` when the app is attached to more than one network. The reverse proxy owns the host's HTTP/HTTPS ports; direct host ports remain available to development servers when needed.
+- The local host configuration owns the production service lifecycle: startup, restart behavior, source revision, and upgrade invocation. On macOS this can be managed by nix-darwin/Arion in the user's host configuration; machine-specific service files and secrets stay outside this repository.
+- Production source is pinned to a commit. For a flake-managed checkout, `nix flake update everyday` advances that pin to the current `main`, and `darwin-rebuild switch` applies the new service configuration. A routine system rebuild does not silently advance the app pin.
+- An upgrade builds the candidate image first, then asks the running app to create and verify a backup. If the build or backup fails, leave the current container running. Replace it only after both succeed, then wait for health and verify the upgraded app. Pending schema migrations also take the platform's automatic pre-migration backup.
+
+The cutover validation confirms that the production hostname works without a published app port, development can run at the same time against isolated data, automatic startup uses the pinned production source, and a failed build or backup does not replace the working production container. These are the local single-host requirements for safely moving existing production data; Phase 7 can standardize broader deployment conventions later.
+
 ### Wiring
 
 | File                                   | Content                                                                         |

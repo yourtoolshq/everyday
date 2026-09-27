@@ -338,6 +338,12 @@ from database blobs.
 - Automated restore verification into an empty disposable volume
 - Safe Taxbook attachment migration that copies and verifies every blob before
   retiring blob data and retains a rollback path through human validation
+- A safe local production cutover on the computer that owns each app's personal
+  data, including its host-managed startup and upgrade path
+- Production app containers reachable through the local reverse proxy without
+  publishing app ports; development and test instances use isolated data
+- A verified pre-upgrade backup before replacing the running production
+  container, followed by health and recovery validation
 
 **Critical requirements:**
 
@@ -348,10 +354,15 @@ from database blobs.
 This phase establishes the data-safety capabilities that Phase 8 (release management) will later integrate into automated upgrade and rollback workflows. That is a dependency, not duplication.
 
 **Completion criteria:** Every application uses the same storage/backup/restore
-foundation. Personal data can be backed up, restored, and safely migrated using
-documented and tested procedures, including verified Taxbook attachment
-migration. A failed deployment or corrupted application can be recovered
-without losing records beyond the explicitly accepted backup interval.
+foundation and can run in production on its data-owning local computer while
+development and test instances use separate data. Production startup and
+upgrades are controlled by the host configuration, app containers are exposed
+through the reverse proxy without publishing app ports, and upgrades verify a
+backup before replacing the running container. Personal data can be backed up,
+restored, and safely migrated using documented and tested procedures,
+including verified Taxbook attachment migration. A failed deployment or
+corrupted application can be recovered without losing records beyond the
+explicitly accepted backup interval.
 
 ---
 
