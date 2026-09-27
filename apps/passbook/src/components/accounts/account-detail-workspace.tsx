@@ -10,6 +10,12 @@ import {
   Upload,
 } from "lucide-react";
 
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+import { Separator } from "@yourtoolshq/ui/separator";
+import { Skeleton } from "@yourtoolshq/ui/skeleton";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { AccountActivityPanel } from "~/components/accounts/account-activity-panel";
 import {
@@ -22,11 +28,6 @@ import { AccountSettingsSheet } from "~/components/accounts/account-settings-she
 import { AccountStatementPeriods } from "~/components/accounts/account-statement-periods";
 import { AccountTermsPanel } from "~/components/accounts/account-terms-panel";
 import { StatementUploadSheet } from "~/components/documents/statement-upload-sheet";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Separator } from "~/components/ui/separator";
-import { Skeleton } from "~/components/ui/skeleton";
 import { accountStatusLabels } from "~/lib/account-status";
 import { accountTypeLabels } from "~/lib/account-types";
 import { canDeriveStatementPeriods } from "~/lib/expected-periods";

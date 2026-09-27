@@ -4,22 +4,18 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import type {
-  FilingItemValueInput,
-  FilingStatus,
-  ReturnCopyStatus,
-} from "~/domain/filing";
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -27,8 +23,15 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/sheet";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type {
+  FilingItemValueInput,
+  FilingStatus,
+  ReturnCopyStatus,
+} from "~/domain/filing";
+import type { RouterOutputs } from "~/trpc/react";
 import {
   filingStatuses,
   filingStatusLabels,
@@ -408,13 +411,12 @@ export function OriginalReturnSheet({
                         <Label htmlFor={`filed-amount-${index}`}>
                           Filed amount
                         </Label>
-                        <Input
+                        <MoneyField
                           id={`filed-amount-${index}`}
-                          inputMode="decimal"
                           value={row.amount}
-                          onChange={(event) =>
+                          onValueChange={(value) =>
                             updateItemValue(index, {
-                              amount: event.target.value,
+                              amount: value,
                             })
                           }
                         />
@@ -442,11 +444,10 @@ export function OriginalReturnSheet({
 
             <div className="space-y-2">
               <Label htmlFor="filing-date">Filing date</Label>
-              <Input
+              <DateField
                 id="filing-date"
-                type="date"
                 value={submissionDate}
-                onChange={(event) => setSubmissionDate(event.target.value)}
+                onChange={(value) => setSubmissionDate(value)}
               />
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -468,13 +469,12 @@ export function OriginalReturnSheet({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="filing-result-amount">Amount</Label>
-                <Input
+                <MoneyField
                   id="filing-result-amount"
-                  inputMode="decimal"
                   placeholder="0.00"
                   value={resultAmount}
                   disabled={resultDirection === "none"}
-                  onChange={(event) => setResultAmount(event.target.value)}
+                  onValueChange={setResultAmount}
                 />
               </div>
             </div>

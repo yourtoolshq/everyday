@@ -5,20 +5,17 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import type { AccountEventType } from "~/lib/account-events";
-import type { AccountTerms } from "~/lib/account-terms";
-import type { RouterOutputs } from "~/trpc/react";
-import { AccountTermsFormFields } from "~/components/accounts/account-terms-form-fields";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -26,8 +23,13 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/sheet";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type { AccountEventType } from "~/lib/account-events";
+import type { AccountTerms } from "~/lib/account-terms";
+import type { RouterOutputs } from "~/trpc/react";
+import { AccountTermsFormFields } from "~/components/accounts/account-terms-form-fields";
 import {
   accountEventTypeLabels,
   accountEventTypes,
@@ -246,25 +248,19 @@ export function AccountEventSheet({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="event-start-date">Start date</Label>
-                <Input
+                <DateField
                   id="event-start-date"
-                  type="date"
                   value={startDate}
-                  onChange={(inputEvent) =>
-                    setStartDate(inputEvent.target.value)
-                  }
+                  onChange={(value) => setStartDate(value)}
                   required
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="event-resolved-date">Resolved date</Label>
-                <Input
+                <DateField
                   id="event-resolved-date"
-                  type="date"
                   value={resolvedDate}
-                  onChange={(inputEvent) =>
-                    setResolvedDate(inputEvent.target.value)
-                  }
+                  onChange={(value) => setResolvedDate(value)}
                 />
               </div>
             </div>
@@ -310,13 +306,10 @@ export function AccountEventSheet({
                       <Label htmlFor="event-terms-effective-date">
                         Terms effective date
                       </Label>
-                      <Input
+                      <DateField
                         id="event-terms-effective-date"
-                        type="date"
                         value={termsEffectiveDate}
-                        onChange={(inputEvent) =>
-                          setTermsEffectiveDate(inputEvent.target.value)
-                        }
+                        onChange={(value) => setTermsEffectiveDate(value)}
                         required
                       />
                     </div>

@@ -5,10 +5,6 @@ import { useState } from "react";
 import { Download, FileText, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import type { ClaimStatus } from "~/lib/benefits";
-import type { RouterInputs, RouterOutputs } from "~/trpc/react";
-import { UploadDocumentDialog } from "~/components/documents/document-manager";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,10 +15,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -31,17 +27,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+} from "@yourtoolshq/ui/dialog";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/select";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type { ClaimStatus } from "~/lib/benefits";
+import type { RouterInputs, RouterOutputs } from "~/trpc/react";
+import { UploadDocumentDialog } from "~/components/documents/document-manager";
 import { claimStatuses, claimStatusLabels } from "~/lib/benefits";
 import { documentTypeLabels } from "~/lib/documents";
 import { formatCents, parseDollarsToCents } from "~/lib/money";
@@ -318,10 +318,9 @@ function ClaimDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="claim-amount">Amount</Label>
-              <Input
+              <MoneyField
                 id="claim-amount"
                 name="amount"
-                inputMode="decimal"
                 defaultValue={
                   claim ? formatCents(claim.amountCents).replace("$", "") : ""
                 }

@@ -1,11 +1,12 @@
-import type { EstimateData } from "./types";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "~/components/ui/card";
+} from "@yourtoolshq/ui/card";
+
+import type { EstimateData } from "./types";
 import { formatCad } from "~/domain/money";
 
 export function HouseholdItems({

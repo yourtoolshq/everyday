@@ -4,10 +4,9 @@ import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import { AccountTermsFormFields } from "~/components/accounts/account-terms-form-fields";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -15,8 +14,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/sheet";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import { AccountTermsFormFields } from "~/components/accounts/account-terms-form-fields";
 import { type AccountTerms } from "~/lib/account-terms";
 import { api } from "~/trpc/react";
 
@@ -86,11 +87,10 @@ export function AccountTermsSheet({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="terms-effective-date">Effective date</Label>
-                <Input
+                <DateField
                   id="terms-effective-date"
-                  type="date"
                   value={effectiveDate}
-                  onChange={(event) => setEffectiveDate(event.target.value)}
+                  onChange={(value) => setEffectiveDate(value)}
                   required
                 />
               </div>

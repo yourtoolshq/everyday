@@ -26,7 +26,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "~/components/ui/sidebar";
+} from "@yourtoolshq/ui/sidebar";
+
 import { api } from "~/trpc/react";
 import { YearSwitcher } from "./year-switcher";
 
@@ -96,11 +97,11 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuButton
                   asChild
                   isActive={pathname === "/settings"}
-                  tooltip="Settings"
+                  tooltip="General"
                 >
                   <Link href="/settings">
                     <IconSettings aria-hidden="true" />
-                    <span>Settings</span>
+                    <span>General</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

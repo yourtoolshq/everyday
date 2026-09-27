@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { IconAlertTriangle, IconChevronRight } from "@tabler/icons-react";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
 import type { EstimateData } from "./types";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
 export function EstimateWarnings({ data }: { data: EstimateData }) {
   return (

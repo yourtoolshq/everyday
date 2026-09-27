@@ -2,12 +2,13 @@
 
 import { IconDots, IconEdit, IconPlus, IconTrash } from "@tabler/icons-react";
 
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
+
 import {
   TenureEmploymentLink,
   TenureEmploymentTag,
 } from "~/components/tenure/tenure-external-link";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,

@@ -1,11 +1,13 @@
+import { normalizeDecimalEntry } from "@yourtoolshq/ui/decimal-entry";
+
 export function dollarsToCents(
   value: string | null | undefined,
 ): number | null {
   if (value === null || value === undefined) return null;
-  const normalized = value.trim().replaceAll(",", "");
-  if (normalized === "") return null;
+  const result = normalizeDecimalEntry(value);
+  if (!result.ok || result.value === "") return null;
 
-  const amount = Number(normalized);
+  const amount = Number(result.value);
   if (!Number.isFinite(amount) || amount < 0) return null;
   return Math.round(amount * 100);
 }

@@ -4,18 +4,18 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import type { DeductionAmountField } from "~/domain/employment";
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
+import { normalizeDecimalEntry } from "@yourtoolshq/ui/decimal-entry";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -23,7 +23,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
+} from "@yourtoolshq/ui/sheet";
+
+import type { DeductionAmountField } from "~/domain/employment";
+import type { RouterOutputs } from "~/trpc/react";
 import {
   calculateNetPay,
   deductionFields,
@@ -37,6 +40,12 @@ type Employment = RouterOutputs["employment"]["list"]["items"][number];
 type Paycheque = RouterOutputs["paycheque"]["list"]["items"][number];
 
 type AmountField = "grossPayCents" | DeductionAmountField;
+
+function entryToCents(value: string) {
+  const result = normalizeDecimalEntry(value);
+  if (!result.ok) return null;
+  return dollarsToCents(result.value);
+}
 
 export function PaychequeFormSheet({
   paycheque,
@@ -63,6 +72,9 @@ export function PaychequeFormSheet({
     ),
   );
   const [payDate, setPayDate] = useState(paycheque?.payDate ?? "");
+  const [amountErrors, setAmountErrors] = useState<
+    Partial<Record<AmountField, string>>
+  >({});
   const [amounts, setAmounts] = useState<Record<AmountField, string>>(
     () =>
       ({
@@ -95,7 +107,7 @@ export function PaychequeFormSheet({
     }
     return (
       Boolean(selectedEmployment?.[field.enabledField]) ||
-      (dollarsToCents(amounts[field.amountField]) ?? 0) > 0
+      (entryToCents(amounts[field.amountField]) ?? 0) > 0
     );
   });
   const parsedAmounts = Object.fromEntries(
@@ -104,7 +116,7 @@ export function PaychequeFormSheet({
         "grossPayCents",
         ...deductionFields.map((field) => field.amountField),
       ] as const
-    ).map((field) => [field, dollarsToCents(amounts[field])]),
+    ).map((field) => [field, entryToCents(amounts[field])]),
   ) as Record<AmountField, number | null>;
   if (
     splitIncomeTax &&
@@ -143,6 +155,19 @@ export function PaychequeFormSheet({
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const expressionErrors: Partial<Record<AmountField, string>> = {};
+    for (const field of [
+      "grossPayCents",
+      ...deductionFields.map((item) => item.amountField),
+    ] as const) {
+      if (field === "incomeTaxCents" && splitIncomeTax) continue;
+      const result = normalizeDecimalEntry(amounts[field]);
+      if (!result.ok) expressionErrors[field] = result.message;
+    }
+    if (Object.values(expressionErrors).some(Boolean)) {
+      setAmountErrors(expressionErrors);
+      return;
+    }
     const invalid = (
       [
         ["grossPayCents", "Gross pay"],
@@ -203,13 +228,12 @@ export function PaychequeFormSheet({
             </div>
             <div className="space-y-2">
               <Label htmlFor="pay-date">Pay date</Label>
-              <Input
+              <DateField
                 id="pay-date"
-                type="date"
                 min={`${year}-01-01`}
                 max={`${year}-12-31`}
                 value={payDate}
-                onChange={(event) => setPayDate(event.target.value)}
+                onChange={(value) => setPayDate(value)}
                 required
               />
               <p className="text-muted-foreground text-xs">
@@ -219,24 +243,22 @@ export function PaychequeFormSheet({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="grossPayCents">Gross pay</Label>
-                <div className="relative">
-                  <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-                    $
-                  </span>
-                  <Input
-                    id="grossPayCents"
-                    className="pl-7 tabular-nums"
-                    inputMode="decimal"
-                    value={amounts.grossPayCents}
-                    onChange={(event) =>
-                      setAmounts((current) => ({
-                        ...current,
-                        grossPayCents: event.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
+                <MoneyField
+                  id="grossPayCents"
+                  value={amounts.grossPayCents}
+                  error={amountErrors.grossPayCents}
+                  onValueChange={(next) => {
+                    setAmounts((current) => ({
+                      ...current,
+                      grossPayCents: next,
+                    }));
+                    setAmountErrors((current) => ({
+                      ...current,
+                      grossPayCents: undefined,
+                    }));
+                  }}
+                  required
+                />
               </div>
               {visibleDeductionFields.map((field) => {
                 const computedIncomeTax =
@@ -244,31 +266,30 @@ export function PaychequeFormSheet({
                 return (
                   <div key={field.amountField} className="space-y-2">
                     <Label htmlFor={field.amountField}>{field.label}</Label>
-                    <div className="relative">
-                      <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-                        $
-                      </span>
-                      <Input
-                        id={field.amountField}
-                        className="pl-7 tabular-nums"
-                        inputMode="decimal"
-                        value={
-                          computedIncomeTax
-                            ? parsedAmounts.incomeTaxCents === null
-                              ? ""
-                              : centsToDollars(parsedAmounts.incomeTaxCents)
-                            : amounts[field.amountField]
-                        }
-                        onChange={(event) =>
-                          setAmounts((current) => ({
-                            ...current,
-                            [field.amountField]: event.target.value,
-                          }))
-                        }
-                        readOnly={computedIncomeTax}
-                        required={!computedIncomeTax}
-                      />
-                    </div>
+                    <MoneyField
+                      id={field.amountField}
+                      value={
+                        computedIncomeTax
+                          ? parsedAmounts.incomeTaxCents === null
+                            ? ""
+                            : centsToDollars(parsedAmounts.incomeTaxCents)
+                          : amounts[field.amountField]
+                      }
+                      error={amountErrors[field.amountField]}
+                      readOnly={computedIncomeTax}
+                      arithmetic={!computedIncomeTax}
+                      required={!computedIncomeTax}
+                      onValueChange={(next) => {
+                        setAmounts((current) => ({
+                          ...current,
+                          [field.amountField]: next,
+                        }));
+                        setAmountErrors((current) => ({
+                          ...current,
+                          [field.amountField]: undefined,
+                        }));
+                      }}
+                    />
                     {computedIncomeTax ? (
                       <p className="text-muted-foreground text-xs">
                         Sum of federal and Manitoba tax withheld.
@@ -279,21 +300,16 @@ export function PaychequeFormSheet({
               })}
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="calculated-net-pay">Net pay (calculated)</Label>
-                <div className="relative">
-                  <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-                    $
-                  </span>
-                  <Input
-                    id="calculated-net-pay"
-                    className="pl-7 tabular-nums"
-                    value={
-                      netPayCents === null || netPayCents < 0
-                        ? ""
-                        : centsToDollars(netPayCents)
-                    }
-                    readOnly
-                  />
-                </div>
+                <MoneyField
+                  id="calculated-net-pay"
+                  value={
+                    netPayCents === null || netPayCents < 0
+                      ? ""
+                      : centsToDollars(netPayCents)
+                  }
+                  readOnly
+                  arithmetic={false}
+                />
                 <p className="text-muted-foreground text-xs">
                   Compare this amount with the pay statement. A difference
                   usually means a deduction is missing or incorrect.

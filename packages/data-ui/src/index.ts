@@ -6,6 +6,7 @@ import { useUpload } from "./upload";
 
 export { BackupStatusBanner } from "./backup-status-banner";
 export { DataSettingsPage } from "./data-settings-page";
+export { DocumentActionButtons } from "./document-action-buttons";
 export { FilePreview, filePreviewUrl, fileUrl } from "./file-preview";
 export type { PreviewableFile } from "./file-preview";
 export type { Upload, UploadedFile, UploadState } from "./upload";

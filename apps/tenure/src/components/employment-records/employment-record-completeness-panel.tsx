@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
 import type { RequiredDocumentKind } from "~/lib/employment-document-suggestions";
 import type { EmploymentRecordRequirement } from "~/lib/employment-record-completeness";
 import type { RouterOutputs } from "~/trpc/react";
 import { RequiredDocumentUploadSheet } from "~/components/employment-records/required-document-upload-sheet";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { employmentRecordCompletenessLabels } from "~/lib/employment-record-completeness";
 import { api } from "~/trpc/react";
 

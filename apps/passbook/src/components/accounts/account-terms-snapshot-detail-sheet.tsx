@@ -5,8 +5,6 @@ import Link from "next/link";
 import { Link2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import type { RouterOutputs } from "~/trpc/react";
-import { AccountTermsSnapshotSheet } from "~/components/accounts/account-terms-snapshot-sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,9 +14,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -26,7 +24,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
+} from "@yourtoolshq/ui/sheet";
+
+import type { RouterOutputs } from "~/trpc/react";
+import { AccountTermsSnapshotSheet } from "~/components/accounts/account-terms-snapshot-sheet";
 import {
   accountTermsFieldLabels,
   listAccountTermsEntries,

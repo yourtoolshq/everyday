@@ -12,7 +12,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
+} from "@yourtoolshq/ui/alert-dialog";
+
 import { api } from "~/trpc/react";
 
 type DeleteTarget = {

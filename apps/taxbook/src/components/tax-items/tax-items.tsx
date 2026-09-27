@@ -4,7 +4,6 @@ import { useState } from "react";
 import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 
-import type { RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,9 +13,11 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-import { Button } from "~/components/ui/button";
-import { Skeleton } from "~/components/ui/skeleton";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Button } from "@yourtoolshq/ui/button";
+import { Skeleton } from "@yourtoolshq/ui/skeleton";
+
+import type { RouterOutputs } from "~/trpc/react";
 import { api } from "~/trpc/react";
 import { ItemFormSheet } from "./item-form-sheet";
 import { TaxItemsTable } from "./tax-items-table";

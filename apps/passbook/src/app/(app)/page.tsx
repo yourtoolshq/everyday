@@ -1,7 +1,8 @@
 import { Building2, Users, Wallet } from "lucide-react";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+
 import { MissingStatementsPanel } from "~/components/overview/missing-statements-panel";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { api } from "~/trpc/server";
 
 export const dynamic = "force-dynamic";

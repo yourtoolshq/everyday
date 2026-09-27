@@ -5,23 +5,18 @@ import { useState } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import type {
-  DeductionAmountField,
-  DeductionEnabledField,
-  EmploymentStatus,
-  PayFrequency,
-} from "~/domain/employment";
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -29,7 +24,15 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
+} from "@yourtoolshq/ui/sheet";
+
+import type {
+  DeductionAmountField,
+  DeductionEnabledField,
+  EmploymentStatus,
+  PayFrequency,
+} from "~/domain/employment";
+import type { RouterOutputs } from "~/trpc/react";
 import {
   deductionFields,
   employmentStatuses,
@@ -292,13 +295,12 @@ export function EmploymentFormSheet({
             {status === "ended" ? (
               <div className="space-y-2">
                 <Label htmlFor="employment-end-date">End date</Label>
-                <Input
+                <DateField
                   id="employment-end-date"
-                  type="date"
                   min={`${year}-01-01`}
                   max={`${year}-12-31`}
                   value={endDate}
-                  onChange={(event) => setEndDate(event.target.value)}
+                  onChange={(value) => setEndDate(value)}
                   required
                 />
               </div>
@@ -338,19 +340,12 @@ export function EmploymentFormSheet({
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="typical-gross">Typical gross pay override</Label>
-              <div className="relative">
-                <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-                  $
-                </span>
-                <Input
-                  id="typical-gross"
-                  className="pl-7 tabular-nums"
-                  inputMode="decimal"
-                  placeholder="Use average pay"
-                  value={typicalGross}
-                  onChange={(event) => setTypicalGross(event.target.value)}
-                />
-              </div>
+              <MoneyField
+                id="typical-gross"
+                placeholder="Use average pay"
+                value={typicalGross}
+                onValueChange={setTypicalGross}
+              />
               <p className="text-muted-foreground text-xs">
                 Leave blank to project from the average gross pay for this
                 employment.

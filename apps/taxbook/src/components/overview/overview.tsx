@@ -10,17 +10,18 @@ import {
   IconListCheck,
 } from "@tabler/icons-react";
 
-import type { ItemStatus } from "~/domain/tax-item";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "~/components/ui/card";
-import { Skeleton } from "~/components/ui/skeleton";
+} from "@yourtoolshq/ui/card";
+import { Skeleton } from "@yourtoolshq/ui/skeleton";
+
+import type { ItemStatus } from "~/domain/tax-item";
 import { formatCad } from "~/domain/money";
 import { itemStatusLabels, itemTypeLabels, itemTypes } from "~/domain/tax-item";
 import { api } from "~/trpc/react";

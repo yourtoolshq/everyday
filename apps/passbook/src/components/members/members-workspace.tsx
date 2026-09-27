@@ -4,17 +4,18 @@ import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+} from "@yourtoolshq/ui/dialog";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
+
 import { api } from "~/trpc/react";
 
 export function MembersWorkspace() {

@@ -4,18 +4,17 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import type { ItemStatus, ItemType, TaxTreatment } from "~/domain/tax-item";
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -23,8 +22,11 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/sheet";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type { ItemStatus, ItemType, TaxTreatment } from "~/domain/tax-item";
+import type { RouterOutputs } from "~/trpc/react";
 import { centsToDollars, dollarsToCents } from "~/domain/money";
 import {
   itemStatuses,
@@ -249,36 +251,23 @@ export function ItemFormSheet({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="expected-amount">Expected amount</Label>
-                <div className="relative">
-                  <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-                    $
-                  </span>
-                  <Input
-                    id="expected-amount"
-                    className="pl-7 tabular-nums"
-                    inputMode="decimal"
-                    placeholder="Optional"
-                    value={expected}
-                    onChange={(event) => setExpected(event.target.value)}
-                  />
-                </div>
+                <MoneyField
+                  id="expected-amount"
+                  placeholder="Optional"
+                  value={expected}
+                  onValueChange={setExpected}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="actual-amount">Actual amount</Label>
-                <div className="relative">
-                  <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-                    $
-                  </span>
-                  <Input
-                    id="actual-amount"
-                    className="pl-7 tabular-nums"
-                    inputMode="decimal"
-                    placeholder="Optional"
-                    value={actual}
-                    onChange={(event) => setActual(event.target.value)}
-                    disabled={item?.valueSource === "records"}
-                  />
-                </div>
+                <MoneyField
+                  id="actual-amount"
+                  placeholder="Optional"
+                  value={actual}
+                  onValueChange={setActual}
+                  disabled={item?.valueSource === "records"}
+                  arithmetic={item?.valueSource !== "records"}
+                />
                 {item?.valueSource === "records" ? (
                   <p className="text-muted-foreground text-xs">
                     Calculated from supporting Records. Edit the Records to

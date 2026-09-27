@@ -7,12 +7,6 @@ import { ArrowLeft, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import type { AccountEventType } from "~/lib/account-events";
-import type { DocumentType } from "~/lib/documents";
-import { AccountEventSheet } from "~/components/accounts/account-event-sheet";
-import { AccountTermsSnapshotDetailSheet } from "~/components/accounts/account-terms-snapshot-detail-sheet";
-import { ActivityDocumentUploadSheet } from "~/components/activity/activity-document-upload-sheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,12 +16,18 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
-import { Separator } from "~/components/ui/separator";
-import { Skeleton } from "~/components/ui/skeleton";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
+import { Separator } from "@yourtoolshq/ui/separator";
+import { Skeleton } from "@yourtoolshq/ui/skeleton";
+
+import type { AccountEventType } from "~/lib/account-events";
+import type { DocumentType } from "~/lib/documents";
+import { AccountEventSheet } from "~/components/accounts/account-event-sheet";
+import { AccountTermsSnapshotDetailSheet } from "~/components/accounts/account-terms-snapshot-detail-sheet";
+import { ActivityDocumentUploadSheet } from "~/components/activity/activity-document-upload-sheet";
 import { accountEventTypeLabels } from "~/lib/account-events";
 import {
   accountTermsFieldLabels,

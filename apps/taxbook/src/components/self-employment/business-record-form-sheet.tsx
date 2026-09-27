@@ -4,17 +4,18 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -22,8 +23,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/sheet";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type { RouterOutputs } from "~/trpc/react";
 import { centsToDollars, dollarsToCents } from "~/domain/money";
 import {
   businessExpenseCategories,
@@ -165,11 +168,10 @@ export function BusinessRecordFormSheet({
             ) : null}
             <div className="space-y-2">
               <Label htmlFor="business-date">Date</Label>
-              <Input
+              <DateField
                 id="business-date"
-                type="date"
                 value={date}
-                onChange={(event) => setDate(event.target.value)}
+                onChange={(value) => setDate(value)}
                 required
               />
             </div>
@@ -186,11 +188,10 @@ export function BusinessRecordFormSheet({
               <Label htmlFor="business-amount">
                 {kind === "expense" ? "Deductible amount" : "Revenue amount"}
               </Label>
-              <Input
+              <MoneyField
                 id="business-amount"
-                inputMode="decimal"
                 value={amount}
-                onChange={(event) => setAmount(event.target.value)}
+                onValueChange={setAmount}
                 required
               />
             </div>

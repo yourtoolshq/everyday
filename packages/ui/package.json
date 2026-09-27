@@ -5,10 +5,32 @@
   "type": "module",
   "exports": {
     "./alert-dialog": "./src/alert-dialog.tsx",
+    "./app-frame": "./src/app-frame.tsx",
     "./badge": "./src/badge.tsx",
+    "./calendar": "./src/calendar.tsx",
+    "./calendar-date": "./src/calendar-date.ts",
     "./button": "./src/button.tsx",
     "./card": "./src/card.tsx",
-    "./progress": "./src/progress.tsx"
+    "./date-field": "./src/date-field.tsx",
+    "./decimal-entry": "./src/decimal-entry.ts",
+    "./dialog": "./src/dialog.tsx",
+    "./input": "./src/input.tsx",
+    "./input-group": "./src/input-group.tsx",
+    "./label": "./src/label.tsx",
+    "./money-field": "./src/money-field.tsx",
+    "./period-coverage": "./src/period-coverage.tsx",
+    "./popover": "./src/popover.tsx",
+    "./progress": "./src/progress.tsx",
+    "./select": "./src/select.tsx",
+    "./separator": "./src/separator.tsx",
+    "./sidebar": "./src/sidebar.tsx",
+    "./sheet": "./src/sheet.tsx",
+    "./skeleton": "./src/skeleton.tsx",
+    "./status-message": "./src/status-message.tsx",
+    "./textarea": "./src/textarea.tsx",
+    "./theme-provider": "./src/theme-provider.tsx",
+    "./theme-setting": "./src/theme-setting.tsx",
+    "./tooltip": "./src/tooltip.tsx"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
@@ -18,9 +40,12 @@
   "dependencies": {
     "class-variance-authority": "catalog:",
     "cn": "catalog:",
-    "radix-ui": "^1.6.7"
+    "next-themes": "^0.4.6",
+    "radix-ui": "^1.6.7",
+    "react-day-picker": "^9.11.1"
   },
   "peerDependencies": {
+    "lucide-react": ">=0.468.0",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
@@ -32,6 +57,7 @@
     "@yourtoolshq/tsconfig": "workspace:*",
     "eslint": "catalog:",
     "jiti": "^2.7.0",
+    "lucide-react": "^0.468.0",
     "react": "catalog:",
     "react-dom": "catalog:",
     "typescript": "catalog:"

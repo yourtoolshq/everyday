@@ -8,10 +8,10 @@ import {
 } from "@tabler/icons-react";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
 
 import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,

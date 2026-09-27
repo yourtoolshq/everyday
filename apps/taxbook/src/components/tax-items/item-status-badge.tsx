@@ -1,5 +1,6 @@
+import { Badge } from "@yourtoolshq/ui/badge";
+
 import type { ItemStatus } from "~/domain/tax-item";
-import { Badge } from "~/components/ui/badge";
 import { itemStatusLabels } from "~/domain/tax-item";
 import { cn } from "~/lib/utils";
 

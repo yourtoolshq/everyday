@@ -1,27 +1,19 @@
 "use client";
 
 import { BackupStatusBanner } from "@yourtoolshq/data-ui";
+import { AppFrame } from "@yourtoolshq/ui/app-frame";
 
 import { AppSidebar } from "~/components/layout/app-sidebar";
 import { SiteHeader } from "~/components/layout/site-header";
-import { SidebarInset, SidebarProvider } from "~/components/ui/sidebar";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "17rem",
-          "--header-height": "3.5rem",
-        } as React.CSSProperties
-      }
+    <AppFrame
+      sidebar={<AppSidebar variant="inset" />}
+      header={<SiteHeader />}
+      banners={<BackupStatusBanner />}
     >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <BackupStatusBanner />
-        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-      </SidebarInset>
-    </SidebarProvider>
+      {children}
+    </AppFrame>
   );
 }

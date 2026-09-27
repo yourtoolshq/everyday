@@ -1,7 +1,15 @@
+import { DateField } from "@yourtoolshq/ui/date-field";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@yourtoolshq/ui/input-group";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
 import type { AccountTerms } from "~/lib/account-terms";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
-import { Textarea } from "~/components/ui/textarea";
 import { accountTermsFieldLabels } from "~/lib/account-terms";
 
 type AccountTermsFormFieldsProps = {
@@ -23,38 +31,49 @@ export function AccountTermsFormFields({
         <Label htmlFor="terms-interest-rate">
           {accountTermsFieldLabels.interestRate}
         </Label>
-        <Input
-          id="terms-interest-rate"
-          inputMode="decimal"
-          value={terms.interestRate ?? ""}
-          onChange={(event) => updateField("interestRate", event.target.value)}
-          placeholder="19.99%"
-        />
+        <InputGroup>
+          <InputGroupInput
+            id="terms-interest-rate"
+            inputMode="decimal"
+            value={terms.interestRate ?? ""}
+            onChange={(event) =>
+              updateField("interestRate", event.target.value)
+            }
+            placeholder="19.99"
+          />
+          <InputGroupAddon>
+            <InputGroupText>%</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
       </div>
       <div className="space-y-2">
         <Label htmlFor="terms-promo-rate">
           {accountTermsFieldLabels.promotionalInterestRate}
         </Label>
-        <Input
-          id="terms-promo-rate"
-          inputMode="decimal"
-          value={terms.promotionalInterestRate ?? ""}
-          onChange={(event) =>
-            updateField("promotionalInterestRate", event.target.value)
-          }
-          placeholder="0%"
-        />
+        <InputGroup>
+          <InputGroupInput
+            id="terms-promo-rate"
+            inputMode="decimal"
+            value={terms.promotionalInterestRate ?? ""}
+            onChange={(event) =>
+              updateField("promotionalInterestRate", event.target.value)
+            }
+            placeholder="0"
+          />
+          <InputGroupAddon>
+            <InputGroupText>%</InputGroupText>
+          </InputGroupAddon>
+        </InputGroup>
       </div>
       <div className="space-y-2">
         <Label htmlFor="terms-promo-expires">
           {accountTermsFieldLabels.promotionalInterestRateExpires}
         </Label>
-        <Input
+        <DateField
           id="terms-promo-expires"
-          type="date"
           value={terms.promotionalInterestRateExpires ?? ""}
-          onChange={(event) =>
-            updateField("promotionalInterestRateExpires", event.target.value)
+          onChange={(value) =>
+            updateField("promotionalInterestRateExpires", value)
           }
         />
       </div>
@@ -62,12 +81,11 @@ export function AccountTermsFormFields({
         <Label htmlFor="terms-credit-limit">
           {accountTermsFieldLabels.creditLimit}
         </Label>
-        <Input
+        <MoneyField
           id="terms-credit-limit"
-          inputMode="decimal"
           value={terms.creditLimit ?? ""}
-          onChange={(event) => updateField("creditLimit", event.target.value)}
-          placeholder="$10,000"
+          onValueChange={(value) => updateField("creditLimit", value)}
+          placeholder="10000"
         />
         <p className="text-muted-foreground text-xs">
           Saved as a number; shown with $ in the terms panel.
@@ -77,12 +95,11 @@ export function AccountTermsFormFields({
         <Label htmlFor="terms-annual-fee">
           {accountTermsFieldLabels.annualFee}
         </Label>
-        <Input
+        <MoneyField
           id="terms-annual-fee"
-          inputMode="decimal"
           value={terms.annualFee ?? ""}
-          onChange={(event) => updateField("annualFee", event.target.value)}
-          placeholder="$120"
+          onValueChange={(value) => updateField("annualFee", value)}
+          placeholder="120"
         />
         <p className="text-muted-foreground text-xs">
           Saved as a number; shown with $ in the terms panel.
@@ -92,11 +109,10 @@ export function AccountTermsFormFields({
         <Label htmlFor="terms-renewal-date">
           {accountTermsFieldLabels.renewalDate}
         </Label>
-        <Input
+        <DateField
           id="terms-renewal-date"
-          type="date"
           value={terms.renewalDate ?? ""}
-          onChange={(event) => updateField("renewalDate", event.target.value)}
+          onChange={(value) => updateField("renewalDate", value)}
         />
       </div>
       <div className="space-y-2 md:col-span-2">

@@ -2,7 +2,9 @@ import "~/styles/globals.css";
 
 import { type Metadata } from "next";
 
-import { TooltipProvider } from "~/components/ui/tooltip";
+import { ThemeProvider } from "@yourtoolshq/ui/theme-provider";
+import { TooltipProvider } from "@yourtoolshq/ui/tooltip";
+
 import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
@@ -14,10 +16,12 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen antialiased">
         <TRPCReactProvider>
-          <TooltipProvider>{children}</TooltipProvider>
+          <ThemeProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </ThemeProvider>
         </TRPCReactProvider>
       </body>
     </html>

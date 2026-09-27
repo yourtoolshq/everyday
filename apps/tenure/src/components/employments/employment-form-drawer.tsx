@@ -3,20 +3,24 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import type {
-  CompensationCurrency,
-  CompensationType,
-} from "~/lib/compensation";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
+import { Input } from "@yourtoolshq/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@yourtoolshq/ui/input-group";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -24,8 +28,13 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/sheet";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type {
+  CompensationCurrency,
+  CompensationType,
+} from "~/lib/compensation";
 import {
   commissionPercentToBasisPoints,
   compensationCurrencies,
@@ -327,20 +336,18 @@ export function EmploymentFormDrawer({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="employment-start-date">Start date</Label>
-              <Input
+              <DateField
                 id="employment-start-date"
-                type="date"
                 value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
+                onChange={(value) => setStartDate(value)}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="employment-end-date">End date</Label>
-              <Input
+              <DateField
                 id="employment-end-date"
-                type="date"
                 value={endDate}
-                onChange={(event) => setEndDate(event.target.value)}
+                onChange={(value) => setEndDate(value)}
               />
             </div>
           </div>
@@ -417,13 +424,10 @@ export function EmploymentFormDrawer({
                     <Label htmlFor="starting-compensation-effective-date">
                       Effective date
                     </Label>
-                    <Input
+                    <DateField
                       id="starting-compensation-effective-date"
-                      type="date"
                       value={compensationEffectiveDate}
-                      onChange={(event) =>
-                        setCompensationEffectiveDate(event.target.value)
-                      }
+                      onChange={(value) => setCompensationEffectiveDate(value)}
                       placeholder={
                         startDate ? `Defaults to ${startDate}` : undefined
                       }
@@ -435,14 +439,19 @@ export function EmploymentFormDrawer({
                       <Label htmlFor="starting-compensation-percent">
                         Commission percentage
                       </Label>
-                      <Input
-                        id="starting-compensation-percent"
-                        inputMode="decimal"
-                        value={compensationPercent}
-                        onChange={(event) =>
-                          setCompensationPercent(event.target.value)
-                        }
-                      />
+                      <InputGroup>
+                        <InputGroupInput
+                          id="starting-compensation-percent"
+                          inputMode="decimal"
+                          value={compensationPercent}
+                          onChange={(event) =>
+                            setCompensationPercent(event.target.value)
+                          }
+                        />
+                        <InputGroupAddon>
+                          <InputGroupText>%</InputGroupText>
+                        </InputGroupAddon>
+                      </InputGroup>
                     </div>
                   ) : (
                     <div className="space-y-2">
@@ -451,13 +460,10 @@ export function EmploymentFormDrawer({
                           ? "Annual salary"
                           : "Hourly rate"}
                       </Label>
-                      <Input
+                      <MoneyField
                         id="starting-compensation-amount"
-                        inputMode="decimal"
                         value={compensationAmount}
-                        onChange={(event) =>
-                          setCompensationAmount(event.target.value)
-                        }
+                        onValueChange={setCompensationAmount}
                       />
                     </div>
                   )}

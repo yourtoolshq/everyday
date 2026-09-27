@@ -1,4 +1,4 @@
-import { Badge } from "~/components/ui/badge";
+import { Badge } from "@yourtoolshq/ui/badge";
 
 export function TenureTag({ href }: { href?: string }) {
   const badge = (

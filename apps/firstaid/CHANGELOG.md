@@ -11,5 +11,10 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 ### Changed
 
 - Visit documents are stored with the shared data platform. Production is served at https://firstaid.tools.local and does not publish a host port.
+- Benefit, visit cost, and claim amount fields show a `$` prefix and a calculator icon. A total such as `10+12+34.5` becomes a dollar amount when you leave the field. The `$` is not saved.
+- Care plan dates can be typed, such as June 01, 2025, or chosen from the calendar. Visit time stays a date and time field.
+- File upload progress uses a thinner bar.
+- Appearance is on General in the sidebar. Light, dark, or system is saved. Data & backups stays storage, backups, and restores.
+- A page that fails to load, is missing, or is still loading explains that and offers a way back.
 
 ### Fixed

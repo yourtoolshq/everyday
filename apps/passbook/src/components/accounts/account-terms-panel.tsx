@@ -3,15 +3,16 @@
 import { useState } from "react";
 import { History, Link2, Pencil, Plus } from "lucide-react";
 
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+import { Separator } from "@yourtoolshq/ui/separator";
+import { Skeleton } from "@yourtoolshq/ui/skeleton";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { AccountTermsSheet } from "~/components/accounts/account-terms-sheet";
 import { AccountTermsSnapshotDetailSheet } from "~/components/accounts/account-terms-snapshot-detail-sheet";
 import { AccountTermsSnapshotSheet } from "~/components/accounts/account-terms-snapshot-sheet";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Separator } from "~/components/ui/separator";
-import { Skeleton } from "~/components/ui/skeleton";
 import { hasAccountTerms, listAccountTermsEntries } from "~/lib/account-terms";
 import { formatDateLabel } from "~/lib/format-date";
 import { formatTermValue } from "~/lib/format-term-value";

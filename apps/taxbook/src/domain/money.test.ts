@@ -14,6 +14,7 @@ describe("money helpers", () => {
     expect(dollarsToCents("1,234.567")).toBe(123457);
     expect(dollarsToCents("-1")).toBeNull();
     expect(dollarsToCents("not money")).toBeNull();
+    expect(dollarsToCents("10+12+34.5")).toBe(5650);
   });
 
   it("formats Canadian dollars", () => {

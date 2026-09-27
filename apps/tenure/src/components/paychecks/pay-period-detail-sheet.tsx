@@ -1,12 +1,10 @@
 "use client";
 
-import { ExternalLink, Paperclip, Pencil, Plus } from "lucide-react";
+import { ExternalLink, Paperclip, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import type { RouterOutputs } from "~/trpc/react";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +12,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
+} from "@yourtoolshq/ui/dialog";
+
+import type { RouterOutputs } from "~/trpc/react";
 import { formatDateLabel } from "~/lib/documents";
 import { formatCad } from "~/lib/money";
 import { payStubCompletenessLabels } from "~/lib/pay-stub-completeness";
@@ -31,6 +31,7 @@ type PayPeriodDetailSheetProps = {
   onAddPaycheck: (periodKey: string) => void;
   onEditPaycheck: (paycheckId: string) => void;
   onAttachStub: (paycheckId: string) => void;
+  onDeletePaycheck: (paycheckId: string) => void;
   onMarkNotApplicable?: (periodKey: string) => void;
   onUndoNotApplicable?: (periodKey: string) => void;
 };
@@ -43,6 +44,7 @@ export function PayPeriodDetailSheet({
   onAddPaycheck,
   onEditPaycheck,
   onAttachStub,
+  onDeletePaycheck,
   onMarkNotApplicable,
   onUndoNotApplicable,
 }: PayPeriodDetailSheetProps) {
@@ -140,6 +142,18 @@ export function PayPeriodDetailSheet({
                   >
                     <Pencil />
                     Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    aria-label={`Delete paycheck from ${formatDateLabel(paycheck.payDate) ?? paycheck.payDate}`}
+                    onClick={() =>
+                      runAction(() => onDeletePaycheck(paycheck.id))
+                    }
+                  >
+                    <Trash2 />
+                    Delete
                   </Button>
                 </div>
               </li>

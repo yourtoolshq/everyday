@@ -3,10 +3,7 @@
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import type { RouterOutputs } from "~/trpc/react";
-import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
-import { Button } from "~/components/ui/button";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +11,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "~/components/ui/dialog";
+} from "@yourtoolshq/ui/dialog";
+
+import type { RouterOutputs } from "~/trpc/react";
+import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
 import { formatFileSize } from "~/lib/documents";
 import { formatDateLabel } from "~/lib/format-date";
 

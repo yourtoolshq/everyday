@@ -5,8 +5,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 
-import type { BenefitCoverageScope } from "~/lib/benefits";
-import type { RouterInputs, RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,10 +15,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -29,17 +27,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+} from "@yourtoolshq/ui/dialog";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/select";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type { BenefitCoverageScope } from "~/lib/benefits";
+import type { RouterInputs, RouterOutputs } from "~/trpc/react";
 import { benefitCoverageScopeLabels } from "~/lib/benefits";
 import { formatCents, parseDollarsToCents } from "~/lib/money";
 import { cn } from "~/lib/utils";
@@ -557,10 +559,9 @@ function BenefitDialog({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="benefit-limit">Annual limit</Label>
-              <Input
+              <MoneyField
                 id="benefit-limit"
                 name="annualLimit"
-                inputMode="decimal"
                 defaultValue={
                   benefit
                     ? formatCents(benefit.annualLimitCents).replace("$", "")
@@ -571,10 +572,9 @@ function BenefitDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="benefit-opening">Opening used</Label>
-              <Input
+              <MoneyField
                 id="benefit-opening"
                 name="openingUsed"
-                inputMode="decimal"
                 defaultValue={
                   benefit && benefit.openingUsedCents > 0
                     ? formatCents(benefit.openingUsedCents).replace("$", "")

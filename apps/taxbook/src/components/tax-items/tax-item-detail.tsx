@@ -10,6 +10,27 @@ import {
 } from "@tabler/icons-react";
 import { toast } from "sonner";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@yourtoolshq/ui/alert-dialog";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@yourtoolshq/ui/card";
+import { Skeleton } from "@yourtoolshq/ui/skeleton";
+
 import type { RouterOutputs } from "~/trpc/react";
 import { RecordFormSheet } from "~/components/records/record-form-sheet";
 import { RecordsTable } from "~/components/records/records-table";
@@ -20,26 +41,6 @@ import {
   TenureEmploymentLink,
   TenureEmploymentTag,
 } from "~/components/tenure/tenure-external-link";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "~/components/ui/card";
-import { Skeleton } from "~/components/ui/skeleton";
 import { formatCad } from "~/domain/money";
 import { itemTypeLabels, taxTreatmentLabels } from "~/domain/tax-item";
 import { api } from "~/trpc/react";

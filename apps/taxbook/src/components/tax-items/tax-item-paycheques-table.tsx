@@ -1,10 +1,11 @@
 "use client";
 
+import { Card, CardContent } from "@yourtoolshq/ui/card";
+
 import {
   TenureEmploymentLink,
   TenureEmploymentTag,
 } from "~/components/tenure/tenure-external-link";
-import { Card, CardContent } from "~/components/ui/card";
 import {
   Table,
   TableBody,

@@ -5,17 +5,12 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import type { ExpectedPayPeriod } from "~/lib/expected-pay-periods";
-import type { PayFrequency } from "~/lib/pay-frequency";
-import type {
-  DeductionAmountField,
-  DeductionSettings,
-} from "~/lib/paycheck-deductions";
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
+import { normalizeDecimalEntry } from "@yourtoolshq/ui/decimal-entry";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
@@ -24,7 +19,7 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -32,7 +27,15 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
+} from "@yourtoolshq/ui/sheet";
+
+import type { ExpectedPayPeriod } from "~/lib/expected-pay-periods";
+import type { PayFrequency } from "~/lib/pay-frequency";
+import type {
+  DeductionAmountField,
+  DeductionSettings,
+} from "~/lib/paycheck-deductions";
+import type { RouterOutputs } from "~/trpc/react";
 import { documentAccept } from "~/lib/documents";
 import {
   canDerivePayPeriods,
@@ -55,6 +58,12 @@ import { api } from "~/trpc/react";
 
 type Paycheck = RouterOutputs["paychecks"]["listByEmployment"][number];
 type AmountField = "grossPayCents" | DeductionAmountField;
+
+function entryToCents(value: string) {
+  const result = normalizeDecimalEntry(value);
+  if (!result.ok) return null;
+  return dollarsToCents(result.value);
+}
 
 type PaycheckFormSheetProps = {
   open: boolean;
@@ -255,7 +264,7 @@ export function PaycheckFormSheet({
         }
         return (
           deductionSettings[field.enabledField] ||
-          (dollarsToCents(amounts[field.amountField]) ?? 0) > 0
+          (entryToCents(amounts[field.amountField]) ?? 0) > 0
         );
       },
     );
@@ -268,7 +277,7 @@ export function PaycheckFormSheet({
           "grossPayCents",
           ...deductionFields.map((field) => field.amountField),
         ] as const
-      ).map((field) => [field, dollarsToCents(amounts[field])]),
+      ).map((field) => [field, entryToCents(amounts[field])]),
     ) as Record<AmountField, number | null>;
 
     if (
@@ -452,25 +461,19 @@ export function PaycheckFormSheet({
                     <Label htmlFor="paycheck-period-start">
                       Pay period start
                     </Label>
-                    <Input
+                    <DateField
                       id="paycheck-period-start"
-                      type="date"
                       value={manualPeriodStart}
-                      onChange={(event) =>
-                        setManualPeriodStart(event.target.value)
-                      }
+                      onChange={(value) => setManualPeriodStart(value)}
                       required
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="paycheck-period-end">Pay period end</Label>
-                    <Input
+                    <DateField
                       id="paycheck-period-end"
-                      type="date"
                       value={manualPeriodEnd}
-                      onChange={(event) =>
-                        setManualPeriodEnd(event.target.value)
-                      }
+                      onChange={(value) => setManualPeriodEnd(value)}
                       required
                     />
                   </div>
@@ -478,11 +481,10 @@ export function PaycheckFormSheet({
               )}
               <div className="space-y-2 sm:col-span-2">
                 <Label htmlFor="paycheck-pay-date">Pay date</Label>
-                <Input
+                <DateField
                   id="paycheck-pay-date"
-                  type="date"
                   value={payDate}
-                  onChange={(event) => setPayDate(event.target.value)}
+                  onChange={(value) => setPayDate(value)}
                   required
                 />
               </div>
@@ -661,20 +663,14 @@ function DollarInput({
   required?: boolean;
 }) {
   return (
-    <div className="relative">
-      <span className="text-muted-foreground absolute top-2.5 left-3 text-sm">
-        $
-      </span>
-      <Input
-        id={id}
-        className="pl-7 tabular-nums"
-        inputMode="decimal"
-        value={value}
-        onChange={(event) => onChange?.(event.target.value)}
-        readOnly={readOnly}
-        required={required}
-      />
-    </div>
+    <MoneyField
+      id={id}
+      value={value}
+      onValueChange={onChange}
+      readOnly={readOnly}
+      required={required}
+      arithmetic={!readOnly && Boolean(onChange)}
+    />
   );
 }
 

@@ -2,15 +2,15 @@
 
 import { usePathname } from "next/navigation";
 
-import { Separator } from "~/components/ui/separator";
-import { SidebarTrigger } from "~/components/ui/sidebar";
+import { Separator } from "@yourtoolshq/ui/separator";
+import { SidebarTrigger } from "@yourtoolshq/ui/sidebar";
 
 const titles: Record<string, string> = {
   "/": "Overview",
   "/items": "Tax Items",
   "/paycheques": "Paycheques",
   "/documents": "Tax Documents",
-  "/settings": "Settings",
+  "/settings": "General",
   "/settings/data": "Data & backups",
 };
 

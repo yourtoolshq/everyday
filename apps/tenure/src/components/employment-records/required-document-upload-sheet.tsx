@@ -3,11 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import type { RequiredDocumentKind } from "~/lib/employment-document-suggestions";
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Sheet,
   SheetContent,
@@ -15,7 +14,10 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
+} from "@yourtoolshq/ui/sheet";
+
+import type { RequiredDocumentKind } from "~/lib/employment-document-suggestions";
+import type { RouterOutputs } from "~/trpc/react";
 import { documentAccept, documentTypeLabels } from "~/lib/documents";
 import {
   canSuggestRequiredDocumentTitle,
@@ -207,11 +209,10 @@ export function RequiredDocumentUploadSheet({
 
           <div className="space-y-2">
             <Label htmlFor="required-document-date">Document date</Label>
-            <Input
+            <DateField
               id="required-document-date"
-              type="date"
               value={documentDate}
-              onChange={(event) => setDocumentDate(event.target.value)}
+              onChange={(value) => setDocumentDate(value)}
             />
           </div>
 

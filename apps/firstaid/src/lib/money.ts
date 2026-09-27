@@ -1,12 +1,14 @@
+import { normalizeDecimalEntry } from "@yourtoolshq/ui/decimal-entry";
+
 /**
  * Parse a dollar amount string into integer cents without floating-point math.
- * Returns null for empty or invalid input.
+ * Returns null for empty or invalid input. A simple + - * / total is accepted.
  */
 export function parseDollarsToCents(input: string): number | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
+  const result = normalizeDecimalEntry(input);
+  if (!result.ok || result.value === "") return null;
 
-  const normalized = trimmed.replace(/[$,\s]/g, "");
+  const normalized = result.value;
   if (!/^\d+(\.\d{0,2})?$/.test(normalized)) return null;
 
   const parts = normalized.split(".");

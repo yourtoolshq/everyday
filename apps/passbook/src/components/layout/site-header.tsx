@@ -3,8 +3,8 @@
 import { usePathname } from "next/navigation";
 import { LockKeyhole } from "lucide-react";
 
-import { Separator } from "~/components/ui/separator";
-import { SidebarTrigger } from "~/components/ui/sidebar";
+import { Separator } from "@yourtoolshq/ui/separator";
+import { SidebarTrigger } from "@yourtoolshq/ui/sidebar";
 
 const titles: Record<string, string> = {
   "/": "Overview",
@@ -12,6 +12,7 @@ const titles: Record<string, string> = {
   "/institutions": "Institutions",
   "/members": "Members",
   "/documents": "Documents",
+  "/settings": "General",
   "/settings/data": "Data & backups",
 };
 

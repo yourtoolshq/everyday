@@ -4,9 +4,10 @@ import { useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
+
 import { PersonFormDrawer } from "~/components/people/person-form-drawer";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
 import { api } from "~/trpc/react";
 
 export function PeopleWorkspace() {

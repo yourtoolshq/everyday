@@ -9,6 +9,7 @@ import {
   History,
   Landmark,
   LayoutDashboard,
+  Settings2,
   Users,
   Wallet,
 } from "lucide-react";
@@ -24,7 +25,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "~/components/ui/sidebar";
+} from "@yourtoolshq/ui/sidebar";
 
 function isNavActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -78,6 +79,18 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Settings</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={pathname === "/settings"}
+                  tooltip="General"
+                >
+                  <Link href="/settings">
+                    <Settings2 aria-hidden="true" />
+                    <span>General</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild

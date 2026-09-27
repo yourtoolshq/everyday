@@ -5,9 +5,6 @@ import { useEffect, useState } from "react";
 import { Download, FileText, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
-
-import type { DocumentType } from "~/lib/documents";
-import type { RouterOutputs } from "~/trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,10 +15,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "~/components/ui/alert-dialog";
-import { Badge } from "~/components/ui/badge";
-import { Button } from "~/components/ui/button";
-import { Card, CardContent } from "~/components/ui/card";
+} from "@yourtoolshq/ui/alert-dialog";
+import { Badge } from "@yourtoolshq/ui/badge";
+import { Button } from "@yourtoolshq/ui/button";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -30,16 +27,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+} from "@yourtoolshq/ui/dialog";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
+
+import type { DocumentType } from "~/lib/documents";
+import type { RouterOutputs } from "~/trpc/react";
 import { claimStatusLabels } from "~/lib/benefits";
 import {
   documentAccept,

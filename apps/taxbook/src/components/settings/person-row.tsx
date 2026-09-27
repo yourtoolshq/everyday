@@ -4,8 +4,9 @@ import type { FormEvent } from "react";
 import { useState } from "react";
 import { IconTrash } from "@tabler/icons-react";
 
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
+import { Button } from "@yourtoolshq/ui/button";
+import { Input } from "@yourtoolshq/ui/input";
+
 import { type RouterOutputs } from "~/trpc/react";
 
 type Person = RouterOutputs["settings"]["get"]["people"][number];

@@ -4,21 +4,24 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import type {
-  CompensationCurrency,
-  CompensationType,
-} from "~/lib/compensation";
-import type { RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "@yourtoolshq/ui/button";
+import { DateField } from "@yourtoolshq/ui/date-field";
+import { Input } from "@yourtoolshq/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupText,
+} from "@yourtoolshq/ui/input-group";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
+} from "@yourtoolshq/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -26,8 +29,14 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "~/components/ui/sheet";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/sheet";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type {
+  CompensationCurrency,
+  CompensationType,
+} from "~/lib/compensation";
+import type { RouterOutputs } from "~/trpc/react";
 import {
   basisPointsToCommissionPercent,
   commissionPercentToBasisPoints,
@@ -318,11 +327,10 @@ export function CompensationChangeFormSheet({
               <Label htmlFor="compensation-effective-date">
                 Effective date
               </Label>
-              <Input
+              <DateField
                 id="compensation-effective-date"
-                type="date"
                 value={effectiveDate}
-                onChange={(event) => setEffectiveDate(event.target.value)}
+                onChange={(value) => setEffectiveDate(value)}
                 required
               />
             </div>
@@ -332,24 +340,30 @@ export function CompensationChangeFormSheet({
                 <Label htmlFor="compensation-commission">
                   Commission percentage
                 </Label>
-                <Input
-                  id="compensation-commission"
-                  inputMode="decimal"
-                  value={commissionPercent}
-                  onChange={(event) => setCommissionPercent(event.target.value)}
-                  placeholder="60"
-                />
+                <InputGroup>
+                  <InputGroupInput
+                    id="compensation-commission"
+                    inputMode="decimal"
+                    value={commissionPercent}
+                    onChange={(event) =>
+                      setCommissionPercent(event.target.value)
+                    }
+                    placeholder="60"
+                  />
+                  <InputGroupAddon>
+                    <InputGroupText>%</InputGroupText>
+                  </InputGroupAddon>
+                </InputGroup>
               </div>
             ) : (
               <div className="space-y-2">
                 <Label htmlFor="compensation-amount">
                   {type === "annual_salary" ? "Annual salary" : "Hourly rate"}
                 </Label>
-                <Input
+                <MoneyField
                   id="compensation-amount"
-                  inputMode="decimal"
                   value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
+                  onValueChange={setAmount}
                   placeholder={type === "annual_salary" ? "85000" : "45.00"}
                 />
               </div>

@@ -5,9 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { CalendarPlus, Plus } from "lucide-react";
 
-import type { VisitStatus } from "~/lib/visits";
-import type { RouterInputs, RouterOutputs } from "~/trpc/react";
-import { Button } from "~/components/ui/button";
+import { Button } from "@yourtoolshq/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -16,17 +14,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "~/components/ui/dialog";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+} from "@yourtoolshq/ui/dialog";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
+import { MoneyField } from "@yourtoolshq/ui/money-field";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "~/components/ui/select";
-import { Textarea } from "~/components/ui/textarea";
+} from "@yourtoolshq/ui/select";
+import { Textarea } from "@yourtoolshq/ui/textarea";
+
+import type { VisitStatus } from "~/lib/visits";
+import type { RouterInputs, RouterOutputs } from "~/trpc/react";
 import { toDateTimeLocalValue } from "~/lib/date-time";
 import { formatCents, parseDollarsToCents } from "~/lib/money";
 import { visitStatuses, visitStatusLabels } from "~/lib/visits";
@@ -320,10 +322,9 @@ export function VisitDialog({
                     (optional)
                   </span>
                 </Label>
-                <Input
+                <MoneyField
                   id={`visit-cost-${visit?.id ?? "new"}`}
                   name="cost"
-                  inputMode="decimal"
                   placeholder="e.g. 110.00"
                   defaultValue={
                     visit?.costCents != null
