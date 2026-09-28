@@ -6,7 +6,6 @@ goal and completion criteria. This plan describes repository work and the proof
 needed before changing any running installation. It does not itself perform a
 production deployment.
 
-
 ## Outcome and boundary
 
 Make each of the four apps straightforward to build, start, inspect, and recover
@@ -33,21 +32,21 @@ Effective configuration verified with
 `docker compose -f apps/<app>/docker-compose.yml config` (no published
 application ports; volumes keep their fixed production names).
 
-| | Taxbook | First Aid | Passbook | Tenure |
-| --- | --- | --- | --- | --- |
-| Build command | `pnpm docker:build:taxbook` | `pnpm docker:build:firstaid` | `pnpm docker:build:passbook` | `pnpm docker:build:tenure` |
-| Dockerfile | `apps/taxbook/Dockerfile` | `apps/firstaid/Dockerfile` | `apps/passbook/Dockerfile` | `apps/tenure/Dockerfile` |
-| Build context | repository root | repository root | repository root | repository root |
-| Compose project dir | `apps/taxbook` | `apps/firstaid` | `apps/passbook` | `apps/tenure` |
-| Internal port | `3000` | `3000` | `3000` | `3000` |
-| Health endpoint | `/api/health` | `/api/health` | `/api/health` | `/api/health` |
-| Data mount | `taxbook-data` → `/data` | `firstaid-data` → `/data` | `passbook-data` → `/data` | `tenure-data` → `/data` |
-| Backup mount | `${TAXBOOK_BACKUP_DIR:-taxbook-backups}` → `/backups` | `${FIRSTAID_BACKUP_DIR:-firstaid-backups}` → `/backups` | `${PASSBOOK_BACKUP_DIR:-passbook-backups}` → `/backups` | `${TENURE_BACKUP_DIR:-tenure-backups}` → `/backups` |
-| Required network | external `web` | external `web` | external `web` | external `web` |
-| Restart policy | `unless-stopped` | `unless-stopped` | `unless-stopped` | `unless-stopped` |
-| Hostname | `taxbook.tools.local` | `firstaid.tools.local` | `passbook.tools.local` | `tenure.tools.local` |
-| Published host port | none | none | none | none |
-| Dev port (not Compose) | `3000` | `3001` | `3002` | `3003` |
+|                        | Taxbook                                               | First Aid                                               | Passbook                                                | Tenure                                              |
+| ---------------------- | ----------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------- |
+| Build command          | `pnpm docker:build:taxbook`                           | `pnpm docker:build:firstaid`                            | `pnpm docker:build:passbook`                            | `pnpm docker:build:tenure`                          |
+| Dockerfile             | `apps/taxbook/Dockerfile`                             | `apps/firstaid/Dockerfile`                              | `apps/passbook/Dockerfile`                              | `apps/tenure/Dockerfile`                            |
+| Build context          | repository root                                       | repository root                                         | repository root                                         | repository root                                     |
+| Compose project dir    | `apps/taxbook`                                        | `apps/firstaid`                                         | `apps/passbook`                                         | `apps/tenure`                                       |
+| Internal port          | `3000`                                                | `3000`                                                  | `3000`                                                  | `3000`                                              |
+| Health endpoint        | `/api/health`                                         | `/api/health`                                           | `/api/health`                                           | `/api/health`                                       |
+| Data mount             | `taxbook-data` → `/data`                              | `firstaid-data` → `/data`                               | `passbook-data` → `/data`                               | `tenure-data` → `/data`                             |
+| Backup mount           | `${TAXBOOK_BACKUP_DIR:-taxbook-backups}` → `/backups` | `${FIRSTAID_BACKUP_DIR:-firstaid-backups}` → `/backups` | `${PASSBOOK_BACKUP_DIR:-passbook-backups}` → `/backups` | `${TENURE_BACKUP_DIR:-tenure-backups}` → `/backups` |
+| Required network       | external `web`                                        | external `web`                                          | external `web`                                          | external `web`                                      |
+| Restart policy         | `unless-stopped`                                      | `unless-stopped`                                        | `unless-stopped`                                        | `unless-stopped`                                    |
+| Hostname               | `taxbook.tools.local`                                 | `firstaid.tools.local`                                  | `passbook.tools.local`                                  | `tenure.tools.local`                                |
+| Published host port    | none                                                  | none                                                    | none                                                    | none                                                |
+| Dev port (not Compose) | `3000`                                                | `3001`                                                  | `3002`                                                  | `3003`                                              |
 
 Common runtime environment in Compose: `DATA_DIR=/data`, `BACKUP_DIR=/backups`,
 `NODE_ENV=production`. Build-time `APP_VERSION` is passed through when set.
@@ -58,14 +57,14 @@ privileges with `su-exec` before `node server.js`.
 
 ### Intentional differences
 
-| Difference | Why it remains |
-| --- | --- |
-| Separate Dockerfile, Compose file, image name, and volume names per app | Independent deployables; never couple lifecycle or data |
-| First Aid image omits `public/` | App has no `public/` directory |
-| Taxbook / Passbook / Tenure copy `public/` | Favicon and static assets required at runtime |
-| Each app copies its own `drizzle/` and `scripts/` | Migrations and `yt-data` stay with the owning app |
-| Optional `*_BACKUP_DIR` host path | Operator may keep backups outside the named Docker volume |
-| Traefik labels and `*.tools.local` hostnames | Existing Nix/Traefik host route; not a new routing scheme |
+| Difference                                                              | Why it remains                                            |
+| ----------------------------------------------------------------------- | --------------------------------------------------------- |
+| Separate Dockerfile, Compose file, image name, and volume names per app | Independent deployables; never couple lifecycle or data   |
+| First Aid image omits `public/`                                         | App has no `public/` directory                            |
+| Taxbook / Passbook / Tenure copy `public/`                              | Favicon and static assets required at runtime             |
+| Each app copies its own `drizzle/` and `scripts/`                       | Migrations and `yt-data` stay with the owning app         |
+| Optional `*_BACKUP_DIR` host path                                       | Operator may keep backups outside the named Docker volume |
+| Traefik labels and `*.tools.local` hostnames                            | Existing Nix/Traefik host route; not a new routing scheme |
 
 ## Deployment contract
 
@@ -182,13 +181,13 @@ upgrade path.
 
 ## Implementation order
 
-| Order | Work | Smallest reviewable result | Proof and stop point |
-| --- | --- | --- | --- |
-| 1 | Record the contract | Deployment matrix above; intentional differences listed | `docker compose config` for each app agrees with the matrix; no new hostname or published application port |
-| 2 | Align image and startup behavior | Shared entrypoint backup-dir handling; root `.dockerignore` only | Build each affected image; run with disposable volumes; non-root healthy process |
-| 3 | Exercise deployment isolation | Per-app `docker-compose.validation.yml` | Health, backups, restart persistence, no host ports, no production volumes |
-| 4 | Reconcile operator docs | Root + app development docs match Compose | Maintainer can follow one app's docs without another app's file |
-| 5 | Confirm the host handoff | Documented sequence referring to host config | Owner reviews before any live change |
+| Order | Work                             | Smallest reviewable result                                       | Proof and stop point                                                                                       |
+| ----- | -------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 1     | Record the contract              | Deployment matrix above; intentional differences listed          | `docker compose config` for each app agrees with the matrix; no new hostname or published application port |
+| 2     | Align image and startup behavior | Shared entrypoint backup-dir handling; root `.dockerignore` only | Build each affected image; run with disposable volumes; non-root healthy process                           |
+| 3     | Exercise deployment isolation    | Per-app `docker-compose.validation.yml`                          | Health, backups, restart persistence, no host ports, no production volumes                                 |
+| 4     | Reconcile operator docs          | Root + app development docs match Compose                        | Maintainer can follow one app's docs without another app's file                                            |
+| 5     | Confirm the host handoff         | Documented sequence referring to host config                     | Owner reviews before any live change                                                                       |
 
 Tracking issue: [#54](https://github.com/yourtoolshq/everyday/issues/54).
 

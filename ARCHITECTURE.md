@@ -15,7 +15,6 @@ everyday/
 
 **Workspace:** pnpm packages under `apps/`, `packages/`, and `tooling/`. Managed with `pnpm@10.28.2` and Turborepo.
 
-
 ## Application isolation
 
 Each app under `apps/<name>/` is a self-contained Next.js application with:
@@ -59,14 +58,12 @@ mounted. The full matrix, intentional differences, validation steps, and Nix
 host-manager handoff live in
 [docs/phase-7/deployment.md](./docs/phase-7/deployment.md).
 
-
 ## Shared tooling (not shared application domains)
 
 `tooling/` provides consistent TypeScript, ESLint, and Prettier configuration.
 Application domains, databases, and deployments remain per-app. Shared runtime
 packages under `packages/` are promoted only after validation (see
 [DEVELOPMENT.md](./DEVELOPMENT.md)).
-
 
 ## Application architecture direction
 

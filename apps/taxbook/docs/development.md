@@ -47,4 +47,3 @@ Production and local development can run on the same computer because production
 The host manager checks out the reviewed commit and builds its candidate image before asking the running app for a verified backup. It leaves the current container in place if either the build or backup fails. The host manager pins the deployed commit; a routine host rebuild does not advance production automatically.
 
 Machine-specific service files and secrets stay outside this repository. The shared deployment contract, validation override, and host-handoff sequence are in the platform [Phase 7 deployment plan](../../../docs/phase-7/deployment.md). Follow the complete [Taxbook Phase 4 host cutover checklist](../../../docs/phase-4/taxbook-cutover.md) only when moving existing Taxbook data onto this Compose configuration. That historic cutover runs only on the computer that owns the production data, after the change is merged and reviewed.
-

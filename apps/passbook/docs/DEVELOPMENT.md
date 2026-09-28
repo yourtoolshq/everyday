@@ -97,5 +97,4 @@ docker compose exec app yt-data backup
 The [recovery runbook](../../../docs/phase-4/data-platform.md#recovery-runbook)
 covers restoring in Docker and moving data to another computer.
 
-
 After changing the schema, generate and commit a migration with `pnpm db:generate`. See [`ENGINEERING.md`](ENGINEERING.md) for the full migration workflow and rules.
