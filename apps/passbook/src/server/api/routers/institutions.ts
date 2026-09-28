@@ -20,9 +20,7 @@ const now = () => new Date().toISOString();
 
 export const institutionsRouter = createTRPCRouter({
   list: publicProcedure.query(({ ctx }) =>
-    mapAppErrors(() =>
-      listInstitutions(createInstitutionRepository(ctx.db)),
-    ),
+    mapAppErrors(() => listInstitutions(createInstitutionRepository(ctx.db))),
   ),
 
   create: publicProcedure

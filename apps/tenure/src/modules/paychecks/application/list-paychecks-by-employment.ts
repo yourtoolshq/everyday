@@ -1,5 +1,5 @@
-import { tenureLog } from "~/core/infrastructure/logger";
 import type { PaycheckRepository } from "~/modules/paychecks/infrastructure/paycheck-repository";
+import { tenureLog } from "~/core/infrastructure/logger";
 
 export async function listPaychecksByEmployment(
   repository: PaycheckRepository,

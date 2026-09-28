@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { TRPCError } from "@trpc/server";
+import { describe, expect, it } from "vitest";
 
 import { conflict, notFound } from "@yourtoolshq/server/errors";
 

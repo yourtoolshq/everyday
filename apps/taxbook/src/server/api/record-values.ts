@@ -3,9 +3,6 @@ import { and, count, eq, sum } from "drizzle-orm";
 
 import type { FileTransaction } from "@yourtoolshq/data/files";
 
-import { deleteRecordById } from "~/modules/records/application/delete-record";
-import { listRecordsByTaxItem } from "~/modules/records/application/list-records-by-tax-item";
-import { createRecordRepository } from "~/modules/records/infrastructure/record-repository";
 import type { Database } from "./helpers";
 import type {
   AttachmentAction,
@@ -13,6 +10,9 @@ import type {
   RecordInput,
   RecordUpdateInput,
 } from "~/domain/record";
+import { deleteRecordById } from "~/modules/records/application/delete-record";
+import { listRecordsByTaxItem } from "~/modules/records/application/list-records-by-tax-item";
+import { createRecordRepository } from "~/modules/records/infrastructure/record-repository";
 import { dataPlatform } from "~/server/data";
 import {
   people,
@@ -254,7 +254,11 @@ export async function updateRecord(
 }
 
 export async function deleteRecord(db: Database, recordId: number) {
-  return deleteRecordById(db, dataPlatform.files.withFiles.bind(dataPlatform.files), recordId);
+  return deleteRecordById(
+    db,
+    dataPlatform.files.withFiles.bind(dataPlatform.files),
+    recordId,
+  );
 }
 
 export async function getActiveAttachment(db: Database, recordId: number) {

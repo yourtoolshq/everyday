@@ -1,7 +1,7 @@
-import { tenureLog } from "~/core/infrastructure/logger";
 import type { CreatePaycheckCommand } from "~/modules/paychecks/domain/paycheck-values";
-import { buildPaycheckWriteValues } from "~/modules/paychecks/domain/paycheck-values";
 import type { PaycheckRepository } from "~/modules/paychecks/infrastructure/paycheck-repository";
+import { tenureLog } from "~/core/infrastructure/logger";
+import { buildPaycheckWriteValues } from "~/modules/paychecks/domain/paycheck-values";
 
 export async function createPaycheck(
   repository: PaycheckRepository,

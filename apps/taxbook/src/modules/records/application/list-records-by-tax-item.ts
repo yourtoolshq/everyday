@@ -1,5 +1,5 @@
-import { taxbookLog } from "~/core/infrastructure/logger";
 import type { RecordRepository } from "~/modules/records/infrastructure/record-repository";
+import { taxbookLog } from "~/core/infrastructure/logger";
 
 export async function listRecordsByTaxItem(
   repository: RecordRepository,

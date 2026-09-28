@@ -3,9 +3,9 @@ import { desc, eq } from "drizzle-orm";
 import { notFound, unexpected } from "@yourtoolshq/server/errors";
 
 import type { DeductionSettings } from "~/lib/paycheck-deductions";
-import { parseDeductionSettings } from "~/lib/paycheck-deductions";
 import type { PaycheckWriteValues } from "~/modules/paychecks/domain/paycheck-values";
 import type { db as tenureDb } from "~/server/db";
+import { parseDeductionSettings } from "~/lib/paycheck-deductions";
 import { documents, employments, paychecks } from "~/server/db/schema";
 
 export type TenureDatabase = typeof tenureDb;

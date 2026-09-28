@@ -1,9 +1,7 @@
-import { taxbookLog } from "~/core/infrastructure/logger";
-import {
-  createRecordRepository,
-  type WithFiles,
-} from "~/modules/records/infrastructure/record-repository";
+import type { WithFiles } from "~/modules/records/infrastructure/record-repository";
 import type { Database } from "~/server/api/helpers";
+import { taxbookLog } from "~/core/infrastructure/logger";
+import { createRecordRepository } from "~/modules/records/infrastructure/record-repository";
 
 export async function deleteRecordById(
   db: Database,

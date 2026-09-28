@@ -1,6 +1,6 @@
-import { passbookLog } from "~/core/infrastructure/logger";
 import type { CreateInstitutionCommand } from "~/modules/institutions/domain/institution-values";
 import type { InstitutionRepository } from "~/modules/institutions/infrastructure/institution-repository";
+import { passbookLog } from "~/core/infrastructure/logger";
 
 export async function createInstitution(
   repository: InstitutionRepository,

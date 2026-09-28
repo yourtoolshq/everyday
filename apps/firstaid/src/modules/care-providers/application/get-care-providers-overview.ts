@@ -1,5 +1,5 @@
-import { firstaidLog } from "~/core/infrastructure/logger";
 import type { CareProvidersRepository } from "~/modules/care-providers/infrastructure/care-providers-repository";
+import { firstaidLog } from "~/core/infrastructure/logger";
 
 export async function getCareProvidersOverview(
   repository: CareProvidersRepository,

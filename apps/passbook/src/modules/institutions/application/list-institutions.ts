@@ -1,5 +1,5 @@
-import { passbookLog } from "~/core/infrastructure/logger";
 import type { InstitutionRepository } from "~/modules/institutions/infrastructure/institution-repository";
+import { passbookLog } from "~/core/infrastructure/logger";
 
 export async function listInstitutions(repository: InstitutionRepository) {
   const started = Date.now();

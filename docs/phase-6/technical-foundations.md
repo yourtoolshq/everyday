@@ -57,16 +57,16 @@ Phase 6 is complete when all four apps consume maintained TS/ESLint presets, at 
 
 ### Implementation status (2026-09-28)
 
-| Gate | Status |
-| ---- | ------ |
-| All four apps consume `@yourtoolshq/tsconfig/nextjs` and `@yourtoolshq/eslint-config/next-app` | Done |
-| Tenure paycheck read (`listByEmployment`) + write (`create`) vertical slice | Done |
-| Taxbook record read (`listByTaxItem`) + write (`delete`) vertical slice | Done |
-| Passbook institution read (`list`) + write (`create`) vertical slice | Done |
-| First Aid care-providers read (`overview`) + write (`createOrganization`) vertical slice | Done |
-| `@yourtoolshq/server` errors + logging with all four apps and `@yourtoolshq/data` consumers | Done |
-| Remaining routers/value modules stay on prior patterns until touched | Intentional — migrate the next feature when it changes |
-| Docker/networking/runtime alignment | Left for Phase 7 |
-| Release automation | Left for Phase 8 |
+| Gate                                                                                           | Status                                                 |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| All four apps consume `@yourtoolshq/tsconfig/nextjs` and `@yourtoolshq/eslint-config/next-app` | Done                                                   |
+| Tenure paycheck read (`listByEmployment`) + write (`create`) vertical slice                    | Done                                                   |
+| Taxbook record read (`listByTaxItem`) + write (`delete`) vertical slice                        | Done                                                   |
+| Passbook institution read (`list`) + write (`create`) vertical slice                           | Done                                                   |
+| First Aid care-providers read (`overview`) + write (`createOrganization`) vertical slice       | Done                                                   |
+| `@yourtoolshq/server` errors + logging with all four apps and `@yourtoolshq/data` consumers    | Done                                                   |
+| Remaining routers/value modules stay on prior patterns until touched                           | Intentional — migrate the next feature when it changes |
+| Docker/networking/runtime alignment                                                            | Left for Phase 7                                       |
+| Release automation                                                                             | Left for Phase 8                                       |
 
 Before closing, update [ARCHITECTURE.md](../../ARCHITECTURE.md) to describe only the conventions and packages actually adopted, update the Phase 3 candidate register with validation outcomes, and leave Docker/networking/runtime deployment alignment for Phase 7. Phase 8 still owns release automation and rollback orchestration.

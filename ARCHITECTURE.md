@@ -61,12 +61,12 @@ host-manager handoff live in
 
 ## Shared packages
 
-| Package                 | Owns                                                                 |
-| ----------------------- | -------------------------------------------------------------------- |
-| `@yourtoolshq/data`     | Storage, migrations, backups, restore, integrity (Phase 4)           |
-| `@yourtoolshq/ui`       | Shared UI primitives and interaction patterns (Phase 5)              |
-| `@yourtoolshq/data-ui`  | Data-platform UI surfaces (Phase 5)                                  |
-| `@yourtoolshq/server`   | Transport-neutral `AppError` vocabulary and structured JSON logging  |
+| Package                | Owns                                                                |
+| ---------------------- | ------------------------------------------------------------------- |
+| `@yourtoolshq/data`    | Storage, migrations, backups, restore, integrity (Phase 4)          |
+| `@yourtoolshq/ui`      | Shared UI primitives and interaction patterns (Phase 5)             |
+| `@yourtoolshq/data-ui` | Data-platform UI surfaces (Phase 5)                                 |
+| `@yourtoolshq/server`  | Transport-neutral `AppError` vocabulary and structured JSON logging |
 
 ## Shared tooling
 

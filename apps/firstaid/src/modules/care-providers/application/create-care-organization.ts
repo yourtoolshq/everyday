@@ -1,6 +1,6 @@
-import { firstaidLog } from "~/core/infrastructure/logger";
 import type { CreateCareOrganizationCommand } from "~/modules/care-providers/domain/care-organization-values";
 import type { CareProvidersRepository } from "~/modules/care-providers/infrastructure/care-providers-repository";
+import { firstaidLog } from "~/core/infrastructure/logger";
 
 export async function createCareOrganization(
   repository: CareProvidersRepository,

@@ -3,8 +3,8 @@ import { asc } from "drizzle-orm";
 import { unexpected } from "@yourtoolshq/server/errors";
 
 import type { CreateInstitutionCommand } from "~/modules/institutions/domain/institution-values";
-import { normalizeInstitutionCommand } from "~/modules/institutions/domain/institution-values";
 import type { db as passbookDb } from "~/server/db";
+import { normalizeInstitutionCommand } from "~/modules/institutions/domain/institution-values";
 import { institutions } from "~/server/db/schema";
 
 export type PassbookDatabase = typeof passbookDb;
