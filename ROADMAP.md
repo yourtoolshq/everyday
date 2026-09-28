@@ -412,6 +412,10 @@ Components should be developed and validated in one application before promotion
 
 **Goal:** Reduce duplicated infrastructure while preserving application independence.
 
+The [Phase 6 implementation plan](./docs/phase-6/technical-foundations.md)
+records the current code-backed starting point, migration order, boundaries, and
+validation gates.
+
 Potential shared concerns:
 
 - Storage utilities established in Phase 4
@@ -441,6 +445,11 @@ perform a repository-wide directory rewrite.
 
 **Goal:** Make local deployment consistent and predictable.
 
+The [Phase 7 implementation plan](./docs/phase-7/deployment.md) records the
+current repository baseline, the remaining alignment work, and verification
+gates. The existing Nix-managed host deployment and its routing are sufficient;
+Phase 7 does not introduce another local domain-routing scheme.
+
 **Scope:**
 
 - Standardized Dockerfile conventions
@@ -451,13 +460,6 @@ perform a repository-wide directory rewrite.
 - Restart behavior
 - Local networking
 - Deployment documentation
-
-Explore local domain routing through Traefik or an equivalent solution:
-
-- `taxbook.localhost`
-- `tenure.localhost`
-- `passbook.localhost`
-- `firstaid.localhost`
 
 Applications should remain independently deployable even when maintained in the same monorepo.
 
