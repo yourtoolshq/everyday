@@ -1,9 +1,12 @@
 #!/bin/sh
 set -eu
 
-mkdir -p /data /data/documents /backups
+mkdir -p /data /data/documents
 chown -R nextjs:nodejs /data
-chown nextjs:nodejs /backups
+if [ -n "${BACKUP_DIR:-}" ]; then
+  mkdir -p "$BACKUP_DIR"
+  chown nextjs:nodejs "$BACKUP_DIR"
+fi
 
 if [ "$#" -gt 0 ]; then
   exec "$@"

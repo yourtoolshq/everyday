@@ -10,19 +10,23 @@ checklist](./passbook-cutover.md) and the [Phase 4 data platform
 design](./data-platform.md). Keep host-specific service configuration and
 secrets in the host configuration repository.
 
-## Current Tenure setup
+## Historic Tenure setup (pre-cutover inventory)
 
-- Docker stores `tenure.db` and `documents/` together under `/data` in the
+The following described Tenure before the Phase 4 platform adoption. It is
+retained as historic context for the cutover checklist. Current Compose
+publishes no host port, mounts separate `tenure-data` and `tenure-backups`
+volumes, and joins only the external `web` network — see
+[Phase 7 deployment](../phase-7/deployment.md).
+
+- Docker stored `tenure.db` and `documents/` together under `/data` in the
   `tenure-data` volume.
-- Documents have a `storage_key`; paycheck stubs and compensation documents
-  point to rows in `documents`.
-- The current backup script copies only the SQLite database and explicitly
-  leaves the documents directory to be backed up separately. The restore
-  script restores only the database.
-- Compose currently publishes `127.0.0.1:3003` and joins both its default
+- Documents had a `storage_key`; paycheck stubs and compensation documents
+  pointed to rows in `documents`.
+- The previous backup script copied only the SQLite database and left the
+  documents directory to be backed up separately.
+- Compose previously published `127.0.0.1:3003` and joined both its default
   network and the external `web` network.
-- Compose does not currently define a separate backup volume or a
-  `BACKUP_DIR`.
+- Compose previously lacked a separate backup volume / `BACKUP_DIR`.
 
 ## 1. Adopt the data platform in the app
 

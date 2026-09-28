@@ -1,0 +1,24 @@
+# Disposable override for Phase 7 deployment isolation checks.
+# Never use with production project names or without inspecting `docker compose config` first.
+#
+#   docker compose -p yt-validation-firstaid \
+#     -f docker-compose.yml -f docker-compose.validation.yml config
+#   docker compose -p yt-validation-firstaid \
+#     -f docker-compose.yml -f docker-compose.validation.yml up -d --build
+#
+# Tear down with `docker compose -p yt-validation-firstaid ... down` (add `-v` only for disposable volumes).
+
+services:
+  app:
+    labels: !reset []
+
+networks:
+  web:
+    name: yt-validation-firstaid-net
+    external: false
+
+volumes:
+  firstaid-data:
+    name: yt-validation-firstaid-data
+  firstaid-backups:
+    name: yt-validation-firstaid-backups

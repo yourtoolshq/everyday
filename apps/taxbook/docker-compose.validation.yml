@@ -1,0 +1,24 @@
+# Disposable override for Phase 7 deployment isolation checks.
+# Never use with production project names or without inspecting `docker compose config` first.
+#
+#   docker compose -p yt-validation-taxbook \
+#     -f docker-compose.yml -f docker-compose.validation.yml config
+#   docker compose -p yt-validation-taxbook \
+#     -f docker-compose.yml -f docker-compose.validation.yml up -d --build
+#
+# Tear down with `docker compose -p yt-validation-taxbook ... down` (add `-v` only for disposable volumes).
+
+services:
+  app:
+    labels: !reset []
+
+networks:
+  web:
+    name: yt-validation-taxbook-net
+    external: false
+
+volumes:
+  taxbook-data:
+    name: yt-validation-taxbook-data
+  taxbook-backups:
+    name: yt-validation-taxbook-backups
