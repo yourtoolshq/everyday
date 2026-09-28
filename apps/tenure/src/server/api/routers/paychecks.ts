@@ -1,10 +1,11 @@
 import { TRPCError } from "@trpc/server";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
 
 import { fileToken } from "@yourtoolshq/data/files";
 
 import type { PaycheckColumnMapping } from "~/lib/paycheck-csv-import";
+import { mapAppErrors, toTRPCError } from "~/core/infrastructure/trpc-errors";
 import {
   deriveExpectedPayPeriodsForYear,
   paycheckMatchesPeriod,
@@ -22,12 +23,13 @@ import {
   paycheckImportRowToInput,
 } from "~/lib/paycheck-csv-import";
 import {
-  applyPaycheckIncomeTax,
-  calculateNetPay,
-  isIncomeTaxSplit,
   parseDeductionSettings,
   paycheckInput,
 } from "~/lib/paycheck-deductions";
+import { createPaycheck } from "~/modules/paychecks/application/create-paycheck";
+import { listPaychecksByEmployment } from "~/modules/paychecks/application/list-paychecks-by-employment";
+import { buildPaycheckWriteValues } from "~/modules/paychecks/domain/paycheck-values";
+import { createPaycheckRepository } from "~/modules/paychecks/infrastructure/paycheck-repository";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   documents,
@@ -42,99 +44,30 @@ const idInput = z.object({ id: z.string().uuid() });
 const employmentIdInput = z.object({ employmentId: z.string().uuid() });
 const now = () => new Date().toISOString();
 
-function buildPaycheckValues(
-  input: z.infer<typeof paycheckInput>,
-  deductionSettings: ReturnType<typeof parseDeductionSettings>,
-) {
-  const split = isIncomeTaxSplit(deductionSettings);
-  const amounts = applyPaycheckIncomeTax(
-    {
-      grossPayCents: input.grossPayCents,
-      incomeTaxCents: input.incomeTaxCents,
-      federalIncomeTaxCents: input.federalIncomeTaxCents,
-      manitobaIncomeTaxCents: input.manitobaIncomeTaxCents,
-      cppCents: input.cppCents,
-      cpp2Cents: input.cpp2Cents,
-      eiCents: input.eiCents,
-      wiCents: input.wiCents,
-      ltdCents: input.ltdCents,
-      extendedHealthCents: input.extendedHealthCents,
-      travelMedicalCents: input.travelMedicalCents,
-      unionDuesCents: input.unionDuesCents,
-      otherDeductionsCents: input.otherDeductionsCents,
-    },
-    split,
-  );
-
-  return {
-    ...amounts,
-    netPayCents: calculateNetPay(amounts),
-    payDate: input.payDate,
-    periodStartDate: input.periodStartDate,
-    periodEndDate: input.periodEndDate,
-  };
-}
-
 async function getEmploymentPaySettings(
   ctx: { db: typeof import("~/server/db").db },
   employmentId: string,
 ) {
-  const [employment] = await ctx.db
-    .select({
-      id: employments.id,
-      deductionSettings: employments.deductionSettings,
-    })
-    .from(employments)
-    .where(eq(employments.id, employmentId));
-
-  if (!employment) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "Employment not found.",
-    });
+  try {
+    return await createPaycheckRepository(
+      ctx.db,
+    ).getEmploymentDeductionSettings(employmentId);
+  } catch (error) {
+    throw toTRPCError(error);
   }
-
-  return parseDeductionSettings(employment.deductionSettings);
 }
 
 export const paychecksRouter = createTRPCRouter({
   listByEmployment: publicProcedure
     .input(employmentIdInput)
-    .query(async ({ ctx, input }) => {
-      return ctx.db
-        .select({
-          id: paychecks.id,
-          employmentId: paychecks.employmentId,
-          payDate: paychecks.payDate,
-          periodStartDate: paychecks.periodStartDate,
-          periodEndDate: paychecks.periodEndDate,
-          grossPayCents: paychecks.grossPayCents,
-          incomeTaxCents: paychecks.incomeTaxCents,
-          federalIncomeTaxCents: paychecks.federalIncomeTaxCents,
-          manitobaIncomeTaxCents: paychecks.manitobaIncomeTaxCents,
-          cppCents: paychecks.cppCents,
-          cpp2Cents: paychecks.cpp2Cents,
-          eiCents: paychecks.eiCents,
-          wiCents: paychecks.wiCents,
-          ltdCents: paychecks.ltdCents,
-          extendedHealthCents: paychecks.extendedHealthCents,
-          travelMedicalCents: paychecks.travelMedicalCents,
-          unionDuesCents: paychecks.unionDuesCents,
-          otherDeductionsCents: paychecks.otherDeductionsCents,
-          netPayCents: paychecks.netPayCents,
-          documentId: paychecks.documentId,
-          documentTitle: documents.title,
-          documentFilename: documents.originalFilename,
-          documentFileId: documents.fileId,
-          documentMimeType: documents.mimeType,
-          createdAt: paychecks.createdAt,
-          updatedAt: paychecks.updatedAt,
-        })
-        .from(paychecks)
-        .leftJoin(documents, eq(paychecks.documentId, documents.id))
-        .where(eq(paychecks.employmentId, input.employmentId))
-        .orderBy(desc(paychecks.payDate), desc(paychecks.createdAt));
-    }),
+    .query(({ ctx, input }) =>
+      mapAppErrors(() =>
+        listPaychecksByEmployment(
+          createPaycheckRepository(ctx.db),
+          input.employmentId,
+        ),
+      ),
+    ),
 
   previewImport: publicProcedure
     .input(
@@ -250,7 +183,7 @@ export const paychecksRouter = createTRPCRouter({
         const inserted = [];
         for (const row of rowsToImport) {
           const parsed = paycheckImportRowToInput(input.employmentId, row);
-          const values = buildPaycheckValues(parsed, settings);
+          const values = buildPaycheckWriteValues(parsed, settings);
           const [paycheck] = await tx
             .insert(paychecks)
             .values({
@@ -274,21 +207,11 @@ export const paychecksRouter = createTRPCRouter({
 
   create: publicProcedure
     .input(paycheckInput)
-    .mutation(async ({ ctx, input }) => {
-      const settings = await getEmploymentPaySettings(ctx, input.employmentId);
-      const values = buildPaycheckValues(input, settings);
-
-      const [paycheck] = await ctx.db
-        .insert(paychecks)
-        .values({
-          employmentId: input.employmentId,
-          ...values,
-        })
-        .returning();
-
-      if (!paycheck) throw new Error("Paycheck creation failed.");
-      return paycheck;
-    }),
+    .mutation(({ ctx, input }) =>
+      mapAppErrors(() =>
+        createPaycheck(createPaycheckRepository(ctx.db), input),
+      ),
+    ),
 
   attachStub: publicProcedure
     .input(
@@ -395,7 +318,7 @@ export const paychecksRouter = createTRPCRouter({
       }
 
       const settings = await getEmploymentPaySettings(ctx, input.employmentId);
-      const values = buildPaycheckValues(input, settings);
+      const values = buildPaycheckWriteValues(input, settings);
 
       const [paycheck] = await ctx.db
         .update(paychecks)

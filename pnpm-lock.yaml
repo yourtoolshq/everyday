@@ -62,7 +62,7 @@ catalogs:
       version: 9.39.5
     eslint-config-next:
       specifier: ^15.5.25
-      version: 15.5.25
+      version: 15.5.26
     next:
       specifier: ^15.2.3
       version: 15.5.25
@@ -149,6 +149,9 @@ importers:
       '@yourtoolshq/data-ui':
         specifier: workspace:*
         version: link:../../packages/data-ui
+      '@yourtoolshq/server':
+        specifier: workspace:*
+        version: link:../../packages/server
       '@yourtoolshq/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -192,9 +195,6 @@ importers:
         specifier: 'catalog:'
         version: 3.25.76
     devDependencies:
-      '@eslint/eslintrc':
-        specifier: 'catalog:'
-        version: 3.3.7
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.63.0
@@ -213,6 +213,12 @@ importers:
       '@vitest/coverage-v8':
         specifier: 'catalog:'
         version: 3.2.7(vitest@3.2.7(@types/node@22.20.4)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@yourtoolshq/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@yourtoolshq/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
       drizzle-kit:
         specifier: 'catalog:'
         version: 0.30.6
@@ -221,7 +227,7 @@ importers:
         version: 9.39.5(jiti@2.7.0)
       eslint-config-next:
         specifier: 'catalog:'
-        version: 15.5.25(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+        version: 15.5.26(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       postcss:
         specifier: 'catalog:'
         version: 8.5.28
@@ -261,6 +267,9 @@ importers:
       '@yourtoolshq/data-ui':
         specifier: workspace:*
         version: link:../../packages/data-ui
+      '@yourtoolshq/server':
+        specifier: workspace:*
+        version: link:../../packages/server
       '@yourtoolshq/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -310,9 +319,6 @@ importers:
         specifier: 'catalog:'
         version: 3.25.76
     devDependencies:
-      '@eslint/eslintrc':
-        specifier: 'catalog:'
-        version: 3.3.7
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.63.0
@@ -331,6 +337,12 @@ importers:
       '@vitest/coverage-v8':
         specifier: 'catalog:'
         version: 3.2.7(vitest@3.2.7(@types/node@22.20.4)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@yourtoolshq/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@yourtoolshq/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
       drizzle-kit:
         specifier: 'catalog:'
         version: 0.30.6
@@ -339,7 +351,7 @@ importers:
         version: 9.39.5(jiti@2.7.0)
       eslint-config-next:
         specifier: 'catalog:'
-        version: 15.5.25(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+        version: 15.5.26(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       postcss:
         specifier: 'catalog:'
         version: 8.5.28
@@ -385,6 +397,9 @@ importers:
       '@yourtoolshq/data-ui':
         specifier: workspace:*
         version: link:../../packages/data-ui
+      '@yourtoolshq/server':
+        specifier: workspace:*
+        version: link:../../packages/server
       '@yourtoolshq/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -434,9 +449,6 @@ importers:
         specifier: 'catalog:'
         version: 3.25.76
     devDependencies:
-      '@eslint/eslintrc':
-        specifier: 'catalog:'
-        version: 3.3.7
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.63.0
@@ -455,6 +467,12 @@ importers:
       '@vitest/coverage-v8':
         specifier: 'catalog:'
         version: 3.2.7(vitest@3.2.7(@types/node@22.20.4)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@yourtoolshq/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@yourtoolshq/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
       drizzle-kit:
         specifier: 'catalog:'
         version: 0.30.6
@@ -463,7 +481,7 @@ importers:
         version: 9.39.5(jiti@2.7.0)
       eslint-config-next:
         specifier: 'catalog:'
-        version: 15.5.25(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+        version: 15.5.26(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       postcss:
         specifier: 'catalog:'
         version: 8.5.28
@@ -512,6 +530,9 @@ importers:
       '@yourtoolshq/data-ui':
         specifier: workspace:*
         version: link:../../packages/data-ui
+      '@yourtoolshq/server':
+        specifier: workspace:*
+        version: link:../../packages/server
       '@yourtoolshq/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -561,9 +582,6 @@ importers:
         specifier: 'catalog:'
         version: 3.25.76
     devDependencies:
-      '@eslint/eslintrc':
-        specifier: 'catalog:'
-        version: 3.3.7
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.63.0
@@ -582,6 +600,12 @@ importers:
       '@vitest/coverage-v8':
         specifier: 'catalog:'
         version: 3.2.7(vitest@3.2.7(@types/node@22.20.4)(jiti@2.7.0)(lightningcss@1.32.0))
+      '@yourtoolshq/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@yourtoolshq/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
       drizzle-kit:
         specifier: 'catalog:'
         version: 0.30.6
@@ -590,7 +614,7 @@ importers:
         version: 9.39.5(jiti@2.7.0)
       eslint-config-next:
         specifier: 'catalog:'
-        version: 15.5.25(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+        version: 15.5.26(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       postcss:
         specifier: 'catalog:'
         version: 8.5.28
@@ -606,6 +630,9 @@ importers:
 
   packages/data:
     dependencies:
+      '@yourtoolshq/server':
+        specifier: workspace:*
+        version: link:../server
       postal-mime:
         specifier: ^3.0.0
         version: 3.0.0
@@ -705,6 +732,33 @@ importers:
         specifier: 'catalog:'
         version: 3.2.7(@types/node@22.20.4)(jiti@2.7.0)(lightningcss@1.32.0)
 
+  packages/server:
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.20.4
+      '@yourtoolshq/eslint-config':
+        specifier: workspace:*
+        version: link:../../tooling/eslint
+      '@yourtoolshq/prettier-config':
+        specifier: workspace:*
+        version: link:../../tooling/prettier
+      '@yourtoolshq/tsconfig':
+        specifier: workspace:*
+        version: link:../../tooling/typescript
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.5(jiti@2.7.0)
+      jiti:
+        specifier: ^2.7.0
+        version: 2.7.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.7(@types/node@22.20.4)(jiti@2.7.0)(lightningcss@1.32.0)
+
   packages/ui:
     dependencies:
       class-variance-authority:
@@ -762,12 +816,18 @@ importers:
       '@eslint/compat':
         specifier: ^1.4.0
         version: 1.4.1(eslint@9.39.5(jiti@2.7.0))
+      '@eslint/eslintrc':
+        specifier: 'catalog:'
+        version: 3.3.7
       '@eslint/js':
         specifier: ^9.39.5
         version: 9.39.5
       '@next/eslint-plugin-next':
         specifier: ^15.5.25
         version: 15.5.25
+      eslint-config-next:
+        specifier: 'catalog:'
+        version: 15.5.26(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       eslint-plugin-import:
         specifier: ^2.32.0
         version: 2.32.0(@typescript-eslint/parser@8.70.1(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint-import-resolver-typescript@3.10.1)(eslint@9.39.5(jiti@2.7.0))
@@ -1941,6 +2001,9 @@ packages:
 
   '@next/eslint-plugin-next@15.5.25':
     resolution: {integrity: sha512-dAzOqZQCAOgIq5yQpsuMBZcwxK0AtzGqHMQpxNWYLQlvf79rsP3SDwdGPNQC4ySaMSihOQXMO/VXubQ3JWW+3A==}
+
+  '@next/eslint-plugin-next@15.5.26':
+    resolution: {integrity: sha512-xeVpG8CbnTf9IelaFbZQ7TN4BXHV2x+ejnXXbY7Z4kD+sgJ8j97psraV+4/fGjLCjNQuEofUHMeIeieDMyKO/w==}
 
   '@next/swc-darwin-arm64@15.5.25':
     resolution: {integrity: sha512-w+RR0v/QuApnWEjRGm1z6gcObKwGMb5YPA7V3bzBEVSBpMFUXprer0tS27UxjUcEnqbhL7Zuzohej79B6rYmBg==}
@@ -4183,8 +4246,8 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-config-next@15.5.25:
-    resolution: {integrity: sha512-hB1oClZzRO3vMAeMmBMch0FHNJ4irH74LvQWDEMHkJtG/Us9+SAsg1f5Pvcw9jz4tc8wSGnvbmF050BRAAIbBg==}
+  eslint-config-next@15.5.26:
+    resolution: {integrity: sha512-nekKvDmRQV8VRUhBTt2B/HFdgNR0vWKA/ao5W1L7lcaEvAXsuQYjIJqwLUGaux9uvXOrxnxLu5dQjnRnOixcfw==}
     peerDependencies:
       eslint: ^7.23.0 || ^8.0.0 || ^9.0.0
       typescript: '>=3.3.1'
@@ -7200,6 +7263,10 @@ snapshots:
     dependencies:
       fast-glob: 3.3.1
 
+  '@next/eslint-plugin-next@15.5.26':
+    dependencies:
+      fast-glob: 3.3.1
+
   '@next/swc-darwin-arm64@15.5.25':
     optional: true
 
@@ -9372,9 +9439,9 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-next@15.5.25(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3):
+  eslint-config-next@15.5.26(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3):
     dependencies:
-      '@next/eslint-plugin-next': 15.5.25
+      '@next/eslint-plugin-next': 15.5.26
       '@rushstack/eslint-patch': 1.16.1
       '@typescript-eslint/eslint-plugin': 8.70.1(@typescript-eslint/parser@8.70.1(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3))(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
       '@typescript-eslint/parser': 8.70.1(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)

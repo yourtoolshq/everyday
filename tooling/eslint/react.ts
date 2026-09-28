@@ -1,4 +1,4 @@
-// @ts-nocheck — reference config; apps retain local eslint rules in Phase 1.
+// @ts-nocheck — React plugin rules; composed into next-app for applications.
 import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import { defineConfig } from "eslint/config";

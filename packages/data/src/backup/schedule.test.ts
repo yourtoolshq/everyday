@@ -52,10 +52,15 @@ async function triggers(platform: ReturnType<typeof defineDataPlatform>) {
 function waitForScheduledBackup() {
   return vi.waitFor(
     () => {
-      expect(console.info).toHaveBeenCalledWith(
-        "backup created",
-        expect.objectContaining({ trigger: "scheduled" }),
-      );
+      expect(
+        vi.mocked(console.info).mock.calls.some((call) => {
+          const line = String(call[0] ?? "");
+          return (
+            line.includes('"operation":"backup.create"') &&
+            line.includes('"trigger":"scheduled"')
+          );
+        }),
+      ).toBe(true);
     },
     { timeout: 5000 },
   );
@@ -148,10 +153,12 @@ describe("backup schedule", () => {
     );
 
     await vi.advanceTimersByTimeAsync(minutes(2));
-    expect(error).toHaveBeenCalledWith("scheduled backup failed", {
-      app: "test",
-      error: "No space left on device",
-    });
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining('"operation":"backup.schedule.run"'),
+    );
+    expect(error).toHaveBeenCalledWith(
+      expect.stringContaining("No space left on device"),
+    );
     await vi.advanceTimersByTimeAsync(minutes(16 * 60));
     await waitForScheduledBackup();
 

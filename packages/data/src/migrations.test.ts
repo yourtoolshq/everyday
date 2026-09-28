@@ -111,11 +111,15 @@ describe("boot migrations", () => {
       verification: { status: "verified" },
     });
     expect(await readMeta()).not.toHaveProperty("migratedByAppVersion");
-    expect(console.info).toHaveBeenCalledWith("database migrated", {
-      app: "test",
-      migrations: ["0001_notes"],
-      preMigrationBackup: backup?.id,
-    });
+    expect(console.info).toHaveBeenCalledWith(
+      expect.stringContaining('"operation":"database.migrate"'),
+    );
+    expect(console.info).toHaveBeenCalledWith(
+      expect.stringContaining('"migrations":"0001_notes"'),
+    );
+    expect(console.info).toHaveBeenCalledWith(
+      expect.stringContaining(`"preMigrationBackup":"${backup?.id}"`),
+    );
   });
 
   it("lets other work run between statements", async () => {
@@ -169,8 +173,10 @@ describe("boot migrations", () => {
         "Migration 0002_broken failed: SQLITE_ERROR: no such table: missing_table",
     });
     expect(console.error).toHaveBeenCalledWith(
-      "data platform blocked",
-      expect.objectContaining({ app: "test", reason: "migration-failed" }),
+      expect.stringContaining('"operation":"platform.blocked"'),
+    );
+    expect(console.error).toHaveBeenCalledWith(
+      expect.stringContaining('"reason":"migration-failed"'),
     );
 
     expect(await tableNames()).not.toContain("notes");

@@ -4,6 +4,7 @@
   "type": "module",
   "exports": {
     "./base": "./base.ts",
+    "./next-app": "./next-app.ts",
     "./nextjs": "./nextjs.ts",
     "./react": "./react.ts"
   },
@@ -14,8 +15,10 @@
   },
   "dependencies": {
     "@eslint/compat": "^1.4.0",
+    "@eslint/eslintrc": "catalog:",
     "@eslint/js": "^9.39.5",
     "@next/eslint-plugin-next": "^15.5.25",
+    "eslint-config-next": "catalog:",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",

@@ -1,0 +1,27 @@
+{
+  "name": "@yourtoolshq/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./errors": "./src/errors.ts",
+    "./log": "./src/log.ts"
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@yourtoolshq/eslint-config": "workspace:*",
+    "@yourtoolshq/prettier-config": "workspace:*",
+    "@yourtoolshq/tsconfig": "workspace:*",
+    "eslint": "catalog:",
+    "jiti": "^2.7.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "prettier": "@yourtoolshq/prettier-config"
+}

@@ -1,7 +1,11 @@
 import { TRPCError } from "@trpc/server";
-import { asc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 
+import { mapAppErrors } from "~/core/infrastructure/trpc-errors";
+import { createInstitution } from "~/modules/institutions/application/create-institution";
+import { listInstitutions } from "~/modules/institutions/application/list-institutions";
+import { createInstitutionRepository } from "~/modules/institutions/infrastructure/institution-repository";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { institutions } from "~/server/db/schema";
 
@@ -15,25 +19,17 @@ const idInput = z.object({ id: z.string().uuid() });
 const now = () => new Date().toISOString();
 
 export const institutionsRouter = createTRPCRouter({
-  list: publicProcedure.query(async ({ ctx }) => {
-    return ctx.db.query.institutions.findMany({
-      orderBy: [asc(institutions.name)],
-    });
-  }),
+  list: publicProcedure.query(({ ctx }) =>
+    mapAppErrors(() => listInstitutions(createInstitutionRepository(ctx.db))),
+  ),
 
   create: publicProcedure
     .input(institutionInput)
-    .mutation(async ({ ctx, input }) => {
-      const [institution] = await ctx.db
-        .insert(institutions)
-        .values({
-          name: input.name,
-          website: input.website ?? null,
-          notes: input.notes ?? null,
-        })
-        .returning();
-      return institution;
-    }),
+    .mutation(({ ctx, input }) =>
+      mapAppErrors(() =>
+        createInstitution(createInstitutionRepository(ctx.db), input),
+      ),
+    ),
 
   update: publicProcedure
     .input(idInput.and(institutionInput))

@@ -701,7 +701,9 @@ Applications have consistent deployment, identifiable releases, safe upgrades, a
 
 ## 11. Immediate next step
 
-**Phases 1–6** are in place for platform development. Current focus is
+**Phases 1–6 are complete** for the platform consolidation scope documented in
+each phase plan (including shared TS/ESLint presets, vertical-slice adoption in
+all four apps, and `@yourtoolshq/server` errors/logging). Current focus is
 **Phase 7 — Unified deployment**.
 
 1. Follow the [Phase 7 implementation plan](./docs/phase-7/deployment.md).

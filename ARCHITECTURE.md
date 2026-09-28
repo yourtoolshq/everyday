@@ -7,13 +7,14 @@ This document describes the current monorepo structure and how applications stay
 ```
 everyday/
 ├── apps/           Four Next.js applications (independent deployables)
-├── packages/       Shared libraries adopted when validated (@yourtoolshq/data, data-ui, ui, …)
+├── packages/       Shared libraries (data, data-ui, ui, server)
 ├── tooling/        Shared dev config (@yourtoolshq/tsconfig, eslint-config, prettier-config)
 ├── turbo/          Package generator
 └── docs/           Platform-phase documentation
 ```
 
-**Workspace:** pnpm packages under `apps/`, `packages/`, and `tooling/`. Managed with `pnpm@10.28.2` and Turborepo.
+**Workspace:** root, 4 apps, 4 shared packages, 3 tooling packages. Managed with
+`pnpm@10.28.2` and Turborepo.
 
 ## Application isolation
 
@@ -58,12 +59,24 @@ mounted. The full matrix, intentional differences, validation steps, and Nix
 host-manager handoff live in
 [docs/phase-7/deployment.md](./docs/phase-7/deployment.md).
 
-## Shared tooling (not shared application domains)
+## Shared packages
 
-`tooling/` provides consistent TypeScript, ESLint, and Prettier configuration.
-Application domains, databases, and deployments remain per-app. Shared runtime
-packages under `packages/` are promoted only after validation (see
-[DEVELOPMENT.md](./DEVELOPMENT.md)).
+| Package                | Owns                                                                |
+| ---------------------- | ------------------------------------------------------------------- |
+| `@yourtoolshq/data`    | Storage, migrations, backups, restore, integrity (Phase 4)          |
+| `@yourtoolshq/ui`      | Shared UI primitives and interaction patterns (Phase 5)             |
+| `@yourtoolshq/data-ui` | Data-platform UI surfaces (Phase 5)                                 |
+| `@yourtoolshq/server`  | Transport-neutral `AppError` vocabulary and structured JSON logging |
+
+## Shared tooling
+
+`tooling/` provides TypeScript, ESLint, and Prettier configuration. All four
+apps extend `@yourtoolshq/tsconfig/nextjs.json` and
+`createNextAppConfig(import.meta.dirname)` from `@yourtoolshq/eslint-config/next-app`.
+Path aliases (`~/`) and Next-specific options stay in each app. The type-checked
+package ESLint preset (`base`) remains for shared packages; `restrictEnvAccess`
+stays opt-in until apps fully standardize on `~/env`. Application domains,
+databases, and deployments remain per-app.
 
 ## Application architecture direction
 
@@ -74,7 +87,7 @@ localized fix does not require reorganizing its whole feature first.
 ```text
 src/
 ├── app/                         Next.js routes and composition
-├── core/                        Small app-wide concepts and infrastructure
+├── core/infrastructure/         App-wide logging and transport error mapping
 ├── modules/
 │   └── <feature>/
 │       ├── domain/              Pure rules, types, and validation
@@ -86,6 +99,17 @@ src/
 
 Small slices may remain a few colocated files. The named directories are
 boundaries, not required empty scaffolding.
+
+### Adopted Phase 6 examples
+
+- **Tenure** `modules/paychecks`: `listByEmployment` read and `create` write.
+- **Taxbook** `modules/records`: `listByTaxItem` read and `delete` write.
+- **Passbook** `modules/institutions`: `list` read and `create` write.
+- **First Aid** `modules/care-providers`: `overview` read and `createOrganization`
+  write.
+
+All four apps map transport-neutral `AppError` values at tRPC (and Taxbook HTTP)
+boundaries and emit structured JSON logs on the adopted paths.
 
 ### Dependency direction
 
@@ -105,18 +129,15 @@ boundaries, not required empty scaffolding.
 - Prefer one concrete repository. Add an interface only when a real second
   adapter exists; do not add generic base repositories or a dependency-injection
   container.
-- App-wide database, storage, logging, and error infrastructure belongs in
-  app-local `core/infrastructure` until promotion is validated.
-
-Taxbook's domain modules and `*-values.ts` files are the closest existing
-reference, but they are not a template to copy unchanged: some remain large and
-mix application, persistence, and transport errors. The detailed evidence and
-candidate decisions live in the
-[Phase 3 audit](./docs/phase-3/architecture-audit.md).
+- Transport-neutral errors live in `@yourtoolshq/server/errors`. Each app maps
+  them in `core/infrastructure` for tRPC and HTTP.
+- Structured logging uses `@yourtoolshq/server/log` (JSON lines to
+  stdout/stderr). Allow-listed context only; apps and `@yourtoolshq/data`
+  share the same event shape for adopted paths.
 
 ## What this document is not
 
 - Per-app domain models → app `docs/domain.md` or `DOMAIN.md`
-- UI conventions → app docs and future design system
+- UI conventions → [DESIGN_LANGUAGE.md](./DESIGN_LANGUAGE.md) and Phase 5 docs
 - Deployment topology → [docs/phase-7/deployment.md](./docs/phase-7/deployment.md);
   Traefik hostnames also appear in [docs/phase-1/baseline.md](./docs/phase-1/baseline.md)
