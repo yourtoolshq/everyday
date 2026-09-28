@@ -1,0 +1,24 @@
+# Disposable override for Phase 7 deployment isolation checks.
+# Never use with production project names or without inspecting `docker compose config` first.
+#
+#   docker compose -p yt-validation-passbook \
+#     -f docker-compose.yml -f docker-compose.validation.yml config
+#   docker compose -p yt-validation-passbook \
+#     -f docker-compose.yml -f docker-compose.validation.yml up -d --build
+#
+# Tear down with `docker compose -p yt-validation-passbook ... down` (add `-v` only for disposable volumes).
+
+services:
+  app:
+    labels: !reset []
+
+networks:
+  web:
+    name: yt-validation-passbook-net
+    external: false
+
+volumes:
+  passbook-data:
+    name: yt-validation-passbook-data
+  passbook-backups:
+    name: yt-validation-passbook-backups

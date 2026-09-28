@@ -7,13 +7,13 @@ This document describes the current monorepo structure and how applications stay
 ```
 everyday/
 ├── apps/           Four Next.js applications (independent deployables)
-├── packages/       Reserved for future shared application code (empty)
+├── packages/       Shared libraries adopted when validated (@yourtoolshq/data, data-ui, ui, …)
 ├── tooling/        Shared dev config (@yourtoolshq/tsconfig, eslint-config, prettier-config)
 ├── turbo/          Package generator
-└── docs/           Platform-phase documentation (e.g. phase-1 verification)
+└── docs/           Platform-phase documentation
 ```
 
-**Workspace:** 8 pnpm packages — root, 4 apps, 3 tooling packages. Managed with `pnpm@10.28.2` and Turborepo.
+**Workspace:** pnpm packages under `apps/`, `packages/`, and `tooling/`. Managed with `pnpm@10.28.2` and Turborepo.
 
 ## Application isolation
 
@@ -37,7 +37,7 @@ Apps do not import from each other. Cross-app integration (e.g. Taxbook ↔ Tenu
 
 E2E tests use port **3100** with isolated `.data/e2e.db` per app run.
 
-## Docker build pattern
+## Docker build and deployment pattern
 
 Images build from the **repository root** using `turbo prune <app> --docker`:
 
@@ -45,15 +45,25 @@ Images build from the **repository root** using `turbo prune <app> --docker`:
 pnpm docker:build:taxbook   # docker build -f apps/taxbook/Dockerfile -t taxbook .
 ```
 
-`docker-compose.yml` in each app sets `context: ../..` so prune output and lockfile resolve correctly. Health checks hit `/api/health` inside the container.
+Each app keeps its own `Dockerfile` and `docker-compose.yml`. Compose sets
+`context: ../..`, mounts named data and backup volumes at `/data` and
+`/backups`, joins the external `web` network, publishes **no** application host
+port, and registers the existing `*.tools.local` Traefik hostname. Health checks
+hit `/api/health` inside the container. Root `.dockerignore` applies to every
+image build.
 
-## Shared tooling (not shared application code)
+Disposable isolation checks use each app's `docker-compose.validation.yml` with
+a throwaway Compose project name so production volumes and host routes are never
+mounted. The full matrix, intentional differences, validation steps, and Nix
+host-manager handoff live in
+[docs/phase-7/deployment.md](./docs/phase-7/deployment.md).
 
-`tooling/` provides consistent TypeScript, ESLint, and Prettier configuration. Application logic and UI remain in each app until a `shared-candidate` is validated and promoted (see [DEVELOPMENT.md](./DEVELOPMENT.md)).
+## Shared tooling (not shared application domains)
 
-The tooling packages are established, but the applications still retain local
-TypeScript and ESLint copies. Consuming the shared presets is a Phase 6
-candidate; this document does not claim that migration is already complete.
+`tooling/` provides consistent TypeScript, ESLint, and Prettier configuration.
+Application domains, databases, and deployments remain per-app. Shared runtime
+packages under `packages/` are promoted only after validation (see
+[DEVELOPMENT.md](./DEVELOPMENT.md)).
 
 ## Application architecture direction
 
@@ -108,4 +118,5 @@ candidate decisions live in the
 
 - Per-app domain models → app `docs/domain.md` or `DOMAIN.md`
 - UI conventions → app docs and future design system
-- Deployment topology → legacy repos until Phase 4; Traefik hostnames documented in [docs/phase-1/baseline.md](./docs/phase-1/baseline.md)
+- Deployment topology → [docs/phase-7/deployment.md](./docs/phase-7/deployment.md);
+  Traefik hostnames also appear in [docs/phase-1/baseline.md](./docs/phase-1/baseline.md)

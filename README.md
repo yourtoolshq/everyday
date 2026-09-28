@@ -37,20 +37,23 @@ pnpm turbo run test -F passbook
 pnpm turbo run test:e2e -F tenure
 ```
 
-Docker builds use `turbo prune` from the monorepo root:
+Docker builds use `turbo prune` from the monorepo root. Production Compose
+publishes no app port; Traefik serves each app on its `*.tools.local` host.
+See [docs/phase-7/deployment.md](./docs/phase-7/deployment.md).
 
 ```bash
 pnpm docker:build:taxbook
-cd apps/taxbook && docker compose up --build
+cd apps/taxbook && docker compose up --build -d
 ```
 
 ## Repository layout
 
 ```
 apps/        Taxbook, Passbook, Tenure, First Aid
-packages/    Reserved for future shared application code (empty in Phase 1)
+packages/    Shared libraries (@yourtoolshq/data, data-ui, ui, …)
 tooling/     @yourtoolshq/tsconfig, eslint-config, prettier-config
 turbo/       Package generator (`pnpm gen`)
+docs/        Platform-phase plans and audits
 ```
 
 ## Documentation
@@ -62,6 +65,7 @@ turbo/       Package generator (`pnpm gen`)
 | [DEVELOPMENT.md](./DEVELOPMENT.md)                    | Workflow, checks, and production boundary      |
 | [AGENTS.md](./AGENTS.md)                              | Entry point for coding agents                  |
 | [ROADMAP.md](./ROADMAP.md)                            | Phased consolidation plan                      |
+| [Phase 7 deployment](./docs/phase-7/deployment.md)    | Unified container contract and host handoff    |
 | [Phase 3 audit](./docs/phase-3/architecture-audit.md) | Architecture decisions and candidate inventory |
 
 ## Philosophy
@@ -70,6 +74,8 @@ See the [Your Tools manifesto](https://your-tools.dev/) for the motivation and p
 
 ## Status
 
-**Phases 1 and 2** are complete. **Phase 3** (architecture inventory) is under
-review. See [ROADMAP.md](./ROADMAP.md), [docs/phase-1/](./docs/phase-1/), and the
-[Phase 3 audit](./docs/phase-3/architecture-audit.md) for details.
+**Phases 1–6** established the monorepo, workflow, architecture decisions, data
+platform, shared UI, and technical foundations. **Phase 7** (unified
+deployment) is the current platform focus — see
+[docs/phase-7/deployment.md](./docs/phase-7/deployment.md) and
+[ROADMAP.md](./ROADMAP.md).

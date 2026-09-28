@@ -46,7 +46,7 @@ Set `TENURE_BACKUP_DIR` to a host directory when backups should live outside the
 TENURE_BACKUP_DIR=/path/to/backups/tenure docker compose up --build -d
 ```
 
-The host manager builds the candidate image, then asks the running app for a verified backup. If the build or the backup fails, it leaves the running container in place. Machine-specific service files and secrets stay outside this repository.
+The host manager builds the candidate image, then asks the running app for a verified backup. If the build or the backup fails, it leaves the running container in place. Machine-specific service files and secrets stay outside this repository. See the platform [Phase 7 deployment contract](../../../docs/phase-7/deployment.md).
 
 ## Traefik
 
@@ -55,7 +55,7 @@ Tenure joins the external `web` Docker network and registers with Traefik at `te
 Add hosts entries if needed (`/etc/hosts` does not support wildcards):
 
 ```sh
-echo "127.0.0.1 taxbook.tools.local tenure.tools.local passbook.tools.local tools.local" | sudo tee -a /etc/hosts
+echo "127.0.0.1 taxbook.tools.local tenure.tools.local passbook.tools.local firstaid.tools.local tools.local" | sudo tee -a /etc/hosts
 ```
 
 Then open https://tenure.tools.local. Traefik serves a locally-trusted mkcert

@@ -701,14 +701,13 @@ Applications have consistent deployment, identifiable releases, safe upgrades, a
 
 ## 11. Immediate next step
 
-**Phases 1 and 2 are complete.** Phase 3 documentation is prepared for
-maintainer review.
+**Phases 1–6** are in place for platform development. Current focus is
+**Phase 7 — Unified deployment**.
 
-Current focus:
-
-1. Review and merge the Phase 3 audit and architecture decisions.
-2. Complete any unresolved baseline verification and close Phase 3 only after
-   its completion criteria are met.
-3. Create the Phase 4 milestone when durability implementation actually begins.
-
-Then proceed to Phase 4 using the acceptance contract in the Phase 3 audit.
+1. Follow the [Phase 7 implementation plan](./docs/phase-7/deployment.md).
+2. Validate Compose and images with disposable volumes only — never production
+   data volumes.
+3. Review the Nix host handoff with the host owner before any live production
+   change.
+4. Phase 8 (release management) begins after Phase 7's completion criteria are
+   met.

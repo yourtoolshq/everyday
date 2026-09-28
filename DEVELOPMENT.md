@@ -117,8 +117,18 @@ See [AGENTS.md](./AGENTS.md). Before changing an app, read that app's `AGENTS.md
 
 ## Production promotion
 
-Legacy repositories remain production until Phase 4 cutover. **No routine production promotion from this monorepo in Phase 2.**
+Production app containers on the data-owning host use the Compose contracts in
+this monorepo and the Nix-managed host lifecycle documented in
+[docs/phase-7/deployment.md](./docs/phase-7/deployment.md) and
+[docs/phase-4/data-platform.md](./docs/phase-4/data-platform.md#local-production-and-development).
+Do not treat every merge to `main` as a production deploy — the host pins a
+reviewed revision and requires build + verified backup before replacement.
 
-**Emergency fixes:** implement in the monorepo first, then minimally backport to the legacy repo. Record both commit SHAs in the PR or Issue.
+**Emergency fixes:** implement in the monorepo first, then promote deliberately
+through the host handoff. Record commit SHAs in the PR or Issue.
 
-Validation data for monorepo checks belongs in gitignored `.validation/` — never attach validation containers to production Docker volume names (`taxbook-data`, `passbook-data`, `tenure-data`, `firstaid-data`).
+Validation data for monorepo checks belongs in gitignored `.validation/` or
+disposable Compose projects (`yt-validation-*` volumes) — never attach
+validation containers to production Docker volume names (`taxbook-data`,
+`passbook-data`, `tenure-data`, `firstaid-data`, or their production backup
+volumes).
