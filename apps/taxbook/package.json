@@ -18,7 +18,9 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test e2e/tax-book.spec.ts && playwright test e2e/filing.spec.ts --grep 'backfills' && playwright test e2e/filing.spec.ts --grep 'confirms lifecycle'",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "docker:build": "docker build -f Dockerfile -t taxbook ../..",
+    "docker:up": "docker compose up --build"
   },
   "dependencies": {
     "@libsql/client": "catalog:",

@@ -38,7 +38,7 @@ Apps do not import from each other. Cross-app integration (e.g. Taxbook ↔ Tenu
 
 E2E tests use port **3100** with isolated `.data/e2e.db` per app run.
 
-## Docker build pattern
+## Docker build and deployment pattern
 
 Images build from the **repository root** using `turbo prune <app> --docker`:
 
@@ -46,7 +46,18 @@ Images build from the **repository root** using `turbo prune <app> --docker`:
 pnpm docker:build:taxbook   # docker build -f apps/taxbook/Dockerfile -t taxbook .
 ```
 
-`docker-compose.yml` in each app sets `context: ../..` so prune output and lockfile resolve correctly. Health checks hit `/api/health` inside the container.
+Each app keeps its own `Dockerfile` and `docker-compose.yml`. Compose sets
+`context: ../..`, mounts named data and backup volumes at `/data` and
+`/backups`, joins the external `web` network, publishes **no** application host
+port, and registers the existing `*.tools.local` Traefik hostname. Health checks
+hit `/api/health` inside the container. Root `.dockerignore` applies to every
+image build.
+
+Disposable isolation checks use each app's `docker-compose.validation.yml` with
+a throwaway Compose project name so production volumes and host routes are never
+mounted. The full matrix, intentional differences, validation steps, and Nix
+host-manager handoff live in
+[docs/phase-7/deployment.md](./docs/phase-7/deployment.md).
 
 ## Shared packages
 
@@ -64,7 +75,8 @@ apps extend `@yourtoolshq/tsconfig/nextjs.json` and
 `createNextAppConfig(import.meta.dirname)` from `@yourtoolshq/eslint-config/next-app`.
 Path aliases (`~/`) and Next-specific options stay in each app. The type-checked
 package ESLint preset (`base`) remains for shared packages; `restrictEnvAccess`
-stays opt-in until apps fully standardize on `~/env`.
+stays opt-in until apps fully standardize on `~/env`. Application domains,
+databases, and deployments remain per-app.
 
 ## Application architecture direction
 
@@ -127,4 +139,5 @@ boundaries and emit structured JSON logs on the adopted paths.
 
 - Per-app domain models → app `docs/domain.md` or `DOMAIN.md`
 - UI conventions → [DESIGN_LANGUAGE.md](./DESIGN_LANGUAGE.md) and Phase 5 docs
-- Deployment topology → Phase 7 plan; Traefik hostnames in [docs/phase-1/baseline.md](./docs/phase-1/baseline.md)
+- Deployment topology → [docs/phase-7/deployment.md](./docs/phase-7/deployment.md);
+  Traefik hostnames also appear in [docs/phase-1/baseline.md](./docs/phase-1/baseline.md)

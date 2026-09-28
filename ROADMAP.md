@@ -702,10 +702,14 @@ Applications have consistent deployment, identifiable releases, safe upgrades, a
 ## 11. Immediate next step
 
 **Phases 1–6 are complete** for the platform consolidation scope documented in
-each phase plan (including shared TS/ESLint presets, vertical-slice pilots in
-Tenure and Taxbook, and `@yourtoolshq/server` errors/logging).
+each phase plan (including shared TS/ESLint presets, vertical-slice adoption in
+all four apps, and `@yourtoolshq/server` errors/logging). Current focus is
+**Phase 7 — Unified deployment**.
 
-Current focus:
-
-1. Proceed to [Phase 7 — Unified deployment](./docs/phase-7/deployment.md).
-2. Leave release automation and rollback orchestration to Phase 8.
+1. Follow the [Phase 7 implementation plan](./docs/phase-7/deployment.md).
+2. Validate Compose and images with disposable volumes only — never production
+   data volumes.
+3. Review the Nix host handoff with the host owner before any live production
+   change.
+4. Phase 8 (release management) begins after Phase 7's completion criteria are
+   met.

@@ -46,9 +46,9 @@ Set `FIRSTAID_BACKUP_DIR` to a host directory when backups should live outside t
 FIRSTAID_BACKUP_DIR=/path/to/backups/firstaid docker compose up --build -d
 ```
 
-The host manager checks out the reviewed commit, builds the candidate image, and asks the running app for a verified backup. If the build or the backup fails, it leaves the running container in place. Machine-specific service files and secrets stay outside this repository.
+The host manager checks out the reviewed commit, builds the candidate image, and asks the running app for a verified backup. If the build or the backup fails, it leaves the running container in place. Machine-specific service files and secrets stay outside this repository. See the platform [Phase 7 deployment contract](../../../docs/phase-7/deployment.md).
 
-The host cutover checklist is [firstaid-cutover.md](../../../docs/phase-4/firstaid-cutover.md).
+The historic host cutover checklist is [firstaid-cutover.md](../../../docs/phase-4/firstaid-cutover.md).
 
 ## Traefik
 
