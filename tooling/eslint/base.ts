@@ -1,4 +1,4 @@
-// @ts-nocheck — reference config; apps retain local eslint rules in Phase 1.
+// @ts-nocheck — shared package/library preset (type-checked). Apps use next-app.
 import * as path from "node:path";
 import { includeIgnoreFile } from "@eslint/compat";
 import eslint from "@eslint/js";

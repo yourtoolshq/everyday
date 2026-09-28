@@ -1,7 +1,5 @@
 {
   "name": "@yourtoolshq/tsconfig",
   "private": true,
-  "files": [
-    "*.json"
-  ]
+  "files": ["*.json"]
 }

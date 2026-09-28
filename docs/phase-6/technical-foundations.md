@@ -55,4 +55,18 @@ Prefer documentation and app-local examples when a package would only wrap one c
 
 Phase 6 is complete when all four apps consume maintained TS/ESLint presets, at least two real feature operations demonstrate the app-local boundary/repository convention, and transport-neutral errors and structured logging work in the adopted paths. Any newly promoted technical package must have more than one real consumer. Document cases that remain app-local and why. The intended result is less copy/paste for the next feature, with no change to app data ownership or independent deployment.
 
+### Implementation status (2026-09-28)
+
+| Gate | Status |
+| ---- | ------ |
+| All four apps consume `@yourtoolshq/tsconfig/nextjs` and `@yourtoolshq/eslint-config/next-app` | Done |
+| Tenure paycheck read (`listByEmployment`) + write (`create`) vertical slice | Done |
+| Taxbook record read (`listByTaxItem`) + write (`delete`) vertical slice | Done |
+| Passbook institution read (`list`) + write (`create`) vertical slice | Done |
+| First Aid care-providers read (`overview`) + write (`createOrganization`) vertical slice | Done |
+| `@yourtoolshq/server` errors + logging with all four apps and `@yourtoolshq/data` consumers | Done |
+| Remaining routers/value modules stay on prior patterns until touched | Intentional — migrate the next feature when it changes |
+| Docker/networking/runtime alignment | Left for Phase 7 |
+| Release automation | Left for Phase 8 |
+
 Before closing, update [ARCHITECTURE.md](../../ARCHITECTURE.md) to describe only the conventions and packages actually adopted, update the Phase 3 candidate register with validation outcomes, and leave Docker/networking/runtime deployment alignment for Phase 7. Phase 8 still owns release automation and rollback orchestration.

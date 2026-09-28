@@ -701,14 +701,11 @@ Applications have consistent deployment, identifiable releases, safe upgrades, a
 
 ## 11. Immediate next step
 
-**Phases 1 and 2 are complete.** Phase 3 documentation is prepared for
-maintainer review.
+**Phases 1–6 are complete** for the platform consolidation scope documented in
+each phase plan (including shared TS/ESLint presets, vertical-slice pilots in
+Tenure and Taxbook, and `@yourtoolshq/server` errors/logging).
 
 Current focus:
 
-1. Review and merge the Phase 3 audit and architecture decisions.
-2. Complete any unresolved baseline verification and close Phase 3 only after
-   its completion criteria are met.
-3. Create the Phase 4 milestone when durability implementation actually begins.
-
-Then proceed to Phase 4 using the acceptance contract in the Phase 3 audit.
+1. Proceed to [Phase 7 — Unified deployment](./docs/phase-7/deployment.md).
+2. Leave release automation and rollback orchestration to Phase 8.

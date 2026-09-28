@@ -1,8 +1,11 @@
 import { TRPCError } from "@trpc/server";
-import { and, count, desc, eq, sum } from "drizzle-orm";
+import { and, count, eq, sum } from "drizzle-orm";
 
 import type { FileTransaction } from "@yourtoolshq/data/files";
 
+import { deleteRecordById } from "~/modules/records/application/delete-record";
+import { listRecordsByTaxItem } from "~/modules/records/application/list-records-by-tax-item";
+import { createRecordRepository } from "~/modules/records/infrastructure/record-repository";
 import type { Database } from "./helpers";
 import type {
   AttachmentAction,
@@ -125,30 +128,7 @@ async function syncRecordTotal(db: QueryDatabase, taxItemId: number) {
 }
 
 export async function listActiveRecords(db: Database, taxItemId: number) {
-  const { year, item } = await requireActiveTaxItem(db, taxItemId);
-  const items = await db
-    .select({
-      id: records.id,
-      taxItemId: records.taxItemId,
-      date: records.date,
-      description: records.description,
-      amountCents: records.amountCents,
-      personId: records.personId,
-      personName: people.name,
-      notes: records.notes,
-      attachmentFileName: recordAttachments.fileName,
-      attachmentMimeType: recordAttachments.mimeType,
-      attachmentSizeBytes: recordAttachments.sizeBytes,
-      attachmentFileId: recordAttachments.fileId,
-      createdAt: records.createdAt,
-      updatedAt: records.updatedAt,
-    })
-    .from(records)
-    .leftJoin(people, eq(records.personId, people.id))
-    .leftJoin(recordAttachments, eq(records.id, recordAttachments.recordId))
-    .where(eq(records.taxItemId, taxItemId))
-    .orderBy(desc(records.date), desc(records.id));
-  return { year, item, items };
+  return listRecordsByTaxItem(createRecordRepository(db), taxItemId);
 }
 
 export async function createRecord(
@@ -274,17 +254,7 @@ export async function updateRecord(
 }
 
 export async function deleteRecord(db: Database, recordId: number) {
-  return dataPlatform.files.withFiles(db, async (tx, files) => {
-    const { record } = await requireEditableActiveRecord(tx, recordId);
-    const [attachment] = await tx
-      .select({ fileId: recordAttachments.fileId })
-      .from(recordAttachments)
-      .where(eq(recordAttachments.recordId, recordId));
-    if (attachment) await files.remove(attachment.fileId);
-    await tx.delete(records).where(eq(records.id, recordId));
-    await syncRecordTotal(tx, record.taxItemId);
-    return { success: true };
-  });
+  return deleteRecordById(db, dataPlatform.files.withFiles.bind(dataPlatform.files), recordId);
 }
 
 export async function getActiveAttachment(db: Database, recordId: number) {

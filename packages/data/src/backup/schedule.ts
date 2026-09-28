@@ -1,5 +1,6 @@
 import type { Backups } from "./backups";
 import type { RetentionPolicy } from "./retention";
+import { createLogger } from "@yourtoolshq/server/log";
 
 export interface BackupPolicy {
   schedule: `daily@${string}`;
@@ -53,12 +54,13 @@ export async function startBackupSchedule(options: {
     (backup) => backup.verification?.status === "verified" && backup.manifest,
   );
   const newestAt = newest?.manifest ? Date.parse(newest.manifest.createdAt) : 0;
+  const log = createLogger(app);
   let nextRunAt =
     Date.now() - newestAt < backupIntervalMs
       ? nextRunAfter(time, new Date())
       : new Date(Date.now() + catchUpDelayMs);
-  console.info("backup schedule started", {
-    app,
+  log.info("backup.schedule.start", {
+    outcome: "success",
     schedule: policy.schedule,
     lastVerifiedBackupAt: newest?.manifest?.createdAt ?? null,
     nextRunAt: nextRunAt.toISOString(),
@@ -68,17 +70,17 @@ export async function startBackupSchedule(options: {
     try {
       const backup = await backups.create({ trigger: "scheduled" });
       if (backup.verification.status !== "verified") {
-        console.error("scheduled backup failed verification", {
-          app,
+        log.error("backup.schedule.run", {
+          outcome: "failure",
           backupId: backup.id,
-          error: backup.verification.error,
+          message: backup.verification.error ?? "verification failed",
         });
       }
       await backups.prune(policy.retention);
     } catch (error) {
-      console.error("scheduled backup failed", {
-        app,
-        error: error instanceof Error ? error.message : String(error),
+      log.error("backup.schedule.run", {
+        outcome: "failure",
+        message: error instanceof Error ? error.message : String(error),
       });
     }
   }

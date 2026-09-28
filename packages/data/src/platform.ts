@@ -4,6 +4,8 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
+import { createLogger } from "@yourtoolshq/server/log";
+
 import type { BackupContext } from "./backup/backups";
 import type {
   BackupPolicy,
@@ -168,8 +170,8 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
 
   function block(reason: BlockedReason, message: string) {
     connection.state = { state: "blocked", reason, message };
-    console.error("data platform blocked", {
-      app: config.app,
+    createLogger(config.app).error("platform.blocked", {
+      outcome: "failure",
       reason,
       message,
     });
@@ -198,9 +200,9 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
           current.pending,
           backupContext.appVersion,
         );
-        console.info("database migrated", {
-          app: config.app,
-          migrations: current.pending.map((m) => m.tag),
+        createLogger(config.app).info("database.migrate", {
+          outcome: "success",
+          migrations: current.pending.map((m) => m.tag).join(","),
           preMigrationBackup,
         });
       }),

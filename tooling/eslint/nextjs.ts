@@ -1,4 +1,4 @@
-// @ts-nocheck — reference config; apps retain local eslint rules in Phase 1.
+// @ts-nocheck — Next.js plugin rules; composed into next-app for applications.
 import nextPlugin from "@next/eslint-plugin-next";
 import { defineConfig } from "eslint/config";
 

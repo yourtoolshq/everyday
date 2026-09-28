@@ -1,7 +1,11 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import type { AttachmentAction, AttachmentInput } from "~/domain/record";
+import { isAppError } from "@yourtoolshq/server/errors";
+
+import { taxbookLog } from "~/core/infrastructure/logger";
+import { appErrorHttpStatus } from "~/core/infrastructure/trpc-errors";
+import type { AttachmentAction } from "~/domain/record";
 import { recordInput, recordUpdateInput } from "~/domain/record";
 import { stageAttachment } from "~/server/api/upload";
 
@@ -87,13 +91,22 @@ export function recordErrorResponse(error: unknown) {
       { status: 400 },
     );
   }
+  if (isAppError(error)) {
+    return Response.json(
+      { error: error.message },
+      { status: appErrorHttpStatus(error) ?? 500 },
+    );
+  }
   if (error instanceof TRPCError) {
     return Response.json(
       { error: error.message },
       { status: statusByCode[error.code] ?? 500 },
     );
   }
-  console.error("Record request failed", error);
+  taxbookLog.error("record.http", {
+    outcome: "failure",
+    message: error instanceof Error ? error.message : "unknown",
+  });
   return Response.json(
     { error: "Unable to save the Record." },
     { status: 500 },

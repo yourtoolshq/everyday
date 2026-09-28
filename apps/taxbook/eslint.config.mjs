@@ -1,19 +1,3 @@
-import { FlatCompat } from "@eslint/eslintrc";
+import { createNextAppConfig } from "@yourtoolshq/eslint-config/next-app";
 
-const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
-
-const config = [
-  {
-    ignores: [
-      ".next/**",
-      "next-env.d.ts",
-      "coverage/**",
-      "drizzle/meta/**",
-      "playwright-report/**",
-      "test-results/**",
-    ],
-  },
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
-];
-
-export default config;
+export default createNextAppConfig(import.meta.dirname);

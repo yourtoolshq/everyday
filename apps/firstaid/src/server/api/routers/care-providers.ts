@@ -1,11 +1,15 @@
 import { TRPCError } from "@trpc/server";
-import { asc, count, eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { z } from "zod";
 
+import { mapAppErrors } from "~/core/infrastructure/trpc-errors";
 import {
   careOrganizationFieldsSchema,
   providerFieldsSchema,
 } from "~/lib/visits";
+import { createCareOrganization } from "~/modules/care-providers/application/create-care-organization";
+import { getCareProvidersOverview } from "~/modules/care-providers/application/get-care-providers-overview";
+import { createCareProvidersRepository } from "~/modules/care-providers/infrastructure/care-providers-repository";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { careOrganizations, providers, visits } from "~/server/db/schema";
 
@@ -13,59 +17,19 @@ const idInput = z.object({ id: z.string().uuid() });
 const now = () => new Date().toISOString();
 
 export const careProvidersRouter = createTRPCRouter({
-  overview: publicProcedure.query(async ({ ctx }) => {
-    const [
-      organizations,
-      allProviders,
-      organizationVisitCounts,
-      providerVisitCounts,
-    ] = await Promise.all([
-      ctx.db
-        .select()
-        .from(careOrganizations)
-        .orderBy(asc(careOrganizations.name)),
-      ctx.db.select().from(providers).orderBy(asc(providers.name)),
-      ctx.db
-        .select({ id: visits.careOrganizationId, total: count() })
-        .from(visits)
-        .groupBy(visits.careOrganizationId),
-      ctx.db
-        .select({ id: visits.providerId, total: count() })
-        .from(visits)
-        .groupBy(visits.providerId),
-    ]);
-
-    const organizationVisits = new Map(
-      organizationVisitCounts.map((row) => [row.id, row.total]),
-    );
-    const providerVisits = new Map(
-      providerVisitCounts.map((row) => [row.id, row.total]),
-    );
-
-    return {
-      organizations: organizations.map((organization) => ({
-        ...organization,
-        providerCount: allProviders.filter(
-          (provider) => provider.careOrganizationId === organization.id,
-        ).length,
-        visitCount: organizationVisits.get(organization.id) ?? 0,
-      })),
-      providers: allProviders.map((provider) => ({
-        ...provider,
-        visitCount: providerVisits.get(provider.id) ?? 0,
-      })),
-    };
-  }),
+  overview: publicProcedure.query(({ ctx }) =>
+    mapAppErrors(() =>
+      getCareProvidersOverview(createCareProvidersRepository(ctx.db)),
+    ),
+  ),
 
   createOrganization: publicProcedure
     .input(careOrganizationFieldsSchema)
-    .mutation(async ({ ctx, input }) => {
-      const [organization] = await ctx.db
-        .insert(careOrganizations)
-        .values(input)
-        .returning();
-      return organization!;
-    }),
+    .mutation(({ ctx, input }) =>
+      mapAppErrors(() =>
+        createCareOrganization(createCareProvidersRepository(ctx.db), input),
+      ),
+    ),
 
   updateOrganization: publicProcedure
     .input(careOrganizationFieldsSchema.and(idInput))

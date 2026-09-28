@@ -13,6 +13,8 @@ import { basename, join } from "node:path";
 import { Writable } from "node:stream";
 import type { Readable } from "node:stream";
 
+import { createLogger } from "@yourtoolshq/server/log";
+
 import type { PausableClient } from "../connection";
 import type { FileCoordinator } from "../files/store";
 import type { Digest } from "./archive";
@@ -73,6 +75,7 @@ export type Backups = ReturnType<typeof createBackups>;
 
 export function createBackups(context: BackupContext) {
   const workDir = join(context.backupDir, ".work");
+  const log = createLogger(context.app);
 
   async function createBackup(trigger: BackupTrigger): Promise<BackupRecord> {
     const createdAt = new Date().toISOString();
@@ -147,7 +150,8 @@ export function createBackups(context: BackupContext) {
     }
 
     const record = await verifyBackup(archivePath);
-    console.info("backup created", {
+    log.info("backup.create", {
+      outcome: "success",
       backupId: id,
       trigger,
       status: record.verification.status,
@@ -384,8 +388,10 @@ export function createBackups(context: BackupContext) {
       await clearRestore(context);
     });
 
-    console.info("backup restored", {
-      ...marker,
+    log.info("backup.restore", {
+      outcome: "success",
+      backupId: basename(archivePath, ".ytbackup"),
+      preRestoreBackup: preRestore.id,
       backupCreatedAt: manifest.createdAt,
     });
     return { manifest, preRestoreBackup: preRestore.id };
