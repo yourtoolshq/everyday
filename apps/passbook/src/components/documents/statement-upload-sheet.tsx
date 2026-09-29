@@ -27,6 +27,7 @@ import {
 import { Textarea } from "@yourtoolshq/ui/textarea";
 
 import type { RouterOutputs } from "~/trpc/react";
+import { InstitutionIcon } from "~/components/institutions/institution-icon";
 import { suggestDocumentTitle } from "~/lib/documents";
 import {
   canDeriveStatementPeriods,
@@ -247,7 +248,13 @@ export function StatementUploadSheet({
                 <SelectContent>
                   {uploadableAccounts.map((account) => (
                     <SelectItem key={account.id} value={account.id}>
-                      {account.institutionName} · {account.displayName}
+                      <span className="flex items-center gap-2">
+                        <InstitutionIcon
+                          fileId={account.institutionIconFileId}
+                          className="size-5"
+                        />
+                        {account.institutionName} · {account.displayName}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -170,6 +170,7 @@ export const accountEventsRouter = createTRPCRouter({
           ...publicEventFields,
           accountName: accounts.displayName,
           institutionName: institutions.name,
+          institutionIconFileId: institutions.iconFileId,
         })
         .from(accountEvents)
         .innerJoin(accounts, eq(accountEvents.accountId, accounts.id))
@@ -204,6 +205,7 @@ export const accountEventsRouter = createTRPCRouter({
           ...publicEventFields,
           accountName: accounts.displayName,
           institutionName: institutions.name,
+          institutionIconFileId: institutions.iconFileId,
         })
         .from(accountEvents)
         .innerJoin(accounts, eq(accountEvents.accountId, accounts.id))
@@ -224,6 +226,7 @@ export const accountEventsRouter = createTRPCRouter({
         ...publicEventFields,
         accountName: accounts.displayName,
         institutionName: institutions.name,
+        institutionIconFileId: institutions.iconFileId,
       })
       .from(accountEvents)
       .innerJoin(accounts, eq(accountEvents.accountId, accounts.id))

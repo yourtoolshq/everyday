@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -10,6 +11,7 @@ import { Skeleton } from "@yourtoolshq/ui/skeleton";
 
 import type { RouterOutputs } from "~/trpc/react";
 import { InstitutionFormSheet } from "~/components/institutions/institution-form-sheet";
+import { InstitutionIcon } from "~/components/institutions/institution-icon";
 import { api } from "~/trpc/react";
 
 type Institution = RouterOutputs["institutions"]["list"][number];
@@ -21,7 +23,10 @@ export function InstitutionsWorkspace() {
   const [formOpen, setFormOpen] = useState(false);
   const deleteInstitution = api.institutions.delete.useMutation({
     onSuccess: async () => {
-      await utils.institutions.list.invalidate();
+      await Promise.all([
+        utils.institutions.list.invalidate(),
+        utils.overview.invalidate(),
+      ]);
       toast.success("Institution removed.");
     },
     onError: (error) => toast.error(error.message),
@@ -90,19 +95,25 @@ export function InstitutionsWorkspace() {
           {items.map((institution) => (
             <Card key={institution.id} className="shadow-none">
               <CardContent className="flex items-start justify-between gap-4 p-4">
-                <div>
-                  <p className="font-medium">{institution.name}</p>
-                  {institution.website ? (
-                    <p className="text-muted-foreground text-sm">
-                      {institution.website}
-                    </p>
-                  ) : null}
-                  {institution.notes ? (
-                    <p className="text-muted-foreground mt-2 text-sm">
-                      {institution.notes}
-                    </p>
-                  ) : null}
-                </div>
+                <Link
+                  href={`/institutions/${institution.id}`}
+                  className="flex min-w-0 items-start gap-3 hover:underline"
+                >
+                  <InstitutionIcon fileId={institution.iconFileId} />
+                  <div>
+                    <p className="font-medium">{institution.name}</p>
+                    {institution.website ? (
+                      <p className="text-muted-foreground text-sm">
+                        {institution.website}
+                      </p>
+                    ) : null}
+                    {institution.notes ? (
+                      <p className="text-muted-foreground mt-2 text-sm">
+                        {institution.notes}
+                      </p>
+                    ) : null}
+                  </div>
+                </Link>
                 <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"

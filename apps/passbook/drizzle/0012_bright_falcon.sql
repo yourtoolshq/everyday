@@ -1,0 +1,1 @@
+ALTER TABLE `institutions` ADD `icon_file_id` text REFERENCES yt_files(id);

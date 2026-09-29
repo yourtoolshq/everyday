@@ -28,6 +28,7 @@ import type { DocumentType } from "~/lib/documents";
 import { AccountEventSheet } from "~/components/accounts/account-event-sheet";
 import { AccountTermsSnapshotDetailSheet } from "~/components/accounts/account-terms-snapshot-detail-sheet";
 import { ActivityDocumentUploadSheet } from "~/components/activity/activity-document-upload-sheet";
+import { InstitutionIcon } from "~/components/institutions/institution-icon";
 import { accountEventTypeLabels } from "~/lib/account-events";
 import {
   accountTermsFieldLabels,
@@ -118,7 +119,11 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-3">
           <div className="space-y-2">
-            <p className="text-primary text-sm font-medium">
+            <p className="text-primary flex items-center gap-2 text-sm font-medium">
+              <InstitutionIcon
+                fileId={event.data.institutionIconFileId}
+                className="size-6"
+              />
               {event.data.institutionName}
             </p>
             <h2 className="text-3xl font-semibold tracking-tight">

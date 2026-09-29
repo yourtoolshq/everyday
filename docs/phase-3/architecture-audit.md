@@ -6,8 +6,6 @@ This document records what exists across Taxbook, First Aid, Passbook, and
 Tenure, which implementations should be used as references, and which work is a
 candidate for a later roadmap phase. Phase 3 makes decisions and records
 evidence; it does not extract packages or reorganize application code.
-The [implementation handoff](./architecture-implementation-plan.md) maps the
-vertical-slice decision to bounded refactors owned by Phase 6.
 
 ## Executive assessment
 

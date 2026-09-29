@@ -7,13 +7,14 @@ import type { db as passbookDb } from "~/server/db";
 import { normalizeInstitutionCommand } from "~/modules/institutions/domain/institution-values";
 import { institutions } from "~/server/db/schema";
 
-export type PassbookDatabase = typeof passbookDb;
+export type PassbookDatabase = Pick<typeof passbookDb, "select" | "insert">;
 
 export type InstitutionRecord = {
   id: string;
   name: string;
   website: string | null;
   notes: string | null;
+  iconFileId: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -23,6 +24,7 @@ const institutionColumns = {
   name: institutions.name,
   website: institutions.website,
   notes: institutions.notes,
+  iconFileId: institutions.iconFileId,
   createdAt: institutions.createdAt,
   updatedAt: institutions.updatedAt,
 } as const;

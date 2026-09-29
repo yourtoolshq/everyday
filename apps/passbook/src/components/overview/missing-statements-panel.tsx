@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
 
 import type { RouterOutputs } from "~/trpc/react";
+import { InstitutionIcon } from "~/components/institutions/institution-icon";
 
 type StatementStatus = RouterOutputs["overview"]["statementStatus"];
 
@@ -85,6 +86,10 @@ export function MissingStatementsPanel({
                   key={`${item.accountId}-${item.periodKey}`}
                   className="flex py-3 text-sm"
                 >
+                  <InstitutionIcon
+                    fileId={item.institutionIconFileId ?? null}
+                    className="mr-3 size-8"
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium">{item.accountName}</p>
                     <p className="text-muted-foreground">

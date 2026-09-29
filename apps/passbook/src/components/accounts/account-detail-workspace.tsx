@@ -28,6 +28,7 @@ import { AccountSettingsSheet } from "~/components/accounts/account-settings-she
 import { AccountStatementPeriods } from "~/components/accounts/account-statement-periods";
 import { AccountTermsPanel } from "~/components/accounts/account-terms-panel";
 import { StatementUploadSheet } from "~/components/documents/statement-upload-sheet";
+import { InstitutionIcon } from "~/components/institutions/institution-icon";
 import { accountStatusLabels } from "~/lib/account-status";
 import { accountTypeLabels } from "~/lib/account-types";
 import { canDeriveStatementPeriods } from "~/lib/expected-periods";
@@ -183,9 +184,16 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-3">
           <div className="space-y-2">
-            <p className="text-primary text-sm font-medium">
+            <Link
+              href={`/institutions/${account.data.institutionId}`}
+              className="text-primary inline-flex items-center gap-2 text-sm font-medium hover:underline"
+            >
+              <InstitutionIcon
+                fileId={account.data.institutionIconFileId}
+                className="size-6"
+              />
               {account.data.institutionName}
-            </p>
+            </Link>
             <h2 className="text-3xl font-semibold tracking-tight">
               {account.data.displayName}
             </h2>

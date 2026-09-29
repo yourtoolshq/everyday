@@ -6,6 +6,8 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Added
 
+- Institutions can have uploaded PNG or WebP icons. Institution pages show accounts grouped by owner, including joint and unassigned accounts.
+
 ### Changed
 
 - Account term fields show a `$` or `%` prefix in the input. The prefix is visual only; saved values stay numbers.

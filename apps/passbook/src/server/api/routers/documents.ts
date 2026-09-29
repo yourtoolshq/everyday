@@ -118,6 +118,7 @@ export const documentsRouter = createTRPCRouter({
           ...publicDocumentFields,
           accountName: accounts.displayName,
           institutionName: institutions.name,
+          institutionIconFileId: institutions.iconFileId,
           linkedActivityTitle: accountEvents.title,
           linkedActivityType: accountEvents.type,
           linkedActivityStartDate: accountEvents.startDate,
@@ -157,6 +158,7 @@ export const documentsRouter = createTRPCRouter({
         updatedAt: row.updatedAt,
         accountName: row.accountName,
         institutionName: row.institutionName,
+        institutionIconFileId: row.institutionIconFileId,
         linkedActivity: row.eventId
           ? {
               id: row.eventId,

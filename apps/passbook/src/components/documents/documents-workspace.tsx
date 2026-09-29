@@ -9,6 +9,7 @@ import { Badge } from "@yourtoolshq/ui/badge";
 import type { RouterOutputs } from "~/trpc/react";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
 import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
+import { InstitutionIcon } from "~/components/institutions/institution-icon";
 import { documentTypeLabels, formatFileSize } from "~/lib/documents";
 import { formatDateLabel } from "~/lib/format-date";
 import { api } from "~/trpc/react";
@@ -84,8 +85,12 @@ export function DocumentsWorkspace() {
                 <td className="px-4 py-3">
                   <Link
                     href={`/accounts/${document.accountId}`}
-                    className="text-primary hover:underline"
+                    className="text-primary inline-flex items-center gap-2 hover:underline"
                   >
+                    <InstitutionIcon
+                      fileId={document.institutionIconFileId}
+                      className="size-6"
+                    />
                     {document.institutionName} · {document.accountName}
                   </Link>
                 </td>

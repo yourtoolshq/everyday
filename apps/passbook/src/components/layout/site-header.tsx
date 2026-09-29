@@ -21,7 +21,9 @@ export function SiteHeader() {
   const title =
     pathname.startsWith("/accounts/") && pathname !== "/accounts"
       ? "Account"
-      : (titles[pathname] ?? "Passbook");
+      : pathname.startsWith("/institutions/") && pathname !== "/institutions"
+        ? "Institution"
+        : (titles[pathname] ?? "Passbook");
 
   return (
     <header className="bg-background/85 flex h-(--header-height) shrink-0 items-center border-b backdrop-blur-sm">

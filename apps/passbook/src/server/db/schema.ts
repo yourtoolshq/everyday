@@ -59,6 +59,7 @@ export const institutions = sqliteTable("institutions", {
   name: text("name").notNull(),
   website: text("website"),
   notes: text("notes"),
+  iconFileId: text("icon_file_id").references(() => filesTable.id),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

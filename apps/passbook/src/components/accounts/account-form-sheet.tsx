@@ -28,6 +28,7 @@ import { Textarea } from "@yourtoolshq/ui/textarea";
 import type { AccountStatus } from "~/lib/account-status";
 import type { AccountType } from "~/lib/account-types";
 import type { RouterOutputs } from "~/trpc/react";
+import { InstitutionIcon } from "~/components/institutions/institution-icon";
 import { accountStatuses, accountStatusLabels } from "~/lib/account-status";
 import { accountTypeLabels, accountTypes } from "~/lib/account-types";
 import { api } from "~/trpc/react";
@@ -107,17 +108,21 @@ export function AccountFormSheet({
   open,
   onOpenChange,
   onAccountClosed,
+  initialInstitutionId,
 }: {
   account: Account | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAccountClosed?: () => void;
+  initialInstitutionId?: string;
 }) {
   const utils = api.useUtils();
   const institutions = api.institutions.list.useQuery();
   const members = api.people.list.useQuery();
   const [form, setForm] = useState<AccountFormState>(
-    account ? accountToFormState(account) : emptyFormState(),
+    account
+      ? accountToFormState(account)
+      : { ...emptyFormState(), institutionId: initialInstitutionId ?? "" },
   );
 
   const finish = async (message: string, closedJustNow = false) => {
@@ -192,7 +197,13 @@ export function AccountFormSheet({
                   <SelectContent>
                     {institutions.data?.map((institution) => (
                       <SelectItem key={institution.id} value={institution.id}>
-                        {institution.name}
+                        <span className="flex items-center gap-2">
+                          <InstitutionIcon
+                            fileId={institution.iconFileId}
+                            className="size-5"
+                          />
+                          {institution.name}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>

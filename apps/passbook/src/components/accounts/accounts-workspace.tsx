@@ -11,6 +11,7 @@ import { Skeleton } from "@yourtoolshq/ui/skeleton";
 
 import type { StatementFrequency } from "~/lib/statement-frequency";
 import { AccountFormSheet } from "~/components/accounts/account-form-sheet";
+import { InstitutionIcon } from "~/components/institutions/institution-icon";
 import { accountStatusLabels } from "~/lib/account-status";
 import { accountTypeLabels } from "~/lib/account-types";
 import { canDeriveStatementPeriods } from "~/lib/expected-periods";
@@ -134,46 +135,53 @@ export function AccountsWorkspace() {
               >
                 <Card className="hover:bg-muted/30 shadow-none transition-colors">
                   <CardContent className="flex items-center justify-between gap-4 p-4">
-                    <div className="min-w-0 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium">{account.displayName}</p>
-                        <Badge variant="secondary">
-                          {statementFrequencyLabels[account.statementFrequency]}
-                        </Badge>
-                        {missingCount > 0 ? (
-                          <Badge
-                            variant="outline"
-                            className="border-red-500/40 text-red-700"
-                          >
-                            {missingCount} missing
+                    <div className="flex min-w-0 items-start gap-3">
+                      <InstitutionIcon fileId={account.institutionIconFileId} />
+                      <div className="min-w-0 space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium">{account.displayName}</p>
+                          <Badge variant="secondary">
+                            {
+                              statementFrequencyLabels[
+                                account.statementFrequency
+                              ]
+                            }
                           </Badge>
-                        ) : null}
-                        {showOpenedDateWarning ? (
-                          <Badge
-                            variant="outline"
-                            className="border-amber-500/40 text-amber-800"
-                          >
-                            <AlertTriangle />
-                            Missing opened date
-                          </Badge>
-                        ) : null}
+                          {missingCount > 0 ? (
+                            <Badge
+                              variant="outline"
+                              className="border-red-500/40 text-red-700"
+                            >
+                              {missingCount} missing
+                            </Badge>
+                          ) : null}
+                          {showOpenedDateWarning ? (
+                            <Badge
+                              variant="outline"
+                              className="border-amber-500/40 text-amber-800"
+                            >
+                              <AlertTriangle />
+                              Missing opened date
+                            </Badge>
+                          ) : null}
+                        </div>
+                        <p className="text-muted-foreground text-sm">
+                          {account.institutionName} ·{" "}
+                          {accountTypeLabels[account.accountType]}
+                          {account.identifierSuffix
+                            ? ` · …${account.identifierSuffix}`
+                            : ""}
+                        </p>
+                        <p className="text-muted-foreground text-sm">
+                          {accountStatusLabels[account.status]} ·{" "}
+                          {account.owners
+                            .map((owner) => owner.displayName)
+                            .join(", ")}
+                          {openedLabel || closedLabel
+                            ? ` · ${openedLabel ? `Opened ${openedLabel}` : ""}${openedLabel && closedLabel ? " · " : ""}${closedLabel ? `Closed ${closedLabel}` : ""}`
+                            : ""}
+                        </p>
                       </div>
-                      <p className="text-muted-foreground text-sm">
-                        {account.institutionName} ·{" "}
-                        {accountTypeLabels[account.accountType]}
-                        {account.identifierSuffix
-                          ? ` · …${account.identifierSuffix}`
-                          : ""}
-                      </p>
-                      <p className="text-muted-foreground text-sm">
-                        {accountStatusLabels[account.status]} ·{" "}
-                        {account.owners
-                          .map((owner) => owner.displayName)
-                          .join(", ")}
-                        {openedLabel || closedLabel
-                          ? ` · ${openedLabel ? `Opened ${openedLabel}` : ""}${openedLabel && closedLabel ? " · " : ""}${closedLabel ? `Closed ${closedLabel}` : ""}`
-                          : ""}
-                      </p>
                     </div>
                     <ChevronRight className="text-muted-foreground size-4 shrink-0" />
                   </CardContent>

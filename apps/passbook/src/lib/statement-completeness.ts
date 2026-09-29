@@ -18,6 +18,7 @@ export type AccountForCompleteness = AccountLifecycle & {
   id: string;
   displayName: string;
   institutionName: string;
+  institutionIconFileId?: string | null;
   statementFrequency: StatementFrequency;
 };
 
@@ -25,6 +26,7 @@ export type MissingStatement = {
   accountId: string;
   accountName: string;
   institutionName: string;
+  institutionIconFileId?: string | null;
   periodKey: string;
   periodLabel: string;
 };
@@ -125,6 +127,7 @@ export function buildMissingStatements(
           accountId: account.id,
           accountName: account.displayName,
           institutionName: account.institutionName,
+          institutionIconFileId: account.institutionIconFileId ?? null,
           periodKey: period.key,
           periodLabel: period.label,
         });

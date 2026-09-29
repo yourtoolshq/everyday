@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { Badge } from "@yourtoolshq/ui/badge";
 
+import { InstitutionIcon } from "~/components/institutions/institution-icon";
 import { accountEventTypeLabels } from "~/lib/account-events";
 import { formatDateLabel } from "~/lib/format-date";
 import { api } from "~/trpc/react";
@@ -70,7 +71,11 @@ export function ActivityWorkspace() {
                 >
                   {event.accountName}
                 </Link>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs">
+                  <InstitutionIcon
+                    fileId={event.institutionIconFileId}
+                    className="size-5"
+                  />
                   {event.institutionName}
                 </p>
               </td>

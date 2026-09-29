@@ -2,6 +2,7 @@ export type CreateInstitutionCommand = {
   name: string;
   website?: string | null;
   notes?: string | null;
+  iconFileId?: string | null;
 };
 
 export function normalizeInstitutionCommand(input: CreateInstitutionCommand) {
@@ -9,5 +10,6 @@ export function normalizeInstitutionCommand(input: CreateInstitutionCommand) {
     name: input.name,
     website: input.website ?? null,
     notes: input.notes ?? null,
+    iconFileId: input.iconFileId ?? null,
   };
 }

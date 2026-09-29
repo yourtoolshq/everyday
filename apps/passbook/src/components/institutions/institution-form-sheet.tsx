@@ -1,7 +1,8 @@
 "use client";
 
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
@@ -18,6 +19,8 @@ import {
 import { Textarea } from "@yourtoolshq/ui/textarea";
 
 import type { RouterOutputs } from "~/trpc/react";
+import { InstitutionIcon } from "~/components/institutions/institution-icon";
+import { useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
 type Institution = RouterOutputs["institutions"]["list"][number];
@@ -26,10 +29,11 @@ type InstitutionFormState = {
   name: string;
   website: string;
   notes: string;
+  removeIcon: boolean;
 };
 
 function emptyFormState(): InstitutionFormState {
-  return { name: "", website: "", notes: "" };
+  return { name: "", website: "", notes: "", removeIcon: false };
 }
 
 function institutionToFormState(
@@ -39,6 +43,7 @@ function institutionToFormState(
     name: institution.name,
     website: institution.website ?? "",
     notes: institution.notes ?? "",
+    removeIcon: false,
   };
 }
 
@@ -63,9 +68,37 @@ export function InstitutionFormSheet({
   const [form, setForm] = useState<InstitutionFormState>(
     institution ? institutionToFormState(institution) : emptyFormState(),
   );
+  const iconUpload = useUpload("institutionIcon");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  async function chooseIcon(file: File | undefined) {
+    if (!file) return;
+    if (
+      !["image/png", "image/webp"].includes(file.type) ||
+      file.size > 1024 * 1024
+    ) {
+      toast.error("Choose a PNG or WebP image no larger than 1 MB.");
+      return;
+    }
+    setPreviewUrl(URL.createObjectURL(file));
+    setForm((current) => ({ ...current, removeIcon: false }));
+    await iconUpload.upload(file);
+  }
 
   const finish = async (message: string) => {
-    await utils.institutions.list.invalidate();
+    await Promise.all([
+      utils.institutions.invalidate(),
+      utils.accounts.invalidate(),
+      utils.overview.invalidate(),
+      utils.documents.invalidate(),
+      utils.accountEvents.invalidate(),
+    ]);
     toast.success(message);
     onOpenChange(false);
   };
@@ -82,7 +115,15 @@ export function InstitutionFormSheet({
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!form.name.trim()) return;
-    const payload = toInstitutionPayload(form);
+    if (iconUpload.status === "uploading") return;
+    if (iconUpload.status === "failed") {
+      toast.error("Upload the icon again before saving.");
+      return;
+    }
+    const payload = {
+      ...toInstitutionPayload(form),
+      icon: iconUpload.file?.token ?? (form.removeIcon ? null : undefined),
+    };
     if (institution) {
       updateInstitution.mutate({ id: institution.id, ...payload });
     } else {
@@ -90,7 +131,10 @@ export function InstitutionFormSheet({
     }
   }
 
-  const pending = createInstitution.isPending || updateInstitution.isPending;
+  const pending =
+    createInstitution.isPending ||
+    updateInstitution.isPending ||
+    iconUpload.status === "uploading";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -106,6 +150,60 @@ export function InstitutionFormSheet({
             </SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-6 px-4 py-6">
+            <div className="space-y-2">
+              <Label htmlFor="institution-icon">Icon (optional)</Label>
+              <div className="flex items-center gap-3">
+                {previewUrl && !form.removeIcon ? (
+                  <Image
+                    src={previewUrl}
+                    alt="Selected icon preview"
+                    width={48}
+                    height={48}
+                    unoptimized
+                    className="size-12 rounded-lg object-cover"
+                  />
+                ) : (
+                  <InstitutionIcon
+                    fileId={
+                      form.removeIcon ? null : (institution?.iconFileId ?? null)
+                    }
+                    className="size-12"
+                  />
+                )}
+                <div className="space-y-2">
+                  <Input
+                    id="institution-icon"
+                    type="file"
+                    accept="image/png,image/webp,.png,.webp"
+                    onChange={(event) => {
+                      void chooseIcon(event.target.files?.[0]);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    PNG or WebP, up to 1 MB.
+                  </p>
+                </div>
+              </div>
+              {(institution?.iconFileId || iconUpload.file) &&
+              !form.removeIcon ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    iconUpload.reset();
+                    setPreviewUrl(null);
+                    setForm((current) => ({ ...current, removeIcon: true }));
+                  }}
+                >
+                  Remove icon
+                </Button>
+              ) : null}
+              {iconUpload.status === "failed" ? (
+                <p className="text-destructive text-sm">{iconUpload.error}</p>
+              ) : null}
+            </div>
             <div className="space-y-2">
               <Label htmlFor="institution-name">Institution name</Label>
               <Input
