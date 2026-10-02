@@ -18,3 +18,4 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 - A page that fails to load, is missing, or is still loading explains that and offers a way back.
 
 ### Fixed
+- Clicking anywhere in a statement period cell now activates its action, not just the label.

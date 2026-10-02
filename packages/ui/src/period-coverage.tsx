@@ -128,7 +128,7 @@ function PeriodCell({ cell }: { cell: PeriodCoverageCell }) {
           aria-label={cell.ariaLabel}
           disabled={!cell.onActivate}
           onClick={cell.onActivate}
-          className="flex flex-1 flex-col items-center justify-center"
+          className="flex h-full w-full flex-1 flex-col items-center justify-center"
         >
           {label}
           {icon}
