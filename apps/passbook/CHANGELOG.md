@@ -10,6 +10,7 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Changed
 
+- The Accounts inventory uses compact rows grouped by institution or owners, including distinct joint-owner groups. Active accounts show by default, with Closed and All filters and collapsible groups.
 - Account term fields show a `$` or `%` prefix in the input. The prefix is visual only; saved values stay numbers.
 - Credit limit and annual fee show a calculator icon. A total such as `10+12+34.5` becomes a dollar amount when you leave the field.
 - Account dates can be typed, such as June 01, 2025, or chosen from the calendar. The saved value stays a calendar date.
@@ -18,4 +19,5 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 - A page that fails to load, is missing, or is still loading explains that and offers a way back.
 
 ### Fixed
+
 - Clicking anywhere in a statement period cell now activates its action, not just the label.
