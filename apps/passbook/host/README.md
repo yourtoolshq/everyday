@@ -13,12 +13,12 @@ Default bind: `http://127.0.0.1:3847`
 
 ## Configuration
 
-| Variable     | Default        |
-| ------------ | -------------- |
-| `DATA_DIR`   | `./.data`      |
+| Variable     | Default              |
+| ------------ | -------------------- |
+| `DATA_DIR`   | `./.data`            |
 | `BACKUP_DIR` | `<DATA_DIR>/backups` |
-| `HOST`       | `127.0.0.1`    |
-| `PORT`       | `3847`         |
+| `HOST`       | `127.0.0.1`          |
+| `PORT`       | `3847`               |
 
 ## Verification
 

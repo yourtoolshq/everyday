@@ -1,10 +1,15 @@
-import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { createLogger } from "@yourtoolshq/server/log";
 
 import type { HostEnv } from "./env";
 import { applyHostEnv } from "./env";
-import { closeHostServer, createHostHttpServer, listenHostServer } from "./http";
+import {
+  closeHostServer,
+  createHostHttpServer,
+  listenHostServer,
+} from "./http";
 
 const passbookRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const logger = createLogger("passbook");

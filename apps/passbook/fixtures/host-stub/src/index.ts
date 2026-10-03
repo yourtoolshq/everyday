@@ -1,5 +1,5 @@
-import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
+import { createServer } from "node:http";
 
 const port = Number(process.env.PORT ?? 3847);
 const host = process.env.HOST ?? "127.0.0.1";
@@ -200,7 +200,10 @@ async function handleRequest(request: Request) {
     return handleTrpc(path, request);
   }
 
-  if (pathname.startsWith("/api/data/upload/document") && request.method === "POST") {
+  if (
+    pathname.startsWith("/api/data/upload/document") &&
+    request.method === "POST"
+  ) {
     const form = await request.formData();
     const file = form.get("file");
     if (!(file instanceof File)) {

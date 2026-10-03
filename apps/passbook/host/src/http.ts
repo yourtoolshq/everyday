@@ -1,5 +1,5 @@
-import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import { createServer } from "node:http";
+import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import type { Socket } from "node:net";
 
 export interface HostHttpOptions {
@@ -25,7 +25,8 @@ async function toFetchRequest(req: IncomingMessage, baseUrl: string) {
   const body = await readRequestBody(req);
   const headers = new Headers();
   for (const [key, value] of Object.entries(req.headers)) {
-    if (value !== undefined) headers.set(key, Array.isArray(value) ? value.join(", ") : value);
+    if (value !== undefined)
+      headers.set(key, Array.isArray(value) ? value.join(", ") : value);
   }
   const init: RequestInit = {
     method: req.method,
@@ -90,11 +91,14 @@ export function createHostHttpServer(options: HostHttpOptions) {
         for (const [key, value] of Object.entries(corsHeaders(origin))) {
           headers.set(key, value);
         }
-        await sendResponse(res, new Response(response.body, {
-          status: response.status,
-          statusText: response.statusText,
-          headers,
-        }));
+        await sendResponse(
+          res,
+          new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers,
+          }),
+        );
       } catch (error) {
         console.error("host request failed", {
           error: error instanceof Error ? error.message : String(error),
@@ -134,12 +138,15 @@ export function listenHostServer(
       }
       reject(error);
     });
-    server.listen(options.port, options.host, () => {
-      const address = server.address();
-      const port =
-        typeof address === "object" && address ? address.port : options.port;
-      resolve({ port });
-    });
+    server.listen(
+      { port: options.port, host: options.host, exclusive: false },
+      () => {
+        const address = server.address();
+        const port =
+          typeof address === "object" && address ? address.port : options.port;
+        resolve({ port });
+      },
+    );
   });
 }
 
@@ -153,7 +160,9 @@ export async function closeHostServer(server: Server, timeoutMs = 10_000) {
   await new Promise<void>((resolve, reject) => {
     const timer = setTimeout(() => {
       for (const socket of connections) socket.destroy();
-      reject(new Error("Host shutdown timed out waiting for in-flight requests."));
+      reject(
+        new Error("Host shutdown timed out waiting for in-flight requests."),
+      );
     }, timeoutMs);
 
     server.close((error) => {

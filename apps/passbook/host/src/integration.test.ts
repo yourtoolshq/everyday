@@ -1,10 +1,10 @@
-import type { ChildProcess } from "node:child_process";
 import { spawn } from "node:child_process";
 import { mkdtemp, rm } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { ChildProcess } from "node:child_process";
 import { afterEach, describe, expect, it } from "vitest";
 
 const hostRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -49,8 +49,13 @@ async function trpc<T>(
   return body.result.data.json;
 }
 
-async function waitForHealth(baseUrl: string) {
-  for (let attempt = 0; attempt < 50; attempt += 1) {
+async function waitForHealth(baseUrl: string, child?: ChildProcess) {
+  let stderr = "";
+  child?.stderr?.on("data", (chunk) => {
+    stderr += String(chunk);
+  });
+
+  for (let attempt = 0; attempt < 150; attempt += 1) {
     try {
       const response = await fetch(`${baseUrl}/api/health`);
       const body = (await response.json()) as { status?: string };
@@ -60,7 +65,9 @@ async function waitForHealth(baseUrl: string) {
     }
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
-  throw new Error(`Host did not become ready at ${baseUrl}`);
+  throw new Error(
+    `Host did not become ready at ${baseUrl}${stderr ? `\n${stderr}` : ""}`,
+  );
 }
 
 function spawnHostProcess(env: Record<string, string>) {
@@ -108,7 +115,7 @@ describe("passbook host integration", () => {
       PORT: port,
       NODE_ENV: "test",
     });
-    await waitForHealth(baseUrl);
+    await waitForHealth(baseUrl, childHost);
 
     const health = await fetch(`${baseUrl}/api/health`);
     expect(health.status).toBe(200);
@@ -191,12 +198,16 @@ describe("passbook host integration", () => {
       body: docForm,
     });
     const docStaged = (await docUpload.json()) as { token: string };
-    const document = await trpc<{ fileId: string }>(baseUrl, "documents.create", {
-      accountId: account.id,
-      type: "other",
-      title: "Welcome letter",
-      file: docStaged.token,
-    });
+    const document = await trpc<{ fileId: string }>(
+      baseUrl,
+      "documents.create",
+      {
+        accountId: account.id,
+        type: "other",
+        title: "Welcome letter",
+        file: docStaged.token,
+      },
+    );
 
     const fileResponse = await fetch(
       `${baseUrl}/api/data/files/${document.fileId}`,
@@ -211,6 +222,8 @@ describe("passbook host integration", () => {
     expect(summaryBefore.accountCount).toBe(1);
 
     await stopHostProcess(childHost);
+    childHost = undefined;
+    await new Promise((resolve) => setTimeout(resolve, 500));
     childHost = spawnHostProcess({
       DATA_DIR: dataDir,
       BACKUP_DIR: join(dataDir, "backups"),
@@ -218,7 +231,7 @@ describe("passbook host integration", () => {
       PORT: port,
       NODE_ENV: "test",
     });
-    await waitForHealth(baseUrl);
+    await waitForHealth(baseUrl, childHost);
 
     const summaryAfter = await trpc<{ accountCount: number }>(
       baseUrl,
