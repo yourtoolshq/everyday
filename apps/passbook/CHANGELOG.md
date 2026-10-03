@@ -7,6 +7,7 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 ### Added
 
 - A standalone Passbook host runs on loopback without Next.js, serving health, tRPC, and data routes for desktop and browser clients.
+- A Vite React client connects to the host for setup, overview, accounts, institutions, and file viewing without Next.js.
 - Institutions can have uploaded PNG or WebP icons. Institution pages show accounts grouped by owner, including joint and unassigned accounts.
 
 ### Changed
