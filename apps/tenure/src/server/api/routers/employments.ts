@@ -58,6 +58,8 @@ function mapEmploymentRow(row: {
   id: string;
   employerId: string;
   employerName: string;
+  employerIconFileId: string | null;
+  employerCountryCode: string | null;
   personId: string;
   personName: string;
   jobTitle: string | null;
@@ -87,6 +89,8 @@ export const employmentsRouter = createTRPCRouter({
         id: employments.id,
         employerId: employers.id,
         employerName: employers.name,
+        employerIconFileId: employers.iconFileId,
+        employerCountryCode: employers.countryCode,
         personId: people.id,
         personName: people.displayName,
         jobTitle: employments.jobTitle,
@@ -119,6 +123,8 @@ export const employmentsRouter = createTRPCRouter({
         id: employments.id,
         employerId: employers.id,
         employerName: employers.name,
+        employerIconFileId: employers.iconFileId,
+        employerCountryCode: employers.countryCode,
         personId: people.id,
         personName: people.displayName,
         jobTitle: employments.jobTitle,

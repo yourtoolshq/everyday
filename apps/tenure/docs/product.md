@@ -9,6 +9,7 @@ Employment records end up scattered across payroll portals, inboxes, downloads, 
 ## Product principles
 
 - **Employer first.** Open an employer to find its pay history, compensation, documents, and discussions. Avoid making users navigate separate global document libraries.
+- **Recognizable employers.** Optional icons and international contact details identify organizations without requiring those details to create an employer. Show a country flag on the employment list when one is recorded.
 - **Keep the originals.** Preserve pay stubs, letters, and exported emails alongside any structured entries or notes.
 - **Record facts; derive summaries.** Enter the agreed pay rate and actual paychecks separately. Calculate comparable changes and totals from those records.
 - **Useful without integrations.** Manual entry and local file uploads must be sufficient. Automatic collection can come later.

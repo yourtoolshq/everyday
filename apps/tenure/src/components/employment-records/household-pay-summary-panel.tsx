@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
 
+import { EmployerIcon } from "~/components/employers/employer-icon";
 import { formatCad } from "~/lib/money";
 import { api } from "~/trpc/react";
 
@@ -77,16 +78,22 @@ export function HouseholdPaySummaryPanel() {
                   key={employment.employmentId}
                   className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
                 >
-                  <div className="min-w-0">
-                    <Link
-                      href={`/employments/${employment.employmentId}`}
-                      className="text-primary text-sm font-medium hover:underline"
-                    >
-                      {employment.employerName}
-                    </Link>
-                    <p className="text-muted-foreground text-xs">
-                      {employment.personName}
-                    </p>
+                  <div className="flex min-w-0 items-start gap-2">
+                    <EmployerIcon
+                      fileId={employment.employerIconFileId}
+                      className="size-7"
+                    />
+                    <div className="min-w-0">
+                      <Link
+                        href={`/employments/${employment.employmentId}`}
+                        className="text-primary text-sm font-medium hover:underline"
+                      >
+                        {employment.employerName}
+                      </Link>
+                      <p className="text-muted-foreground text-xs">
+                        {employment.personName}
+                      </p>
+                    </div>
                   </div>
                   <div className="text-right text-sm">
                     <p>

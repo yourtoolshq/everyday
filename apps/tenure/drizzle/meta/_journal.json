@@ -43,6 +43,13 @@
       "when": 1790480036807,
       "tag": "0005_platform_files",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1790990324127,
+      "tag": "0006_solid_mister_sinister",
+      "breakpoints": true
     }
   ]
 }

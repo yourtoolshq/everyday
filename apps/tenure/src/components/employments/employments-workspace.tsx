@@ -8,8 +8,10 @@ import { toast } from "sonner";
 import { Button } from "@yourtoolshq/ui/button";
 import { Card, CardContent } from "@yourtoolshq/ui/card";
 
+import { EmployerIcon } from "~/components/employers/employer-icon";
 import { EmploymentFormDrawer } from "~/components/employments/employment-form-drawer";
 import { formatCompensationRate } from "~/lib/compensation";
+import { countryFlag, countryName } from "~/lib/countries";
 import { employmentStatusLabels } from "~/lib/employment-status";
 import { api } from "~/trpc/react";
 
@@ -52,36 +54,49 @@ export function EmploymentsWorkspace() {
             <CardContent className="flex items-start justify-between gap-4 p-4">
               <Link
                 href={`/employments/${employment.id}`}
-                className="min-w-0 flex-1 space-y-1"
+                className="flex min-w-0 flex-1 items-start gap-3"
               >
-                <p className="font-medium">
-                  {employment.jobTitle ? (
-                    <>
-                      {employment.jobTitle}
-                      <span className="text-muted-foreground font-normal">
-                        {" "}
-                        at {employment.employerName}
+                <EmployerIcon fileId={employment.employerIconFileId} />
+                <div className="min-w-0 space-y-1">
+                  <p className="font-medium">
+                    {employment.jobTitle ? (
+                      <>
+                        {employment.jobTitle}
+                        <span className="text-muted-foreground font-normal">
+                          {" "}
+                          at {employment.employerName}
+                        </span>
+                      </>
+                    ) : (
+                      employment.employerName
+                    )}
+                    {employment.employerCountryCode ? (
+                      <span
+                        role="img"
+                        aria-label={countryName(employment.employerCountryCode)}
+                        title={countryName(employment.employerCountryCode)}
+                        className="ml-2 text-base font-normal"
+                      >
+                        {countryFlag(employment.employerCountryCode)}
                       </span>
-                    </>
-                  ) : (
-                    employment.employerName
-                  )}
-                </p>
-                <p className="text-muted-foreground text-sm">
-                  {employment.personName}
-                </p>
-                <p className="text-muted-foreground text-sm">
-                  {employmentStatusLabels[employment.status]}
-                  {employment.startDate
-                    ? ` · from ${employment.startDate}`
-                    : ""}
-                  {employment.endDate ? ` to ${employment.endDate}` : ""}
-                </p>
-                {employment.currentCompensation ? (
-                  <p className="text-muted-foreground text-sm">
-                    {formatCompensationRate(employment.currentCompensation)}
+                    ) : null}
                   </p>
-                ) : null}
+                  <p className="text-muted-foreground text-sm">
+                    {employment.personName}
+                  </p>
+                  <p className="text-muted-foreground text-sm">
+                    {employmentStatusLabels[employment.status]}
+                    {employment.startDate
+                      ? ` · from ${employment.startDate}`
+                      : ""}
+                    {employment.endDate ? ` to ${employment.endDate}` : ""}
+                  </p>
+                  {employment.currentCompensation ? (
+                    <p className="text-muted-foreground text-sm">
+                      {formatCompensationRate(employment.currentCompensation)}
+                    </p>
+                  ) : null}
+                </div>
               </Link>
               <div className="flex shrink-0 items-center gap-1">
                 <Button

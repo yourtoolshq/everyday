@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@yourtoolshq/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
 
+import { EmployerIcon } from "~/components/employers/employer-icon";
 import { api } from "~/trpc/react";
 
 export function EmploymentRecordsReviewWorkspace() {
@@ -78,17 +79,23 @@ export function EmploymentRecordsReviewWorkspace() {
                   key={`${item.employmentId}-${item.requirementKey}`}
                   className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
                 >
-                  <div className="min-w-0 space-y-1">
-                    <p className="text-sm font-medium">
-                      {item.employerName}
-                      <span className="text-muted-foreground font-normal">
-                        {" "}
-                        · {item.personName}
-                      </span>
-                    </p>
-                    <p className="text-muted-foreground text-sm">
-                      {item.label}
-                    </p>
+                  <div className="flex min-w-0 items-start gap-2">
+                    <EmployerIcon
+                      fileId={item.employerIconFileId ?? null}
+                      className="size-7"
+                    />
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-sm font-medium">
+                        {item.employerName}
+                        <span className="text-muted-foreground font-normal">
+                          {" "}
+                          · {item.personName}
+                        </span>
+                      </p>
+                      <p className="text-muted-foreground text-sm">
+                        {item.label}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <Badge variant="destructive">Missing</Badge>

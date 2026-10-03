@@ -205,6 +205,7 @@ export const employmentRecordsRouter = createTRPCRouter({
       .select({
         id: employments.id,
         employerName: employers.name,
+        employerIconFileId: employers.iconFileId,
         personName: people.displayName,
       })
       .from(employments)
@@ -304,6 +305,7 @@ export const householdPaySummaryProcedure = publicProcedure.query(
       .select({
         employmentId: paychecks.employmentId,
         employerName: employers.name,
+        employerIconFileId: employers.iconFileId,
         personName: people.displayName,
         payDate: paychecks.payDate,
         grossPayCents: paychecks.grossPayCents,
@@ -319,6 +321,7 @@ export const householdPaySummaryProcedure = publicProcedure.query(
       {
         employmentId: string;
         employerName: string;
+        employerIconFileId: string | null;
         personName: string;
         paychecks: Array<{
           payDate: string;
@@ -332,6 +335,7 @@ export const householdPaySummaryProcedure = publicProcedure.query(
       const existing = byEmployment.get(row.employmentId) ?? {
         employmentId: row.employmentId,
         employerName: row.employerName,
+        employerIconFileId: row.employerIconFileId,
         personName: row.personName,
         paychecks: [],
       };
@@ -347,6 +351,7 @@ export const householdPaySummaryProcedure = publicProcedure.query(
       .map((employment) => ({
         employmentId: employment.employmentId,
         employerName: employment.employerName,
+        employerIconFileId: employment.employerIconFileId,
         personName: employment.personName,
         lifetime: sumPaychecks(employment.paychecks),
         thisYear: sumPaychecks(employment.paychecks, summary.year),

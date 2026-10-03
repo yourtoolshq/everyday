@@ -23,6 +23,8 @@ flowchart TD
 
 **Employer** is the organization. **Employment** is a person's relationship with that organization over a period of time. Keeping them distinct allows a person to leave and later rejoin the same employer without merging separate periods of employment.
 
+An employer may have an optional icon, website, general contact email and phone, notes, and a structured contact address. The address has two lines, city or locality, state/province/region, postal code, and country. Country is required when any other address field is entered. Country is stored as an ISO 3166-1 alpha-2 code, so employers in different countries can be recorded; the employment list shows its flag. These are organization details, not a particular person's employment location or compensation currency.
+
 ## Core concepts
 
 | Concept             | Meaning                                                                                                                                                                         |

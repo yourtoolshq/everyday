@@ -507,6 +507,7 @@ export const paychecksRouter = createTRPCRouter({
       .select({
         id: employments.id,
         employerName: employers.name,
+        employerIconFileId: employers.iconFileId,
         personName: people.displayName,
         status: employments.status,
         startDate: employments.startDate,
