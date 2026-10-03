@@ -135,6 +135,18 @@ boundaries and emit structured JSON logs on the adopted paths.
   stdout/stderr). Allow-listed context only; apps and `@yourtoolshq/data`
   share the same event shape for adopted paths.
 
+## Proposed release and distribution direction
+
+The [architecture decision records](./docs/adr/README.md) describe proposals for
+independent desktop applications, app-owned hosts with multiple clients, and
+managed releases with recoverable updates. They capture problems, goals,
+alternatives, and tradeoffs at the architectural level. Framework choices and
+implementation plans remain for later discussion.
+
+These records are **Proposed** and do not describe changes already implemented.
+The current app isolation, deployment contracts, and production promotion rules
+remain in effect. [ROADMAP.md](./ROADMAP.md) owns phase sequencing.
+
 ## What this document is not
 
 - Per-app domain models → app `docs/domain.md` or `DOMAIN.md`
