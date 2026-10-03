@@ -14,7 +14,9 @@ services:
       - tenure-data:/data
       - ${TENURE_BACKUP_DIR:-tenure-backups}:/backups
     networks:
-      - web
+      web:
+        aliases:
+          - tenure.internal
     labels:
       - traefik.enable=true
       - traefik.docker.network=web
