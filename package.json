@@ -13,6 +13,7 @@
     "check:passbook": "turbo run lint typecheck test build migrations:check -F passbook...",
     "check:passbook-host": "turbo run lint typecheck test -F @passbook/host",
     "check:passbook-client": "turbo run lint typecheck test build -F @passbook/client",
+    "check:passbook-desktop": "turbo run lint typecheck test build -F @passbook/desktop",
     "check:tenure": "turbo run lint typecheck test build migrations:check -F tenure...",
     "clean": "git clean -xdf node_modules",
     "dev": "turbo watch dev --continue",

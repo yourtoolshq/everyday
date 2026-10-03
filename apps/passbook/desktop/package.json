@@ -1,0 +1,26 @@
+{
+  "name": "@passbook/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "pnpm build && node --import tsx scripts/dev.ts",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "electron": "^38.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@yourtoolshq/eslint-config": "workspace:*",
+    "@yourtoolshq/tsconfig": "workspace:*",
+    "eslint": "catalog:",
+    "tsx": "^4.20.6",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
