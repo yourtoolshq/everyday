@@ -42,7 +42,10 @@
     }
   },
   "globalPassThroughEnv": [
+    "DEV",
     "NODE_ENV",
+    "VITE_PASSBOOK_ALLOW_REMOTE",
+    "VITE_PASSBOOK_HOST_URL",
     "CI",
     "PORT",
     "DATABASE_URL",

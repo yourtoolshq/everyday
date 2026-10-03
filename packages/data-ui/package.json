@@ -5,7 +5,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./server": "./src/server.ts"
+    "./server": "./src/server.ts",
+    "./maintenance-screen": "./src/maintenance-screen.tsx",
+    "./eml-viewer": "./src/eml-viewer.tsx",
+    "./file-preview": "./src/file-preview.tsx"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
