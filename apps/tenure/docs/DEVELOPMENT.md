@@ -50,7 +50,7 @@ The host manager builds the candidate image, then asks the running app for a ver
 
 ## Traefik
 
-Tenure joins the external `web` Docker network and registers with Traefik at `tenure.tools.local`.
+Tenure joins the external `web` Docker network and registers with Traefik at `tenure.tools.local`. The same network exposes the `tenure.internal` alias so other production containers (for example Taxbook) can call Tenure's integration API over plain HTTP on port 3000.
 
 Add hosts entries if needed (`/etc/hosts` does not support wildcards):
 

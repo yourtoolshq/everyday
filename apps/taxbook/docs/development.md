@@ -40,6 +40,8 @@ docker compose up -d
 
 The Compose file expects an existing external Docker network named `web`. The app sets `traefik.docker.network=web` and does not publish `3000` to the host.
 
+Server-side Tenure sync calls use `TENURE_FETCH_BASE_URL` (default `http://tenure.internal:3000`) so the Taxbook container can reach Tenure over the shared `web` network. Browser links and the Tenure base URL in Settings still use `https://tenure.tools.local`. Tenure's Compose file registers the `tenure.internal` network alias for that internal route. Override `TENURE_FETCH_BASE_URL` only when your host uses a different internal Tenure address.
+
 Production and local development can run on the same computer because production uses the named volumes while `pnpm dev` uses `.data`. Do not set local `DATA_DIR` or test configuration to `/data`, `taxbook-data`, or a production volume.
 
 ## Host upgrades and cutover

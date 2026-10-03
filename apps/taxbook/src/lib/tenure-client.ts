@@ -1,3 +1,5 @@
+import { resolveTenureFetchBaseUrl } from "./tenure-url";
+
 export type TenureIntegrationEmployment = {
   id: string;
   personId: string;
@@ -40,15 +42,26 @@ export type TenureIntegrationPaycheck = {
   updatedAt: string;
 };
 
-function normalizeBaseUrl(baseUrl: string): string {
-  return baseUrl.replace(/\/+$/, "");
+function describeTenureFetchError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  if (/certificate|CERT|UNABLE_TO_VERIFY|self signed/i.test(message)) {
+    return "Unable to reach Tenure. TLS verification failed for the configured URL. In Docker, set TENURE_FETCH_BASE_URL to Tenure's internal HTTP URL.";
+  }
+  if (/ENOTFOUND|getaddrinfo|EAI_AGAIN/i.test(message)) {
+    return "Unable to reach Tenure. The configured hostname is not reachable from this process. In Docker, set TENURE_FETCH_BASE_URL to Tenure's internal HTTP URL.";
+  }
+  if (/ECONNREFUSED|fetch failed/i.test(message)) {
+    return "Unable to reach Tenure. Check that Tenure is running and the base URL is correct.";
+  }
+  return "Unable to reach Tenure.";
 }
 
 export async function fetchTenureHealth(
   baseUrl: string,
 ): Promise<{ ok: boolean; error?: string }> {
+  const fetchBaseUrl = resolveTenureFetchBaseUrl(baseUrl);
   try {
-    const response = await fetch(`${normalizeBaseUrl(baseUrl)}/api/health`, {
+    const response = await fetch(`${fetchBaseUrl}/api/health`, {
       cache: "no-store",
     });
     if (!response.ok) {
@@ -59,18 +72,16 @@ export async function fetchTenureHealth(
       return { ok: false, error: "Tenure health check failed." };
     }
     return { ok: true };
-  } catch {
-    return { ok: false, error: "Unable to reach Tenure." };
+  } catch (error) {
+    return { ok: false, error: describeTenureFetchError(error) };
   }
 }
 
 export async function fetchTenureEmployments(baseUrl: string) {
-  const response = await fetch(
-    `${normalizeBaseUrl(baseUrl)}/api/integration/employments`,
-    {
-      cache: "no-store",
-    },
-  );
+  const fetchBaseUrl = resolveTenureFetchBaseUrl(baseUrl);
+  const response = await fetch(`${fetchBaseUrl}/api/integration/employments`, {
+    cache: "no-store",
+  });
   if (!response.ok) {
     throw new Error(`Tenure responded with ${response.status}.`);
   }
@@ -84,11 +95,12 @@ export async function fetchTenurePaychecks(
   baseUrl: string,
   input: { employmentId: string; updatedSince?: string },
 ) {
+  const fetchBaseUrl = resolveTenureFetchBaseUrl(baseUrl);
   const params = new URLSearchParams({ employmentId: input.employmentId });
   if (input.updatedSince) params.set("updatedSince", input.updatedSince);
 
   const response = await fetch(
-    `${normalizeBaseUrl(baseUrl)}/api/integration/paychecks?${params.toString()}`,
+    `${fetchBaseUrl}/api/integration/paychecks?${params.toString()}`,
     { cache: "no-store" },
   );
   if (!response.ok) {

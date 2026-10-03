@@ -9,6 +9,7 @@ services:
       DATA_DIR: /data
       BACKUP_DIR: /backups
       NODE_ENV: production
+      TENURE_FETCH_BASE_URL: ${TENURE_FETCH_BASE_URL:-http://tenure.internal:3000}
     restart: unless-stopped
     volumes:
       - taxbook-data:/data
