@@ -44,6 +44,10 @@
     "remote-access:gate": {
       "cache": false
     },
+    "release:gate": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
     "clean": {
       "cache": false
     }
@@ -70,6 +74,12 @@
     "FIRSTAID_PORT",
     "PASSBOOK_PORT",
     "PASSBOOK_REQUIRE_AUTH",
+    "PASSBOOK_ROOT",
+    "PASSBOOK_USE_BUNDLED_HOST",
+    "PASSBOOK_PACKAGED",
+    "PASSBOOK_USER_DATA_DIR",
+    "PASSBOOK_HOST_ENTRY",
+    "PASSBOOK_CLIENT_DIST",
     "TENURE_PORT"
   ]
 }

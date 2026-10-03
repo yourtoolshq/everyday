@@ -88,8 +88,8 @@ Set `PASSBOOK_KEEP_GATE_DATA=1` to retain API gate data for inspection.
 
 ## Remaining limitations
 
-- **Desktop packaging** — Electron shell runs from source via `tsx`; no installer yet ([#71](https://github.com/yourtoolshq/everyday/issues/71)).
-- **Remote access** — loopback only; no authenticated browser/phone access ([#70](https://github.com/yourtoolshq/everyday/issues/70)).
+- **Desktop packaging** — Linux AppImage is available via `pnpm package:passbook:linux`; signing and auto-update feed publication remain Later ([#71](https://github.com/yourtoolshq/everyday/issues/71)).
+- **Remote access** — pairing and bearer tokens are available; TLS termination remains the operator's responsibility ([#70](https://github.com/yourtoolshq/everyday/issues/70)).
 - **OS target** — Linux x86_64 is the leading candidate; macOS/Windows packaging is Later.
 - **Client route parity** — sidebar links to `/members`, `/documents`, `/activity`, and `/settings` are not yet implemented in the SPA; core gate workflow routes are covered.
 - **Next.js production path** — unchanged; Docker deployment remains the production path until a later cutover.

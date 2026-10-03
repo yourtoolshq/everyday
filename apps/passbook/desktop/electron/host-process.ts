@@ -2,7 +2,8 @@ import { spawn } from "node:child_process";
 import type { ChildProcess } from "node:child_process";
 
 export interface HostProcessOptions {
-  entry: string;
+  command: string;
+  args: string[];
   cwd: string;
   env: Record<string, string>;
 }
@@ -15,7 +16,7 @@ export class HostProcess {
 
   start() {
     if (this.child) return;
-    this.child = spawn("node", ["--import", "tsx", this.options.entry], {
+    this.child = spawn(this.options.command, this.options.args, {
       cwd: this.options.cwd,
       env: { ...process.env, ...this.options.env },
       stdio: ["ignore", "pipe", "pipe"],
