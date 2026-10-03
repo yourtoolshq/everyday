@@ -53,10 +53,10 @@ export const institutionsRouter = createTRPCRouter({
       ctx.files.withFiles(ctx.db, async (tx, files) => {
         const icon = input.icon ? await files.claim(input.icon) : null;
         if (icon) validateIcon(icon.mimeType);
-        return createInstitution(
-          createInstitutionRepository(tx),
-          { ...input, iconFileId: icon?.id ?? null },
-        );
+        return createInstitution(createInstitutionRepository(tx), {
+          ...input,
+          iconFileId: icon?.id ?? null,
+        });
       }),
     ),
   ),

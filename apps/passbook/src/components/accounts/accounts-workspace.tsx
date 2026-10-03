@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, ChevronRight, Plus } from "lucide-react";
+import { AlertTriangle, ChevronRight, Plus, Users } from "lucide-react";
 
 import { Badge } from "@yourtoolshq/ui/badge";
 import { Button } from "@yourtoolshq/ui/button";
@@ -12,10 +12,10 @@ import { Skeleton } from "@yourtoolshq/ui/skeleton";
 import type { StatementFrequency } from "~/lib/statement-frequency";
 import { AccountFormSheet } from "~/components/accounts/account-form-sheet";
 import { InstitutionIcon } from "~/components/institutions/institution-icon";
+import { groupAccounts } from "~/lib/account-groups";
 import { accountStatusLabels } from "~/lib/account-status";
 import { accountTypeLabels } from "~/lib/account-types";
 import { canDeriveStatementPeriods } from "~/lib/expected-periods";
-import { formatDateLabel } from "~/lib/format-date";
 import {
   buildExceptionsByAccount,
   buildMissingStatements,
@@ -48,6 +48,10 @@ export function AccountsWorkspace() {
     api.documents.statementDocumentsByAccount.useQuery();
   const periodExceptions = api.statementPeriodExceptions.listAll.useQuery();
   const [formOpen, setFormOpen] = useState(false);
+  const [grouping, setGrouping] = useState<"institution" | "owners">(
+    "institution",
+  );
+  const [status, setStatus] = useState<"active" | "closed" | "all">("active");
 
   const exceptionsByAccount = useMemo(
     () => buildExceptionsByAccount(periodExceptions.data ?? []),
@@ -86,10 +90,14 @@ export function AccountsWorkspace() {
   }
 
   const items = accounts.data ?? [];
+  const filtered = items.filter(
+    (account) => status === "all" || account.status === status,
+  );
+  const groups = groupAccounts(filtered, grouping);
 
   return (
     <div className="space-y-5">
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-2">
           <p className="text-primary text-sm font-medium">Inventory</p>
           <h2 className="text-3xl font-semibold tracking-tight">Accounts</h2>
@@ -121,74 +129,177 @@ export function AccountsWorkspace() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {items.map((account) => {
-            const openedLabel = formatDateLabel(account.openedDate);
-            const closedLabel = formatDateLabel(account.closedDate);
-            const showOpenedDateWarning = needsOpenedDateWarning(account);
-            const missingCount = missingCountByAccount[account.id] ?? 0;
-
-            return (
-              <Link
-                key={account.id}
-                href={`/accounts/${account.id}`}
-                className="block"
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div
+              className="flex items-center gap-1"
+              role="group"
+              aria-label="Filter accounts by status"
+            >
+              {(["active", "closed", "all"] as const).map((value) => (
+                <Button
+                  key={value}
+                  size="sm"
+                  variant={status === value ? "secondary" : "ghost"}
+                  aria-pressed={status === value}
+                  onClick={() => setStatus(value)}
+                >
+                  {{ active: "Active", closed: "Closed", all: "All" }[value]}
+                </Button>
+              ))}
+              <span
+                className="text-muted-foreground ml-2 text-xs"
+                role="status"
               >
-                <Card className="hover:bg-muted/30 shadow-none transition-colors">
-                  <CardContent className="flex items-center justify-between gap-4 p-4">
-                    <div className="flex min-w-0 items-start gap-3">
-                      <InstitutionIcon fileId={account.institutionIconFileId} />
-                      <div className="min-w-0 space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="font-medium">{account.displayName}</p>
-                          <Badge variant="secondary">
-                            {
-                              statementFrequencyLabels[
-                                account.statementFrequency
-                              ]
-                            }
-                          </Badge>
-                          {missingCount > 0 ? (
-                            <Badge
-                              variant="outline"
-                              className="border-red-500/40 text-red-700"
-                            >
-                              {missingCount} missing
-                            </Badge>
+                {filtered.length}{" "}
+                {filtered.length === 1 ? "account" : "accounts"}
+              </span>
+            </div>
+            <div
+              className="flex items-center gap-1"
+              role="group"
+              aria-label="Group accounts by"
+            >
+              <span className="text-muted-foreground mr-1 text-xs">
+                Group by
+              </span>
+              <Button
+                size="sm"
+                variant={grouping === "institution" ? "secondary" : "ghost"}
+                aria-pressed={grouping === "institution"}
+                onClick={() => setGrouping("institution")}
+              >
+                Institution
+              </Button>
+              <Button
+                size="sm"
+                variant={grouping === "owners" ? "secondary" : "ghost"}
+                aria-pressed={grouping === "owners"}
+                onClick={() => setGrouping("owners")}
+              >
+                Owners
+              </Button>
+            </div>
+          </div>
+          {filtered.length === 0 ? (
+            <p className="text-muted-foreground rounded-lg border p-6 text-sm">
+              No {status === "all" ? "" : `${status} `}accounts. Choose another
+              status to see your accounts.
+            </p>
+          ) : null}
+          <div className="divide-y overflow-hidden rounded-lg border">
+            {groups.map((group) => (
+              <details
+                key={`${grouping}-${status}-${group.key}`}
+                open
+                className="group/section"
+              >
+                <summary className="bg-muted/30 hover:bg-muted/50 focus-visible:ring-ring flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="text-muted-foreground size-4 shrink-0 transition-transform group-open/section:rotate-90"
+                  />
+                  {grouping === "institution" ? (
+                    <InstitutionIcon
+                      fileId={group.accounts[0]?.institutionIconFileId ?? null}
+                      className="size-6"
+                    />
+                  ) : (
+                    <Users
+                      aria-hidden="true"
+                      className="text-muted-foreground size-4 shrink-0"
+                    />
+                  )}
+                  <h3 className="min-w-0 flex-1 font-medium break-words">
+                    {group.label}
+                  </h3>
+                  <span className="text-muted-foreground shrink-0 text-xs">
+                    {group.accounts.length}{" "}
+                    {group.accounts.length === 1 ? "account" : "accounts"}
+                  </span>
+                </summary>
+                <ul className="divide-y">
+                  {group.accounts.map((account) => {
+                    const showOpenedDateWarning =
+                      needsOpenedDateWarning(account);
+                    const missingCount = missingCountByAccount[account.id] ?? 0;
+                    const owners =
+                      account.owners
+                        .map((owner) => owner.displayName)
+                        .sort((a, b) => a.localeCompare(b))
+                        .join(" + ") || "Unassigned";
+                    return (
+                      <li key={account.id}>
+                        <Link
+                          href={`/accounts/${account.id}`}
+                          className="hover:bg-muted/30 focus-visible:ring-ring flex items-center gap-3 px-3 py-2.5 transition-colors focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset"
+                        >
+                          {grouping === "owners" ? (
+                            <InstitutionIcon
+                              fileId={account.institutionIconFileId}
+                              className="size-7"
+                            />
                           ) : null}
-                          {showOpenedDateWarning ? (
-                            <Badge
-                              variant="outline"
-                              className="border-amber-500/40 text-amber-800"
-                            >
-                              <AlertTriangle />
-                              Missing opened date
-                            </Badge>
-                          ) : null}
-                        </div>
-                        <p className="text-muted-foreground text-sm">
-                          {account.institutionName} ·{" "}
-                          {accountTypeLabels[account.accountType]}
-                          {account.identifierSuffix
-                            ? ` · …${account.identifierSuffix}`
-                            : ""}
-                        </p>
-                        <p className="text-muted-foreground text-sm">
-                          {accountStatusLabels[account.status]} ·{" "}
-                          {account.owners
-                            .map((owner) => owner.displayName)
-                            .join(", ")}
-                          {openedLabel || closedLabel
-                            ? ` · ${openedLabel ? `Opened ${openedLabel}` : ""}${openedLabel && closedLabel ? " · " : ""}${closedLabel ? `Closed ${closedLabel}` : ""}`
-                            : ""}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="text-muted-foreground size-4 shrink-0" />
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                              <span className="text-sm font-medium break-words">
+                                {account.displayName}
+                              </span>
+                              {account.identifierSuffix ? (
+                                <span className="text-muted-foreground text-xs">
+                                  …{account.identifierSuffix}
+                                </span>
+                              ) : null}
+                              {account.status === "closed" ? (
+                                <Badge variant="secondary">
+                                  {accountStatusLabels[account.status]}
+                                </Badge>
+                              ) : null}
+                              {missingCount > 0 &&
+                              !statementDocuments.isLoading &&
+                              !periodExceptions.isLoading &&
+                              !statementDocuments.error &&
+                              !periodExceptions.error ? (
+                                <Badge
+                                  variant="outline"
+                                  className="border-destructive/30 text-destructive"
+                                >
+                                  {missingCount} missing
+                                </Badge>
+                              ) : null}
+                              {showOpenedDateWarning ? (
+                                <Badge
+                                  variant="outline"
+                                  className="border-amber-500/40 text-amber-800 dark:text-amber-300"
+                                >
+                                  <AlertTriangle aria-hidden="true" />
+                                  Missing opened date
+                                </Badge>
+                              ) : null}
+                            </div>
+                            <p className="text-muted-foreground mt-0.5 text-xs break-words">
+                              {grouping === "institution"
+                                ? owners
+                                : account.institutionName}{" "}
+                              · {accountTypeLabels[account.accountType]} ·{" "}
+                              {
+                                statementFrequencyLabels[
+                                  account.statementFrequency
+                                ]
+                              }
+                            </p>
+                          </div>
+                          <ChevronRight
+                            aria-hidden="true"
+                            className="text-muted-foreground size-4 shrink-0"
+                          />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </details>
+            ))}
+          </div>
         </div>
       )}
 
