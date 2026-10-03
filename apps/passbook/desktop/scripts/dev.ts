@@ -29,8 +29,30 @@ const client = run("pnpm", ["dev"], path.join(passbookRoot, "client"), {
   PASSBOOK_HOST_URL: paths.hostUrl,
 });
 
-setTimeout(() => {
+async function waitForClient(timeoutMs = 30_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (client.exitCode !== null) {
+      throw new Error(`Vite exited during startup (${client.exitCode}).`);
+    }
+    try {
+      const response = await fetch(paths.clientDevUrl);
+      if (response.ok) return;
+    } catch {
+      // Vite is still starting.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`Vite did not become ready at ${paths.clientDevUrl}.`);
+}
+
+try {
+  await waitForClient();
   run("pnpm", ["exec", "electron", "."], desktopRoot);
-}, 4_000);
+} catch (error) {
+  client.kill("SIGTERM");
+  console.error(error instanceof Error ? error.message : String(error));
+  process.exit(1);
+}
 
 client.on("exit", () => process.exit(0));

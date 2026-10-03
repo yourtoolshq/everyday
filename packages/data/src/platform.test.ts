@@ -1,4 +1,4 @@
-import { access } from "node:fs/promises";
+import { access, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { initTRPC } from "@trpc/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -88,6 +88,30 @@ describe("defineDataPlatform", () => {
     await reopened.settled();
     expect(await reopened.db.select().from(filesTable)).toHaveLength(1);
     context.platform = reopened;
+  });
+
+  it("keeps a relative migration folder when the working directory changes", async () => {
+    const originalCwd = process.cwd();
+    const otherDirectory = join(context.root, "other-working-directory");
+    const dataDir = join(context.root, "relative-migrations-data");
+    let platform: ReturnType<typeof defineDataPlatform> | undefined;
+
+    try {
+      await mkdir(otherDirectory);
+      process.chdir(context.root);
+      platform = defineDataPlatform({
+        app: "relative-migrations",
+        dataDir,
+        db: { schema: { filesTable }, migrationsFolder: "drizzle" },
+      });
+
+      process.chdir(otherDirectory);
+
+      expect(await platform.settled()).toEqual({ state: "ready" });
+    } finally {
+      platform?.close();
+      process.chdir(originalCwd);
+    }
   });
 });
 
