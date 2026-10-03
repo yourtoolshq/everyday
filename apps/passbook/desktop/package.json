@@ -49,6 +49,7 @@
     "build:client": "pnpm --filter @passbook/client build",
     "build:host": "pnpm --filter @passbook/host build",
     "dev": "pnpm build && node --import tsx scripts/dev.ts",
+    "verify:electron": "node --import tsx -e \"import { assertElectronInstalled } from './electron/verify-install.ts'; assertElectronInstalled(); console.log('Electron install OK');\"",
     "lint": "eslint .",
     "package:linux": "pnpm build:client && pnpm build:host && pnpm build && electron-builder --linux --publish never",
     "test": "vitest run",

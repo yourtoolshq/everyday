@@ -9,8 +9,19 @@ cd apps/passbook/desktop
 pnpm dev
 ```
 
-`pnpm dev` builds the Electron main/preload bundle, starts the Vite client on
+`pnpm dev` builds the Electron main/preload bundle, verifies the Electron
+runtime was extracted during install, starts the Vite client on
 `http://127.0.0.1:5173`, then opens Electron after a short delay.
+
+If Electron failed to install (common on Node 24.16+ or 26+ without the monorepo
+`yauzl` override), `pnpm verify:electron` reports the problem before launch.
+Reinstall dependencies from the repo root after pulling dependency fixes:
+
+```bash
+rm -rf node_modules
+pnpm install
+pnpm --filter @passbook/desktop verify:electron
+```
 
 ## Configuration
 
