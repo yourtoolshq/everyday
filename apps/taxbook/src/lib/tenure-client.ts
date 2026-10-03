@@ -1,3 +1,5 @@
+import { resolveTenureFetchBaseUrl } from "./tenure-url";
+
 export type TenureIntegrationEmployment = {
   id: string;
   personId: string;
@@ -40,8 +42,6 @@ export type TenureIntegrationPaycheck = {
   updatedAt: string;
 };
 
-import { resolveTenureFetchBaseUrl } from "./tenure-url";
-
 function describeTenureFetchError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   if (/certificate|CERT|UNABLE_TO_VERIFY|self signed/i.test(message)) {
@@ -79,12 +79,9 @@ export async function fetchTenureHealth(
 
 export async function fetchTenureEmployments(baseUrl: string) {
   const fetchBaseUrl = resolveTenureFetchBaseUrl(baseUrl);
-  const response = await fetch(
-    `${fetchBaseUrl}/api/integration/employments`,
-    {
-      cache: "no-store",
-    },
-  );
+  const response = await fetch(`${fetchBaseUrl}/api/integration/employments`, {
+    cache: "no-store",
+  });
   if (!response.ok) {
     throw new Error(`Tenure responded with ${response.status}.`);
   }

@@ -22,9 +22,9 @@ describe("tenure-url", () => {
 
   it("uses TENURE_FETCH_BASE_URL for server-side Tenure API calls", () => {
     vi.stubEnv("TENURE_FETCH_BASE_URL", "http://tenure.internal:3000/");
-    expect(
-      resolveTenureFetchBaseUrl("https://tenure.tools.local"),
-    ).toBe("http://tenure.internal:3000");
+    expect(resolveTenureFetchBaseUrl("https://tenure.tools.local")).toBe(
+      "http://tenure.internal:3000",
+    );
   });
 
   it("falls back to the configured base URL when no override is set", () => {
