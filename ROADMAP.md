@@ -521,19 +521,32 @@ app-owned hosts supporting local and remote clients. These are architectural
 proposals for discussion, not a scheduled migration or a selected technical
 stack.
 
-Docker Compose remains the initial distribution method. Later, investigate an Electron-based desktop application.
+Docker Compose remains the initial distribution method. Electron is the leading
+desktop candidate; the first executable plan is the Passbook foundation wave in
+[docs/phase-9/](./docs/phase-9/README.md).
 
-**Considerations:**
+**Foundation wave (Passbook first):**
+
+- [Implementation baseline](./docs/phase-9/baseline.md) — migration boundaries, technical recommendation, proof workflow
+- [Host/client/desktop contracts](./docs/phase-9/contracts.md) — lifecycle, configuration, readiness, errors
+- [Task briefs](./docs/phase-9/README.md#execution-package) — host, client, desktop assignments
+- [Integration plan](./docs/phase-9/integration-plan.md) — parallel ownership, stubs, gate, Ready/Blocked/Later table
+
+Foundation implementation stays **Blocked** until the maintainer reviews the
+baseline. It does not replace the current Next.js or Docker production path.
+
+**Later considerations:**
 
 - Bundling applications
 - SQLite and uploaded-file management inside a desktop wrapper
-- Automatic updates
+- Automatic updates (builds on Phase 8 / ADR-0003)
 - Backup and restore interfaces exposed to users
 - Installation and onboarding
 - Installing only selected applications
 - Coexistence with Docker distribution
+- Second-app validation before shared runtime extraction
 
-**Completion criteria:** A distribution approach exists that preserves local-first ownership and data durability while reducing installation complexity.
+**Completion criteria:** A distribution approach exists that preserves local-first ownership and data durability while reducing installation complexity. The Passbook foundation gate (local startup, record/document workflow, restart persistence, understandable startup failure) is the first proof toward that outcome.
 
 ---
 
