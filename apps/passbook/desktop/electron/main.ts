@@ -48,7 +48,7 @@ function getPaths() {
         HOST: paths.host,
         PORT: paths.port,
         NODE_ENV: process.env.NODE_ENV ?? "development",
-        PASSBOOK_ROOT: paths.hostCwd,
+        PASSBOOK_ROOT: paths.root,
       },
     });
   }

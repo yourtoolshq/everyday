@@ -8,6 +8,7 @@ const desktopRoot = path.resolve(
 const passbookRoot = path.resolve(desktopRoot, "..");
 
 export interface DesktopPaths {
+  root: string;
   dataDir: string;
   backupDir: string;
   host: string;
@@ -56,6 +57,7 @@ export function resolveDesktopPaths(
   const appVersion = env.APP_VERSION ?? "0.1.0";
 
   return {
+    root,
     dataDir,
     backupDir,
     host,

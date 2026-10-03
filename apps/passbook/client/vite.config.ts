@@ -35,7 +35,9 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
+      host: "127.0.0.1",
       port: Number(env.VITE_DEV_PORT ?? 5173),
+      strictPort: true,
       proxy: {
         "/api": {
           target: hostUrl,
