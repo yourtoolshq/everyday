@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
 import { LoaderCircle } from "lucide-react";
+import { Navigate, useNavigate } from "react-router-dom";
 
 import { Button } from "@yourtoolshq/ui/button";
 import {

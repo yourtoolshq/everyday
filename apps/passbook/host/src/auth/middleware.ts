@@ -3,8 +3,8 @@ import type { AuthContext } from "./types";
 import {
   isAuthAdminRoute,
   isHealthRoute,
-  isPublicAuthRoute,
   isLoopbackAddress,
+  isPublicAuthRoute,
   readBearerToken,
   requiresRemoteAuth,
 } from "./policy";

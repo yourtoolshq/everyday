@@ -32,7 +32,9 @@ async function freePort() {
         reject(new Error("Could not allocate a port"));
         return;
       }
-      server.close((error) => (error ? reject(error) : resolvePort(address.port)));
+      server.close((error) =>
+        error ? reject(error) : resolvePort(address.port),
+      );
     });
   });
 }

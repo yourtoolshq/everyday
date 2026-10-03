@@ -37,8 +37,7 @@ export async function handleAuthRoute(
     } catch (error) {
       return json(
         {
-          error:
-            error instanceof Error ? error.message : "Pairing failed.",
+          error: error instanceof Error ? error.message : "Pairing failed.",
         },
         400,
       );

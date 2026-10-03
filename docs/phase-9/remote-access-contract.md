@@ -18,11 +18,11 @@ unchanged unless `PASSBOOK_REQUIRE_AUTH=1` is set for testing.
 
 ## Network boundary
 
-| Mode | Host bind | Remote clients | Auth |
-| ---- | --------- | -------------- | ---- |
-| Local (default) | `127.0.0.1` | Not reachable | Loopback exempt |
-| Private LAN | `0.0.0.0` with `PASSBOOK_REMOTE_ACCESS=1` | Same subnet / VPN | Bearer token required |
-| Public internet | **Out of scope** | Not supported | Do not expose without reverse proxy + TLS |
+| Mode            | Host bind                                 | Remote clients    | Auth                                      |
+| --------------- | ----------------------------------------- | ----------------- | ----------------------------------------- |
+| Local (default) | `127.0.0.1`                               | Not reachable     | Loopback exempt                           |
+| Private LAN     | `0.0.0.0` with `PASSBOOK_REMOTE_ACCESS=1` | Same subnet / VPN | Bearer token required                     |
+| Public internet | **Out of scope**                          | Not supported     | Do not expose without reverse proxy + TLS |
 
 TLS termination is the operator's responsibility (reverse proxy, Caddy, etc.).
 The host serves plain HTTP; pairing codes must not be transmitted over untrusted
@@ -42,13 +42,13 @@ immediate; revoked tokens receive `401` on the next request.
 
 ## Authorization model
 
-| Surface | Loopback | Remote (paired) |
-| ------- | -------- | --------------- |
-| `/api/health` | Full | Summary only (`status`, `auth`) |
-| `/api/auth/pair` | Allowed | Allowed |
-| `/api/auth/pairing-codes` | Allowed | Denied (`403`) |
-| `/api/auth/tokens` | List/revoke | Denied |
-| `/api/trpc/*`, `/api/data/*` | Allowed | Requires bearer token |
+| Surface                      | Loopback    | Remote (paired)                 |
+| ---------------------------- | ----------- | ------------------------------- |
+| `/api/health`                | Full        | Summary only (`status`, `auth`) |
+| `/api/auth/pair`             | Allowed     | Allowed                         |
+| `/api/auth/pairing-codes`    | Allowed     | Denied (`403`)                  |
+| `/api/auth/tokens`           | List/revoke | Denied                          |
+| `/api/trpc/*`, `/api/data/*` | Allowed     | Requires bearer token           |
 
 Destructive backup/restore operations follow the same boundary: remote paired
 clients may use data APIs allowed by tRPC; token administration remains

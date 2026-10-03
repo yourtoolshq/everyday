@@ -2,16 +2,16 @@ import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 
 import { createDataHandlers } from "@yourtoolshq/data/next";
 
+import type { HostRequestContext } from "./auth/middleware";
 import { appRouter } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
 import { dataPlatform } from "~/server/data";
 import { fileRouter } from "~/server/files";
 import { createHealthResponse } from "~/server/health";
 import { authorizeRequest } from "./auth/middleware";
-import { handleAuthRoute } from "./auth/routes";
 import { requiresRemoteAuth } from "./auth/policy";
+import { handleAuthRoute } from "./auth/routes";
 import { createAuthStore } from "./auth/store";
-import type { HostRequestContext } from "./auth/middleware";
 
 const dataHandlers = createDataHandlers(dataPlatform, { fileRouter });
 const authStore = createAuthStore(process.env.DATA_DIR ?? "./.data");

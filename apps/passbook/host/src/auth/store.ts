@@ -1,8 +1,12 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createHash, randomBytes, randomInt } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
-import type { AuthStoreData, AuthTokenRecord, PairingCodeRecord } from "./types";
+import type {
+  AuthStoreData,
+  AuthTokenRecord,
+  PairingCodeRecord,
+} from "./types";
 
 const PAIRING_TTL_MS = 5 * 60 * 1000;
 
