@@ -51,7 +51,7 @@ export async function startPassbookHost(
   const server = createHostHttpServer({
     host: envInput.HOST,
     port: envInput.PORT,
-    handler: handleHostRequest,
+    handler: (input) => handleHostRequest(input),
   });
 
   let port = envInput.PORT;

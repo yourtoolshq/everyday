@@ -14,10 +14,12 @@ import { AccountsWorkspace } from "~/components/accounts/accounts-workspace";
 import { InstitutionsWorkspace } from "~/components/institutions/institutions-workspace";
 import { AppShell } from "~/components/layout/app-shell";
 import { Toaster } from "~/components/ui/sonner";
+import { AuthGate } from "./components/auth-gate";
 import { HostGate } from "./components/host-gate";
 import { RequireHousehold } from "./components/require-household";
 import { FileViewerRoute } from "./routes/file-viewer";
 import { OverviewRoute } from "./routes/overview";
+import { PairRoute } from "./routes/pair";
 import { SetupRoute } from "./routes/setup";
 import { TRPCReactProvider } from "./trpc/react";
 
@@ -71,9 +73,31 @@ export function App() {
           <HostGate>
             <BrowserRouter>
               <Routes>
-                <Route path="/setup" element={<SetupRoute />} />
-                <Route path="/files/:fileId" element={<FileViewerRoute />} />
-                <Route path="/*" element={<AppLayout />} />
+                <Route path="/pair" element={<PairRoute />} />
+                <Route
+                  path="/setup"
+                  element={
+                    <AuthGate>
+                      <SetupRoute />
+                    </AuthGate>
+                  }
+                />
+                <Route
+                  path="/files/:fileId"
+                  element={
+                    <AuthGate>
+                      <FileViewerRoute />
+                    </AuthGate>
+                  }
+                />
+                <Route
+                  path="/*"
+                  element={
+                    <AuthGate>
+                      <AppLayout />
+                    </AuthGate>
+                  }
+                />
               </Routes>
               <Toaster />
             </BrowserRouter>

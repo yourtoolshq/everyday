@@ -41,6 +41,9 @@
       "cache": false,
       "dependsOn": ["^build"]
     },
+    "remote-access:gate": {
+      "cache": false
+    },
     "clean": {
       "cache": false
     }
@@ -66,6 +69,7 @@
     "TAXBOOK_PORT",
     "FIRSTAID_PORT",
     "PASSBOOK_PORT",
+    "PASSBOOK_REQUIRE_AUTH",
     "TENURE_PORT"
   ]
 }

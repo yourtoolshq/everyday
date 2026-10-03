@@ -6,6 +6,8 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Added
 
+- Remote device pairing uses short-lived codes and bearer tokens; loopback clients remain unchanged while remote clients must pair before accessing records.
+- A remote-access gate (`pnpm remote-access:gate`) verifies pairing, authorization, and revocation.
 - A foundation integration gate (`pnpm foundation:gate`) verifies the host workflow, restart persistence, backup/restore, and client setup UI against disposable data.
 - A standalone Passbook host runs on loopback without Next.js, serving health, tRPC, and data routes for desktop and browser clients.
 - A Vite React client connects to the host for setup, overview, accounts, institutions, and file viewing without Next.js.
