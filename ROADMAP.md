@@ -471,6 +471,11 @@ Applications should remain independently deployable even when maintained in the 
 
 **Goal:** Separate active development from stable versions used to manage real personal data.
 
+[ADR-0003](./docs/adr/0003-managed-releases-and-safe-updates.md) records the
+proposed direction for prebuilt releases and managed, recoverable updates.
+Release policies and technical implementation remain for later discussion;
+the proposal does not change the current production promotion rules.
+
 Introduce a consistent release process:
 
 ```
@@ -508,6 +513,13 @@ Avoid automatically deploying every merge to the production environment.
 ### Phase 9 — Distribution _(future)_
 
 **Goal:** Make Your Tools accessible to people who do not want to manage a development environment.
+
+[ADR-0001](./docs/adr/0001-independent-desktop-applications.md) proposes separate
+desktop products with shared foundations, and
+[ADR-0002](./docs/adr/0002-app-owned-hosts-and-multiple-clients.md) proposes
+app-owned hosts supporting local and remote clients. These are architectural
+proposals for discussion, not a scheduled migration or a selected technical
+stack.
 
 Docker Compose remains the initial distribution method. Later, investigate an Electron-based desktop application.
 
