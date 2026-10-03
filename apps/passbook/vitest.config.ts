@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    exclude: ["e2e/**", "node_modules/**"],
+    exclude: ["e2e/**", "host/**", "client/**", "desktop/**", "node_modules/**"],
     env: {
       DATA_DIR: "./.data/test",
     },

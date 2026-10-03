@@ -14,5 +14,12 @@
     "**/*.js",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "generated"]
+  "exclude": [
+    "node_modules",
+    "generated",
+    "host/**",
+    "client/**",
+    "desktop/**",
+    "fixtures/**"
+  ]
 }
