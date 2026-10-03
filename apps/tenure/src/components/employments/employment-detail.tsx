@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
 import type { RouterOutputs } from "~/trpc/react";
 import { EmploymentCompensationPanel } from "~/components/compensation/employment-compensation-panel";
 import { EmploymentDiscussionsPanel } from "~/components/discussions/employment-discussions-panel";
+import { EmployerIcon } from "~/components/employers/employer-icon";
 import { EmploymentPaySummaryCard } from "~/components/employment-records/employment-pay-summary-card";
 import { EmploymentRecordCompletenessPanel } from "~/components/employment-records/employment-record-completeness-panel";
 import { EmploymentDocumentsPanel } from "~/components/employments/employment-documents-panel";
@@ -51,19 +52,25 @@ export function EmploymentDetail({ employment }: EmploymentDetailProps) {
                 {employmentStatusLabels[employment.status]}
               </Badge>
             </div>
-            <h2 className="text-3xl font-semibold tracking-tight">
-              {employment.jobTitle ? (
-                <>
-                  {employment.jobTitle}
-                  <span className="text-muted-foreground font-normal">
-                    {" "}
-                    at {employment.employerName}
-                  </span>
-                </>
-              ) : (
-                employment.employerName
-              )}
-            </h2>
+            <div className="flex items-center gap-3">
+              <EmployerIcon
+                fileId={employment.employerIconFileId}
+                className="size-12"
+              />
+              <h2 className="text-3xl font-semibold tracking-tight">
+                {employment.jobTitle ? (
+                  <>
+                    {employment.jobTitle}
+                    <span className="text-muted-foreground font-normal">
+                      {" "}
+                      at {employment.employerName}
+                    </span>
+                  </>
+                ) : (
+                  employment.employerName
+                )}
+              </h2>
+            </div>
             <p className="text-muted-foreground">{employment.personName}</p>
           </div>
           <Button onClick={() => setEditOpen(true)}>
@@ -85,7 +92,13 @@ export function EmploymentDetail({ employment }: EmploymentDetailProps) {
                 href={`/employers/${employment.employerId}`}
                 className="text-primary text-sm font-medium hover:underline"
               >
-                {employment.employerName}
+                <span className="inline-flex items-center gap-2">
+                  <EmployerIcon
+                    fileId={employment.employerIconFileId}
+                    className="size-6"
+                  />
+                  {employment.employerName}
+                </span>
               </Link>
             </div>
             <div>

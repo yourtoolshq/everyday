@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@yourtoolshq/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
 
+import { EmployerIcon } from "~/components/employers/employer-icon";
 import { api } from "~/trpc/react";
 
 export function MissingEmploymentRecordsPanel() {
@@ -36,11 +37,17 @@ export function MissingEmploymentRecordsPanel() {
                 key={`${item.employmentId}-${item.requirementKey}`}
                 className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0"
               >
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{item.employerName}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {item.label} · {item.personName}
-                  </p>
+                <div className="flex min-w-0 items-start gap-2">
+                  <EmployerIcon
+                    fileId={item.employerIconFileId ?? null}
+                    className="size-7"
+                  />
+                  <div>
+                    <p className="text-sm font-medium">{item.employerName}</p>
+                    <p className="text-muted-foreground text-xs">
+                      {item.label} · {item.personName}
+                    </p>
+                  </div>
                 </div>
                 <Badge variant="destructive" className="shrink-0">
                   Missing

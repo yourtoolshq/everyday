@@ -35,6 +35,7 @@ import type {
   CompensationCurrency,
   CompensationType,
 } from "~/lib/compensation";
+import { EmployerIcon } from "~/components/employers/employer-icon";
 import {
   commissionPercentToBasisPoints,
   compensationCurrencies,
@@ -281,7 +282,13 @@ export function EmploymentFormDrawer({
               <SelectContent>
                 {employers.data?.map((employer) => (
                   <SelectItem key={employer.id} value={employer.id}>
-                    {employer.name}
+                    <span className="inline-flex items-center gap-2">
+                      <EmployerIcon
+                        fileId={employer.iconFileId}
+                        className="size-5"
+                      />
+                      {employer.name}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>

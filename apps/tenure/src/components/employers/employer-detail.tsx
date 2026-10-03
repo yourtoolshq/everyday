@@ -11,7 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
 
 import type { RouterOutputs } from "~/trpc/react";
 import { EmployerFormDrawer } from "~/components/employers/employer-form-drawer";
+import { EmployerIcon } from "~/components/employers/employer-icon";
 import { EmploymentFormDrawer } from "~/components/employments/employment-form-drawer";
+import { countryName } from "~/lib/countries";
 import { employmentStatusLabels } from "~/lib/employment-status";
 
 type EmployerDetailProps = {
@@ -34,20 +36,70 @@ export function EmployerDetail({ employer }: EmployerDetailProps) {
     <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-semibold tracking-tight">
-              {employer.name}
-            </h2>
-            {employer.website ? (
-              <p className="text-muted-foreground text-sm">
-                {employer.website}
-              </p>
-            ) : null}
-            {employer.notes ? (
-              <p className="text-muted-foreground max-w-2xl text-sm whitespace-pre-wrap">
-                {employer.notes}
-              </p>
-            ) : null}
+          <div className="flex items-start gap-4">
+            <EmployerIcon fileId={employer.iconFileId} className="size-16" />
+            <div className="space-y-2">
+              <h2 className="text-3xl font-semibold tracking-tight">
+                {employer.name}
+              </h2>
+              {employer.website ? (
+                <p className="text-muted-foreground text-sm">
+                  {employer.website}
+                </p>
+              ) : null}
+              {employer.email ? (
+                <p className="text-sm">
+                  <a
+                    className="text-primary hover:underline"
+                    href={`mailto:${employer.email}`}
+                  >
+                    {employer.email}
+                  </a>
+                </p>
+              ) : null}
+              {employer.phone ? (
+                <p className="text-sm">
+                  <a
+                    className="text-primary hover:underline"
+                    href={`tel:${employer.phone}`}
+                  >
+                    {employer.phone}
+                  </a>
+                </p>
+              ) : null}
+              {employer.countryCode ||
+              employer.addressLine1 ||
+              employer.addressLine2 ||
+              employer.city ||
+              employer.region ||
+              employer.postalCode ? (
+                <address className="text-muted-foreground text-sm not-italic">
+                  {employer.addressLine1 ? (
+                    <div>{employer.addressLine1}</div>
+                  ) : null}
+                  {employer.addressLine2 ? (
+                    <div>{employer.addressLine2}</div>
+                  ) : null}
+                  {[employer.city, employer.region, employer.postalCode].filter(
+                    Boolean,
+                  ).length > 0 ? (
+                    <div>
+                      {[employer.city, employer.region, employer.postalCode]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </div>
+                  ) : null}
+                  {employer.countryCode ? (
+                    <div>{countryName(employer.countryCode)}</div>
+                  ) : null}
+                </address>
+              ) : null}
+              {employer.notes ? (
+                <p className="text-muted-foreground max-w-2xl text-sm whitespace-pre-wrap">
+                  {employer.notes}
+                </p>
+              ) : null}
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => setEditOpen(true)}>

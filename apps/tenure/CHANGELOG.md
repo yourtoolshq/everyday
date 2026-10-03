@@ -6,6 +6,8 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Added
 
+- Employers can have optional PNG or WebP icons, contact details, and structured addresses in different countries. Employer icons appear beside names throughout Tenure, and the employment list shows a flag when the employer has a country.
+
 ### Changed
 
 - Compensation amount fields show a `$` prefix, and commission fields show a `%` prefix. The prefix is visual only.

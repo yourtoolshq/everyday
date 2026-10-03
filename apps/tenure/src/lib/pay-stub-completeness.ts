@@ -29,6 +29,7 @@ export type PaycheckForCompleteness = {
 export type EmploymentForCompleteness = EmploymentLifecycle & {
   id: string;
   employerName: string;
+  employerIconFileId?: string | null;
   personName: string;
   payFrequency: PayFrequency;
   biweeklyAnchorDate: string | null;
@@ -37,6 +38,7 @@ export type EmploymentForCompleteness = EmploymentLifecycle & {
 export type MissingPayStubItem = {
   employmentId: string;
   employerName: string;
+  employerIconFileId?: string | null;
   personName: string;
   periodKey: string;
   periodLabel: string;
@@ -149,6 +151,7 @@ export function buildMissingPayStubItems(
           missing.push({
             employmentId: employment.id,
             employerName: employment.employerName,
+            employerIconFileId: employment.employerIconFileId ?? null,
             personName: employment.personName,
             periodKey: period.key,
             periodLabel: period.label,
@@ -161,6 +164,7 @@ export function buildMissingPayStubItems(
           missing.push({
             employmentId: employment.id,
             employerName: employment.employerName,
+            employerIconFileId: employment.employerIconFileId ?? null,
             personName: employment.personName,
             periodKey: period.key,
             periodLabel: period.label,

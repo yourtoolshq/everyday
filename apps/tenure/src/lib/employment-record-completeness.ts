@@ -23,6 +23,7 @@ export type EmploymentRecordRequirementStatus = EmploymentRecordRequirement & {
 export type MissingEmploymentRecordItem = {
   employmentId: string;
   employerName: string;
+  employerIconFileId?: string | null;
   personName: string;
   requirementKey: string;
   label: string;
@@ -191,6 +192,7 @@ export function deriveEmploymentRecordCompleteness(
 export type EmploymentForRecordReview = {
   id: string;
   employerName: string;
+  employerIconFileId?: string | null;
   personName: string;
 };
 
@@ -249,6 +251,7 @@ export function buildMissingEmploymentRecordItems(
       missing.push({
         employmentId: employment.id,
         employerName: employment.employerName,
+        employerIconFileId: employment.employerIconFileId ?? null,
         personName: employment.personName,
         requirementKey: requirement.key,
         label: requirement.label,

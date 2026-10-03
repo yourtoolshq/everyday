@@ -9,6 +9,7 @@ import { Button } from "@yourtoolshq/ui/button";
 import { Card, CardContent } from "@yourtoolshq/ui/card";
 
 import { EmployerFormDrawer } from "~/components/employers/employer-form-drawer";
+import { EmployerIcon } from "~/components/employers/employer-icon";
 import { api } from "~/trpc/react";
 
 export function EmployersWorkspace() {
@@ -43,19 +44,22 @@ export function EmployersWorkspace() {
             <CardContent className="flex items-start justify-between gap-4 p-4">
               <Link
                 href={`/employers/${employer.id}`}
-                className="min-w-0 flex-1"
+                className="flex min-w-0 flex-1 items-start gap-3"
               >
-                <p className="font-medium">{employer.name}</p>
-                {employer.website ? (
-                  <p className="text-muted-foreground text-sm">
-                    {employer.website}
-                  </p>
-                ) : null}
-                {employer.notes ? (
-                  <p className="text-muted-foreground mt-2 text-sm">
-                    {employer.notes}
-                  </p>
-                ) : null}
+                <EmployerIcon fileId={employer.iconFileId} />
+                <div className="min-w-0">
+                  <p className="font-medium">{employer.name}</p>
+                  {employer.website ? (
+                    <p className="text-muted-foreground text-sm">
+                      {employer.website}
+                    </p>
+                  ) : null}
+                  {employer.notes ? (
+                    <p className="text-muted-foreground mt-2 text-sm">
+                      {employer.notes}
+                    </p>
+                  ) : null}
+                </div>
               </Link>
               <div className="flex shrink-0 items-center gap-1">
                 <Button
