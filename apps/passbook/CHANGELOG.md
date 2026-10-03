@@ -6,6 +6,8 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Added
 
+- Linux AppImage packaging bundles the desktop shell, client, and standalone host without developer tooling.
+- A release gate (`pnpm release:gate`) verifies bundled-host startup, backup checkpoints, versioned restarts, and recovery.
 - Remote device pairing uses short-lived codes and bearer tokens; loopback clients remain unchanged while remote clients must pair before accessing records.
 - A remote-access gate (`pnpm remote-access:gate`) verifies pairing, authorization, and revocation.
 - A foundation integration gate (`pnpm foundation:gate`) verifies the host workflow, restart persistence, backup/restore, and client setup UI against disposable data.

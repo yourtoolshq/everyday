@@ -7,15 +7,53 @@ const desktopRoot = path.resolve(
 );
 const passbookRoot = path.resolve(desktopRoot, "..");
 
-export function resolveDesktopPaths(env: NodeJS.ProcessEnv = process.env) {
+export interface DesktopPaths {
+  dataDir: string;
+  backupDir: string;
+  host: string;
+  port: string;
+  hostUrl: string;
+  clientDevUrl: string;
+  clientDist: string;
+  hostEntry: string;
+  hostCwd: string;
+  hostCommand: string;
+  hostArgs: string[];
+  appVersion: string;
+}
+
+export function resolveDesktopPaths(
+  env: NodeJS.ProcessEnv = process.env,
+): DesktopPaths {
+  const packaged = env.PASSBOOK_PACKAGED === "1";
+  const root = packaged && env.PASSBOOK_ROOT ? env.PASSBOOK_ROOT : passbookRoot;
   const dataDir =
-    env.DATA_DIR ?? path.join(passbookRoot, ".data", "desktop-test");
+    env.DATA_DIR ??
+    (packaged && env.PASSBOOK_USER_DATA_DIR
+      ? path.join(env.PASSBOOK_USER_DATA_DIR, "data")
+      : path.join(passbookRoot, ".data", "desktop-test"));
   const backupDir = env.BACKUP_DIR ?? path.join(dataDir, "backups");
   const host = env.HOST ?? "127.0.0.1";
   const port = env.PORT ?? "3847";
   const hostUrl = `http://${host}:${port}`;
   const clientDevUrl = env.PASSBOOK_CLIENT_DEV_URL ?? "http://127.0.0.1:5173";
-  const clientDist = path.join(passbookRoot, "client", "dist", "index.html");
+  const clientDist =
+    env.PASSBOOK_CLIENT_DIST ??
+    (packaged
+      ? path.join(root, "client", "index.html")
+      : path.join(passbookRoot, "client", "dist", "index.html"));
+  const useBundledHost = packaged || env.PASSBOOK_USE_BUNDLED_HOST === "1";
+  const hostEntry =
+    env.PASSBOOK_HOST_ENTRY ??
+    (useBundledHost
+      ? path.join(root, "host", "dist", "passbook-host.cjs")
+      : path.join(passbookRoot, "host", "src", "index.ts"));
+  const hostCwd = useBundledHost ? root : path.join(passbookRoot, "host");
+  const hostCommand = "node";
+  const hostArgs = useBundledHost
+    ? [hostEntry]
+    : ["--import", "tsx", hostEntry];
+  const appVersion = env.APP_VERSION ?? "0.1.0";
 
   return {
     dataDir,
@@ -25,7 +63,10 @@ export function resolveDesktopPaths(env: NodeJS.ProcessEnv = process.env) {
     hostUrl,
     clientDevUrl,
     clientDist,
-    hostEntry: path.join(passbookRoot, "host", "src", "index.ts"),
-    hostCwd: path.join(passbookRoot, "host"),
+    hostEntry,
+    hostCwd,
+    hostCommand,
+    hostArgs,
+    appVersion,
   };
 }

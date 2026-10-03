@@ -2,33 +2,58 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, dialog } from "electron";
 
+import type { DesktopPaths } from "./config.js";
 import { resolveDesktopPaths } from "./config.js";
 import { isHostHealthy } from "./host-connectivity.js";
 import { HostProcess } from "./host-process.js";
 import { isAllowedNavigation } from "./navigation.js";
 
-const paths = resolveDesktopPaths();
-const host = new HostProcess({
-  entry: paths.hostEntry,
-  cwd: paths.hostCwd,
-  env: {
-    DATA_DIR: paths.dataDir,
-    BACKUP_DIR: paths.backupDir,
-    HOST: paths.host,
-    PORT: paths.port,
-    NODE_ENV: process.env.NODE_ENV ?? "development",
-  },
-});
-
+let paths: DesktopPaths | null = null;
+let host: HostProcess | null = null;
 let mainWindow: BrowserWindow | null = null;
 let errorWindow: BrowserWindow | null = null;
 let quitting = false;
 let hostOwnedByDesktop = false;
 
-const allowedOrigins = [
-  new URL(paths.clientDevUrl).origin,
-  new URL(paths.hostUrl).origin,
-];
+function configurePackagedEnv() {
+  if (!app.isPackaged) return;
+  process.env.PASSBOOK_PACKAGED = "1";
+  process.env.PASSBOOK_USER_DATA_DIR = app.getPath("userData");
+  process.env.PASSBOOK_ROOT = path.join(process.resourcesPath, "passbook");
+  process.env.PASSBOOK_HOST_ENTRY = path.join(
+    process.resourcesPath,
+    "host",
+    "passbook-host.cjs",
+  );
+  process.env.PASSBOOK_CLIENT_DIST = path.join(
+    process.resourcesPath,
+    "client",
+    "index.html",
+  );
+  process.env.PASSBOOK_USE_BUNDLED_HOST = "1";
+}
+
+function getPaths() {
+  if (!paths) {
+    configurePackagedEnv();
+    paths = resolveDesktopPaths();
+    host = new HostProcess({
+      command: paths.hostCommand,
+      args: paths.hostArgs,
+      cwd: paths.hostCwd,
+      env: {
+        APP_VERSION: paths.appVersion,
+        DATA_DIR: paths.dataDir,
+        BACKUP_DIR: paths.backupDir,
+        HOST: paths.host,
+        PORT: paths.port,
+        NODE_ENV: process.env.NODE_ENV ?? "development",
+        PASSBOOK_ROOT: paths.hostCwd,
+      },
+    });
+  }
+  return paths;
+}
 
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
@@ -36,10 +61,16 @@ if (!gotSingleInstanceLock) {
 }
 
 async function createMainWindow() {
+  const resolved = getPaths();
   const useDevClient = process.env.PASSBOOK_DESKTOP_USE_DIST !== "1";
   const loadUrl = useDevClient
-    ? paths.clientDevUrl
-    : `file://${paths.clientDist}`;
+    ? resolved.clientDevUrl
+    : `file://${resolved.clientDist}`;
+
+  const allowedOrigins = [
+    new URL(resolved.clientDevUrl).origin,
+    new URL(resolved.hostUrl).origin,
+  ];
 
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -53,7 +84,7 @@ async function createMainWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      additionalArguments: [`--passbook-host-url=${paths.hostUrl}`],
+      additionalArguments: [`--passbook-host-url=${resolved.hostUrl}`],
     },
   });
 
@@ -94,13 +125,15 @@ function showStartupError(message: string) {
 }
 
 async function ensureHostReady() {
-  if (await isHostHealthy(paths.hostUrl)) {
+  const resolved = getPaths();
+  if (!host) throw new Error("Host process is not configured.");
+  if (await isHostHealthy(resolved.hostUrl)) {
     return;
   }
 
   host.start();
   hostOwnedByDesktop = true;
-  await host.waitForHealth(paths.hostUrl);
+  await host.waitForHealth(resolved.hostUrl);
 }
 
 if (gotSingleInstanceLock) {
@@ -139,7 +172,7 @@ app.on("activate", () => {
 app.on("before-quit", (event) => {
   if (
     !hostOwnedByDesktop ||
-    !host.isRunning() ||
+    !host?.isRunning() ||
     process.env.PASSBOOK_LEAVE_HOST_RUNNING === "1"
   ) {
     return;
