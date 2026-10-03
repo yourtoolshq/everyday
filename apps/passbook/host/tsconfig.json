@@ -1,0 +1,12 @@
+{
+  "extends": "@yourtoolshq/tsconfig/base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "lib": ["ES2022"],
+    "paths": {
+      "~/*": ["../src/*"]
+    },
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "../src/server/**/*.ts", "../src/env.js"]
+}
