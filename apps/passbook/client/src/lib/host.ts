@@ -1,8 +1,25 @@
 declare const __PASSBOOK_HOST_URL__: string;
 
+interface PassbookDesktopBridge {
+  hostUrl: string;
+}
+
+declare global {
+  interface Window {
+    passbookDesktop?: PassbookDesktopBridge;
+  }
+}
+
+function readDesktopHostUrl() {
+  if (typeof window === "undefined") return undefined;
+  return window.passbookDesktop?.hostUrl;
+}
+
 export function getHostUrl() {
   const configured =
-    import.meta.env.VITE_PASSBOOK_HOST_URL ?? __PASSBOOK_HOST_URL__;
+    readDesktopHostUrl() ??
+    import.meta.env.VITE_PASSBOOK_HOST_URL ??
+    __PASSBOOK_HOST_URL__;
   if (!configured) return "http://127.0.0.1:3847";
 
   const allowRemote = import.meta.env.VITE_PASSBOOK_ALLOW_REMOTE === "1";
