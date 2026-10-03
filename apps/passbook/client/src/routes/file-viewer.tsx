@@ -57,8 +57,8 @@ export function FileViewerRoute() {
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-4 p-8">
         <p>{state.message}</p>
-        <Button asChild variant="outline">
-          <a href="/">Back to Passbook</a>
+        <Button variant="outline" onClick={() => window.location.assign("/")}>
+          Back to Passbook
         </Button>
       </main>
     );

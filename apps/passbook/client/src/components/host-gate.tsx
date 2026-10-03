@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { LoaderCircle, TriangleAlert } from "lucide-react";
 
 import type { PlatformStatus } from "@yourtoolshq/data";
@@ -31,7 +31,7 @@ export function HostGate({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<GateState>({ kind: "loading" });
   const hostUrl = getHostUrl();
 
-  const check = async () => {
+  const check = useCallback(async () => {
     setState({ kind: "loading" });
     try {
       const health = await fetch(hostApiPath("/api/health"), {
@@ -72,11 +72,11 @@ export function HostGate({ children }: { children: React.ReactNode }) {
           "Passbook could not reach the host. Start the host process and try again.",
       });
     }
-  };
+  }, [hostUrl]);
 
   useEffect(() => {
     void check();
-  }, []);
+  }, [check]);
 
   if (state.kind === "loading") {
     return (
