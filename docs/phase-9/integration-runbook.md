@@ -18,6 +18,7 @@ pnpm check:passbook-host
 pnpm check:passbook-client
 pnpm check:passbook-desktop
 cd apps/passbook && pnpm foundation:gate
+pnpm migration-rehearsal:gate
 ```
 
 `foundation:gate` runs:
@@ -86,13 +87,28 @@ Set `PASSBOOK_KEEP_GATE_DATA=1` to retain API gate data for inspection.
 | 10  | Client setup UI against real host                | Playwright gate                    |
 | 11  | Host connection error screen (manual)            | Desktop smoke / HostGate component |
 
+## Migration readiness ([#72](https://github.com/yourtoolshq/everyday/issues/72))
+
+```bash
+pnpm migration-rehearsal:gate
+```
+
+Rehearses container-to-desktop movement using the `previous-release` fixture:
+migrate on the bundled host, export a verified backup, stop the source writer,
+restore into a disposable desktop destination, and verify record counts plus
+document digests.
+
+See [behavior-inventory.md](./behavior-inventory.md) and
+[desktop-cutover-runbook.md](./desktop-cutover-runbook.md) for parity status and
+maintainer cutover steps. Production cutover is **not** authorized by a green gate.
+
 ## Remaining limitations
 
 - **Desktop packaging** — Linux AppImage is available via `pnpm package:passbook:linux`; signing and auto-update feed publication remain Later ([#71](https://github.com/yourtoolshq/everyday/issues/71)).
 - **Remote access** — pairing and bearer tokens are available; TLS termination remains the operator's responsibility ([#70](https://github.com/yourtoolshq/everyday/issues/70)).
 - **OS target** — Linux x86_64 is the leading candidate; macOS/Windows packaging is Later.
-- **Client route parity** — sidebar links to `/members`, `/documents`, `/activity`, and `/settings` are not yet implemented in the SPA; core gate workflow routes are covered.
-- **Next.js production path** — unchanged; Docker deployment remains the production path until a later cutover.
+- **Client route parity** — sidebar links to `/members`, `/documents`, `/activity`, and `/settings` are not yet implemented in the SPA; see [behavior-inventory.md](./behavior-inventory.md).
+- **Next.js production path** — unchanged; Docker deployment remains the production path until maintainer-authorized cutover ([#72](https://github.com/yourtoolshq/everyday/issues/72)).
 
 ## Evidence checklist (for PR handoff)
 
@@ -101,4 +117,6 @@ Set `PASSBOOK_KEEP_GATE_DATA=1` to retain API gate data for inspection.
 - [ ] `pnpm check:passbook-client` passes
 - [ ] `pnpm check:passbook-desktop` passes
 - [ ] `cd apps/passbook && pnpm foundation:gate` passes
+- [ ] `pnpm migration-rehearsal:gate` passes
+- [ ] [behavior-inventory.md](./behavior-inventory.md) and [desktop-cutover-runbook.md](./desktop-cutover-runbook.md) reviewed
 - [ ] Changelog updated for user-visible integration behavior

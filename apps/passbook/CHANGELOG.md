@@ -6,6 +6,8 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Added
 
+- A migration rehearsal gate (`pnpm migration-rehearsal:gate`) verifies container-to-desktop backup restore with record and document digest checks.
+- Desktop readiness docs cover the full behavior inventory and reviewed cutover runbook without authorizing production migration.
 - Linux AppImage packaging bundles the desktop shell, client, and standalone host without developer tooling.
 - A release gate (`pnpm release:gate`) verifies bundled-host startup, backup checkpoints, versioned restarts, and recovery.
 - Remote device pairing uses short-lived codes and bearer tokens; loopback clients remain unchanged while remote clients must pair before accessing records.

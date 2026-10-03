@@ -25,6 +25,7 @@
     "foundation:gate": "pnpm --silent -F @yourtoolshq/data build && node scripts/foundation-gate.mjs && playwright test --config playwright.foundation.config.ts",
     "remote-access:gate": "node scripts/remote-access-gate.mjs",
     "release:gate": "pnpm --silent -F @yourtoolshq/data build && node scripts/release-gate.mjs",
+    "migration-rehearsal:gate": "pnpm --silent -F @yourtoolshq/data build && node scripts/migration-rehearsal-gate.mjs",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit"
   },
