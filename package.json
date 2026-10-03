@@ -17,6 +17,7 @@
     "foundation:gate": "pnpm --filter passbook foundation:gate",
     "remote-access:gate": "pnpm --filter passbook remote-access:gate",
     "release:gate": "pnpm --filter passbook release:gate",
+    "migration-rehearsal:gate": "pnpm --filter passbook migration-rehearsal:gate",
     "package:passbook:linux": "pnpm --filter @passbook/desktop package:linux",
     "check:tenure": "turbo run lint typecheck test build migrations:check -F tenure...",
     "clean": "git clean -xdf node_modules",

@@ -24,14 +24,16 @@ those phases without declaring them complete.
 
 ## Execution package
 
-| Document                                                 | Purpose                                                                              |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| [Implementation baseline](./baseline.md)                 | Target platform, technical choices, migration boundaries, smallest Passbook workflow |
-| [Host/client/desktop contracts](./contracts.md)          | Shared lifecycle, configuration, readiness, errors, and representative examples      |
-| [Host foundation brief](./task-host.md)                  | Standalone Passbook host assignment                                                  |
-| [Client foundation brief](./task-client.md)              | Standalone Passbook client assignment                                                |
-| [Desktop shell brief](./task-desktop.md)                 | Electron wrapper assignment                                                          |
-| [Integration and dependency plan](./integration-plan.md) | Parallel ownership, stubs, integration gate, Ready/Blocked/Later table               |
+| Document                                                 | Purpose                                                                                                         |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| [Implementation baseline](./baseline.md)                 | Target platform, technical choices, migration boundaries, smallest Passbook workflow                            |
+| [Host/client/desktop contracts](./contracts.md)          | Shared lifecycle, configuration, readiness, errors, and representative examples                                 |
+| [Host foundation brief](./task-host.md)                  | Standalone Passbook host assignment                                                                             |
+| [Client foundation brief](./task-client.md)              | Standalone Passbook client assignment                                                                           |
+| [Desktop shell brief](./task-desktop.md)                 | Electron wrapper assignment                                                                                     |
+| [Integration and dependency plan](./integration-plan.md) | Parallel ownership, stubs, integration gate, Ready/Blocked/Later table                                          |
+| [Behavior inventory](./behavior-inventory.md)            | Passbook parity status for desktop readiness ([#72](https://github.com/yourtoolshq/everyday/issues/72))         |
+| [Desktop cutover runbook](./desktop-cutover-runbook.md)  | Migration rehearsal and maintainer cutover checklist ([#72](https://github.com/yourtoolshq/everyday/issues/72)) |
 
 ## Maintainer gate
 
