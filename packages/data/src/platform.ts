@@ -122,6 +122,9 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
   config: DataPlatformConfig<TSchema>,
 ) {
   const dataDir = resolve(config.dataDir);
+  // Migration operations can run after a host changes its working directory.
+  // Capture the configured location now so they always read the app's journal.
+  const migrationsFolder = resolve(config.db.migrationsFolder);
   const documentsDir = join(dataDir, "documents");
   const databasePath = join(dataDir, `${config.app}.db`);
   if (config.backups) parseSchedule(config.backups.schedule);
@@ -140,7 +143,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
     databasePath,
     documentsDir,
     backupDir,
-    migrationsFolder: config.db.migrationsFolder,
+    migrationsFolder,
     client: connection.client,
     coordinator: connection.coordinator,
     serialize: connection.serialize,
@@ -153,7 +156,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
   const planOptions = {
     app: config.app,
     databasePath,
-    migrationsFolder: config.db.migrationsFolder,
+    migrationsFolder,
   };
 
   async function enterReady() {
@@ -343,7 +346,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
 
   async function listRestorableBackups(): Promise<RestorableBackup[]> {
     const known = new Set(
-      readJournal(config.db.migrationsFolder).map((m) => m.hash),
+      readJournal(migrationsFolder).map((m) => m.hash),
     );
     return (await backups.list()).flatMap(({ id, manifest, verification }) =>
       manifest &&
