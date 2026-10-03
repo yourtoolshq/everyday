@@ -20,4 +20,3 @@ test("foundation client completes setup against the real host", async ({
     page.getByRole("heading", { name: "Foundation household" }),
   ).toBeVisible({ timeout: 15_000 });
 });
-

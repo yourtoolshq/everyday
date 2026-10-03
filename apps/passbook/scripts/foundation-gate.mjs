@@ -19,9 +19,7 @@ const hostEntry = join(hostRoot, "src/index.ts");
 const dataDir = resolve(
   process.env.DATA_DIR ?? join(passbookRoot, ".data/foundation-gate"),
 );
-const backupDir = resolve(
-  process.env.BACKUP_DIR ?? join(dataDir, "backups"),
-);
+const backupDir = resolve(process.env.BACKUP_DIR ?? join(dataDir, "backups"));
 const restoreDataDir = join(dirname(dataDir), "foundation-gate-restore");
 const ytData = join(
   passbookRoot,
@@ -226,8 +224,7 @@ async function runWorkflow(baseUrl) {
 
   const statementStatus = await trpc(baseUrl, "overview.statementStatus");
   const stillMissing = statementStatus.missingStatements.some(
-    (entry) =>
-      entry.accountId === account.id && entry.periodKey === "2026-01",
+    (entry) => entry.accountId === account.id && entry.periodKey === "2026-01",
   );
   if (stillMissing) fail("statement period still marked missing");
 
@@ -286,10 +283,9 @@ async function main() {
       BACKUP_DIR: backupDir,
       PORT: String(port),
     });
-    const backupMatch = backupOutput.match(
-      /Created backup ([^:]+): verified/,
-    );
-    if (!backupMatch) fail(`backup output missing verified id: ${backupOutput}`);
+    const backupMatch = backupOutput.match(/Created backup ([^:]+): verified/);
+    if (!backupMatch)
+      fail(`backup output missing verified id: ${backupOutput}`);
     const backupId = backupMatch[1];
 
     log("backup", `verifying backup ${backupId}`);

@@ -15,7 +15,10 @@ export default defineConfig(({ mode }) => {
           "./src/trpc/react.tsx",
         ),
         "~": path.resolve(import.meta.dirname, "../src"),
-        "next/image": path.resolve(import.meta.dirname, "./src/shims/image.tsx"),
+        "next/image": path.resolve(
+          import.meta.dirname,
+          "./src/shims/image.tsx",
+        ),
         "next/link": path.resolve(import.meta.dirname, "./src/shims/link.tsx"),
         "next/navigation": path.resolve(
           import.meta.dirname,
