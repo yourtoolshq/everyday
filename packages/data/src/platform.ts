@@ -345,9 +345,7 @@ export function defineDataPlatform<TSchema extends Record<string, unknown>>(
   };
 
   async function listRestorableBackups(): Promise<RestorableBackup[]> {
-    const known = new Set(
-      readJournal(migrationsFolder).map((m) => m.hash),
-    );
+    const known = new Set(readJournal(migrationsFolder).map((m) => m.hash));
     return (await backups.list()).flatMap(({ id, manifest, verification }) =>
       manifest &&
       verification?.status === "verified" &&
