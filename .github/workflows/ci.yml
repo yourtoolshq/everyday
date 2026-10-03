@@ -192,9 +192,24 @@ jobs:
         if: matrix.app == 'passbook'
         run: .github/scripts/passbook-backup-round-trip.sh passbook
 
+  foundation-gate:
+    name: foundation gate (passbook)
+    needs: changes
+    if: needs.changes.outputs.run_heavy == 'true' && contains(fromJson(needs.changes.outputs.e2e_apps), 'passbook')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup
+
+      - run: pnpm --filter passbook exec playwright install --with-deps chromium
+
+      - name: Run Passbook foundation gate
+        run: pnpm foundation:gate
+
   required:
     name: required
-    needs: [changes, format, quality, e2e, docker]
+    needs: [changes, format, quality, e2e, docker, foundation-gate]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -214,3 +229,6 @@ jobs:
           check "${{ needs.quality.result }}" "quality"
           check "${{ needs.e2e.result }}" "e2e"
           check "${{ needs.docker.result }}" "docker"
+          if [ "${{ needs.changes.outputs.run_heavy }}" = "true" ] && echo '${{ needs.changes.outputs.e2e_apps }}' | grep -q passbook; then
+            check "${{ needs.foundation-gate.result }}" "foundation-gate"
+          fi

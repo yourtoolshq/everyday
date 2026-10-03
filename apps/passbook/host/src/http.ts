@@ -51,7 +51,7 @@ function corsHeaders(origin: string | null): Record<string, string> {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers":
-      "content-type, trpc-batch-mode, x-trpc-source",
+      "content-type, trpc-accept, trpc-batch-mode, x-trpc-source",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };

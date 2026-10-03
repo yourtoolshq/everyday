@@ -22,12 +22,12 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
       links: [
         loggerLink({
           enabled: (op) =>
-            process.env.NODE_ENV !== "production" ||
+            import.meta.env.DEV ||
             (op.direction === "down" && op.result instanceof Error),
         }),
         httpBatchStreamLink({
           transformer: SuperJSON,
-          url: `${getHostUrl()}/api/trpc`,
+          url: import.meta.env.DEV ? "/api/trpc" : `${getHostUrl()}/api/trpc`,
           headers: () => {
             const headers = new Headers();
             headers.set("x-trpc-source", "passbook-client");
