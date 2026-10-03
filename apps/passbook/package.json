@@ -22,6 +22,7 @@
     "start": "next start",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "foundation:gate": "pnpm --silent -F @yourtoolshq/data build && node scripts/foundation-gate.mjs && playwright test --config playwright.foundation.config.ts",
     "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit"
   },

@@ -1,28 +1,26 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const clientPort = process.env.VITE_DEV_PORT ?? "5174";
+
 export default defineConfig({
   testDir: "./e2e",
-  testIgnore: "**/foundation.spec.ts",
+  testMatch: "foundation.spec.ts",
   fullyParallel: false,
   workers: 1,
   projects: [
     {
-      name: "desktop-chromium",
+      name: "foundation-chromium",
       use: { ...devices["Desktop Chrome"] },
     },
   ],
   use: {
-    baseURL: "http://127.0.0.1:3100",
+    baseURL: `http://127.0.0.1:${clientPort}`,
     trace: "retain-on-failure",
   },
   webServer: {
-    command:
-      "node scripts/prepare-e2e.mjs && pnpm exec next dev --turbopack --port 3100",
-    url: "http://127.0.0.1:3100/api/health",
+    command: "node scripts/start-foundation-stack.mjs",
+    url: `http://127.0.0.1:${clientPort}`,
     reuseExistingServer: !process.env.CI,
-    env: {
-      DATA_DIR: "./.data/e2e",
-    },
     timeout: 120_000,
   },
 });

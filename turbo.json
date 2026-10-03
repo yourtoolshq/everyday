@@ -37,6 +37,10 @@
       "cache": false,
       "dependsOn": ["^topo"]
     },
+    "foundation:gate": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
     "clean": {
       "cache": false
     }

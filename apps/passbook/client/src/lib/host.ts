@@ -38,6 +38,6 @@ export function getHostUrl() {
 
 export function hostApiPath(path: string) {
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  if (process.env.NODE_ENV !== "production") return normalized;
+  if (import.meta.env.DEV) return normalized;
   return `${getHostUrl()}${normalized}`;
 }
