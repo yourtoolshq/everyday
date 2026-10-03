@@ -207,9 +207,22 @@ jobs:
       - name: Run Passbook foundation gate
         run: pnpm foundation:gate
 
+  remote-access-gate:
+    name: remote access gate (passbook)
+    needs: changes
+    if: needs.changes.outputs.run_heavy == 'true' && contains(fromJson(needs.changes.outputs.e2e_apps), 'passbook')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup
+
+      - name: Run Passbook remote access gate
+        run: pnpm remote-access:gate
+
   required:
     name: required
-    needs: [changes, format, quality, e2e, docker, foundation-gate]
+    needs: [changes, format, quality, e2e, docker, foundation-gate, remote-access-gate]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -231,4 +244,5 @@ jobs:
           check "${{ needs.docker.result }}" "docker"
           if [ "${{ needs.changes.outputs.run_heavy }}" = "true" ] && echo '${{ needs.changes.outputs.e2e_apps }}' | grep -q passbook; then
             check "${{ needs.foundation-gate.result }}" "foundation-gate"
+            check "${{ needs.remote-access-gate.result }}" "remote-access-gate"
           fi

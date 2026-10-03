@@ -7,8 +7,14 @@ import { createTRPCContext } from "~/server/api/trpc";
 import { dataPlatform } from "~/server/data";
 import { fileRouter } from "~/server/files";
 import { createHealthResponse } from "~/server/health";
+import { authorizeRequest } from "./auth/middleware";
+import { handleAuthRoute } from "./auth/routes";
+import { requiresRemoteAuth } from "./auth/policy";
+import { createAuthStore } from "./auth/store";
+import type { HostRequestContext } from "./auth/middleware";
 
 const dataHandlers = createDataHandlers(dataPlatform, { fileRouter });
+const authStore = createAuthStore(process.env.DATA_DIR ?? "./.data");
 
 function dataPathParts(pathname: string) {
   const prefix = "/api/data/";
@@ -17,11 +23,32 @@ function dataPathParts(pathname: string) {
   return rest.length > 0 ? rest.split("/") : [];
 }
 
-export async function handleHostRequest(request: Request) {
+function isAuthRoute(pathname: string) {
+  return pathname.startsWith("/api/auth/");
+}
+
+export async function handleHostRequest(input: HostRequestContext) {
+  const { request } = input;
   const { pathname } = new URL(request.url);
 
+  const authResult = await authorizeRequest(authStore, input);
+  if (authResult.error) return authResult.error;
+  const authContext = authResult.context;
+
   if (pathname === "/api/health") {
-    return createHealthResponse();
+    const health = await createHealthResponse();
+    if (requiresRemoteAuth(authContext) && !authContext.tokenId) {
+      const body = (await health.json()) as { status?: string };
+      return Response.json({
+        status: body.status ?? "ok",
+        auth: "required",
+      });
+    }
+    return health;
+  }
+
+  if (isAuthRoute(pathname)) {
+    return handleAuthRoute(authStore, request, authContext);
   }
 
   if (pathname === "/api/trpc" || pathname.startsWith("/api/trpc/")) {

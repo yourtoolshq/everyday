@@ -6,6 +6,7 @@ import { createTRPCReact } from "@trpc/react-query";
 import SuperJSON from "superjson";
 
 import type { AppRouter } from "~/server/api/root";
+import { authHeaders } from "../lib/auth";
 import { getHostUrl } from "../lib/host";
 import { createQueryClient } from "./query-client";
 
@@ -29,7 +30,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
           transformer: SuperJSON,
           url: import.meta.env.DEV ? "/api/trpc" : `${getHostUrl()}/api/trpc`,
           headers: () => {
-            const headers = new Headers();
+            const headers = new Headers(authHeaders());
             headers.set("x-trpc-source", "passbook-client");
             return headers;
           },

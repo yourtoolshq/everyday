@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@yourtoolshq/ui/card";
 
+import { authHeaders, clearAuthToken, isRemoteHostUrl } from "../lib/auth";
 import { getHostUrl, hostApiPath } from "../lib/host";
 
 type GateState =
@@ -23,6 +24,7 @@ type GateState =
 async function readPlatformStatus() {
   const response = await fetch(hostApiPath("/api/data/status"), {
     cache: "no-store",
+    headers: authHeaders(),
   });
   return (await response.json()) as PlatformStatus;
 }
@@ -36,11 +38,19 @@ export function HostGate({ children }: { children: React.ReactNode }) {
     try {
       const health = await fetch(hostApiPath("/api/health"), {
         cache: "no-store",
+        headers: authHeaders(),
       });
       const body = (await health.json()) as {
         status?: string;
         state?: PlatformStatus | string;
+        auth?: string;
       };
+
+      if (health.status === 401 && isRemoteHostUrl(hostUrl)) {
+        clearAuthToken();
+        window.location.assign("/pair");
+        return;
+      }
 
       if (body.status === "maintenance") {
         const status = await readPlatformStatus();

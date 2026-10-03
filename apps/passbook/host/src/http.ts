@@ -2,10 +2,12 @@ import { createServer } from "node:http";
 import type { IncomingMessage, Server, ServerResponse } from "node:http";
 import type { Socket } from "node:net";
 
+import type { HostRequestContext } from "./auth/middleware";
+
 export interface HostHttpOptions {
   host: string;
   port: number;
-  handler: (request: Request) => Promise<Response>;
+  handler: (input: HostRequestContext) => Promise<Response>;
 }
 
 function readRequestBody(req: IncomingMessage) {
@@ -51,7 +53,7 @@ function corsHeaders(origin: string | null): Record<string, string> {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers":
-      "content-type, trpc-accept, trpc-batch-mode, x-trpc-source",
+      "authorization, content-type, trpc-accept, trpc-batch-mode, x-trpc-source",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
@@ -85,7 +87,8 @@ export function createHostHttpServer(options: HostHttpOptions) {
         }
 
         const request = await toFetchRequest(req, baseUrl);
-        const response = await options.handler(request);
+        const remoteAddress = req.socket.remoteAddress ?? "127.0.0.1";
+        const response = await options.handler({ request, remoteAddress });
         const headers = new Headers(response.headers);
         const origin = request.headers.get("origin");
         for (const [key, value] of Object.entries(corsHeaders(origin))) {
