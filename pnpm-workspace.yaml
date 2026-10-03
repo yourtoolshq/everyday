@@ -50,3 +50,6 @@ onlyBuiltDependencies:
 
 overrides:
   eslint-plugin-react-hooks: 5.2.0
+  # extract-zip (used by electron postinstall) depends on yauzl@2, which fails to
+  # fully unzip Electron on Node 24.16+ and 26+. See electron/electron#51619.
+  yauzl: ^3.3.1
