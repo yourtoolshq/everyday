@@ -17,6 +17,12 @@ Read these together: product independence defines what users install;
 client/host separation defines where records live and how devices access them;
 managed releases define how installed applications evolve safely.
 
+Implementation planning for the first Passbook foundation wave lives in
+[docs/phase-9/](../phase-9/README.md) (baseline, contracts, task briefs, and
+integration gate). ADRs record direction; Phase 9 docs record executable
+assignments. Neither authorizes production migration until the maintainer marks
+the integration plan Ready.
+
 The proposals apply to Taxbook, First Aid, Passbook, and Tenure. They record a
 future direction for discussion, not the architecture already implemented or
 authorization to migrate applications or change production. The roadmap remains
