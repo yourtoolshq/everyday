@@ -107,7 +107,7 @@ maintainer cutover steps. Production cutover is **not** authorized by a green ga
 - **Desktop packaging** — Linux AppImage is available via `pnpm package:passbook:linux`; signing and auto-update feed publication remain Later ([#71](https://github.com/yourtoolshq/everyday/issues/71)).
 - **Remote access** — pairing and bearer tokens are available; TLS termination remains the operator's responsibility ([#70](https://github.com/yourtoolshq/everyday/issues/70)).
 - **OS target** — Linux x86_64 is the leading candidate; macOS/Windows packaging is Later.
-- **Client route parity** — sidebar links to `/members`, `/documents`, `/activity`, and `/settings` are not yet implemented in the SPA; see [behavior-inventory.md](./behavior-inventory.md).
+- **Client route parity** — all Next app routes are wired in the SPA; see [behavior-inventory.md](./behavior-inventory.md).
 - **Next.js production path** — unchanged; Docker deployment remains the production path until maintainer-authorized cutover ([#72](https://github.com/yourtoolshq/everyday/issues/72)).
 
 ## Evidence checklist (for PR handoff)

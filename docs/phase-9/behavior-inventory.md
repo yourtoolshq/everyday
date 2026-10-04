@@ -30,16 +30,16 @@ Automated evidence: `pnpm foundation:gate`, `pnpm release:gate`,
 
 ## Institutions and accounts
 
-| Behavior                              | Next | Desktop client | Status     | Evidence                             |
-| ------------------------------------- | ---- | -------------- | ---------- | ------------------------------------ |
-| Create/list institutions              | Yes  | Yes            | Preserved  | `foundation:gate`                    |
-| Institution detail page               | Yes  | No route       | Unresolved | Next `/institutions/[id]` only       |
-| Institution icons (PNG/WebP)          | Yes  | Partial        | Unresolved | API works; SPA institution list only |
-| Create/list accounts                  | Yes  | Yes            | Preserved  | `foundation:gate`                    |
-| Account detail (terms, docs, periods) | Yes  | Yes            | Preserved  | Client `/accounts/:id`, E2E uploads  |
-| Account inventory grouping/filters    | Yes  | Yes            | Preserved  | Shared `AccountsWorkspace` component |
-| Joint ownership                       | Yes  | Yes            | Preserved  | `upgrade.test.ts` fixture            |
-| Closed accounts in history            | Yes  | Yes            | Preserved  | Fixture + overview counts            |
+| Behavior                              | Next | Desktop client | Status    | Evidence                              |
+| ------------------------------------- | ---- | -------------- | --------- | ------------------------------------- |
+| Create/list institutions              | Yes  | Yes            | Preserved | `foundation:gate`                     |
+| Institution detail page               | Yes  | Yes            | Preserved | Client `/institutions/:institutionId` |
+| Institution icons (PNG/WebP)          | Yes  | Yes            | Preserved | Shared institution components         |
+| Create/list accounts                  | Yes  | Yes            | Preserved | `foundation:gate`                     |
+| Account detail (terms, docs, periods) | Yes  | Yes            | Preserved | Client `/accounts/:id`, E2E uploads   |
+| Account inventory grouping/filters    | Yes  | Yes            | Preserved | Shared `AccountsWorkspace` component  |
+| Joint ownership                       | Yes  | Yes            | Preserved | `upgrade.test.ts` fixture             |
+| Closed accounts in history            | Yes  | Yes            | Preserved | Fixture + overview counts             |
 
 ## Statements and completeness
 
@@ -55,43 +55,43 @@ Automated evidence: `pnpm foundation:gate`, `pnpm release:gate`,
 
 ## Documents and files
 
-| Behavior                          | Next | Desktop client | Status     | Evidence                           |
-| --------------------------------- | ---- | -------------- | ---------- | ---------------------------------- |
-| Account document upload           | Yes  | Yes            | Preserved  | `foundation:gate`                  |
-| Statement documents               | Yes  | Yes            | Preserved  | Gate + migration rehearsal         |
-| Activity-linked documents         | Yes  | No route       | Unresolved | Next `/activity` only              |
-| Void cheque linkage               | Yes  | Yes            | Preserved  | Account detail panel (shared)      |
-| Email (.eml) viewer               | Yes  | Yes            | Preserved  | File viewer route `/files/:id`     |
-| PDF/image/audio upload validation | Yes  | Yes            | Preserved  | Next E2E `uploads.spec.ts`         |
-| File bytes after restart          | Yes  | Yes            | Preserved  | `foundation:gate` restart step     |
-| File bytes after backup restore   | Yes  | Yes            | Preserved  | `migration-rehearsal:gate` digests |
-| Global documents inventory page   | Yes  | No route       | Unresolved | Next `/documents` only             |
+| Behavior                          | Next | Desktop client | Status    | Evidence                             |
+| --------------------------------- | ---- | -------------- | --------- | ------------------------------------ |
+| Account document upload           | Yes  | Yes            | Preserved | `foundation:gate`                    |
+| Statement documents               | Yes  | Yes            | Preserved | Gate + migration rehearsal           |
+| Activity-linked documents         | Yes  | Yes            | Preserved | Client `/activity` and detail routes |
+| Void cheque linkage               | Yes  | Yes            | Preserved | Account detail panel (shared)        |
+| Email (.eml) viewer               | Yes  | Yes            | Preserved | File viewer route `/files/:id`       |
+| PDF/image/audio upload validation | Yes  | Yes            | Preserved | Next E2E `uploads.spec.ts`           |
+| File bytes after restart          | Yes  | Yes            | Preserved | `foundation:gate` restart step       |
+| File bytes after backup restore   | Yes  | Yes            | Preserved | `migration-rehearsal:gate` digests   |
+| Global documents inventory page   | Yes  | Yes            | Preserved | Client `/documents`                  |
 
 ## Activity
 
-| Behavior             | Next | Desktop client | Status     | Evidence                     |
-| -------------------- | ---- | -------------- | ---------- | ---------------------------- |
-| Account activity log | Yes  | Partial        | Unresolved | Panel on account detail only |
-| Activity detail page | Yes  | No route       | Unresolved | Next `/activity/[eventId]`   |
-| Activity documents   | Yes  | Partial        | Unresolved | API exists; no SPA workflow  |
+| Behavior             | Next | Desktop client | Status    | Evidence                     |
+| -------------------- | ---- | -------------- | --------- | ---------------------------- |
+| Account activity log | Yes  | Yes            | Preserved | Account detail + `/activity` |
+| Activity detail page | Yes  | Yes            | Preserved | Client `/activity/:eventId`  |
+| Activity documents   | Yes  | Yes            | Preserved | Activity detail workspace    |
 
 ## Members
 
-| Behavior          | Next | Desktop client | Status     | Evidence             |
-| ----------------- | ---- | -------------- | ---------- | -------------------- |
-| Members list/edit | Yes  | No route       | Unresolved | Next `/members` only |
-| Owner assignment  | Yes  | Yes            | Preserved  | Account create flows |
+| Behavior          | Next | Desktop client | Status    | Evidence             |
+| ----------------- | ---- | -------------- | --------- | -------------------- |
+| Members list/edit | Yes  | Yes            | Preserved | Client `/members`    |
+| Owner assignment  | Yes  | Yes            | Preserved | Account create flows |
 
 ## Settings and appearance
 
-| Behavior                  | Next | Desktop client | Status     | Evidence                         |
-| ------------------------- | ---- | -------------- | ---------- | -------------------------------- |
-| Light/dark/system theme   | Yes  | Yes            | Preserved  | Shared `ThemeProvider`           |
-| General settings page     | Yes  | No route       | Unresolved | Next `/settings`                 |
-| Data & backups UI         | Yes  | No route       | Unresolved | Next `/settings/data`            |
-| Backup now / restore UI   | Yes  | CLI/API only   | Unresolved | `yt-data`; no SPA data screen    |
-| Integrity scan UI         | Yes  | No route       | Unresolved | Next data settings only          |
-| Automatic backup schedule | Yes  | Host           | Preserved  | Host runs platform backup worker |
+| Behavior                  | Next | Desktop client | Status    | Evidence                         |
+| ------------------------- | ---- | -------------- | --------- | -------------------------------- |
+| Light/dark/system theme   | Yes  | Yes            | Preserved | Shared `ThemeProvider`           |
+| General settings page     | Yes  | Yes            | Preserved | Client `/settings`               |
+| Data & backups UI         | Yes  | Yes            | Preserved | Client `/settings/data`          |
+| Backup now / restore UI   | Yes  | Yes            | Preserved | `@yourtoolshq/data-ui` screen    |
+| Integrity scan UI         | Yes  | Yes            | Preserved | Data settings integrity card     |
+| Automatic backup schedule | Yes  | Host           | Preserved | Host runs platform backup worker |
 
 ## Data platform and controls
 
@@ -123,23 +123,24 @@ Automated evidence: `pnpm foundation:gate`, `pnpm release:gate`,
 
 **Verified and ready for maintainer review**
 
+- Full Next app route parity in the desktop client (members, documents, activity, settings, institution detail)
 - Core account/institution/statement/document workflow on the desktop host
 - Restart persistence and backup/restore semantics
 - Representative old-database migration and container-to-desktop rehearsal
 - Linux packaging and recoverable update orchestration
 - Authenticated remote client access
 
-**Unresolved gaps that block full product parity**
+**Remaining limitations (do not block migration readiness)**
 
-1. SPA routes for **Members**, **Documents**, **Activity**, and **Settings/Data**
-   (sidebar links exist via shared shell but routes are not wired).
-2. **Institution detail** and full **data-management UI** remain on the Next app only.
-3. **Integrity scan** and in-app restore flows are not yet exposed in the desktop client.
+1. **Production cutover** — Docker/Next remains the live deployment until a
+   maintainer authorizes cutover using [desktop-cutover-runbook.md](./desktop-cutover-runbook.md).
+2. **macOS / Windows packages** — Linux AppImage is the reviewed target; other
+   platforms remain Later.
+3. **Auto-update feed publication** — orchestration exists; signed feed delivery
+   requires credentials not present in CI.
 
-These gaps do **not** invalidate data migration readiness — records, relationships,
-statement maps, and document bytes are verified — but they **do** block claiming
-the desktop client replaces the full production UI. Production cutover remains
-**Later** until a maintainer authorizes it.
+All product-scope routes and data controls from the Next app are now available
+in the desktop client via shared workspace components.
 
 ## Verification commands
 
