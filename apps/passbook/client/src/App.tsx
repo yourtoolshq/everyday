@@ -17,9 +17,16 @@ import { Toaster } from "~/components/ui/sonner";
 import { AuthGate } from "./components/auth-gate";
 import { HostGate } from "./components/host-gate";
 import { RequireHousehold } from "./components/require-household";
+import { ActivityRoute } from "./routes/activity";
+import { ActivityDetailRoute } from "./routes/activity-detail";
+import { DocumentsRoute } from "./routes/documents";
 import { FileViewerRoute } from "./routes/file-viewer";
+import { InstitutionDetailRoute } from "./routes/institution-detail";
+import { MembersRoute } from "./routes/members";
 import { OverviewRoute } from "./routes/overview";
 import { PairRoute } from "./routes/pair";
+import { SettingsRoute } from "./routes/settings";
+import { SettingsDataRoute } from "./routes/settings-data";
 import { SetupRoute } from "./routes/setup";
 import { TRPCReactProvider } from "./trpc/react";
 
@@ -29,30 +36,19 @@ function AppLayout() {
       <AppShell>
         <Routes>
           <Route path="/" element={<OverviewRoute />} />
+          <Route path="/accounts" element={<AccountsPage />} />
+          <Route path="/accounts/:accountId" element={<AccountDetailPage />} />
+          <Route path="/institutions" element={<InstitutionsPage />} />
           <Route
-            path="/accounts"
-            element={
-              <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 md:p-6">
-                <AccountsWorkspace />
-              </main>
-            }
+            path="/institutions/:institutionId"
+            element={<InstitutionDetailRoute />}
           />
-          <Route
-            path="/accounts/:accountId"
-            element={
-              <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 md:p-6">
-                <AccountDetailRoute />
-              </main>
-            }
-          />
-          <Route
-            path="/institutions"
-            element={
-              <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 md:p-6">
-                <InstitutionsWorkspace />
-              </main>
-            }
-          />
+          <Route path="/members" element={<MembersRoute />} />
+          <Route path="/documents" element={<DocumentsRoute />} />
+          <Route path="/activity" element={<ActivityRoute />} />
+          <Route path="/activity/:eventId" element={<ActivityDetailRoute />} />
+          <Route path="/settings" element={<SettingsRoute />} />
+          <Route path="/settings/data" element={<SettingsDataRoute />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AppShell>
@@ -60,9 +56,29 @@ function AppLayout() {
   );
 }
 
-function AccountDetailRoute() {
+function AccountsPage() {
+  return (
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 md:p-6">
+      <AccountsWorkspace />
+    </main>
+  );
+}
+
+function AccountDetailPage() {
   const { accountId = "" } = useParams();
-  return <AccountDetailWorkspace accountId={accountId} />;
+  return (
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 md:p-6">
+      <AccountDetailWorkspace accountId={accountId} />
+    </main>
+  );
+}
+
+function InstitutionsPage() {
+  return (
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col p-4 md:p-6">
+      <InstitutionsWorkspace />
+    </main>
+  );
 }
 
 export function App() {
