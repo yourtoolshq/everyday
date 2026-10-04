@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { resolveDesktopPaths } from "../electron/config.js";
+import { assertElectronInstalled } from "../electron/verify-install.js";
 
 const desktopRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const passbookRoot = path.resolve(desktopRoot, "..");
@@ -47,6 +48,7 @@ async function waitForClient(timeoutMs = 30_000) {
 }
 
 try {
+  assertElectronInstalled();
   await waitForClient();
   run("pnpm", ["exec", "electron", "."], desktopRoot);
 } catch (error) {
