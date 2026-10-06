@@ -9,11 +9,6 @@ const hostRoot = dirname(fileURLToPath(import.meta.url));
 const passbookRoot = resolve(hostRoot, "..");
 const distRoot = resolve(hostRoot, "dist");
 const require = createRequire(import.meta.url);
-const nativePackage = `@libsql/${process.platform}-${process.arch}`;
-const clientEntry = require.resolve("@libsql/client");
-const nativeEntry = require.resolve(nativePackage, {
-  paths: [dirname(clientEntry)],
-});
 
 await rm(distRoot, { force: true, recursive: true });
 await build({
@@ -29,6 +24,13 @@ await build({
   logLevel: "warning",
 });
 
-const nativeTarget = resolve(distRoot, "node_modules", nativePackage);
-await mkdir(resolve(nativeTarget, ".."), { recursive: true });
-await cp(dirname(nativeEntry), nativeTarget, { recursive: true });
+if (process.env.PASSBOOK_BUNDLE_NATIVE_RUNTIME === "1") {
+  const nativePackage = `@libsql/${process.platform}-${process.arch}`;
+  const clientEntry = require.resolve("@libsql/client");
+  const nativeEntry = require.resolve(nativePackage, {
+    paths: [dirname(clientEntry)],
+  });
+  const nativeTarget = resolve(distRoot, "node_modules", nativePackage);
+  await mkdir(resolve(nativeTarget, ".."), { recursive: true });
+  await cp(dirname(nativeEntry), nativeTarget, { recursive: true });
+}

@@ -68,7 +68,7 @@
   "scripts": {
     "build": "node build.mjs",
     "build:client": "pnpm --filter @passbook/client build",
-    "build:host": "pnpm --filter @passbook/host build",
+    "build:host": "PASSBOOK_BUNDLE_NATIVE_RUNTIME=1 pnpm --filter @passbook/host build",
     "dev": "pnpm build && node --import tsx scripts/dev.ts",
     "verify:electron": "node --import tsx -e \"import { assertElectronInstalled } from './electron/verify-install.ts'; assertElectronInstalled(); console.log('Electron install OK');\"",
     "lint": "eslint .",
