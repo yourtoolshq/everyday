@@ -25,8 +25,11 @@
         ]
       },
       {
-        "from": "../host/dist/passbook-host.cjs",
-        "to": "host/passbook-host.cjs"
+        "from": "../host/dist",
+        "to": "host",
+        "filter": [
+          "**/*"
+        ]
       },
       {
         "from": "../drizzle",
@@ -42,27 +45,46 @@
       ],
       "category": "Office",
       "artifactName": "passbook-${version}-${os}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "artifactName": "Passbook-${version}-${arch}.${ext}"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "node build.mjs",
     "build:client": "pnpm --filter @passbook/client build",
-    "build:host": "pnpm --filter @passbook/host build",
+    "build:host": "PASSBOOK_BUNDLE_NATIVE_RUNTIME=1 pnpm --filter @passbook/host build",
     "dev": "pnpm build && node --import tsx scripts/dev.ts",
     "verify:electron": "node --import tsx -e \"import { assertElectronInstalled } from './electron/verify-install.ts'; assertElectronInstalled(); console.log('Electron install OK');\"",
     "lint": "eslint .",
     "package:linux": "pnpm build:client && pnpm build:host && pnpm build && electron-builder --linux --publish never",
+    "package:mac": "pnpm build:client && pnpm build:host && pnpm build && electron-builder --mac --arm64 --publish never",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "electron": "^38.2.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "catalog:",
     "@yourtoolshq/eslint-config": "workspace:*",
     "@yourtoolshq/tsconfig": "workspace:*",
+    "electron": "^38.2.0",
     "electron-builder": "^25.1.8",
+    "esbuild": "^0.28.2",
     "eslint": "catalog:",
     "tsx": "^4.20.6",
     "typescript": "catalog:",

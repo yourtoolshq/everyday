@@ -49,8 +49,8 @@ Related documents:
 
 ## Prerequisites
 
-- Passbook Linux AppImage built from the release commit:
-  `pnpm package:passbook:linux`
+- Passbook macOS Apple Silicon DMG built from the release commit:
+  `pnpm package:passbook:mac`
 - `yt-data` available on the source system (inside the Docker container or host checkout)
 - A verified `.ytbackup` export of the production data
 - A disposable destination path for desktop data (never production `userData` on first rehearsal)
@@ -148,11 +148,12 @@ PASSBOOK_DESKTOP_USE_DIST=1 \
 DATA_DIR="$destination_data_dir" BACKUP_DIR="$destination_backup_dir" pnpm dev
 ```
 
-Packaged AppImage:
+Packaged macOS application:
 
 ```bash
-./passbook-<version>-linux-x86_64.AppImage
-# Uses OS userData; copy restored data there only after rehearsal approval
+open /Applications/Passbook.app
+# Uses ~/Library/Application Support/Passbook/data; copy restored data there
+# only after rehearsal approval.
 ```
 
 ## 6. Post-restore verification checklist
@@ -203,9 +204,9 @@ pnpm release:gate
 Proves backup checkpoint, versioned host restart, and recovery from a failed
 update attempt on disposable data.
 
-Manual AppImage update rehearsal:
+Manual macOS update rehearsal:
 
-1. Install version A to a test profile.
+1. Install version A to a dedicated test application profile.
 2. Create household data and a verified backup.
 3. Install version B over A.
 4. Confirm data survives and `GET /api/data/status` reports version B.

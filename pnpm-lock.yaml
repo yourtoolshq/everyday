@@ -452,10 +452,6 @@ importers:
         version: 3.2.7(@types/debug@4.1.13)(@types/node@22.20.4)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.23.15)
 
   apps/passbook/desktop:
-    dependencies:
-      electron:
-        specifier: ^38.2.0
-        version: 38.8.6
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -466,9 +462,15 @@ importers:
       '@yourtoolshq/tsconfig':
         specifier: workspace:*
         version: link:../../../tooling/typescript
+      electron:
+        specifier: ^38.2.0
+        version: 38.8.6
       electron-builder:
         specifier: ^25.1.8
         version: 25.1.8(electron-builder-squirrel-windows@25.1.8)
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
       eslint:
         specifier: 'catalog:'
         version: 9.39.5(jiti@2.7.0)

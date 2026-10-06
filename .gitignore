@@ -16,6 +16,7 @@ next-env.d.ts
 # production
 build
 dist
+apps/passbook/desktop/release/
 
 # misc
 .DS_Store

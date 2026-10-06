@@ -32,22 +32,24 @@ The integration gate exercises this sequence end to end:
 
 Evidence paths for each step appear in [Migration boundary inventory](#migration-boundary-inventory).
 
-Out of scope for the first wave: account events, terms snapshots, data settings
-screens beyond a minimal blocked/maintenance gate, remote authenticated access,
-packaged installers, and automatic updates.
+Out of scope for the first release wave: account events, terms snapshots, data
+settings screens beyond the existing controls, remote authenticated access, and
+Mac App Store distribution. The first release wave includes a macOS package and
+the groundwork required for a later nightly updater; it does not authorize
+automatic installation without a recoverable update gate.
 
 ## First supported target
 
-| Topic                   | Status                                  | Recommendation                                                                                                                                                                                                                     |
-| ----------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Application             | **Established**                         | Passbook first; validate a second app before generic shared runtime extraction                                                                                                                                                     |
-| Monorepo                | **Established**                         | Keep Turborepo + pnpm workspaces; shared packages stay workspace-local                                                                                                                                                             |
-| Host runtime            | **Proposed**                            | Node.js 22 standalone HTTP process; reuse existing tRPC routers and `@yourtoolshq/data`                                                                                                                                            |
-| Client runtime          | **Proposed**                            | Vite + React SPA; reuse existing client components and tRPC React Query client                                                                                                                                                     |
-| Desktop runtime         | **Proposed**                            | Electron main process wrapping the SPA and supervising the host                                                                                                                                                                    |
-| Initial desktop OS/arch | **Blocked — maintainer input required** | Leading candidate: **Linux x86_64** (matches the existing Nix-managed production host). macOS and Windows remain Later until daily-use target is confirmed. A macOS development checkout does not establish the production target. |
-| Packaging format        | **Later**                               | AppImage or `.deb` on Linux after the integration gate; not part of foundation wave                                                                                                                                                |
-| Remote access / auth    | **Later**                               | Local loopback only; no public exposure of currently unauthenticated routes                                                                                                                                                        |
+| Topic                   | Status          | Recommendation                                                                                                                           |
+| ----------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Application             | **Established** | Passbook first; validate a second app before generic shared runtime extraction                                                           |
+| Monorepo                | **Established** | Keep Turborepo + pnpm workspaces; shared packages stay workspace-local                                                                   |
+| Host runtime            | **Proposed**    | Node.js 22 standalone HTTP process; reuse existing tRPC routers and `@yourtoolshq/data`                                                  |
+| Client runtime          | **Proposed**    | Vite + React SPA; reuse existing client components and tRPC React Query client                                                           |
+| Desktop runtime         | **Proposed**    | Electron main process wrapping the SPA and supervising the host                                                                          |
+| Initial desktop OS/arch | **Established** | **macOS Apple Silicon (`arm64`)** only. Linux, Windows, Intel Macs, and universal binaries are unsupported for the initial release wave. |
+| Packaging format        | **Established** | Direct-download DMG for installation plus ZIP updater payload, published as a GitHub nightly prerelease. No Mac App Store plan.          |
+| Remote access / auth    | **Later**       | Local loopback only; no public exposure of currently unauthenticated routes                                                              |
 
 ## Technical recommendation
 
@@ -64,6 +66,9 @@ Next.js:
   `packages/data/src/next/handlers.ts`, adapted to the host HTTP stack.
 - Expose `/api/health` using `createHealthResponse` from
   `apps/passbook/src/server/health.ts`.
+- In packaged mode, serve the built SPA and its route fallback from the same
+  loopback origin as the API. This keeps relative upload, file, backup, and
+  document URLs valid for the desktop without changing browser-client behavior.
 - Bind to loopback by default (`127.0.0.1`) on a configurable port.
 
 **Established facts:** tRPC + SuperJSON, Drizzle/libSQL, and
@@ -97,12 +102,13 @@ Replace Next.js presentation with a **Vite React SPA** that:
 An **Electron** application that:
 
 - Starts the Passbook host as a child process before opening the client window.
-- Loads the built client (dev: Vite dev server URL; prod: `file://` or bundled
-  static assets).
+- Loads the Vite development server in development and the host-served bundled
+  SPA in packaged mode; `file://` is not a supported packaged-client origin.
 - Keeps the host running when the window closes (ADR-0002 success criteria).
 - Surfaces host startup failure in the window before the client connects.
 
-**Deferred:** code signing, auto-update, tray/menu polish, multi-window.
+**Deferred:** code signing/notarization credentials, release publication,
+updater UI and install orchestration, tray/menu polish, and multi-window.
 
 ## Repository and package ownership
 
@@ -160,13 +166,13 @@ pattern and a second app validates it.
 
 ### Adapt (keep behavior, change wiring)
 
-| Area              | Paths                                                         | Notes                                                                                    |
-| ----------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| tRPC React client | `apps/passbook/src/trpc/react.tsx`                            | `getBaseUrl()` must read host URL config, not `window.location` when client is `file://` |
-| Data UI screens   | `@yourtoolshq/data-ui`                                        | Already HTTP-based; point upload/fetch URLs at host                                      |
-| File viewer       | `apps/passbook/src/app/files/[fileId]/page.tsx`               | Move to SPA route; keep `FileViewerPage` behavior                                        |
-| Setup page        | `apps/passbook/src/app/setup/page.tsx`, `components/setup/**` | SPA entry when `setup.state.initialized === false`                                       |
-| Logging/errors    | `apps/passbook/src/core/infrastructure/**`                    | Reuse `@yourtoolshq/server` in host                                                      |
+| Area              | Paths                                                         | Notes                                                                                          |
+| ----------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| tRPC React client | `apps/passbook/src/trpc/react.tsx`                            | In packaged mode it shares the loopback host origin; development keeps its configured host URL |
+| Data UI screens   | `@yourtoolshq/data-ui`                                        | Already HTTP-based; point upload/fetch URLs at host                                            |
+| File viewer       | `apps/passbook/src/app/files/[fileId]/page.tsx`               | Move to SPA route; keep `FileViewerPage` behavior                                              |
+| Setup page        | `apps/passbook/src/app/setup/page.tsx`, `components/setup/**` | SPA entry when `setup.state.initialized === false`                                             |
+| Logging/errors    | `apps/passbook/src/core/infrastructure/**`                    | Reuse `@yourtoolshq/server` in host                                                            |
 
 ## Compatibility and update boundaries
 

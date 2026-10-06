@@ -33,11 +33,8 @@ pnpm migration-rehearsal:gate
 The automated gate does not launch Electron. To verify the desktop shell locally:
 
 ```bash
-# Terminal 1 — build client and start host-backed stack
+# Build a client and start a host-backed stack with disposable data
 cd apps/passbook/client && pnpm build
-cd apps/passbook/host && DATA_DIR=./.data/desktop-manual BACKUP_DIR=./.data/desktop-manual/backups pnpm dev
-
-# Terminal 2 — desktop with bundled client (no Vite dev server)
 cd apps/passbook/desktop
 PASSBOOK_DESKTOP_USE_DIST=1 DATA_DIR=../.data/desktop-manual BACKUP_DIR=../.data/desktop-manual/backups pnpm dev
 ```
@@ -62,14 +59,14 @@ Set `PASSBOOK_KEEP_GATE_DATA=1` to retain API gate data for inspection.
 
 ## Environment variables
 
-| Variable                      | Default                                    | Used by                                   |
-| ----------------------------- | ------------------------------------------ | ----------------------------------------- |
-| `DATA_DIR`                    | `.data/foundation-gate`                    | Host data root                            |
-| `BACKUP_DIR`                  | `<DATA_DIR>/backups`                       | Backup archives                           |
-| `PORT`                        | ephemeral (API gate) / `3848` (Playwright) | Host listen port                          |
-| `PASSBOOK_HOST_URL`           | `http://127.0.0.1:3847`                    | Client host connection                    |
-| `PASSBOOK_DESKTOP_USE_DIST`   | unset (dev server)                         | Desktop loads `client/dist` when `1`      |
-| `PASSBOOK_LEAVE_HOST_RUNNING` | unset                                      | Desktop quit leaves host running when `1` |
+| Variable                      | Default                                    | Used by                                              |
+| ----------------------------- | ------------------------------------------ | ---------------------------------------------------- |
+| `DATA_DIR`                    | `.data/foundation-gate`                    | Host data root                                       |
+| `BACKUP_DIR`                  | `<DATA_DIR>/backups`                       | Backup archives                                      |
+| `PORT`                        | ephemeral (API gate) / `3848` (Playwright) | Host listen port                                     |
+| `PASSBOOK_HOST_URL`           | `http://127.0.0.1:3847`                    | Client host connection                               |
+| `PASSBOOK_DESKTOP_USE_DIST`   | unset (dev server)                         | Desktop loads the host-served `client/dist` when `1` |
+| `PASSBOOK_LEAVE_HOST_RUNNING` | unset                                      | Desktop quit leaves host running when `1`            |
 
 ## Gate assertions
 
@@ -104,9 +101,12 @@ maintainer cutover steps. Production cutover is **not** authorized by a green ga
 
 ## Remaining limitations
 
-- **Desktop packaging** — Linux AppImage is available via `pnpm package:passbook:linux`; signing and auto-update feed publication remain Later ([#71](https://github.com/yourtoolshq/everyday/issues/71)).
+- **Desktop packaging** — an unsigned Apple Silicon DMG and ZIP can be built
+  locally with `pnpm package:passbook:mac`. Signing, notarization, nightly
+  publication, and the updater UI remain Later.
 - **Remote access** — pairing and bearer tokens are available; TLS termination remains the operator's responsibility ([#70](https://github.com/yourtoolshq/everyday/issues/70)).
-- **OS target** — Linux x86_64 is the leading candidate; macOS/Windows packaging is Later.
+- **OS target** — macOS Apple Silicon is the initial supported target; Linux,
+  Windows, and Intel macOS are out of scope.
 - **Client route parity** — all Next app routes are wired in the SPA; see [behavior-inventory.md](./behavior-inventory.md).
 - **Next.js production path** — unchanged; Docker deployment remains the production path until maintainer-authorized cutover ([#72](https://github.com/yourtoolshq/everyday/issues/72)).
 
