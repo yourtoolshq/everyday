@@ -12,6 +12,7 @@ import { authorizeRequest } from "./auth/middleware";
 import { requiresRemoteAuth } from "./auth/policy";
 import { handleAuthRoute } from "./auth/routes";
 import { createAuthStore } from "./auth/store";
+import { serveClientAsset } from "./static-client";
 
 const dataHandlers = createDataHandlers(dataPlatform, { fileRouter });
 const authStore = createAuthStore(process.env.DATA_DIR ?? "./.data");
@@ -83,5 +84,8 @@ export async function handleHostRequest(input: HostRequestContext) {
     return new Response("Method Not Allowed", { status: 405 });
   }
 
-  return new Response("Not Found", { status: 404 });
+  return (
+    (await serveClientAsset(request)) ??
+    new Response("Not Found", { status: 404 })
+  );
 }

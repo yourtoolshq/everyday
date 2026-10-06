@@ -25,11 +25,8 @@ function configurePackagedEnv() {
     "host",
     "passbook-host.cjs",
   );
-  process.env.PASSBOOK_CLIENT_DIST = path.join(
-    process.resourcesPath,
-    "client",
-    "index.html",
-  );
+  process.env.PASSBOOK_CLIENT_DIST = path.join(process.resourcesPath, "client");
+  process.env.PASSBOOK_HOST_COMMAND = process.execPath;
   process.env.PASSBOOK_USE_BUNDLED_HOST = "1";
 }
 
@@ -48,7 +45,9 @@ function getPaths() {
         HOST: paths.host,
         PORT: paths.port,
         NODE_ENV: process.env.NODE_ENV ?? "development",
+        PASSBOOK_CLIENT_DIST: paths.clientDist,
         PASSBOOK_ROOT: paths.root,
+        ...(app.isPackaged ? { ELECTRON_RUN_AS_NODE: "1" } : {}),
       },
     });
   }
@@ -62,10 +61,9 @@ if (!gotSingleInstanceLock) {
 
 async function createMainWindow() {
   const resolved = getPaths();
-  const useDevClient = process.env.PASSBOOK_DESKTOP_USE_DIST !== "1";
-  const loadUrl = useDevClient
-    ? resolved.clientDevUrl
-    : `file://${resolved.clientDist}`;
+  const useDevClient =
+    !app.isPackaged && process.env.PASSBOOK_DESKTOP_USE_DIST !== "1";
+  const loadUrl = useDevClient ? resolved.clientDevUrl : resolved.hostUrl;
 
   const allowedOrigins = [
     new URL(resolved.clientDevUrl).origin,
@@ -79,7 +77,7 @@ async function createMainWindow() {
     webPreferences: {
       preload: path.join(
         path.dirname(fileURLToPath(import.meta.url)),
-        "preload.js",
+        "preload.cjs",
       ),
       contextIsolation: true,
       nodeIntegration: false,

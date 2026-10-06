@@ -44,6 +44,23 @@ node --import tsx apps/passbook/host/src/index.ts
 `PASSBOOK_HOST_URL` is injected into the renderer through the preload bridge
 (`window.passbookDesktop.hostUrl`).
 
+## Local macOS package
+
+The initial supported package is an unsigned Apple Silicon (`arm64`) build:
+
+```bash
+pnpm package:passbook:mac
+```
+
+It writes a DMG and ZIP to `release/`. The packaged Electron runtime starts the
+bundled host using Electron's embedded Node runtime and loads the client from
+the loopback host; it does not require a system Node, pnpm, Vite, Docker, or a
+source checkout.
+
+The local package is unsigned. macOS may require an explicit Gatekeeper override
+to open it. Signing, notarization, nightly publication, and automatic updates
+are separate follow-up work.
+
 ## Behavior
 
 - Starts the host before opening the window unless a healthy host is already
@@ -57,6 +74,9 @@ node --import tsx apps/passbook/host/src/index.ts
 - External navigation is blocked; only the configured client and host origins are
   allowed.
 - Host startup failures show a dedicated error window with actionable text.
+- In a package, the host serves the SPA and API from the same loopback origin.
+  This keeps document uploads, file links, backup actions, and SPA routes
+  working without `file://` handling.
 
 ## Verification
 

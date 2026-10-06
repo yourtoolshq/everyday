@@ -160,37 +160,41 @@ pnpm foundation:gate   # apps/passbook package script
 
 ## Later phases building on this gate
 
-| Capability                                  | Builds on                                 | Phase / ADR                 |
-| ------------------------------------------- | ----------------------------------------- | --------------------------- |
-| Managed host updates with backup checkpoint | Running host + `@yourtoolshq/data`        | Phase 8, ADR-0003           |
-| Packaged desktop installer                  | Desktop shell + confirmed OS              | Phase 9 Later               |
-| Authenticated phone/browser client          | Host loopback contract extended with auth | ADR-0002 Later              |
-| Second app validation                       | Passbook host/client pattern              | ADR-0001 shared foundations |
-| Generic shared runtime package              | Two app proofs                            | Shared-candidate convention |
-| Next.js production cutover                  | Integration gate green                    | Separate cutover plan       |
+| Capability                                  | Builds on                                 | Phase / ADR                     |
+| ------------------------------------------- | ----------------------------------------- | ------------------------------- |
+| Managed host updates with backup checkpoint | Running host + `@yourtoolshq/data`        | Phase 8, ADR-0003               |
+| Packaged macOS arm64 desktop installer      | Host-served SPA + self-contained host     | Current local-package milestone |
+| Authenticated phone/browser client          | Host loopback contract extended with auth | ADR-0002 Later                  |
+| Second app validation                       | Passbook host/client pattern              | ADR-0001 shared foundations     |
+| Generic shared runtime package              | Two app proofs                            | Shared-candidate convention     |
+| Next.js production cutover                  | Integration gate green                    | Separate cutover plan           |
 
 ## Ready / Blocked / Later
 
 Maintainer: update **Decision** column after review. Implementation agents must
 not start rows marked Blocked.
 
-| Item                                                           | Decision                              | Depends on                                  | Unblocks                             |
-| -------------------------------------------------------------- | ------------------------------------- | ------------------------------------------- | ------------------------------------ |
-| Phase 9 baseline docs (#63)                                    | **Ready** (pending maintainer review) | ADRs on branch                              | Maintainer review                    |
-| Maintainer review of baseline                                  | **Blocked**                           | #63 merge                                   | Host/client/desktop assignments      |
-| Initial desktop OS/architecture                                | **Blocked**                           | Maintainer confirms daily-use target        | Desktop packaging, OS data paths     |
-| Host foundation assignment                                     | **Blocked**                           | Maintainer review                           | Real host integration, desktop spawn |
-| Client foundation assignment                                   | **Blocked**                           | Maintainer review                           | Desktop UI load, integration gate UI |
-| Desktop foundation assignment                                  | **Blocked**                           | Maintainer review + OS target               | Desktop integration gate smoke       |
-| host-stub fixtures                                             | **Blocked**                           | Maintainer review                           | Parallel client/desktop against stub |
-| Root workspace scripts (`check:passbook-*`, `foundation:gate`) | **Blocked**                           | Integration owner after first package lands | CI for foundation wave               |
-| Integration gate script                                        | **Blocked**                           | Host + client Ready                         | Declaring foundation wave complete   |
-| Linux desktop packaging                                        | **Later**                             | Integration gate + OS target                | End-user install                     |
-| macOS / Windows desktop                                        | **Later**                             | OS target + Linux proof                     | Cross-platform releases              |
-| Remote authenticated access                                    | **Later**                             | Local foundation proven                     | Phone/remote clients                 |
-| Next production cutover                                        | **Later**                             | Foundation gate + maintainer cutover plan   | Retire combined Next deployment      |
-| Shared runtime extraction                                      | **Later**                             | Second app validation                       | `@yourtoolshq/runtime` candidate     |
-| Auto-update in desktop                                         | **Later**                             | Phase 8 release artifacts                   | ADR-0003                             |
+| Item                                                           | Decision                              | Depends on                                  | Unblocks                               |
+| -------------------------------------------------------------- | ------------------------------------- | ------------------------------------------- | -------------------------------------- |
+| Phase 9 baseline docs (#63)                                    | **Ready** (pending maintainer review) | ADRs on branch                              | Maintainer review                      |
+| Maintainer review of baseline                                  | **Blocked**                           | #63 merge                                   | Host/client/desktop assignments        |
+| Initial desktop OS/architecture                                | **Ready**                             | macOS Apple Silicon (`arm64`) confirmed     | Desktop packaging, OS data paths       |
+| Host foundation assignment                                     | **Blocked**                           | Maintainer review                           | Real host integration, desktop spawn   |
+| Client foundation assignment                                   | **Blocked**                           | Maintainer review                           | Desktop UI load, integration gate UI   |
+| Desktop foundation assignment                                  | **Blocked**                           | Maintainer review + OS target               | Desktop integration gate smoke         |
+| host-stub fixtures                                             | **Blocked**                           | Maintainer review                           | Parallel client/desktop against stub   |
+| Root workspace scripts (`check:passbook-*`, `foundation:gate`) | **Blocked**                           | Integration owner after first package lands | CI for foundation wave                 |
+| Integration gate script                                        | **Blocked**                           | Host + client Ready                         | Declaring foundation wave complete     |
+| Unsigned macOS arm64 local package                             | **Ready**                             | Host-served SPA + self-contained host       | Local installed-app testing            |
+| Installed macOS arm64 acceptance gate                          | **Later**                             | Real Apple Silicon package                  | Declaring local desktop workflow ready |
+| Desktop document-opening policy and validation                 | **Later**                             | Installed-app acceptance gate               | Full document workflow                 |
+| Signed/notarized nightly macOS release                         | **Later**                             | Apple credentials + local package proof     | Normal installation                    |
+| Linux, Windows, Intel macOS, and Mac App Store                 | **Out of scope**                      | None                                        | None                                   |
+| Remote authenticated access                                    | **Later**                             | Local foundation proven                     | Phone/remote clients                   |
+| Next production cutover                                        | **Later**                             | Foundation gate + maintainer cutover plan   | Retire combined Next deployment        |
+| Shared runtime extraction                                      | **Later**                             | Second app validation                       | `@yourtoolshq/runtime` candidate       |
+| Nightly desktop updater                                        | **Later**                             | Signed GitHub prereleases + recovery gate   | ADR-0003                               |
+| Installed-product versus development isolation                 | **Later**                             | App identity, data, port, and backup policy | Safe local development                 |
 
 ## Concurrent execution summary
 

@@ -5,6 +5,7 @@ const schema = z.object({
   BACKUP_DIR: z.string().min(1).optional(),
   DATA_DIR: z.string().min(1).default("./.data"),
   HOST: z.string().min(1).default("127.0.0.1"),
+  PASSBOOK_CLIENT_DIST: z.string().min(1).optional(),
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
@@ -22,6 +23,7 @@ export function loadHostEnv(
     DATA_DIR: source.DATA_DIR,
     HOST: source.HOST,
     NODE_ENV: source.NODE_ENV,
+    PASSBOOK_CLIENT_DIST: source.PASSBOOK_CLIENT_DIST,
     PORT: source.PORT,
   });
 }
@@ -31,4 +33,7 @@ export function applyHostEnv(env: HostEnv) {
   process.env.BACKUP_DIR = env.BACKUP_DIR;
   process.env.DATA_DIR = env.DATA_DIR;
   process.env.NODE_ENV = env.NODE_ENV;
+  if (env.PASSBOOK_CLIENT_DIST) {
+    process.env.PASSBOOK_CLIENT_DIST = env.PASSBOOK_CLIENT_DIST;
+  }
 }

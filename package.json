@@ -19,6 +19,7 @@
     "release:gate": "pnpm --filter passbook release:gate",
     "migration-rehearsal:gate": "pnpm --filter passbook migration-rehearsal:gate",
     "package:passbook:linux": "pnpm --filter @passbook/desktop package:linux",
+    "package:passbook:mac": "pnpm --filter @passbook/desktop package:mac",
     "check:tenure": "turbo run lint typecheck test build migrations:check -F tenure...",
     "clean": "git clean -xdf node_modules",
     "dev": "turbo watch dev --continue",

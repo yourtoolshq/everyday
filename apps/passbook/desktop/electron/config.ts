@@ -41,8 +41,8 @@ export function resolveDesktopPaths(
   const clientDist =
     env.PASSBOOK_CLIENT_DIST ??
     (packaged
-      ? path.join(root, "client", "index.html")
-      : path.join(passbookRoot, "client", "dist", "index.html"));
+      ? path.join(root, "client")
+      : path.join(passbookRoot, "client", "dist"));
   const useBundledHost = packaged || env.PASSBOOK_USE_BUNDLED_HOST === "1";
   const hostEntry =
     env.PASSBOOK_HOST_ENTRY ??
@@ -50,7 +50,7 @@ export function resolveDesktopPaths(
       ? path.join(root, "host", "dist", "passbook-host.cjs")
       : path.join(passbookRoot, "host", "src", "index.ts"));
   const hostCwd = useBundledHost ? root : path.join(passbookRoot, "host");
-  const hostCommand = "node";
+  const hostCommand = env.PASSBOOK_HOST_COMMAND ?? "node";
   const hostArgs = useBundledHost
     ? [hostEntry]
     : ["--import", "tsx", hostEntry];

@@ -13,9 +13,13 @@ import {
 
 const passbookRoot =
   process.env.PASSBOOK_ROOT ??
-  (typeof __dirname !== "undefined"
-    ? join(__dirname, "..", "..")
-    : join(dirname(fileURLToPath(import.meta.url)), "..", ".."));
+  join(
+    typeof __dirname === "string"
+      ? __dirname
+      : dirname(fileURLToPath(import.meta.url)),
+    "..",
+    "..",
+  );
 const logger = createLogger("passbook");
 
 export interface PassbookHost {

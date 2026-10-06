@@ -106,18 +106,18 @@ Automated evidence: `pnpm foundation:gate`, `pnpm release:gate`,
 
 ## Distribution, access, and updates
 
-| Behavior                         | Next/Docker | Desktop        | Status    | Evidence                          |
-| -------------------------------- | ----------- | -------------- | --------- | --------------------------------- |
-| Docker production deployment     | Yes         | Unchanged      | Preserved | Phase 7 deployment docs           |
-| Linux AppImage install           | No          | Yes            | Completed | `package:passbook:linux`          |
-| Bundled host (no Node on target) | No          | Yes            | Completed | `release-contract.md`             |
-| Clean install smoke              | N/A         | Manual         | Completed | Desktop runbook § manual smoke    |
-| Versioned update with checkpoint | Image pull  | Orchestrated   | Completed | `release:gate`                    |
-| Failed update recovery           | Rollback    | Backup restore | Completed | `release:gate` recovery step      |
-| Remote phone/browser pairing     | No          | Yes            | Completed | `remote-access:gate`              |
-| macOS / Windows packages         | No          | No             | Later     | `release-contract.md` limitations |
-| Auto-update feed publication     | No          | No             | Later     | Signing/feed credentials          |
-| Production cutover execution     | Active      | Not started    | Later     | Maintainer-authorized only        |
+| Behavior                         | Next/Docker | Desktop        | Status       | Evidence                          |
+| -------------------------------- | ----------- | -------------- | ------------ | --------------------------------- |
+| Docker production deployment     | Yes         | Unchanged      | Preserved    | Phase 7 deployment docs           |
+| macOS arm64 DMG install          | No          | Yes            | In progress  | `package:passbook:mac`            |
+| Bundled host (no Node on target) | No          | Yes            | In progress  | `release-contract.md`             |
+| Clean install smoke              | N/A         | Manual         | In progress  | Desktop runbook § manual smoke    |
+| Versioned update with checkpoint | Image pull  | Orchestrated   | Completed    | `release:gate`                    |
+| Failed update recovery           | Rollback    | Backup restore | Completed    | `release:gate` recovery step      |
+| Remote phone/browser pairing     | No          | Yes            | Completed    | `remote-access:gate`              |
+| Linux, Windows, Intel macOS      | No          | No             | Out of scope | `release-contract.md` limitations |
+| Nightly update feed publication  | No          | No             | Later        | Signing/feed credentials          |
+| Production cutover execution     | Active      | Not started    | Later        | Maintainer-authorized only        |
 
 ## Readiness assessment
 
@@ -127,15 +127,15 @@ Automated evidence: `pnpm foundation:gate`, `pnpm release:gate`,
 - Core account/institution/statement/document workflow on the desktop host
 - Restart persistence and backup/restore semantics
 - Representative old-database migration and container-to-desktop rehearsal
-- Linux packaging and recoverable update orchestration
+- macOS arm64 package construction and recoverable update orchestration
 - Authenticated remote client access
 
 **Remaining limitations (do not block migration readiness)**
 
 1. **Production cutover** — Docker/Next remains the live deployment until a
    maintainer authorizes cutover using [desktop-cutover-runbook.md](./desktop-cutover-runbook.md).
-2. **macOS / Windows packages** — Linux AppImage is the reviewed target; other
-   platforms remain Later.
+2. **Signed macOS nightly package** — unsigned local artifacts exist, but
+   signing/notarization and GitHub prerelease publication remain Later.
 3. **Auto-update feed publication** — orchestration exists; signed feed delivery
    requires credentials not present in CI.
 

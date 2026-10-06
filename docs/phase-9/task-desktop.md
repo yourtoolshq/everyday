@@ -4,9 +4,9 @@ Standalone assignment to wrap the Passbook client and host in an Electron
 desktop application. Read [baseline.md](./baseline.md) and
 [contracts.md](./contracts.md) first.
 
-**Status:** Blocked until maintainer marks this row Ready **and** the initial
-desktop OS/architecture row is unblocked in
-[integration-plan.md](./integration-plan.md#ready--blocked--later).
+**Status:** The initial desktop target is macOS Apple Silicon (`arm64`).
+Local unsigned packaging is in scope; signing, notarization, release
+publication, and the updater controller remain follow-up work.
 
 ## Required reading
 
@@ -38,7 +38,7 @@ desktop OS/architecture row is unblocked in
 2. Wait for host health per contracts before showing the main client window.
 3. Load client:
    - dev: Vite dev server URL documented by client handoff
-   - prod: bundled static assets from client build
+   - prod: bundled static assets served from the loopback host
 4. Inject or pass `PASSBOOK_HOST_URL` to the client (preload/contextBridge or
    query param — document choice).
 5. **Window close:** hide window; host keeps running (ADR-0002).
@@ -50,19 +50,20 @@ desktop OS/architecture row is unblocked in
 
 ## Exclusions
 
-- Installers, code signing, auto-update (Phase 8 / ADR-0003 Later)
+- Code signing, notarization, release publication, and auto-update controller
+  (follow-up release work)
 - System tray, menu bar, multi-window
 - Remote access, pairing, auth
 - Spawning clients other than the embedded Passbook UI
-- Linux packaging (AppImage/deb) — Later after OS confirmation
+- Linux, Windows, Intel macOS, and Mac App Store packaging
 
 ## Dependencies
 
-| Depends on                        | Reason                    |
-| --------------------------------- | ------------------------- |
-| Host assignment                   | Binary/script to spawn    |
-| Client assignment                 | UI to load                |
-| Desktop OS/architecture confirmed | Native Electron artifacts |
+| Depends on                    | Reason                    |
+| ----------------------------- | ------------------------- |
+| Host assignment               | Binary/script to spawn    |
+| Client assignment             | UI to load                |
+| macOS Apple Silicon (`arm64`) | Native Electron artifacts |
 
 | Parallel with | Notes                                                                           |
 | ------------- | ------------------------------------------------------------------------------- |

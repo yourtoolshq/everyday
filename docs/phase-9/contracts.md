@@ -10,14 +10,14 @@ representative examples.
 
 ## App identity and data isolation
 
-| Field                             | Value                                                                                                               |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Application id                    | `passbook`                                                                                                          |
-| Display name                      | Passbook                                                                                                            |
-| Data platform app key             | `"passbook"` in `defineDataPlatform`                                                                                |
-| Default data directory (dev)      | `./.data` relative to host working directory                                                                        |
-| Production-style paths            | `DATA_DIR=/data`, `BACKUP_DIR=/backups` (unchanged from Phase 4/7)                                                  |
-| Desktop data directory (proposed) | `<platform-app-data>/Passbook/` where platform-app-data follows OS conventions once the desktop target is confirmed |
+| Field                        | Value                                                                                                             |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Application id               | `passbook`                                                                                                        |
+| Display name                 | Passbook                                                                                                          |
+| Data platform app key        | `"passbook"` in `defineDataPlatform`                                                                              |
+| Default data directory (dev) | `./.data` relative to host working directory                                                                      |
+| Production-style paths       | `DATA_DIR=/data`, `BACKUP_DIR=/backups` (unchanged from Phase 4/7)                                                |
+| Desktop data directory       | `~/Library/Application Support/Passbook/data/` through Electron `userData` on supported macOS arm64 installations |
 
 Passbook data must never read or write Taxbook, First Aid, or Tenure paths.
 Multiple Passbook hosts on one machine must use distinct `DATA_DIR` values.
@@ -28,15 +28,16 @@ Multiple Passbook hosts on one machine must use distinct `DATA_DIR` values.
 2. Desktop shell injected env when it spawns the host
 3. Optional future user config file (`Later`)
 
-| Variable            | Required             | Default                                                           | Consumer          |
-| ------------------- | -------------------- | ----------------------------------------------------------------- | ----------------- |
-| `DATA_DIR`          | no                   | `./.data`                                                         | Host              |
-| `BACKUP_DIR`        | no                   | `<DATA_DIR>/backups`                                              | Host              |
-| `APP_VERSION`       | no                   | unset                                                             | Host / health     |
-| `PORT`              | no                   | `3847` (proposed foundation port; avoids 3002 Next dev collision) | Host              |
-| `HOST`              | no                   | `127.0.0.1`                                                       | Host bind address |
-| `PASSBOOK_HOST_URL` | yes (client/desktop) | `http://127.0.0.1:3847`                                           | Client            |
-| `NODE_ENV`          | no                   | `development`                                                     | All               |
+| Variable               | Required             | Default                                                            | Consumer           |
+| ---------------------- | -------------------- | ------------------------------------------------------------------ | ------------------ |
+| `DATA_DIR`             | no                   | `./.data`                                                          | Host               |
+| `BACKUP_DIR`           | no                   | `<DATA_DIR>/backups`                                               | Host               |
+| `APP_VERSION`          | no                   | unset                                                              | Host / health      |
+| `PORT`                 | no                   | `3847` (proposed foundation port; avoids 3002 Next dev collision)  | Host               |
+| `HOST`                 | no                   | `127.0.0.1`                                                        | Host bind address  |
+| `PASSBOOK_HOST_URL`    | yes (client/desktop) | `http://127.0.0.1:3847`                                            | Client             |
+| `PASSBOOK_CLIENT_DIST` | packaged host only   | unset in development; bundled client resource in a desktop install | Host static client |
+| `NODE_ENV`             | no                   | `development`                                                      | All                |
 
 The foundation port `3847` is a proposed default to keep the new host parallel
 to the existing Next dev server on `3002`. Integration owner registers the
@@ -51,8 +52,10 @@ The client and desktop resolve:
 - Health: `${PASSBOOK_HOST_URL}/api/health`
 - File download: `${PASSBOOK_HOST_URL}/api/data/files/:id`
 
-No service discovery in the foundation wave. Desktop shell writes
-`PASSBOOK_HOST_URL` before launching the client.
+No service discovery in the foundation wave. In development, the client uses
+`PASSBOOK_HOST_URL` through the Vite proxy. In a packaged desktop app, Electron
+starts the host with `PASSBOOK_CLIENT_DIST` and loads the SPA from the host root,
+so the client and API share one loopback origin.
 
 ## Platform lifecycle and readiness
 
