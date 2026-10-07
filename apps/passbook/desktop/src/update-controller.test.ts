@@ -15,7 +15,7 @@ const autoUpdater = {
   quitAndInstall: vi.fn(),
 };
 
-vi.mock("electron-updater", () => ({
+vi.mock("../electron/auto-updater.js", () => ({
   autoUpdater,
 }));
 

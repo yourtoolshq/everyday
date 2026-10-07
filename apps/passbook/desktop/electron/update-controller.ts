@@ -1,5 +1,5 @@
 import type { BrowserWindow } from "electron";
-import { autoUpdater } from "electron-updater";
+import { autoUpdater } from "./auto-updater.js";
 
 import type {
   DesktopUpdateActionResult,
