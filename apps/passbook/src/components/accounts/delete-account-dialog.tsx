@@ -105,12 +105,10 @@ export function DeleteAccountDialog({
   const documentCount = preview.data?.documentCount ?? 0;
   const requiresTypedName = documentCount > 0;
   const nameMatches =
-    !requiresTypedName ||
-    confirmName.trim() === displayName.trim();
+    !requiresTypedName || confirmName.trim() === displayName.trim();
 
   const pending = deleteAccount.isPending;
-  const canDelete =
-    preview.isSuccess && nameMatches && !pending;
+  const canDelete = preview.isSuccess && nameMatches && !pending;
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>

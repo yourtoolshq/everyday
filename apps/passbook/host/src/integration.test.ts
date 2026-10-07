@@ -299,12 +299,16 @@ describe("passbook host integration", () => {
     });
     const staged = (await upload.json()) as { token: string };
 
-    const document = await trpc<{ fileId: string }>(baseUrl, "documents.create", {
-      accountId: account.id,
-      type: "other",
-      title: "Temp upload",
-      file: staged.token,
-    });
+    const document = await trpc<{ fileId: string }>(
+      baseUrl,
+      "documents.create",
+      {
+        accountId: account.id,
+        type: "other",
+        title: "Temp upload",
+        file: staged.token,
+      },
+    );
 
     const preview = await trpc<{
       documentCount: number;
