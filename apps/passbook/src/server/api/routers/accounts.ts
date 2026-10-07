@@ -10,8 +10,11 @@ import {
 } from "~/lib/statement-frequency";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
+  accountEvents,
   accountOwnership,
   accounts,
+  accountTermsSnapshots,
+  documents,
   institutions,
   people,
   statementExpectations,
@@ -297,13 +300,76 @@ export const accountsRouter = createTRPCRouter({
       return { accountId: input.accountId, frequency: input.frequency };
     }),
 
-  delete: publicProcedure.input(idInput).mutation(async ({ ctx, input }) => {
-    const [account] = await ctx.db
-      .delete(accounts)
-      .where(eq(accounts.id, input.id))
-      .returning({ id: accounts.id });
-    if (!account)
-      throw new TRPCError({ code: "NOT_FOUND", message: "Account not found." });
-    return account;
-  }),
+  deletePreview: publicProcedure
+    .input(idInput)
+    .query(async ({ ctx, input }) => {
+      const [account] = await ctx.db
+        .select({
+          id: accounts.id,
+          displayName: accounts.displayName,
+          status: accounts.status,
+        })
+        .from(accounts)
+        .where(eq(accounts.id, input.id));
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found.",
+        });
+      }
+
+      const [documentRows, eventRows, snapshotRows] = await Promise.all([
+        ctx.db
+          .select({ id: documents.id })
+          .from(documents)
+          .where(eq(documents.accountId, input.id)),
+        ctx.db
+          .select({ id: accountEvents.id })
+          .from(accountEvents)
+          .where(eq(accountEvents.accountId, input.id)),
+        ctx.db
+          .select({ id: accountTermsSnapshots.id })
+          .from(accountTermsSnapshots)
+          .where(eq(accountTermsSnapshots.accountId, input.id)),
+      ]);
+
+      return {
+        displayName: account.displayName,
+        status: account.status,
+        documentCount: documentRows.length,
+        activityCount: eventRows.length,
+        termsSnapshotCount: snapshotRows.length,
+      };
+    }),
+
+  delete: publicProcedure.input(idInput).mutation(({ ctx, input }) =>
+    ctx.files.withFiles(ctx.db, async (tx, files) => {
+      const documentRows = await tx
+        .select({ fileId: documents.fileId })
+        .from(documents)
+        .where(eq(documents.accountId, input.id));
+
+      const [account] = await tx
+        .delete(accounts)
+        .where(eq(accounts.id, input.id))
+        .returning({ id: accounts.id });
+
+      if (!account) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Account not found.",
+        });
+      }
+
+      for (const row of documentRows) {
+        await files.remove(row.fileId);
+      }
+
+      return {
+        id: account.id,
+        deletedDocumentCount: documentRows.length,
+      };
+    }),
+  ),
 });

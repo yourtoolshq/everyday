@@ -27,6 +27,7 @@ import { AccountFormSheet } from "~/components/accounts/account-form-sheet";
 import { AccountSettingsSheet } from "~/components/accounts/account-settings-sheet";
 import { AccountStatementPeriods } from "~/components/accounts/account-statement-periods";
 import { AccountTermsPanel } from "~/components/accounts/account-terms-panel";
+import { DeleteAccountDialog } from "~/components/accounts/delete-account-dialog";
 import { StatementUploadSheet } from "~/components/documents/statement-upload-sheet";
 import { InstitutionIcon } from "~/components/institutions/institution-icon";
 import { accountStatusLabels } from "~/lib/account-status";
@@ -82,6 +83,7 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uploadTarget, setUploadTarget] = useState<UploadTarget | null>(null);
   const [closureUploadOpen, setClosureUploadOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const statementDocumentsByPeriod = useMemo(() => {
     const map: Record<string, AccountDocument> = {};
@@ -400,6 +402,30 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
           periodKey={uploadTarget.periodKey}
         />
       ) : null}
+
+      <Card className="border-destructive/30 shadow-none">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-destructive text-base">
+            Danger zone
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-wrap items-center justify-between gap-4">
+          <p className="text-muted-foreground max-w-2xl text-sm">
+            Permanently delete this account and every document, statement
+            period, activity entry, and terms snapshot attached to it. To keep
+            history, close the account from Edit instead.
+          </p>
+          <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+            Delete account
+          </Button>
+        </CardContent>
+      </Card>
+
+      <DeleteAccountDialog
+        accountId={account.data.id}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
     </div>
   );
 }

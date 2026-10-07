@@ -63,6 +63,8 @@ An account may include:
 
 Closed accounts remain part of the historical record.
 
+Delete account is a rare escape hatch for wrong or test entries. It removes the account and everything attached to it. Users who need to keep statements or other records should close the account instead.
+
 ### Define expected statements
 
 Each account can define how often statements are expected.
