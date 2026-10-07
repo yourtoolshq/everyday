@@ -6,7 +6,7 @@ const fs = require("node:fs");
 const { resolvePreviousPassbookTag } = require("./version.cjs");
 
 function listGitTags(cwd = process.cwd()) {
-  const stdout = execFileSync("git", ["tag", "--list", "passbook-v*"], {
+  const stdout = execFileSync("git", ["tag", "--list", "v*"], {
     cwd,
     encoding: "utf8",
   });

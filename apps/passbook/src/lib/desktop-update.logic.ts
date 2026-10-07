@@ -28,9 +28,9 @@ export function getDesktopUpdateReleaseUrl(
 ): string | null {
   const normalizedVersion = version?.trim();
   if (!normalizedVersion) return null;
-  const tag = normalizedVersion.startsWith("passbook-v")
+  const tag = normalizedVersion.startsWith("v")
     ? normalizedVersion
-    : `passbook-v${normalizedVersion}`;
+    : `v${normalizedVersion}`;
   return `${DESKTOP_RELEASE_TAG_URL}/${encodeURIComponent(tag)}`;
 }
 
