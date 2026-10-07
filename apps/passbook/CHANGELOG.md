@@ -6,6 +6,7 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Added
 
+- A scheduled GitHub Actions release publishes macOS Apple Silicon desktop builds with generated release notes, DMG downloads, and updater metadata.
 - The desktop client now includes Members, Documents, Activity, institution detail, General settings, and Data & backups routes with the same workspace components as the Next app.
 - A migration rehearsal gate (`pnpm migration-rehearsal:gate`) verifies container-to-desktop backup restore with record and document digest checks.
 - Desktop readiness docs cover the full behavior inventory and reviewed cutover runbook without authorizing production migration.
