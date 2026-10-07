@@ -1,11 +1,11 @@
 import type { BrowserWindow } from "electron";
-import { autoUpdater } from "./auto-updater.js";
 
 import type {
   DesktopUpdateActionResult,
   DesktopUpdateState,
   DesktopUpdateTrialState,
 } from "./update-types.js";
+import { autoUpdater } from "./auto-updater.js";
 import { normalizeDesktopUpdateReleaseNotes } from "./release-notes.js";
 import { UpdateOrchestrator } from "./update-orchestrator.js";
 import {
