@@ -77,9 +77,13 @@ function openPreviewWindow(
     },
   });
 
-  attachNavigationGuard(previewWindow.webContents, allowedOrigins, (nestedUrl) => {
-    openPreviewWindow(nestedUrl, previewWindow, allowedOrigins);
-  });
+  attachNavigationGuard(
+    previewWindow.webContents,
+    allowedOrigins,
+    (nestedUrl) => {
+      openPreviewWindow(nestedUrl, previewWindow, allowedOrigins);
+    },
+  );
 
   void previewWindow.loadURL(url);
 }
