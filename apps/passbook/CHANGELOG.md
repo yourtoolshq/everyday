@@ -38,6 +38,8 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Fixed
 
+- The desktop update recovery screen no longer crashes to a blank window after
+  an update verification failure.
 - Desktop update releases now use a Passbook-specific SemVer channel, so the
   updater can find them in the monorepo's shared GitHub release feed.
 - The desktop sidebar now always shows the installed version, checks GitHub for
