@@ -86,7 +86,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  },
   "devDependencies": {
     "@types/node": "catalog:",
     "@yourtoolshq/eslint-config": "workspace:*",

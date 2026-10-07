@@ -2,7 +2,7 @@ import { build } from "esbuild";
 
 const common = {
   bundle: true,
-  external: ["electron"],
+  external: ["electron", "electron-updater"],
   platform: "node",
   target: "node22",
 };

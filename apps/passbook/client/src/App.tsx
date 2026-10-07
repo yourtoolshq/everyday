@@ -17,6 +17,7 @@ import { Toaster } from "~/components/ui/sonner";
 import { AuthGate } from "./components/auth-gate";
 import { HostGate } from "./components/host-gate";
 import { RequireHousehold } from "./components/require-household";
+import { UpdateGate } from "./components/update-gate";
 import { ActivityRoute } from "./routes/activity";
 import { ActivityDetailRoute } from "./routes/activity-detail";
 import { DocumentsRoute } from "./routes/documents";
@@ -86,38 +87,40 @@ export function App() {
     <TRPCReactProvider>
       <ThemeProvider>
         <TooltipProvider>
-          <HostGate>
-            <BrowserRouter>
-              <Routes>
-                <Route path="/pair" element={<PairRoute />} />
-                <Route
-                  path="/setup"
-                  element={
-                    <AuthGate>
-                      <SetupRoute />
-                    </AuthGate>
-                  }
-                />
-                <Route
-                  path="/files/:fileId"
-                  element={
-                    <AuthGate>
-                      <FileViewerRoute />
-                    </AuthGate>
-                  }
-                />
-                <Route
-                  path="/*"
-                  element={
-                    <AuthGate>
-                      <AppLayout />
-                    </AuthGate>
-                  }
-                />
-              </Routes>
-              <Toaster />
-            </BrowserRouter>
-          </HostGate>
+          <UpdateGate>
+            <HostGate>
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/pair" element={<PairRoute />} />
+                  <Route
+                    path="/setup"
+                    element={
+                      <AuthGate>
+                        <SetupRoute />
+                      </AuthGate>
+                    }
+                  />
+                  <Route
+                    path="/files/:fileId"
+                    element={
+                      <AuthGate>
+                        <FileViewerRoute />
+                      </AuthGate>
+                    }
+                  />
+                  <Route
+                    path="/*"
+                    element={
+                      <AuthGate>
+                        <AppLayout />
+                      </AuthGate>
+                    }
+                  />
+                </Routes>
+                <Toaster />
+              </BrowserRouter>
+            </HostGate>
+          </UpdateGate>
         </TooltipProvider>
       </ThemeProvider>
     </TRPCReactProvider>

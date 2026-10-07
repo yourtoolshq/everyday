@@ -17,6 +17,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -26,6 +27,8 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@yourtoolshq/ui/sidebar";
+
+import { DesktopUpdatePill } from "~/components/desktop/desktop-update-pill";
 
 function isNavActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -107,6 +110,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="border-t p-2">
+        <DesktopUpdatePill />
+      </SidebarFooter>
       <SidebarRail />
     </Sidebar>
   );
