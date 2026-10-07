@@ -33,7 +33,14 @@ export function resolveDesktopPaths(
     (packaged && env.PASSBOOK_USER_DATA_DIR
       ? path.join(env.PASSBOOK_USER_DATA_DIR, "data")
       : path.join(passbookRoot, ".data", "desktop-test"));
-  const backupDir = env.BACKUP_DIR ?? path.join(dataDir, "backups");
+  // Desktop data and backups must be separate folders. Keeping archives under
+  // the data folder makes a damaged or accidentally removed data folder take
+  // every recovery point with it.
+  const backupDir =
+    env.BACKUP_DIR ??
+    (packaged && env.PASSBOOK_USER_DATA_DIR
+      ? path.join(env.PASSBOOK_USER_DATA_DIR, "backups")
+      : path.join(dataDir, "backups"));
   const host = env.HOST ?? "127.0.0.1";
   const port = env.PORT ?? "3847";
   const hostUrl = `http://${host}:${port}`;

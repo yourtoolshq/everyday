@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, dialog } from "electron";
 
 import type { DesktopPaths } from "./config.js";
+import { moveLegacyDesktopBackups } from "./backup-location.js";
 import { resolveDesktopPaths } from "./config.js";
 import { isHostHealthy } from "./host-connectivity.js";
 import { HostProcess } from "./host-process.js";
@@ -36,6 +37,13 @@ function getPaths() {
   if (!paths) {
     configurePackagedEnv();
     paths = resolveDesktopPaths();
+    if (app.isPackaged && !process.env.BACKUP_DIR) {
+      try {
+        moveLegacyDesktopBackups(paths.dataDir, paths.backupDir);
+      } catch (error) {
+        console.warn("Passbook could not move legacy desktop backups:", error);
+      }
+    }
     host = new HostProcess({
       command: paths.hostCommand,
       args: paths.hostArgs,

@@ -48,6 +48,11 @@ describe("desktop update logic", () => {
     expect(getDesktopUpdateButtonLabel(state)).toBe("Restart to update");
   });
 
+  it("uses the same action button to check for updates", () => {
+    expect(resolveDesktopUpdateButtonAction(baseState())).toBe("check");
+    expect(getDesktopUpdateButtonLabel(baseState())).toBe("Check for updates");
+  });
+
   it("hides the pill while a post-update trial is active", () => {
     expect(
       shouldShowDesktopUpdateButton(
@@ -63,6 +68,15 @@ describe("desktop update logic", () => {
         }),
       ),
     ).toBe(false);
+  });
+
+  it("keeps the single action visible while checking and downloading", () => {
+    expect(
+      shouldShowDesktopUpdateButton(baseState({ status: "checking" })),
+    ).toBe(true);
+    expect(
+      shouldShowDesktopUpdateButton(baseState({ status: "downloading" })),
+    ).toBe(true);
   });
 
   it("includes the downloaded version in the install confirmation", () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { DownloadIcon, RotateCwIcon, XIcon } from "lucide-react";
+import { DownloadIcon, RefreshCwIcon, RotateCwIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -15,11 +15,6 @@ import {
   AlertDialogTitle,
 } from "@yourtoolshq/ui/alert-dialog";
 import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@yourtoolshq/ui/sidebar";
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -31,7 +26,6 @@ import {
   getDesktopUpdateButtonLabel,
   getDesktopUpdateButtonTooltip,
   getDesktopUpdateInstallConfirmationMessage,
-  getDesktopUpdateReleaseUrl,
   isDesktopUpdateButtonDisabled,
   isPassbookDesktop,
   resolveDesktopUpdateButtonAction,
@@ -72,6 +66,27 @@ export function DesktopUpdatePill() {
   const { bridge, state } = useDesktopUpdate();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isActionPending, setIsActionPending] = useState(false);
+
+  const handleCheck = useCallback(async () => {
+    if (!bridge) return;
+    setIsActionPending(true);
+    try {
+      const result = await bridge.checkForUpdates();
+      const error = getDesktopUpdateActionError(result);
+      if (error) {
+        toast.error("Could not check for updates", { description: error });
+      }
+    } catch (error) {
+      toast.error("Could not check for updates", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
+      });
+    } finally {
+      setIsActionPending(false);
+    }
+  }, [bridge]);
 
   const handleDownload = useCallback(async () => {
     if (!bridge) return;
@@ -116,19 +131,21 @@ export function DesktopUpdatePill() {
     }
   }, [bridge]);
 
-  const visible =
-    isPassbookDesktop() && state && shouldShowDesktopUpdateButton(state);
-  if (!visible || !bridge || !state) return null;
+  const isDesktop = isPassbookDesktop();
+  if (!isDesktop || !bridge || !state) return null;
+
+  const visible = shouldShowDesktopUpdateButton(state);
+  if (!visible) return null;
 
   const action = resolveDesktopUpdateButtonAction(state);
   const disabled = isDesktopUpdateButtonDisabled(state) || isActionPending;
   const tooltip = getDesktopUpdateButtonTooltip(state);
-  const releaseUrl = getDesktopUpdateReleaseUrl(
-    state.downloadedVersion ?? state.availableVersion,
-  );
-
   const handleClick = () => {
     if (disabled || action === "none") return;
+    if (action === "check") {
+      void handleCheck();
+      return;
+    }
     if (action === "download") {
       void handleDownload();
       return;
@@ -138,59 +155,66 @@ export function DesktopUpdatePill() {
 
   return (
     <>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SidebarMenuButton
-                className="text-primary"
-                disabled={disabled}
-                onClick={handleClick}
-              >
+      <div className="flex items-center justify-between gap-2 px-1">
+        <span className="text-muted-foreground truncate text-xs">
+          v{state.currentVersion}
+        </span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={getDesktopUpdateButtonLabel(state)}
+              disabled={disabled}
+              onClick={handleClick}
+              className={`relative flex size-9 shrink-0 items-center justify-center rounded-full border transition-colors disabled:cursor-wait disabled:opacity-70 ${
+                action === "download" || action === "install"
+                  ? "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20"
+                  : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {state.status === "downloading" ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: `conic-gradient(currentColor ${Math.min(
+                      100,
+                      Math.max(0, state.downloadPercent ?? 0),
+                    )}%, transparent 0)`,
+                  }}
+                />
+              ) : null}
+              <span className="bg-background relative flex size-7 items-center justify-center rounded-full">
                 {action === "install" ? (
-                  <RotateCwIcon aria-hidden="true" />
+                  <RotateCwIcon aria-hidden="true" className="size-4" />
+                ) : action === "download" || state.status === "downloading" ? (
+                  <DownloadIcon aria-hidden="true" className="size-4" />
                 ) : (
-                  <DownloadIcon aria-hidden="true" />
+                  <RefreshCwIcon
+                    aria-hidden="true"
+                    className={`size-4 ${
+                      state.status === "checking" ? "animate-spin" : ""
+                    }`}
+                  />
                 )}
-                <span>{getDesktopUpdateButtonLabel(state)}</span>
-              </SidebarMenuButton>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              className={
-                state.releaseNotes.length > 0
-                  ? "pointer-events-auto max-w-sm"
-                  : undefined
-              }
-            >
-              <ReleaseNotesTooltip
-                tooltip={tooltip}
-                releaseNotes={state.releaseNotes}
-              />
-            </TooltipContent>
-          </Tooltip>
-        </SidebarMenuItem>
-        {action === "download" ? (
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="text-muted-foreground"
-              onClick={() => void bridge.dismissUpdate()}
-            >
-              <XIcon aria-hidden="true" />
-              <span>Dismiss until next launch</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ) : null}
-        {releaseUrl ? (
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <a href={releaseUrl} target="_blank" rel="noreferrer">
-                <span>View release on GitHub</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        ) : null}
-      </SidebarMenu>
+              </span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            className={
+              state.releaseNotes.length > 0
+                ? "pointer-events-auto max-w-sm"
+                : undefined
+            }
+          >
+            <ReleaseNotesTooltip
+              tooltip={tooltip}
+              releaseNotes={state.releaseNotes}
+            />
+          </TooltipContent>
+        </Tooltip>
+      </div>
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>

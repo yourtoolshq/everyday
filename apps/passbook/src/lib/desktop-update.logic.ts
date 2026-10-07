@@ -3,7 +3,8 @@ import type {
   DesktopUpdateState,
 } from "./desktop-update.types";
 
-export type DesktopUpdateButtonAction = "download" | "install" | "none";
+export type DesktopUpdateButtonAction =
+  "check" | "download" | "install" | "none";
 
 const DESKTOP_RELEASE_TAG_URL =
   "https://github.com/yourtoolshq/everyday/releases/tag";
@@ -36,20 +37,22 @@ export function getDesktopUpdateReleaseUrl(
 export function resolveDesktopUpdateButtonAction(
   state: DesktopUpdateState,
 ): DesktopUpdateButtonAction {
+  if (!state.enabled || state.trial) return "none";
   if (state.downloadedVersion) return "install";
   if (state.status === "available") return "download";
   if (state.status === "error" && state.errorContext === "download") {
     return state.availableVersion ? "download" : "none";
   }
-  return "none";
+  if (state.status === "error" && state.errorContext === "install") {
+    return state.downloadedVersion ? "install" : "none";
+  }
+  return "check";
 }
 
 export function shouldShowDesktopUpdateButton(
   state: DesktopUpdateState | null,
 ): boolean {
-  if (!state?.enabled || state.dismissed || state.trial) return false;
-  if (state.status === "downloading") return true;
-  return resolveDesktopUpdateButtonAction(state) !== "none";
+  return Boolean(state?.enabled && !state.trial);
 }
 
 export function isDesktopUpdateButtonDisabled(
@@ -60,6 +63,7 @@ export function isDesktopUpdateButtonDisabled(
 
 export function getDesktopUpdateButtonLabel(state: DesktopUpdateState): string {
   const action = resolveDesktopUpdateButtonAction(state);
+  if (action === "check") return "Check for updates";
   if (action === "install") return "Restart to update";
   if (state.status === "downloading") {
     const progress =
@@ -74,6 +78,7 @@ export function getDesktopUpdateButtonLabel(state: DesktopUpdateState): string {
 export function getDesktopUpdateButtonTooltip(
   state: DesktopUpdateState,
 ): string {
+  if (state.status === "checking") return "Checking for updates";
   if (state.status === "available") {
     return `Update ${state.availableVersion ?? "available"} ready to download`;
   }
