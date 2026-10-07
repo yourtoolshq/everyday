@@ -1,14 +1,6 @@
+import "~/lib/desktop-update.types";
+
 declare const __PASSBOOK_HOST_URL__: string;
-
-interface PassbookDesktopBridge {
-  hostUrl: string;
-}
-
-declare global {
-  interface Window {
-    passbookDesktop?: PassbookDesktopBridge;
-  }
-}
 
 function readDesktopHostUrl() {
   if (typeof window === "undefined") return undefined;

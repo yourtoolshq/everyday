@@ -7,7 +7,7 @@ import { resolveDesktopPaths } from "./config.js";
 import { isHostHealthy } from "./host-connectivity.js";
 import { HostProcess } from "./host-process.js";
 import { isAllowedNavigation } from "./navigation.js";
-import { setupAutoUpdater } from "./update-manager.js";
+import { getUpdateController, setupAutoUpdater } from "./update-manager.js";
 
 let paths: DesktopPaths | null = null;
 let host: HostProcess | null = null;
@@ -101,6 +101,8 @@ async function createMainWindow() {
       mainWindow?.hide();
     }
   });
+
+  getUpdateController()?.registerWindow(mainWindow);
 
   await mainWindow.loadURL(loadUrl);
   mainWindow.show();

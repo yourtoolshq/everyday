@@ -14,18 +14,13 @@ const autoUpdater = {
 
 vi.mock("electron", () => ({
   app: { isPackaged: true },
-  dialog: {
-    showMessageBox: vi.fn(() => Promise.resolve({ response: 1 })),
-    showErrorBox: vi.fn(),
+  ipcMain: {
+    handle: vi.fn(),
   },
 }));
 
 vi.mock("electron-updater", () => ({
   autoUpdater,
-}));
-
-vi.mock("../electron/host-connectivity.js", () => ({
-  isHostHealthy: vi.fn(() => Promise.resolve(true)),
 }));
 
 describe("setupAutoUpdater", () => {
@@ -35,14 +30,15 @@ describe("setupAutoUpdater", () => {
     vi.useFakeTimers();
   });
 
-  it("registers update handlers when packaged", async () => {
+  it("registers IPC handlers and update listeners when packaged", async () => {
     const { setupAutoUpdater } = await import("../electron/update-manager.js");
-    await setupAutoUpdater({
+    const controller = await setupAutoUpdater({
       dataDir: "/tmp/passbook-update",
       hostUrl: "http://127.0.0.1:3847",
       previousVersion: "0.1.0.20260306.1",
     });
 
+    expect(controller).not.toBeNull();
     expect(autoUpdater.autoDownload).toBe(false);
     expect(autoUpdater.on).toHaveBeenCalledWith(
       "update-available",
