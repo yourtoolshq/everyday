@@ -1,33 +1,160 @@
 name: passbook release
 
 on:
+  schedule:
+    # Check often; publish only when the six-hour gate passes.
+    - cron: "8,38 * * * *"
   workflow_dispatch:
-    inputs:
-      version:
-        description: Release version tag (for example 0.1.0)
-        required: true
-        type: string
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: passbook-release
+  cancel-in-progress: false
 
 jobs:
-  package-linux:
-    name: package linux AppImage
+  should_release:
+    name: Decide whether to release
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.proceed.outputs.proceed }}
+    steps:
+      - name: Manual release
+        if: github.event_name == 'workflow_dispatch'
+        id: proceed
+        run: echo "proceed=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: github.event_name == 'schedule'
+        with:
+          sparse-checkout: apps/passbook/scripts/release
+
+      - name: Evaluate scheduled release gate
+        if: github.event_name == 'schedule'
+        id: proceed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {
+              shouldReleaseOnSchedule,
+            } = require("./apps/passbook/scripts/release/check-scheduled-release.cjs");
+            const proceed = await shouldReleaseOnSchedule({ github, context, core });
+            core.setOutput("proceed", proceed ? "true" : "false");
+
+  preflight:
+    name: Resolve release metadata
+    needs: should_release
+    if: needs.should_release.outputs.proceed == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ github.sha }}
+      version: ${{ steps.release_meta.outputs.version }}
+      tag: ${{ steps.release_meta.outputs.tag }}
+      release_name: ${{ steps.release_meta.outputs.name }}
+      previous_tag: ${{ steps.previous_tag.outputs.previous_tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: release_meta
+        name: Resolve release version
+        env:
+          RELEASE_DATE: ${{ github.run_started_at }}
+          RELEASE_SHA: ${{ github.sha }}
+          RELEASE_RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          release_date="$(date -u -d "$RELEASE_DATE" +%Y%m%d)"
+          node apps/passbook/scripts/release/resolve-release-meta.cjs \
+            --date "$release_date" \
+            --run-number "$RELEASE_RUN_NUMBER" \
+            --sha "$RELEASE_SHA" \
+            --repo-root "$GITHUB_WORKSPACE" \
+            --github-output
+
+      - id: previous_tag
+        name: Resolve previous release tag
+        run: |
+          node apps/passbook/scripts/release/resolve-previous-tag.cjs \
+            --current-tag "${{ steps.release_meta.outputs.tag }}" \
+            --github-output
+
+  quality:
+    name: Release quality checks
+    needs: preflight
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: ./.github/actions/setup
 
-      - name: Build Passbook release artifacts
-        run: pnpm package:passbook:linux
-        env:
-          APP_VERSION: ${{ inputs.version }}
+      - name: Verify Electron install
+        run: pnpm --filter @passbook/desktop verify:electron
 
-      - name: Upload AppImage
+      - name: Check Passbook desktop
+        run: pnpm check:passbook-desktop
+
+      - name: Run Passbook release gate
+        run: pnpm release:gate
+
+      - name: Run Passbook release script tests
+        run: pnpm --filter passbook test -- scripts/release/version.test.mjs
+
+  package_mac:
+    name: Package macOS desktop
+    needs: [preflight, quality]
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup
+
+      - name: Align desktop package version
+        run: |
+          node apps/passbook/scripts/release/set-desktop-version.cjs \
+            "${{ needs.preflight.outputs.version }}" \
+            "$GITHUB_WORKSPACE"
+
+      - name: Build Passbook macOS release artifacts
+        run: pnpm package:passbook:mac
+        env:
+          APP_VERSION: ${{ needs.preflight.outputs.version }}
+
+      - name: Upload release artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: passbook-linux-${{ inputs.version }}
-          path: apps/passbook/desktop/release/*.AppImage
+          name: passbook-mac-release
+          path: |
+            apps/passbook/desktop/release/*.dmg
+            apps/passbook/desktop/release/*.zip
+            apps/passbook/desktop/release/latest-mac.yml
+            apps/passbook/desktop/release/*.blockmap
           if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs: [preflight, package_mac]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: passbook-mac-release
+          path: release-assets
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.preflight.outputs.tag }}
+          target_commitish: ${{ needs.preflight.outputs.ref }}
+          name: ${{ needs.preflight.outputs.release_name }}
+          generate_release_notes: true
+          previous_tag: ${{ needs.preflight.outputs.previous_tag }}
+          prerelease: false
+          make_latest: true
+          files: |
+            release-assets/*.dmg
+            release-assets/*.zip
+            release-assets/latest-mac.yml
+            release-assets/*.blockmap
+          fail_on_unmatching_files: true

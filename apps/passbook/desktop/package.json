@@ -10,6 +10,13 @@
     "productName": "Passbook",
     "npmRebuild": false,
     "nodeGypRebuild": false,
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "yourtoolshq",
+        "repo": "everyday"
+      }
+    ],
     "directories": {
       "output": "release",
       "buildResources": "build"
