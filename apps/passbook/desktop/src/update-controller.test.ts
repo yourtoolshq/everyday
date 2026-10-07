@@ -35,7 +35,8 @@ describe("UpdateController", () => {
             Promise.resolve({
               result: {
                 data: {
-                  json: { id: "backup-1", verification: { ok: true } },
+                  id: "backup-1",
+                  verification: { status: "verified" },
                 },
               },
             }),
@@ -69,6 +70,44 @@ describe("UpdateController", () => {
       availableVersion: "0.1.1",
       releaseNotes: [{ version: "0.1.1", items: ["Fix desktop packaging"] }],
     });
+  });
+
+  it("calls the data platform backup API with plain tRPC envelopes", async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            result: {
+              data: {
+                id: "backup-1",
+                verification: { status: "verified" },
+              },
+            },
+          }),
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { UpdateController } =
+      await import("../electron/update-controller.js");
+    const controller = new UpdateController({
+      dataDir,
+      hostUrl: "http://127.0.0.1:3847",
+      currentVersion: "0.1.0",
+    });
+
+    await controller.start();
+    autoUpdaterHandlers.get("update-downloaded")?.({ version: "0.1.1" });
+    await controller.installUpdate();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:3847/api/data/trpc/backups.create",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+    );
   });
 
   it("leaves the update in trial stage before restart", async () => {
