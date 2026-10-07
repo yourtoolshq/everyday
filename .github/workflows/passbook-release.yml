@@ -18,12 +18,12 @@ jobs:
     name: Decide whether to release
     runs-on: ubuntu-latest
     outputs:
-      proceed: ${{ steps.proceed.outputs.proceed }}
+      proceed: ${{ steps.export_proceed.outputs.proceed }}
     steps:
       - name: Manual release
         if: github.event_name == 'workflow_dispatch'
-        id: proceed
         run: echo "proceed=true" >> "$GITHUB_OUTPUT"
+        id: proceed_manual
 
       - uses: actions/checkout@v4
         if: github.event_name == 'schedule'
@@ -32,7 +32,7 @@ jobs:
 
       - name: Evaluate scheduled release gate
         if: github.event_name == 'schedule'
-        id: proceed
+        id: proceed_schedule
         uses: actions/github-script@v7
         with:
           script: |
@@ -41,6 +41,15 @@ jobs:
             } = require("./apps/passbook/scripts/release/check-scheduled-release.cjs");
             const proceed = await shouldReleaseOnSchedule({ github, context, core });
             core.setOutput("proceed", proceed ? "true" : "false");
+
+      - name: Export release decision
+        id: export_proceed
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "proceed=${{ steps.proceed_manual.outputs.proceed }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "proceed=${{ steps.proceed_schedule.outputs.proceed }}" >> "$GITHUB_OUTPUT"
+          fi
 
   preflight:
     name: Resolve release metadata
