@@ -16,13 +16,9 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command:
-      "node scripts/prepare-e2e.mjs && pnpm exec next dev --turbopack --port 3100",
-    url: "http://127.0.0.1:3100/api/health",
+    command: "node scripts/prepare-e2e.mjs && node scripts/start-e2e-stack.mjs",
+    url: "http://127.0.0.1:3100",
     reuseExistingServer: !process.env.CI,
-    env: {
-      DATA_DIR: "./.data/e2e",
-    },
     timeout: 120_000,
   },
 });

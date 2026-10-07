@@ -23,7 +23,7 @@ host and completes the proof workflow without Next.js. Read
 
 - `apps/passbook/client/**` (new Vite package)
 - Copied/adapted components under `apps/passbook/client/src/**` sourced from
-  `apps/passbook/src/components/**` and `src/lib/**` (prefer imports from app
+  `apps/passbook/shared/components/**` and `src/lib/**` (prefer imports from app
   paths or shared copies — do not break Next imports)
 - Client routing, env, and tRPC provider configuration
 - Client Playwright or Vitest tests under `apps/passbook/client/`
@@ -33,8 +33,8 @@ host and completes the proof workflow without Next.js. Read
 
 - `apps/passbook/host/**` except reading contract examples
 - `apps/passbook/desktop/**`
-- `apps/passbook/src/server/**`
-- `apps/passbook/src/app/**` (Next production path)
+- `apps/passbook/shared/server/**`
+- `apps/passbook/shared/app/**` (Next production path)
 - Root workspace tooling (integration owner)
 
 ## Requirements

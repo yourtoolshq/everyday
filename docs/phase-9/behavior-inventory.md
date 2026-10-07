@@ -1,8 +1,7 @@
 # Passbook — Desktop behavior inventory
 
 Inventory for issue [#72](https://github.com/yourtoolshq/everyday/issues/72).
-Compares the production Next.js/Docker deployment against the new host, client,
-and desktop stack. Status meanings:
+Documents the desktop host, client, and Electron stack. Status meanings:
 
 | Status         | Meaning                                                                |
 | -------------- | ---------------------------------------------------------------------- |
@@ -13,8 +12,8 @@ and desktop stack. Status meanings:
 
 Reference implementations:
 
-- **Next (production):** `apps/passbook/src/app/**`, Docker image
-- **Desktop stack:** `apps/passbook/host`, `client`, `desktop`
+- **Shared code:** `apps/passbook/shared/`
+- **Runtimes:** `apps/passbook/host`, `client`, `desktop`
 
 Automated evidence: `pnpm foundation:gate`, `pnpm release:gate`,
 `pnpm remote-access:gate`, `pnpm migration-rehearsal:gate`.

@@ -10,7 +10,7 @@
     "check": "pnpm format && turbo run lint typecheck test build migrations:check",
     "check:taxbook": "turbo run lint typecheck test build migrations:check -F taxbook...",
     "check:firstaid": "turbo run lint typecheck test build migrations:check -F firstaid...",
-    "check:passbook": "turbo run lint typecheck test build migrations:check -F passbook...",
+    "check:passbook": "turbo run lint typecheck test build migrations:check -F passbook -F @passbook/host -F @passbook/client -F @passbook/desktop",
     "check:passbook-host": "turbo run lint typecheck test build -F @passbook/host",
     "check:passbook-client": "turbo run lint typecheck test build -F @passbook/client",
     "check:passbook-desktop": "turbo run lint typecheck test build -F @passbook/desktop",
@@ -25,7 +25,7 @@
     "dev": "turbo watch dev --continue",
     "dev:taxbook": "turbo watch dev -F taxbook",
     "dev:firstaid": "turbo watch dev -F firstaid",
-    "dev:passbook": "turbo watch dev -F passbook",
+    "dev:passbook": "turbo watch dev -F @passbook/host -F @passbook/client",
     "dev:tenure": "turbo watch dev -F tenure",
     "format": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",
     "format:fix": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",
@@ -36,7 +36,6 @@
     "typecheck": "turbo run typecheck",
     "docker:build:taxbook": "docker build -f apps/taxbook/Dockerfile -t taxbook .",
     "docker:build:firstaid": "docker build -f apps/firstaid/Dockerfile -t firstaid .",
-    "docker:build:passbook": "docker build -f apps/passbook/Dockerfile -t passbook .",
     "docker:build:tenure": "docker build -f apps/tenure/Dockerfile -t tenure ."
   },
   "devDependencies": {

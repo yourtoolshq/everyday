@@ -286,9 +286,6 @@ importers:
       lucide-react:
         specifier: ^0.468.0
         version: 0.468.0(react@19.3.0)
-      next:
-        specifier: 'catalog:'
-        version: 15.5.25(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -353,6 +350,9 @@ importers:
       eslint-config-next:
         specifier: 'catalog:'
         version: 15.5.26(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
+      next:
+        specifier: 'catalog:'
+        version: 15.5.25(@babel/core@7.29.7)(@playwright/test@1.63.0)(@types/node@22.20.4)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       postcss:
         specifier: 'catalog:'
         version: 8.5.28

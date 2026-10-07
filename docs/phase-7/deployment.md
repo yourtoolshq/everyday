@@ -28,14 +28,19 @@ redesign either system.
 
 ## Deployment matrix
 
+Passbook no longer ships a Docker image from this repository. Production
+distribution is the **desktop app** (`apps/passbook/desktop`). The Passbook
+column below is retained for operators who still run a legacy container until
+cutover; new work should follow `apps/passbook/docs/DEVELOPMENT.md`.
+
 Effective configuration verified with
 `docker compose -f apps/<app>/docker-compose.yml config` (no published
 application ports; volumes keep their fixed production names).
 
 |                        | Taxbook                                               | First Aid                                               | Passbook                                                | Tenure                                              |
 | ---------------------- | ----------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------- |
-| Build command          | `pnpm docker:build:taxbook`                           | `pnpm docker:build:firstaid`                            | `pnpm docker:build:passbook`                            | `pnpm docker:build:tenure`                          |
-| Dockerfile             | `apps/taxbook/Dockerfile`                             | `apps/firstaid/Dockerfile`                              | `apps/passbook/Dockerfile`                              | `apps/tenure/Dockerfile`                            |
+| Build command          | `pnpm docker:build:taxbook`                           | `pnpm docker:build:firstaid`                            | Desktop: `pnpm package:passbook:mac`                    | `pnpm docker:build:tenure`                          |
+| Dockerfile             | `apps/taxbook/Dockerfile`                             | `apps/firstaid/Dockerfile`                              | _(none — desktop app)_                                  | `apps/tenure/Dockerfile`                            |
 | Build context          | repository root                                       | repository root                                         | repository root                                         | repository root                                     |
 | Compose project dir    | `apps/taxbook`                                        | `apps/firstaid`                                         | `apps/passbook`                                         | `apps/tenure`                                       |
 | Internal port          | `3000`                                                | `3000`                                                  | `3000`                                                  | `3000`                                              |
@@ -46,7 +51,7 @@ application ports; volumes keep their fixed production names).
 | Restart policy         | `unless-stopped`                                      | `unless-stopped`                                        | `unless-stopped`                                        | `unless-stopped`                                    |
 | Hostname               | `taxbook.tools.local`                                 | `firstaid.tools.local`                                  | `passbook.tools.local`                                  | `tenure.tools.local`                                |
 | Published host port    | none                                                  | none                                                    | none                                                    | none                                                |
-| Dev port (not Compose) | `3000`                                                | `3001`                                                  | `3002`                                                  | `3003`                                              |
+| Dev port (not Compose) | `3000`                                                | `3001`                                                  | Client `5173`, host `3847` (see Passbook docs)          | `3003`                                              |
 
 Common runtime environment in Compose: `DATA_DIR=/data`, `BACKUP_DIR=/backups`,
 `NODE_ENV=production`. Build-time `APP_VERSION` is passed through when set.

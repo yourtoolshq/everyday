@@ -102,7 +102,7 @@ Abrupt kill may leave SQLite WAL files; Phase 4 recovery procedures apply.
 
 ### Health endpoint
 
-`GET /api/health` behavior matches `apps/passbook/src/server/health.ts`:
+`GET /api/health` behavior matches `apps/passbook/shared/server/health.ts`:
 
 **Maintenance (platform not ready):**
 
@@ -217,7 +217,7 @@ The foundation gate must implement at least these procedures and routes.
 | `overview`     | `summary`, `statementStatus`   | Dashboard and missing statements |
 
 Exact input/output shapes remain those exported by
-`apps/passbook/src/server/api/root.ts`. Clients must not depend on undocumented
+`apps/passbook/shared/server/api/root.ts`. Clients must not depend on undocumented
 fields.
 
 ### HTTP routes

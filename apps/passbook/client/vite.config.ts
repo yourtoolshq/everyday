@@ -14,7 +14,7 @@ export default defineConfig(({ mode }) => {
           import.meta.dirname,
           "./src/trpc/react.tsx",
         ),
-        "~": path.resolve(import.meta.dirname, "../src"),
+        "~": path.resolve(import.meta.dirname, "../shared"),
         "next/image": path.resolve(
           import.meta.dirname,
           "./src/shims/image.tsx",

@@ -1,100 +1,100 @@
-# Development and self-hosting
+# Development
 
-Passbook uses Node.js 22 and pnpm 10.
+Passbook is a **desktop product**: Electron loads a Vite client that talks to a loopback **host**. Shared domain code, UI, and server logic live under `shared/`. Platform libraries live in the monorepo root `packages/` (`@yourtoolshq/*`).
+
+## Layout
+
+```text
+apps/passbook/
+  host/       # HTTP server (tRPC, data routes, auth, static client in production)
+  client/     # Vite SPA (routes, tRPC client, gates)
+  desktop/    # Electron shell, packaging, updates
+  shared/     # lib/, server/, components/, styles/ — Passbook-only
+  drizzle/    # SQL migrations
+  e2e/        # Playwright (host + client stack)
+  scripts/    # CI gates, release helpers
+```
+
+## Prerequisites
+
+Node.js 22 and pnpm 10 (from the repository root).
 
 ## Local development
 
+From the monorepo root:
+
 ```sh
 pnpm install
-pnpm dev
+pnpm dev:passbook
 ```
 
-Open http://localhost:3002. The SQLite database (`DATA_DIR/passbook.db`) and managed documents are stored under `.data/` and ignored by Git.
+That runs the **host** and **client** dev servers. Open the client URL printed by Vite (default `http://127.0.0.1:5173`). Data defaults to `apps/passbook/.data/`.
+
+For the full desktop shell:
+
+```sh
+cd apps/passbook/desktop
+pnpm dev
+```
 
 Optional environment variables:
 
 ```sh
 DATA_DIR=./.data
-PORT=3002
+PORT=3847          # host listen port
+PASSBOOK_HOST_URL=http://127.0.0.1:3847
 ```
 
-Run the verification suite with:
+## Verification
+
+From the repository root:
 
 ```sh
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm exec playwright install chromium
-pnpm test:e2e
+pnpm check:passbook
+pnpm check:passbook-host
+pnpm check:passbook-client
+pnpm check:passbook-desktop
 ```
 
-## Self-hosting with Docker
-
-Production Compose publishes no host port. It listens on port 3000 inside the
-external `web` network and Traefik serves <https://passbook.tools.local>.
-Compose mounts the named `passbook-data` volume at `/data` and the separate
-`passbook-backups` volume at `/backups`. Development stays on port 3002 with
-`pnpm dev` and `DATA_DIR=./.data`. Never mount `passbook-data` or
-`passbook-backups` into a development or test process.
+Passbook-specific gates (disposable data only):
 
 ```sh
-docker compose build
-docker compose up -d
+pnpm foundation:gate
+pnpm remote-access:gate
+pnpm release:gate
+pnpm migration-rehearsal:gate
 ```
 
-The Compose file expects an existing external Docker network named `web`. The
-app sets `traefik.docker.network=web` and does not publish `3000` to the host.
-
-Set `PASSBOOK_BACKUP_DIR` to a host directory when backups should live outside
-the `passbook-backups` volume:
+Playwright E2E (host + client):
 
 ```sh
-PASSBOOK_BACKUP_DIR=/path/to/backups/passbook docker compose up --build -d
+pnpm --filter passbook exec playwright install chromium
+pnpm --filter passbook test:e2e
 ```
 
-The host manager builds the candidate image, then asks the running app for a
-verified backup. If the build or the backup fails, it leaves the running
-container in place. Machine-specific service files and secrets stay outside
-this repository. See the platform
-[Phase 7 deployment contract](../../../docs/phase-7/deployment.md).
+## Data and migrations
 
-## Traefik
-
-Passbook joins the external `web` Docker network and registers with Traefik at
-`passbook.tools.local`.
-
-Add hosts entries if needed (`/etc/hosts` does not support wildcards):
+SQLite and documents live under `DATA_DIR` (default `.data/`). Managed documents are under `DATA_DIR/documents`.
 
 ```sh
-echo "127.0.0.1 taxbook.tools.local tenure.tools.local passbook.tools.local firstaid.tools.local tools.local" | sudo tee -a /etc/hosts
-```
-
-Then open https://passbook.tools.local. Traefik serves a locally-trusted mkcert
-wildcard certificate for `*.tools.local` (configured in dotfiles).
-
-## Documents and backups
-
-Account documents are managed copies under `DATA_DIR/documents` (`DATA_DIR` defaults to `.data`, or `/data` in Docker). Uploads accept one PDF, image (JPEG, PNG, WebP, HEIC), EML, or audio (MP3, M4A, WAV, OGG) file at a time, up to 25 MB.
-
-A backup is one `.ytbackup` archive holding the database and every document it references, verified after it is written. Backups go to `BACKUP_DIR`, which defaults to `DATA_DIR/backups`. `pnpm data` runs the [`yt-data`](../../../docs/phase-4/data-platform.md#command-line) CLI against a running `pnpm dev` server, or against `.data` directly when the server is stopped:
-
-```sh
+cd apps/passbook
+pnpm db:generate   # after schema changes — see ENGINEERING.md
+pnpm db:migrate
 pnpm data backup
 pnpm data list
 pnpm data restore <backup id>
 ```
 
-In Docker, backups go to `/backups` (the `passbook-backups` volume unless
-`PASSBOOK_BACKUP_DIR` overrides it). Set `APP_VERSION` when building to record
-the version in each backup:
+## macOS package (unsigned)
 
 ```sh
-APP_VERSION=1.4.0 docker compose up --build -d
-docker compose exec app yt-data backup
+pnpm package:passbook:mac
 ```
 
-The [recovery runbook](../../../docs/phase-4/data-platform.md#recovery-runbook)
-covers restoring in Docker and moving data to another computer.
+Artifacts land in `apps/passbook/desktop/release/`. See `desktop/README.md` for Gatekeeper notes.
 
-After changing the schema, generate and commit a migration with `pnpm db:generate`. See [`ENGINEERING.md`](ENGINEERING.md) for the full migration workflow and rules.
+## Documents
+
+Account documents are managed copies under `DATA_DIR/documents`. Uploads accept one PDF, image (JPEG, PNG, WebP, HEIC), EML, or audio (MP3, M4A, WAV, OGG) file at a time, up to 25 MB.
+
+Recovery procedures are documented in the platform [data platform recovery runbook](../../../docs/phase-4/data-platform.md#recovery-runbook).

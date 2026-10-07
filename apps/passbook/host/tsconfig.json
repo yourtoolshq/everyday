@@ -4,9 +4,9 @@
     "baseUrl": ".",
     "lib": ["ES2022"],
     "paths": {
-      "~/*": ["../src/*"]
+      "~/*": ["../shared/*"]
     },
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "../src/server/**/*.ts", "../src/env.js"]
+  "include": ["src/**/*.ts", "../shared/server/**/*.ts", "../shared/env.js"]
 }
