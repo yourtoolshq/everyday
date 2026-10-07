@@ -38,10 +38,12 @@ function resolvePassbookReleaseMetadata({
 }) {
   const baseVersion = resolveTargetBaseVersion(packageVersion);
   const version = `${baseVersion}.${date}.${runNumber}`;
+  const electronVersion = `${baseVersion}-${date}.${runNumber}`;
   const shortSha = sha.slice(0, 12);
   return {
     baseVersion,
     version,
+    packageVersion: electronVersion,
     tag: `${PASSBOOK_RELEASE_TAG_PREFIX}${version}`,
     name: `Passbook ${version} (${shortSha})`,
     shortSha,

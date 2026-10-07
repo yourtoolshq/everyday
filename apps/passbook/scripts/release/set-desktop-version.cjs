@@ -4,8 +4,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 function setDesktopVersion(repoRoot, version) {
-  if (!/^\d+\.\d+\.\d+\.\d{8}\.\d+$/.test(version)) {
-    throw new Error(`Invalid Passbook release version '${version}'.`);
+  if (!/^\d+\.\d+\.\d+-\d{8}\.\d+$/.test(version)) {
+    throw new Error(`Invalid Passbook release package version '${version}'.`);
   }
 
   const packageJsonPath = path.join(

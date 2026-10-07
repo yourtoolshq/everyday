@@ -62,6 +62,7 @@ function main() {
   const entries = [
     ["base_version", metadata.baseVersion],
     ["version", metadata.version],
+    ["package_version", metadata.packageVersion],
     ["tag", metadata.tag],
     ["name", metadata.name],
     ["short_sha", metadata.shortSha],

@@ -33,6 +33,7 @@ describe("resolvePassbookReleaseMetadata", () => {
     ).toEqual({
       baseVersion: "0.1.1",
       version: "0.1.1.20260307.42",
+      packageVersion: "0.1.1-20260307.42",
       tag: "passbook-v0.1.1.20260307.42",
       name: "Passbook 0.1.1.20260307.42 (abcdef123456)",
       shortSha: "abcdef123456",
