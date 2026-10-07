@@ -87,9 +87,9 @@ export function App() {
     <TRPCReactProvider>
       <ThemeProvider>
         <TooltipProvider>
-          <UpdateGate>
-            <HostGate>
-              <BrowserRouter>
+          <BrowserRouter>
+            <UpdateGate>
+              <HostGate>
                 <Routes>
                   <Route path="/pair" element={<PairRoute />} />
                   <Route
@@ -118,9 +118,9 @@ export function App() {
                   />
                 </Routes>
                 <Toaster />
-              </BrowserRouter>
-            </HostGate>
-          </UpdateGate>
+              </HostGate>
+            </UpdateGate>
+          </BrowserRouter>
         </TooltipProvider>
       </ThemeProvider>
     </TRPCReactProvider>
