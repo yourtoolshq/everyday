@@ -46,6 +46,10 @@ node --import tsx apps/passbook/host/src/index.ts
 
 ## Local macOS package
 
+Packaging disables electron-builder's native dependency rebuild step
+(`npmRebuild: false`). The desktop shell has no runtime npm dependencies; the
+bundled host already ships its own libSQL native runtime under `extraResources`.
+
 The initial supported package is an unsigned Apple Silicon (`arm64`) build:
 
 ```bash

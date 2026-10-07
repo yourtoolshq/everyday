@@ -32,4 +32,5 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Fixed
 
+- macOS packaging no longer fails on pnpm workspaces when electron-builder tries to rebuild transitive native dependencies such as `@emnapi/core`.
 - Clicking anywhere in a statement period cell now activates its action, not just the label.
