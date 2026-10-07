@@ -30,15 +30,22 @@ async function trpc<T>(
   baseUrl: string,
   path: string,
   input?: unknown,
+  asQuery = false,
 ): Promise<T> {
-  const response =
-    input === undefined
-      ? await fetch(`${baseUrl}/api/trpc/${path}`)
-      : await fetch(`${baseUrl}/api/trpc/${path}`, {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ json: input }),
-        });
+  let response: Response;
+  if (input !== undefined && !asQuery) {
+    response = await fetch(`${baseUrl}/api/trpc/${path}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ json: input }),
+    });
+  } else if (input !== undefined) {
+    response = await fetch(
+      `${baseUrl}/api/trpc/${path}?input=${encodeURIComponent(JSON.stringify({ json: input }))}`,
+    );
+  } else {
+    response = await fetch(`${baseUrl}/api/trpc/${path}`);
+  }
   const body = (await response.json()) as {
     result?: { data: { json: T } };
     error?: { message: string };
@@ -244,5 +251,88 @@ describe("passbook host integration", () => {
     );
     expect(fileAfter.status).toBe(200);
     expect(Buffer.from(await fileAfter.arrayBuffer())).toEqual(pdf);
+  });
+
+  it("deletes an account, removes stored files, and clears inventory", async () => {
+    dataDir = await mkdtemp(join(tmpdir(), "passbook-host-"));
+    const port = String(await freePort());
+    baseUrl = `http://127.0.0.1:${port}`;
+
+    childHost = spawnHostProcess({
+      DATA_DIR: dataDir,
+      BACKUP_DIR: join(dataDir, "backups"),
+      HOST: "127.0.0.1",
+      PORT: port,
+      NODE_ENV: "test",
+    });
+    await waitForHealth(baseUrl, childHost);
+
+    await trpc(baseUrl, "setup.initialize", {
+      householdName: "Delete test household",
+      people: ["Alex"],
+    });
+
+    const people = await trpc<{ id: string }[]>(baseUrl, "people.list");
+    const person = people[0];
+    if (!person) throw new Error("Expected at least one person");
+
+    const institution = await trpc<{ id: string }>(
+      baseUrl,
+      "institutions.create",
+      { name: "Delete Test Bank" },
+    );
+    const account = await trpc<{ id: string }>(baseUrl, "accounts.create", {
+      institutionId: institution.id,
+      displayName: "Temporary Chequing",
+      accountType: "chequing",
+      ownerIds: [person.id],
+    });
+
+    const form = new FormData();
+    form.set(
+      "file",
+      new File([pdf], "temp-statement.pdf", { type: "application/pdf" }),
+    );
+    const upload = await fetch(`${baseUrl}/api/data/upload/document`, {
+      method: "POST",
+      body: form,
+    });
+    const staged = (await upload.json()) as { token: string };
+
+    const document = await trpc<{ fileId: string }>(baseUrl, "documents.create", {
+      accountId: account.id,
+      type: "other",
+      title: "Temp upload",
+      file: staged.token,
+    });
+
+    const preview = await trpc<{
+      documentCount: number;
+      displayName: string;
+    }>(baseUrl, "accounts.deletePreview", { id: account.id }, true);
+    expect(preview.displayName).toBe("Temporary Chequing");
+    expect(preview.documentCount).toBe(1);
+
+    const deleted = await trpc<{ id: string; deletedDocumentCount: number }>(
+      baseUrl,
+      "accounts.delete",
+      { id: account.id },
+    );
+    expect(deleted.deletedDocumentCount).toBe(1);
+
+    await expect(
+      trpc(baseUrl, "accounts.get", { id: account.id }, true),
+    ).rejects.toThrow();
+
+    const fileResponse = await fetch(
+      `${baseUrl}/api/data/files/${document.fileId}`,
+    );
+    expect(fileResponse.status).toBe(404);
+
+    const summary = await trpc<{ accountCount: number }>(
+      baseUrl,
+      "overview.summary",
+    );
+    expect(summary.accountCount).toBe(0);
   });
 });

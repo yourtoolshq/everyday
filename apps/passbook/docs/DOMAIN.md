@@ -155,6 +155,8 @@ Closing an account must:
 
 Closing an account must never behave like deleting it.
 
+Deleting an account is a separate, destructive operation. Use it only to remove a mistaken or duplicate entry. Delete permanently removes the account and all attached documents, activity, terms history, and stored files. It must not be offered as an alternative to closure.
+
 ---
 
 ### Statement expectation
