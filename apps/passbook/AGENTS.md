@@ -15,12 +15,12 @@ For implementation conventions — UI patterns, tRPC usage, migrations, testing 
 
 Passbook ships as a **desktop app** (host + Vite client + Electron). Product code that is not a runtime shell lives under **`shared/`** (`lib/`, `server/`, `components/`). Monorepo-wide libraries stay in root **`packages/`** (`@yourtoolshq/*`). Do not add Passbook-only packages under root `packages/` unless multiple Everyday apps need the same code.
 
-| Path | Role |
-| ---- | ---- |
-| `host/` | Loopback HTTP, auth, bundled API |
-| `client/` | SPA routes and tRPC client |
-| `desktop/` | Electron packaging and updates |
-| `shared/` | Passbook domain + UI shared by client (and typechecked from host) |
+| Path       | Role                                                              |
+| ---------- | ----------------------------------------------------------------- |
+| `host/`    | Loopback HTTP, auth, bundled API                                  |
+| `client/`  | SPA routes and tRPC client                                        |
+| `desktop/` | Electron packaging and updates                                    |
+| `shared/`  | Passbook domain + UI shared by client (and typechecked from host) |
 
 ## Before starting a phase
 

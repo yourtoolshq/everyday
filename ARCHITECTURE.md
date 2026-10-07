@@ -33,12 +33,12 @@ Apps do not import from each other. Cross-app integration (e.g. Taxbook ↔ Tenu
 
 ## Development ports
 
-| Application | Dev port |
-| ----------- | -------- |
-| Taxbook     | 3000     |
-| First Aid   | 3001     |
+| Application | Dev port                                                                  |
+| ----------- | ------------------------------------------------------------------------- |
+| Taxbook     | 3000                                                                      |
+| First Aid   | 3001                                                                      |
 | Passbook    | Vite client `5173`, host `3847` (see `apps/passbook/docs/DEVELOPMENT.md`) |
-| Tenure      | 3003     |
+| Tenure      | 3003                                                                      |
 
 E2E tests use port **3100** with isolated `.data/e2e.db` per app run.
 

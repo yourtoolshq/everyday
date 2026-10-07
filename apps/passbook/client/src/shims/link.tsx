@@ -8,6 +8,10 @@ export type NextLinkProps = {
   prefetch?: boolean;
 } & Omit<ComponentProps<typeof RouterLink>, "to" | "href" | "children">;
 
-export default function Link({ href, prefetch: _prefetch, ...props }: NextLinkProps) {
+export default function Link({
+  href,
+  prefetch: _prefetch,
+  ...props
+}: NextLinkProps) {
   return <RouterLink {...props} to={href} />;
 }

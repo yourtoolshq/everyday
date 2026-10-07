@@ -3,6 +3,7 @@ import { desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
 import type { AccountTerms } from "~/lib/account-terms";
+import type { db } from "~/server/db";
 import {
   createAccountEventInputSchema,
   updateAccountEventInputSchema,
@@ -12,7 +13,6 @@ import {
   normalizeAccountTerms,
 } from "~/lib/account-terms";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
-import type { db } from "~/server/db";
 import {
   accountEvents,
   accounts,
