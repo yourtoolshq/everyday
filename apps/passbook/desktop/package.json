@@ -8,6 +8,8 @@
     "extends": null,
     "appId": "com.yourtoolshq.passbook",
     "productName": "Passbook",
+    "npmRebuild": false,
+    "nodeGypRebuild": false,
     "directories": {
       "output": "release",
       "buildResources": "build"
