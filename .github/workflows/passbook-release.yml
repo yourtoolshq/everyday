@@ -59,6 +59,7 @@ jobs:
     outputs:
       ref: ${{ github.sha }}
       version: ${{ steps.release_meta.outputs.version }}
+      package_version: ${{ steps.release_meta.outputs.package_version }}
       tag: ${{ steps.release_meta.outputs.tag }}
       release_name: ${{ steps.release_meta.outputs.name }}
       previous_tag: ${{ steps.previous_tag.outputs.previous_tag }}
@@ -122,7 +123,7 @@ jobs:
       - name: Align desktop package version
         run: |
           node apps/passbook/scripts/release/set-desktop-version.cjs \
-            "${{ needs.preflight.outputs.version }}" \
+            "${{ needs.preflight.outputs.package_version }}" \
             "$GITHUB_WORKSPACE"
 
       - name: Build Passbook macOS release artifacts
