@@ -29,28 +29,32 @@ export interface UpdateControllerOptions {
   currentVersion: string;
 }
 
+interface PreUpdateBackupRecord {
+  id: string;
+  verification?: { status?: string };
+}
+
 async function createPreUpdateBackup(hostUrl: string) {
   const response = await fetch(`${hostUrl}/api/data/trpc/backups.create`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ json: null }),
+    body: JSON.stringify({}),
   });
   const body = (await response.json()) as {
-    result?: {
-      data?: { json?: { id?: string; verification?: { ok?: boolean } } };
-    };
-    error?: unknown;
+    result?: { data?: PreUpdateBackupRecord };
+    error?: { message?: string };
   };
 
-  if (!response.ok || !body.result?.data?.json?.id) {
+  const backup = body.result?.data;
+  if (!response.ok || !backup?.id) {
     throw new Error(
       "Passbook could not create a verified backup before updating.",
     );
   }
-  if (body.result.data.json.verification?.ok !== true) {
+  if (backup.verification?.status !== "verified") {
     throw new Error("Passbook created a backup, but verification failed.");
   }
-  return body.result.data.json.id;
+  return backup.id;
 }
 
 export class UpdateController {
