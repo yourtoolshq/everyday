@@ -19,12 +19,16 @@ async function createPreUpdateBackup(hostUrl: string) {
     body: JSON.stringify({ json: null }),
   });
   const body = (await response.json()) as {
-    result?: { data?: { json?: { id?: string; verification?: { ok?: boolean } } } };
+    result?: {
+      data?: { json?: { id?: string; verification?: { ok?: boolean } } };
+    };
     error?: unknown;
   };
 
   if (!response.ok || !body.result?.data?.json?.id) {
-    throw new Error("Passbook could not create a verified backup before updating.");
+    throw new Error(
+      "Passbook could not create a verified backup before updating.",
+    );
   }
   if (body.result.data.json.verification?.ok !== true) {
     throw new Error("Passbook created a backup, but verification failed.");
@@ -83,7 +87,8 @@ export async function setupAutoUpdater(options: UpdateManagerOptions) {
         cancelId: 1,
         title: "Passbook update available",
         message: `Version ${info.version} is available.`,
-        detail: "Passbook will create a verified backup before installing the update.",
+        detail:
+          "Passbook will create a verified backup before installing the update.",
       })
       .then(({ response }) => {
         if (response === 0) {
@@ -105,7 +110,8 @@ export async function setupAutoUpdater(options: UpdateManagerOptions) {
         cancelId: 1,
         title: "Passbook update ready",
         message: `Version ${info.version} has been downloaded.`,
-        detail: "Passbook will back up your data, restart, and apply the update.",
+        detail:
+          "Passbook will back up your data, restart, and apply the update.",
       })
       .then(async ({ response }) => {
         if (response !== 0) return;
