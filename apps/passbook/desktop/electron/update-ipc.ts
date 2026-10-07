@@ -5,9 +5,7 @@ import type { UpdateController } from "./update-controller.js";
 export function registerUpdateIpc(controller: UpdateController) {
   ipcMain.handle("passbook:update:get-state", () => controller.getState());
 
-  ipcMain.handle("passbook:update:download", () =>
-    controller.downloadUpdate(),
-  );
+  ipcMain.handle("passbook:update:download", () => controller.downloadUpdate());
 
   ipcMain.handle("passbook:update:install", () => controller.installUpdate());
 

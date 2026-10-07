@@ -29,7 +29,9 @@ function nextStatusAfterDownloadFailure(
   return state.availableVersion ? "available" : "error";
 }
 
-export function reduceOnCheckStart(state: DesktopUpdateState): DesktopUpdateState {
+export function reduceOnCheckStart(
+  state: DesktopUpdateState,
+): DesktopUpdateState {
   return {
     ...state,
     status: "checking",
@@ -71,7 +73,9 @@ export function reduceOnUpdateAvailable(
   };
 }
 
-export function reduceOnNoUpdate(state: DesktopUpdateState): DesktopUpdateState {
+export function reduceOnNoUpdate(
+  state: DesktopUpdateState,
+): DesktopUpdateState {
   return {
     ...state,
     status: "up-to-date",
@@ -84,7 +88,9 @@ export function reduceOnNoUpdate(state: DesktopUpdateState): DesktopUpdateState 
   };
 }
 
-export function reduceOnDownloadStart(state: DesktopUpdateState): DesktopUpdateState {
+export function reduceOnDownloadStart(
+  state: DesktopUpdateState,
+): DesktopUpdateState {
   return {
     ...state,
     status: "downloading",

@@ -1,7 +1,13 @@
 import type { BrowserWindow } from "electron";
 import { autoUpdater } from "electron-updater";
 
+import type {
+  DesktopUpdateActionResult,
+  DesktopUpdateState,
+  DesktopUpdateTrialState,
+} from "./update-types.js";
 import { normalizeDesktopUpdateReleaseNotes } from "./release-notes.js";
+import { UpdateOrchestrator } from "./update-orchestrator.js";
 import {
   createInitialDesktopUpdateState,
   reduceOnCheckFailure,
@@ -14,12 +20,6 @@ import {
   reduceOnNoUpdate,
   reduceOnUpdateAvailable,
 } from "./update-state.js";
-import type {
-  DesktopUpdateActionResult,
-  DesktopUpdateState,
-  DesktopUpdateTrialState,
-} from "./update-types.js";
-import { UpdateOrchestrator } from "./update-orchestrator.js";
 
 const UPDATE_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000;
 
@@ -153,8 +153,7 @@ export class UpdateController {
   }
 
   async installUpdate(): Promise<DesktopUpdateActionResult> {
-    const version =
-      this.state.downloadedVersion ?? this.state.availableVersion;
+    const version = this.state.downloadedVersion ?? this.state.availableVersion;
     if (
       !this.state.enabled ||
       this.actionInFlight ||
@@ -166,10 +165,7 @@ export class UpdateController {
 
     this.actionInFlight = true;
     try {
-      await this.orchestrator.beginUpdate(
-        version,
-        this.options.currentVersion,
-      );
+      await this.orchestrator.beginUpdate(version, this.options.currentVersion);
       const backupId = await createPreUpdateBackup(this.options.hostUrl);
       await this.orchestrator.markBackupComplete(backupId);
       autoUpdater.quitAndInstall();

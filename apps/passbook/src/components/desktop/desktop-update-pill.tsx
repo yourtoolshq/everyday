@@ -54,7 +54,9 @@ function ReleaseNotesTooltip({
       <p>{tooltip}</p>
       {releaseNotes.map((releaseNote) => (
         <div key={releaseNote.version} className="space-y-1">
-          <p className="font-medium">What&apos;s changed in {releaseNote.version}</p>
+          <p className="font-medium">
+            What&apos;s changed in {releaseNote.version}
+          </p>
           <ul className="list-disc space-y-1 pl-4">
             {releaseNote.items.map((item) => (
               <li key={item}>{item}</li>
@@ -71,18 +73,8 @@ export function DesktopUpdatePill() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isActionPending, setIsActionPending] = useState(false);
 
-  const visible =
-    isPassbookDesktop() && state && shouldShowDesktopUpdateButton(state);
-  if (!visible || !bridge || !state) return null;
-
-  const action = resolveDesktopUpdateButtonAction(state);
-  const disabled = isDesktopUpdateButtonDisabled(state) || isActionPending;
-  const tooltip = getDesktopUpdateButtonTooltip(state);
-  const releaseUrl = getDesktopUpdateReleaseUrl(
-    state.downloadedVersion ?? state.availableVersion,
-  );
-
   const handleDownload = useCallback(async () => {
+    if (!bridge) return;
     setIsActionPending(true);
     try {
       const result = await bridge.downloadUpdate();
@@ -93,7 +85,9 @@ export function DesktopUpdatePill() {
     } catch (error) {
       toast.error("Could not start update download", {
         description:
-          error instanceof Error ? error.message : "An unexpected error occurred.",
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
       });
     } finally {
       setIsActionPending(false);
@@ -101,6 +95,7 @@ export function DesktopUpdatePill() {
   }, [bridge]);
 
   const handleInstall = useCallback(async () => {
+    if (!bridge) return;
     setIsActionPending(true);
     try {
       const result = await bridge.installUpdate();
@@ -111,13 +106,26 @@ export function DesktopUpdatePill() {
     } catch (error) {
       toast.error("Could not install update", {
         description:
-          error instanceof Error ? error.message : "An unexpected error occurred.",
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
       });
     } finally {
       setIsActionPending(false);
       setConfirmOpen(false);
     }
   }, [bridge]);
+
+  const visible =
+    isPassbookDesktop() && state && shouldShowDesktopUpdateButton(state);
+  if (!visible || !bridge || !state) return null;
+
+  const action = resolveDesktopUpdateButtonAction(state);
+  const disabled = isDesktopUpdateButtonDisabled(state) || isActionPending;
+  const tooltip = getDesktopUpdateButtonTooltip(state);
+  const releaseUrl = getDesktopUpdateReleaseUrl(
+    state.downloadedVersion ?? state.availableVersion,
+  );
 
   const handleClick = () => {
     if (disabled || action === "none") return;
@@ -150,7 +158,9 @@ export function DesktopUpdatePill() {
             <TooltipContent
               side="top"
               className={
-                state.releaseNotes.length > 0 ? "pointer-events-auto max-w-sm" : undefined
+                state.releaseNotes.length > 0
+                  ? "pointer-events-auto max-w-sm"
+                  : undefined
               }
             >
               <ReleaseNotesTooltip
@@ -191,7 +201,9 @@ export function DesktopUpdatePill() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isActionPending}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isActionPending}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={isActionPending}
               onClick={(event) => {

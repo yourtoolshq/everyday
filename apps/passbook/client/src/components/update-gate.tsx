@@ -12,9 +12,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@yourtoolshq/ui/card";
-import { useDesktopUpdate } from "~/hooks/use-desktop-update";
-import type { DesktopUpdateTrialState } from "~/lib/desktop-update.types";
 
+import type { DesktopUpdateTrialState } from "~/lib/desktop-update.types";
+import { useDesktopUpdate } from "~/hooks/use-desktop-update";
 import { authHeaders } from "../lib/auth";
 import { hostApiPath } from "../lib/host";
 
@@ -75,7 +75,11 @@ function VerifyUpdateScreen({
         state?: PlatformStatus | string;
       };
 
-      if (body.status === "maintenance" || !health.ok || body.status === "error") {
+      if (
+        body.status === "maintenance" ||
+        !health.ok ||
+        body.status === "error"
+      ) {
         const status = await readPlatformStatus();
         if (status.state !== "ready") {
           setVerifyState({ kind: "maintenance", status });
@@ -167,7 +171,10 @@ function VerifyUpdateScreen({
         <Card className="w-full max-w-lg shadow-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <LoaderCircle className="size-5 animate-spin" aria-hidden="true" />
+              <LoaderCircle
+                className="size-5 animate-spin"
+                aria-hidden="true"
+              />
               Verifying update
             </CardTitle>
             <CardDescription>

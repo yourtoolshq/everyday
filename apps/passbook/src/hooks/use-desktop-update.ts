@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { getDesktopUpdatesBridge } from "~/lib/desktop-update.logic";
 import type { DesktopUpdateState } from "~/lib/desktop-update.types";
+import { getDesktopUpdatesBridge } from "~/lib/desktop-update.logic";
 
 export function useDesktopUpdate() {
   const bridge = getDesktopUpdatesBridge();

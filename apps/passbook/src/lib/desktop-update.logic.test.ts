@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import type { DesktopUpdateState } from "./desktop-update.types";
 import {
   getDesktopUpdateButtonLabel,
   getDesktopUpdateInstallConfirmationMessage,
   resolveDesktopUpdateButtonAction,
   shouldShowDesktopUpdateButton,
 } from "./desktop-update.logic";
-import type { DesktopUpdateState } from "./desktop-update.types";
 
 function baseState(
   overrides: Partial<DesktopUpdateState> = {},

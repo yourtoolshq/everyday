@@ -50,9 +50,8 @@ describe("UpdateController", () => {
   });
 
   it("exposes available updates without native dialogs", async () => {
-    const { UpdateController } = await import(
-      "../electron/update-controller.js"
-    );
+    const { UpdateController } =
+      await import("../electron/update-controller.js");
     const controller = new UpdateController({
       dataDir,
       hostUrl: "http://127.0.0.1:3847",
@@ -73,9 +72,8 @@ describe("UpdateController", () => {
   });
 
   it("leaves the update in trial stage before restart", async () => {
-    const { UpdateController } = await import(
-      "../electron/update-controller.js"
-    );
+    const { UpdateController } =
+      await import("../electron/update-controller.js");
     const controller = new UpdateController({
       dataDir,
       hostUrl: "http://127.0.0.1:3847",
@@ -113,9 +111,8 @@ describe("UpdateController", () => {
       }),
     );
 
-    const { UpdateController } = await import(
-      "../electron/update-controller.js"
-    );
+    const { UpdateController } =
+      await import("../electron/update-controller.js");
     const controller = new UpdateController({
       dataDir,
       hostUrl: "http://127.0.0.1:3847",
