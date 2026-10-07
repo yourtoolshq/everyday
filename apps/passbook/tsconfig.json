@@ -1,26 +1,34 @@
 {
-  "extends": "@yourtoolshq/tsconfig/nextjs.json",
+  "extends": "@yourtoolshq/tsconfig/base.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "lib": ["ES2022", "DOM"],
+    "jsx": "react-jsx",
+    "skipLibCheck": true,
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./shared/*"]
     }
   },
   "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    "**/*.cjs",
-    "**/*.js",
-    ".next/types/**/*.ts"
+    "shared/lib/**/*.ts",
+    "shared/server/**/*.ts",
+    "shared/modules/**/*.ts",
+    "shared/core/**/*.ts",
+    "shared/env.js",
+    "drizzle.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts",
+    "playwright.foundation.config.ts"
   ],
   "exclude": [
     "node_modules",
     "generated",
+    "shared/components/**",
     "host/**",
     "client/**",
     "desktop/**",
     "fixtures/**",
-    "scripts/release/**"
+    "scripts/**",
+    "e2e/**"
   ]
 }

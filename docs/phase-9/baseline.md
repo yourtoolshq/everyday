@@ -58,14 +58,14 @@ automatic installation without a recoverable update gate.
 Run Passbook business operations in a **standalone Node host** that is not
 Next.js:
 
-- Boot with `dataPlatform.boot()` from `apps/passbook/src/server/data.ts`.
-- Serve existing tRPC procedures from `apps/passbook/src/server/api/root.ts`
+- Boot with `dataPlatform.boot()` from `apps/passbook/shared/server/data.ts`.
+- Serve existing tRPC procedures from `apps/passbook/shared/server/api/root.ts`
   at `/api/trpc`.
 - Serve data-platform HTTP routes (upload, files, status) using the same
   behavior as `createDataHandlers` in
   `packages/data/src/next/handlers.ts`, adapted to the host HTTP stack.
 - Expose `/api/health` using `createHealthResponse` from
-  `apps/passbook/src/server/health.ts`.
+  `apps/passbook/shared/server/health.ts`.
 - In packaged mode, serve the built SPA and its route fallback from the same
   loopback origin as the API. This keeps relative upload, file, backup, and
   document URLs valid for the desktop without changing browser-client behavior.
@@ -87,9 +87,9 @@ supervisor beyond desktop shell.
 Replace Next.js presentation with a **Vite React SPA** that:
 
 - Loads routes for setup, dashboard, accounts, institutions, documents, and file
-  viewer pages currently under `apps/passbook/src/app/(app)/` and `/setup`.
-- Reuses components from `apps/passbook/src/components/` and hooks from
-  `apps/passbook/src/lib/uploads.ts`.
+  viewer pages currently under `apps/passbook/shared/app/(app)/` and `/setup`.
+- Reuses components from `apps/passbook/shared/components/` and hooks from
+  `apps/passbook/shared/lib/uploads.ts`.
 - Connects to the host through configurable base URLs for tRPC (`/api/trpc`) and
   data HTTP (`/api/data/*`).
 - Drops React Server Components and `~/trpc/server` callers; fetches in client
@@ -121,10 +121,10 @@ cutover:
 | `apps/passbook/client/`                                  | Client brief                 | Vite SPA, routing, host connection config               |
 | `apps/passbook/desktop/`                                 | Desktop brief                | Electron main/preload, host lifecycle                   |
 | `apps/passbook/fixtures/host-stub/`                      | Integration plan             | Contract-faithful stub for parallel client/desktop work |
-| `apps/passbook/src/server/**`                            | Host brief (read/adapt)      | Existing tRPC routers, data wiring, health              |
-| `apps/passbook/src/lib/**`                               | Shared (read-only in wave 1) | Domain logic reused by host                             |
-| `apps/passbook/src/components/**`                        | Client brief (copy/adapt)    | UI reused by SPA                                        |
-| `apps/passbook/src/app/**`                               | Unchanged in wave 1          | Current Next production path                            |
+| `apps/passbook/shared/server/**`                            | Host brief (read/adapt)      | Existing tRPC routers, data wiring, health              |
+| `apps/passbook/shared/lib/**`                               | Shared (read-only in wave 1) | Domain logic reused by host                             |
+| `apps/passbook/shared/components/**`                        | Client brief (copy/adapt)    | UI reused by SPA                                        |
+| `apps/passbook/shared/app/**`                               | Unchanged in wave 1          | Current Next production path                            |
 | Root `package.json`, `turbo.json`, `pnpm-workspace.yaml` | Integration owner            | Scripts and workspace entries for new packages          |
 
 Do **not** extract a generic `@yourtoolshq/runtime` package in this wave.
@@ -137,30 +137,30 @@ pattern and a second app validates it.
 
 | Area                        | Paths                                                                                                                                      | Evidence                                            |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
-| Domain rules                | `apps/passbook/src/lib/statement-completeness.ts`, `expected-periods.ts`, `documents.ts`, `statement-frequency.ts`, `account-status.ts`, … | Vitest coverage in matching `*.test.ts` files       |
-| Statement upload validation | `apps/passbook/src/server/documents/statement-upload.ts`                                                                                   | Called from `documents` router                      |
-| Vertical-slice module       | `apps/passbook/src/modules/institutions/**`                                                                                                | `institution-repository.test.ts`                    |
-| Data platform contract      | `apps/passbook/src/server/data.ts`, `src/server/db/schema.ts`, `drizzle/`                                                                  | `defineDataPlatform({ app: "passbook", … })`        |
-| File router                 | `apps/passbook/src/server/files.ts`                                                                                                        | Endpoints `document`, `institutionIcon`             |
-| tRPC API surface            | `apps/passbook/src/server/api/root.ts`, routers under `routers/`                                                                           | Used by Playwright helpers in `e2e/uploads.spec.ts` |
+| Domain rules                | `apps/passbook/shared/lib/statement-completeness.ts`, `expected-periods.ts`, `documents.ts`, `statement-frequency.ts`, `account-status.ts`, … | Vitest coverage in matching `*.test.ts` files       |
+| Statement upload validation | `apps/passbook/shared/server/documents/statement-upload.ts`                                                                                   | Called from `documents` router                      |
+| Vertical-slice module       | `apps/passbook/shared/modules/institutions/**`                                                                                                | `institution-repository.test.ts`                    |
+| Data platform contract      | `apps/passbook/shared/server/data.ts`, `src/server/db/schema.ts`, `drizzle/`                                                                  | `defineDataPlatform({ app: "passbook", … })`        |
+| File router                 | `apps/passbook/shared/server/files.ts`                                                                                                        | Endpoints `document`, `institutionIcon`             |
+| tRPC API surface            | `apps/passbook/shared/server/api/root.ts`, routers under `routers/`                                                                           | Used by Playwright helpers in `e2e/uploads.spec.ts` |
 | Readiness middleware        | `requireReady(dataPlatform)` in `src/server/api/trpc.ts`                                                                                   | Maps platform states to `SERVICE_UNAVAILABLE`       |
-| Health semantics            | `apps/passbook/src/server/health.ts`                                                                                                       | Maintenance returns 200; DB failure returns 503     |
-| Upload helpers              | `apps/passbook/src/lib/uploads.ts`                                                                                                         | Wraps `@yourtoolshq/data-ui` upload helpers         |
-| UI workspaces               | `apps/passbook/src/components/**`                                                                                                          | E2E exercises account detail, uploads, viewer       |
+| Health semantics            | `apps/passbook/shared/server/health.ts`                                                                                                       | Maintenance returns 200; DB failure returns 503     |
+| Upload helpers              | `apps/passbook/shared/lib/uploads.ts`                                                                                                         | Wraps `@yourtoolshq/data-ui` upload helpers         |
+| UI workspaces               | `apps/passbook/shared/components/**`                                                                                                          | E2E exercises account detail, uploads, viewer       |
 
 ### Tied to Next.js (replace in client/host split)
 
 | Area                      | Paths                                               | Adaptation                                                       |
 | ------------------------- | --------------------------------------------------- | ---------------------------------------------------------------- |
-| App Router pages          | `apps/passbook/src/app/**`                          | SPA routes + client data fetching                                |
-| RSC tRPC                  | `apps/passbook/src/trpc/server.ts`                  | Remove; use client tRPC only                                     |
-| Next instrumentation boot | `apps/passbook/src/instrumentation.ts`              | Host calls `dataPlatform.boot()` at process start                |
-| Next data route adapter   | `apps/passbook/src/app/api/data/[...path]/route.ts` | Host-native data HTTP handler                                    |
-| Next tRPC route           | `apps/passbook/src/app/api/trpc/[trpc]/route.ts`    | Host-native tRPC handler                                         |
-| Next health route         | `apps/passbook/src/app/api/health/route.ts`         | Host `/api/health`                                               |
-| Server `DataGate` layout  | `apps/passbook/src/app/(app)/layout.tsx`            | Client-side gate using `/api/data/status` or tRPC error handling |
+| App Router pages          | `apps/passbook/shared/app/**`                          | SPA routes + client data fetching                                |
+| RSC tRPC                  | `apps/passbook/shared/trpc/server.ts`                  | Remove; use client tRPC only                                     |
+| Next instrumentation boot | `apps/passbook/shared/instrumentation.ts`              | Host calls `dataPlatform.boot()` at process start                |
+| Next data route adapter   | `apps/passbook/shared/app/api/data/[...path]/route.ts` | Host-native data HTTP handler                                    |
+| Next tRPC route           | `apps/passbook/shared/app/api/trpc/[trpc]/route.ts`    | Host-native tRPC handler                                         |
+| Next health route         | `apps/passbook/shared/app/api/health/route.ts`         | Host `/api/health`                                               |
+| Server `DataGate` layout  | `apps/passbook/shared/app/(app)/layout.tsx`            | Client-side gate using `/api/data/status` or tRPC error handling |
 | SSR household redirect    | `RequireHousehold` in `(app)/layout.tsx`            | Client route guard calling `setup.state`                         |
-| Next env helper           | `apps/passbook/src/env.js`                          | Host/client env modules (`@t3-oss/env-core` or zod)              |
+| Next env helper           | `apps/passbook/shared/env.js`                          | Host/client env modules (`@t3-oss/env-core` or zod)              |
 | Standalone Next build     | `next.config.js`, `Dockerfile`                      | Unchanged until production cutover                               |
 | E2E server                | `playwright.config.ts` webServer                    | New integration config targeting host+client                     |
 
@@ -168,11 +168,11 @@ pattern and a second app validates it.
 
 | Area              | Paths                                                         | Notes                                                                                          |
 | ----------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| tRPC React client | `apps/passbook/src/trpc/react.tsx`                            | In packaged mode it shares the loopback host origin; development keeps its configured host URL |
+| tRPC React client | `apps/passbook/shared/trpc/react.tsx`                            | In packaged mode it shares the loopback host origin; development keeps its configured host URL |
 | Data UI screens   | `@yourtoolshq/data-ui`                                        | Already HTTP-based; point upload/fetch URLs at host                                            |
-| File viewer       | `apps/passbook/src/app/files/[fileId]/page.tsx`               | Move to SPA route; keep `FileViewerPage` behavior                                              |
-| Setup page        | `apps/passbook/src/app/setup/page.tsx`, `components/setup/**` | SPA entry when `setup.state.initialized === false`                                             |
-| Logging/errors    | `apps/passbook/src/core/infrastructure/**`                    | Reuse `@yourtoolshq/server` in host                                                            |
+| File viewer       | `apps/passbook/shared/app/files/[fileId]/page.tsx`               | Move to SPA route; keep `FileViewerPage` behavior                                              |
+| Setup page        | `apps/passbook/shared/app/setup/page.tsx`, `components/setup/**` | SPA entry when `setup.state.initialized === false`                                             |
+| Logging/errors    | `apps/passbook/shared/core/infrastructure/**`                    | Reuse `@yourtoolshq/server` in host                                                            |
 
 ## Compatibility and update boundaries
 

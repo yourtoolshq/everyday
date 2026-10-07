@@ -61,8 +61,8 @@ flowchart TD
 | `apps/passbook/client/**`                                | Client assignee                                     |
 | `apps/passbook/desktop/**`                               | Desktop assignee                                    |
 | `apps/passbook/fixtures/host-stub/**`                    | Host assignee (with client review for shape parity) |
-| `apps/passbook/src/server/**` shared routers             | Host assignee with `pnpm check:passbook` gate       |
-| `apps/passbook/src/app/**` Next routes                   | Untouched in foundation wave                        |
+| `apps/passbook/shared/server/**` shared routers             | Host assignee with `pnpm check:passbook` gate       |
+| `apps/passbook/shared/app/**` Next routes                   | Untouched in foundation wave                        |
 
 ## host-stub fixture plan
 

@@ -4,6 +4,10 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ## Unreleased
 
+### Changed
+
+- Passbook is desktop-only: Docker and the Next.js app are removed. Shared code lives under `shared/`; development uses the host and client (or the desktop shell).
+
 ### Added
 
 - A scheduled GitHub Actions release publishes macOS Apple Silicon desktop builds with generated release notes, DMG downloads, and updater metadata.

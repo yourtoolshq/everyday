@@ -21,7 +21,7 @@ await build({
   outfile: resolve(distRoot, "passbook-host.cjs"),
   external: bundleNativeRuntime ? [] : ["@libsql/client"],
   alias: {
-    "~": resolve(passbookRoot, "src"),
+    "~": resolve(passbookRoot, "shared"),
   },
   logLevel: "warning",
 });

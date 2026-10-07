@@ -5,7 +5,13 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "paths": {
-      "~/*": ["../src/*"]
+      "~/trpc/react": ["./src/trpc/react.tsx"],
+      "~/*": ["../shared/*"],
+      "next/image": ["./src/shims/image.tsx"],
+      "next/link": ["./src/shims/link.tsx"],
+      "next/navigation": ["./src/shims/navigation.ts"],
+      "next/headers": ["./src/shims/headers.ts"],
+      "server-only": ["./src/shims/server-only.ts"]
     },
     "types": ["vite/client"]
   },

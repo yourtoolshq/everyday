@@ -6,7 +6,7 @@ This document describes the current monorepo structure and how applications stay
 
 ```
 everyday/
-├── apps/           Four Next.js applications (independent deployables)
+├── apps/           Product applications (mostly Next.js + Docker; Passbook is desktop)
 ├── packages/       Shared libraries (data, data-ui, ui, server)
 ├── tooling/        Shared dev config (@yourtoolshq/tsconfig, eslint-config, prettier-config)
 ├── turbo/          Package generator
@@ -18,12 +18,16 @@ everyday/
 
 ## Application isolation
 
-Each app under `apps/<name>/` is a self-contained Next.js application with:
+Each product under `apps/<name>/` is isolated:
 
-- Its own `package.json`, database schema, and migrations
+- Its own `package.json`, database schema, and migrations (where applicable)
 - Its own SQLite database and document storage (local `.data/` in development)
-- Its own `Dockerfile` and `docker-compose.yml`
-- Its own tests and Playwright E2E suite
+- Its own tests and Playwright E2E suite where applicable
+
+Taxbook, First Aid, and Tenure remain **Next.js + Docker** deployables. **Passbook**
+is a **desktop product**: `host/`, `client/`, `desktop/`, and Passbook-only code in
+`shared/` (see `apps/passbook/AGENTS.md`). Passbook does not ship a Docker image
+from this repository.
 
 Apps do not import from each other. Cross-app integration (e.g. Taxbook ↔ Tenure) uses HTTP APIs and configurable base URLs, not shared code packages.
 
@@ -33,7 +37,7 @@ Apps do not import from each other. Cross-app integration (e.g. Taxbook ↔ Tenu
 | ----------- | -------- |
 | Taxbook     | 3000     |
 | First Aid   | 3001     |
-| Passbook    | 3002     |
+| Passbook    | Vite client `5173`, host `3847` (see `apps/passbook/docs/DEVELOPMENT.md`) |
 | Tenure      | 3003     |
 
 E2E tests use port **3100** with isolated `.data/e2e.db` per app run.

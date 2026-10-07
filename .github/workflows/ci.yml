@@ -15,6 +15,7 @@ jobs:
       docs_only: ${{ steps.scope.outputs.docs_only }}
       run_heavy: ${{ steps.scope.outputs.run_heavy }}
       e2e_apps: ${{ steps.scope.outputs.e2e_apps }}
+      docker_apps: ${{ steps.scope.outputs.docker_apps }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -57,6 +58,7 @@ jobs:
             echo 'docs_only=true' >> "$GITHUB_OUTPUT"
             echo 'run_heavy=false' >> "$GITHUB_OUTPUT"
             echo 'e2e_apps=[]' >> "$GITHUB_OUTPUT"
+            echo 'docker_apps=[]' >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -65,10 +67,12 @@ jobs:
 
           if [ "${{ steps.filter.outputs.platform }}" = "true" ]; then
             echo 'e2e_apps=["taxbook","firstaid","passbook","tenure"]' >> "$GITHUB_OUTPUT"
+            echo 'docker_apps=["taxbook","firstaid","tenure"]' >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           apps=()
+          docker_apps=()
           for app in taxbook firstaid passbook tenure; do
             case "$app" in
               taxbook) changed="${{ steps.filter.outputs.taxbook }}" ;;
@@ -78,14 +82,19 @@ jobs:
             esac
             if [ "$changed" = "true" ]; then
               apps+=("\"$app\"")
+              if [ "$app" != "passbook" ]; then
+                docker_apps+=("\"$app\"")
+              fi
             fi
           done
 
           if [ "${#apps[@]}" -eq 0 ]; then
             echo 'e2e_apps=[]' >> "$GITHUB_OUTPUT"
+            echo 'docker_apps=[]' >> "$GITHUB_OUTPUT"
             echo 'run_heavy=false' >> "$GITHUB_OUTPUT"
           else
             echo "e2e_apps=[$(IFS=,; echo "${apps[*]}")]" >> "$GITHUB_OUTPUT"
+            echo "docker_apps=[$(IFS=,; echo "${docker_apps[*]}")]" >> "$GITHUB_OUTPUT"
           fi
 
   format:
@@ -151,12 +160,12 @@ jobs:
   docker:
     name: docker (${{ matrix.app }})
     needs: changes
-    if: needs.changes.outputs.run_heavy == 'true' && needs.changes.outputs.e2e_apps != '[]'
+    if: needs.changes.outputs.run_heavy == 'true' && needs.changes.outputs.docker_apps != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        app: ${{ fromJson(needs.changes.outputs.e2e_apps) }}
+        app: ${{ fromJson(needs.changes.outputs.docker_apps) }}
     steps:
       - uses: actions/checkout@v4
 
@@ -175,10 +184,6 @@ jobs:
           docker logs "${{ matrix.app }}-ci" || true
           docker rm -f "${{ matrix.app }}-ci"
           exit 1
-
-      - name: Backup round trip
-        if: matrix.app == 'passbook'
-        run: .github/scripts/passbook-backup-round-trip.sh passbook
 
   foundation-gate:
     name: foundation gate (passbook)
@@ -266,7 +271,9 @@ jobs:
           check "${{ needs.format.result }}" "format"
           check "${{ needs.quality.result }}" "quality"
           check "${{ needs.e2e.result }}" "e2e"
-          check "${{ needs.docker.result }}" "docker"
+          if [ '${{ needs.changes.outputs.docker_apps }}' != '[]' ]; then
+            check "${{ needs.docker.result }}" "docker"
+          fi
           if [ "${{ needs.changes.outputs.run_heavy }}" = "true" ] && echo '${{ needs.changes.outputs.e2e_apps }}' | grep -q passbook; then
             check "${{ needs.foundation-gate.result }}" "foundation-gate"
             check "${{ needs.remote-access-gate.result }}" "remote-access-gate"

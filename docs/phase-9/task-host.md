@@ -22,7 +22,7 @@ first.
 **May create or edit:**
 
 - `apps/passbook/host/**` (new package)
-- `apps/passbook/src/server/**` — extract shared imports only; avoid breaking Next routes
+- `apps/passbook/shared/server/**` — extract shared imports only; avoid breaking Next routes
 - `apps/passbook/package.json` — scripts that delegate to host, if needed
 - Host-specific env module under `apps/passbook/host/`
 - Host unit/integration tests under `apps/passbook/host/`
@@ -30,7 +30,7 @@ first.
 
 **May read but not break:**
 
-- `apps/passbook/src/app/api/**` — keep Next handlers working until cutover
+- `apps/passbook/shared/app/api/**` — keep Next handlers working until cutover
 - `packages/data/**` — prefer host adapter over changing platform semantics
 
 **Do not edit:**

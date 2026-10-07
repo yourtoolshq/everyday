@@ -36,8 +36,14 @@ Passbook may eventually connect with other Your Tools apps, including a budgetin
 
 Those integrations should be added only when they solve a real workflow.
 
+## Development
+
+Passbook runs as a **desktop app** (Electron + loopback host + Vite client). See
+[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for local setup and verification.
+
 ## Project docs
 
+- `docs/DEVELOPMENT.md` — local development and layout
 - `docs/PRODUCT.md` — product goals and scope
 - `docs/DOMAIN.md` — domain model and boundaries
 - `docs/ROADMAP.md` — phased implementation plan

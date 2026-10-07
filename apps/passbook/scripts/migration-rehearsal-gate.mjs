@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Rehearses container-to-desktop data movement using the previous-release
+ * Rehearses on-disk upgrade data movement using the previous-release
  * fixture as a representative old deployment and the bundled host as the
  * desktop runtime. Writers never run against the same data directory.
  *
@@ -19,7 +19,7 @@ const hostRoot = join(passbookRoot, "host");
 const hostBundle = join(hostRoot, "dist/passbook-host.cjs");
 const fixtureRoot = join(
   passbookRoot,
-  "src/server/db/fixtures/previous-release",
+  "shared/server/db/fixtures/previous-release",
 );
 const sourceDataDir = resolve(passbookRoot, ".data/migration-rehearsal-source");
 const desktopDataDir = resolve(

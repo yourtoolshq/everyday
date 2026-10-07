@@ -4,7 +4,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts", "scripts/release/**/*.test.mjs"],
+    include: ["shared/**/*.test.ts", "scripts/release/**/*.test.mjs"],
     exclude: [
       "e2e/**",
       "host/**",
@@ -18,12 +18,12 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      include: ["src/server/**/*.ts", "src/lib/**/*.ts"],
+      include: ["shared/server/**/*.ts", "shared/lib/**/*.ts"],
     },
   },
   resolve: {
     alias: {
-      "~": path.resolve(import.meta.dirname, "./src"),
+      "~": path.resolve(import.meta.dirname, "./shared"),
     },
   },
 });

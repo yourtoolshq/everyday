@@ -7,19 +7,14 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "next build",
-    "data": "pnpm --silent -F @yourtoolshq/data build && node node_modules/@yourtoolshq/data/dist/yt-data.cjs --app passbook --migrations drizzle --data-dir \"${DATA_DIR:-./.data}\" --url \"http://127.0.0.1:${PORT:-3002}\"",
+    "build": "node -e \"process.exit(0)\"",
+    "data": "pnpm --silent -F @yourtoolshq/data build && node node_modules/@yourtoolshq/data/dist/yt-data.cjs --app passbook --migrations drizzle --data-dir \"${DATA_DIR:-./.data}\" --url \"http://127.0.0.1:${PASSBOOK_HOST_PORT:-3847}\"",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "dev": "next dev --turbopack --port ${PORT:-3002}",
-    "docker:build": "docker build -f Dockerfile -t passbook ../..",
-    "docker:up": "docker compose up --build",
     "lint": "eslint .",
     "migrations:check": "pnpm data migrations check",
-    "preview": "next build && next start",
-    "start": "next start",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "foundation:gate": "pnpm --silent -F @yourtoolshq/data build && node scripts/foundation-gate.mjs && playwright test --config playwright.foundation.config.ts",
@@ -44,7 +39,6 @@
     "cn": "catalog:",
     "drizzle-orm": "catalog:",
     "lucide-react": "^0.468.0",
-    "next": "catalog:",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.6.7",
     "react": "catalog:",
@@ -68,12 +62,10 @@
     "drizzle-kit": "catalog:",
     "eslint": "catalog:",
     "eslint-config-next": "catalog:",
+    "next": "catalog:",
     "postcss": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
-  },
-  "ct3aMetadata": {
-    "initVersion": "7.40.0"
   }
 }
