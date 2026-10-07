@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { DownloadIcon, RotateCwIcon, XIcon } from "lucide-react";
+import { DownloadIcon, RefreshCwIcon, RotateCwIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -36,6 +36,7 @@ import {
   isPassbookDesktop,
   resolveDesktopUpdateButtonAction,
   shouldShowDesktopUpdateButton,
+  shouldShowDesktopUpdateCheck,
 } from "~/lib/desktop-update.logic";
 
 function ReleaseNotesTooltip({
@@ -72,6 +73,27 @@ export function DesktopUpdatePill() {
   const { bridge, state } = useDesktopUpdate();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isActionPending, setIsActionPending] = useState(false);
+
+  const handleCheck = useCallback(async () => {
+    if (!bridge) return;
+    setIsActionPending(true);
+    try {
+      const result = await bridge.checkForUpdates();
+      const error = getDesktopUpdateActionError(result);
+      if (error) {
+        toast.error("Could not check for updates", { description: error });
+      }
+    } catch (error) {
+      toast.error("Could not check for updates", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred.",
+      });
+    } finally {
+      setIsActionPending(false);
+    }
+  }, [bridge]);
 
   const handleDownload = useCallback(async () => {
     if (!bridge) return;
@@ -116,10 +138,11 @@ export function DesktopUpdatePill() {
     }
   }, [bridge]);
 
-  const visible =
-    isPassbookDesktop() && state && shouldShowDesktopUpdateButton(state);
-  if (!visible || !bridge || !state) return null;
+  const isDesktop = isPassbookDesktop();
+  if (!isDesktop || !bridge || !state) return null;
 
+  const showUpdateButton = shouldShowDesktopUpdateButton(state);
+  const showCheckButton = shouldShowDesktopUpdateCheck(state);
   const action = resolveDesktopUpdateButtonAction(state);
   const disabled = isDesktopUpdateButtonDisabled(state) || isActionPending;
   const tooltip = getDesktopUpdateButtonTooltip(state);
@@ -139,38 +162,59 @@ export function DesktopUpdatePill() {
   return (
     <>
       <SidebarMenu>
-        <SidebarMenuItem>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <SidebarMenuButton
-                className="text-primary"
-                disabled={disabled}
-                onClick={handleClick}
-              >
-                {action === "install" ? (
-                  <RotateCwIcon aria-hidden="true" />
-                ) : (
-                  <DownloadIcon aria-hidden="true" />
-                )}
-                <span>{getDesktopUpdateButtonLabel(state)}</span>
-              </SidebarMenuButton>
-            </TooltipTrigger>
-            <TooltipContent
-              side="top"
-              className={
-                state.releaseNotes.length > 0
-                  ? "pointer-events-auto max-w-sm"
-                  : undefined
-              }
-            >
-              <ReleaseNotesTooltip
-                tooltip={tooltip}
-                releaseNotes={state.releaseNotes}
-              />
-            </TooltipContent>
-          </Tooltip>
+        <SidebarMenuItem className="text-muted-foreground px-2 pb-1 text-xs">
+          Passbook {state.currentVersion}
         </SidebarMenuItem>
-        {action === "download" ? (
+        {showCheckButton ? (
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              className="text-muted-foreground"
+              disabled={isActionPending}
+              onClick={() => void handleCheck()}
+            >
+              <RefreshCwIcon aria-hidden="true" />
+              <span>
+                {state.status === "error" && state.errorContext === "check"
+                  ? "Retry update check"
+                  : "Check for updates"}
+              </span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        ) : null}
+        {showUpdateButton ? (
+          <SidebarMenuItem>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <SidebarMenuButton
+                  className="text-primary"
+                  disabled={disabled}
+                  onClick={handleClick}
+                >
+                  {action === "install" ? (
+                    <RotateCwIcon aria-hidden="true" />
+                  ) : (
+                    <DownloadIcon aria-hidden="true" />
+                  )}
+                  <span>{getDesktopUpdateButtonLabel(state)}</span>
+                </SidebarMenuButton>
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                className={
+                  state.releaseNotes.length > 0
+                    ? "pointer-events-auto max-w-sm"
+                    : undefined
+                }
+              >
+                <ReleaseNotesTooltip
+                  tooltip={tooltip}
+                  releaseNotes={state.releaseNotes}
+                />
+              </TooltipContent>
+            </Tooltip>
+          </SidebarMenuItem>
+        ) : null}
+        {showUpdateButton && action === "download" ? (
           <SidebarMenuItem>
             <SidebarMenuButton
               className="text-muted-foreground"

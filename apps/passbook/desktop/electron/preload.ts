@@ -29,6 +29,8 @@ contextBridge.exposeInMainWorld("passbookDesktop", {
         ipcRenderer.removeListener("passbook:update:state", handler);
       };
     },
+    checkForUpdates: (): Promise<DesktopUpdateActionResult> =>
+      ipcRenderer.invoke("passbook:update:check"),
     downloadUpdate: (): Promise<DesktopUpdateActionResult> =>
       ipcRenderer.invoke("passbook:update:download"),
     installUpdate: (): Promise<DesktopUpdateActionResult> =>

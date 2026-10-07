@@ -44,6 +44,7 @@ export interface DesktopUpdateActionResult {
 export interface PassbookDesktopUpdatesBridge {
   getState: () => Promise<DesktopUpdateState>;
   subscribe: (listener: (state: DesktopUpdateState) => void) => () => void;
+  checkForUpdates: () => Promise<DesktopUpdateActionResult>;
   downloadUpdate: () => Promise<DesktopUpdateActionResult>;
   installUpdate: () => Promise<DesktopUpdateActionResult>;
   dismissUpdate: () => Promise<DesktopUpdateState>;

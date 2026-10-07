@@ -6,6 +6,7 @@ import {
   getDesktopUpdateInstallConfirmationMessage,
   resolveDesktopUpdateButtonAction,
   shouldShowDesktopUpdateButton,
+  shouldShowDesktopUpdateCheck,
 } from "./desktop-update.logic";
 
 function baseState(
@@ -62,6 +63,16 @@ describe("desktop update logic", () => {
           },
         }),
       ),
+    ).toBe(false);
+  });
+
+  it("allows an update check whenever no update action is in progress", () => {
+    expect(shouldShowDesktopUpdateCheck(baseState())).toBe(true);
+    expect(
+      shouldShowDesktopUpdateCheck(baseState({ status: "checking" })),
+    ).toBe(false);
+    expect(
+      shouldShowDesktopUpdateCheck(baseState({ status: "downloading" })),
     ).toBe(false);
   });
 

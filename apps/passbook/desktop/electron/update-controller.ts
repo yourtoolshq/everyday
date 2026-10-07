@@ -97,7 +97,9 @@ export class UpdateController {
       });
     };
 
-    setTimeout(checkForUpdates, 15_000);
+    // Check immediately so the first window receives a useful state rather
+    // than an empty footer while it is open. Subsequent checks stay periodic.
+    checkForUpdates();
     setInterval(checkForUpdates, UPDATE_CHECK_INTERVAL_MS);
   }
 
@@ -107,7 +109,12 @@ export class UpdateController {
   }
 
   async checkForUpdates(): Promise<DesktopUpdateActionResult> {
-    if (!this.state.enabled || this.actionInFlight || this.state.trial) {
+    if (
+      !this.state.enabled ||
+      this.actionInFlight ||
+      this.state.trial ||
+      this.state.status === "checking"
+    ) {
       return { accepted: false, completed: false, state: this.getState() };
     }
     this.state = reduceOnCheckStart(this.state);

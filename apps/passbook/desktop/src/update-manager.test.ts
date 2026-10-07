@@ -49,7 +49,7 @@ describe("setupAutoUpdater", () => {
       expect.any(Function),
     );
 
-    vi.advanceTimersByTime(15_000);
+    await vi.advanceTimersByTimeAsync(0);
     expect(autoUpdater.checkForUpdates).toHaveBeenCalledTimes(1);
   });
 });

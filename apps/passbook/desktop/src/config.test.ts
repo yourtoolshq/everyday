@@ -12,4 +12,20 @@ describe("resolveDesktopPaths", () => {
     expect(paths.dataDir).toContain("desktop-test");
     expect(paths.clientDevUrl).toBe("http://127.0.0.1:5173");
   });
+
+  it("keeps packaged backups outside the packaged data directory", () => {
+    const paths = resolveDesktopPaths({
+      PASSBOOK_PACKAGED: "1",
+      PASSBOOK_ROOT: "/Applications/Passbook.app/Contents/Resources/passbook",
+      PASSBOOK_USER_DATA_DIR:
+        "/Users/example/Library/Application Support/Passbook",
+    });
+
+    expect(paths.dataDir).toBe(
+      "/Users/example/Library/Application Support/Passbook/data",
+    );
+    expect(paths.backupDir).toBe(
+      "/Users/example/Library/Application Support/Passbook/backups",
+    );
+  });
 });

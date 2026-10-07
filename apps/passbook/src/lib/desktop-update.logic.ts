@@ -52,6 +52,17 @@ export function shouldShowDesktopUpdateButton(
   return resolveDesktopUpdateButtonAction(state) !== "none";
 }
 
+export function shouldShowDesktopUpdateCheck(
+  state: DesktopUpdateState | null,
+): boolean {
+  return Boolean(
+    state?.enabled &&
+    !state.trial &&
+    state.status !== "checking" &&
+    state.status !== "downloading",
+  );
+}
+
 export function isDesktopUpdateButtonDisabled(
   state: DesktopUpdateState | null,
 ): boolean {
