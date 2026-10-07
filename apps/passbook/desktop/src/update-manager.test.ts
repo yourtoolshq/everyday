@@ -19,7 +19,7 @@ vi.mock("electron", () => ({
   },
 }));
 
-vi.mock("electron-updater", () => ({
+vi.mock("../electron/auto-updater.js", () => ({
   autoUpdater,
 }));
 
