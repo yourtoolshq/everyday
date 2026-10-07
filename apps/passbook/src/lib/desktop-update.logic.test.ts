@@ -4,6 +4,7 @@ import type { DesktopUpdateState } from "./desktop-update.types";
 import {
   getDesktopUpdateButtonLabel,
   getDesktopUpdateInstallConfirmationMessage,
+  getDesktopUpdateReleaseUrl,
   resolveDesktopUpdateButtonAction,
   shouldShowDesktopUpdateButton,
 } from "./desktop-update.logic";
@@ -28,6 +29,12 @@ function baseState(
 }
 
 describe("desktop update logic", () => {
+  it("links a Passbook update to its semver GitHub tag", () => {
+    expect(getDesktopUpdateReleaseUrl("0.1.1-passbook.20260307.42")).toBe(
+      "https://github.com/yourtoolshq/everyday/releases/tag/v0.1.1-passbook.20260307.42",
+    );
+  });
+
   it("shows download action when an update is available", () => {
     const state = baseState({
       status: "available",

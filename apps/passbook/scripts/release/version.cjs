@@ -1,10 +1,10 @@
 /** @typedef {{ major: number; minor: number; patch: number; date: number; runNumber: number }} PassbookReleaseVersion */
 
-const PASSBOOK_RELEASE_TAG_PREFIX = "passbook-v";
+const PASSBOOK_RELEASE_CHANNEL = "passbook";
 const MINIMUM_RELEASE_GAP_MS = 6 * 60 * 60 * 1000;
 
 function parsePassbookReleaseTag(tag) {
-  const match = /^passbook-v(\d+)\.(\d+)\.(\d+)\.(\d{8})\.(\d+)$/.exec(tag);
+  const match = /^v?(\d+)\.(\d+)\.(\d+)-passbook\.(\d{8})\.(\d+)$/.exec(tag);
   if (!match) return undefined;
   const [, major, minor, patch, date, runNumber] = match;
   return {
@@ -38,13 +38,16 @@ function resolvePassbookReleaseMetadata({
 }) {
   const baseVersion = resolveTargetBaseVersion(packageVersion);
   const version = `${baseVersion}.${date}.${runNumber}`;
-  const electronVersion = `${baseVersion}-${date}.${runNumber}`;
+  const electronVersion = `${baseVersion}-${PASSBOOK_RELEASE_CHANNEL}.${date}.${runNumber}`;
   const shortSha = sha.slice(0, 12);
   return {
     baseVersion,
     version,
     packageVersion: electronVersion,
-    tag: `${PASSBOOK_RELEASE_TAG_PREFIX}${version}`,
+    // GitHubProvider filters prerelease-channel releases by a semver-valid
+    // tag. The app channel keeps Passbook releases separate from other apps
+    // in this monorepo's shared GitHub releases feed.
+    tag: `v${electronVersion}`,
     name: `Passbook ${version} (${shortSha})`,
     shortSha,
   };
@@ -89,7 +92,7 @@ function shouldScheduledRelease({
 }
 
 module.exports = {
-  PASSBOOK_RELEASE_TAG_PREFIX,
+  PASSBOOK_RELEASE_CHANNEL,
   MINIMUM_RELEASE_GAP_MS,
   comparePassbookReleaseVersions,
   isPassbookReleaseTag,

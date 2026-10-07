@@ -1,6 +1,6 @@
 const {
   MINIMUM_RELEASE_GAP_MS,
-  PASSBOOK_RELEASE_TAG_PREFIX,
+  isPassbookReleaseTag,
   shouldScheduledRelease,
 } = require("./version.cjs");
 
@@ -15,7 +15,7 @@ async function findLatestPassbookRelease({ github, context }) {
       (release) =>
         !release.draft &&
         release.published_at &&
-        release.tag_name.startsWith(PASSBOOK_RELEASE_TAG_PREFIX),
+        isPassbookReleaseTag(release.tag_name),
     )
     .sort(
       (left, right) =>

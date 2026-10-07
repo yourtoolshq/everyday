@@ -33,8 +33,8 @@ describe("resolvePassbookReleaseMetadata", () => {
     ).toEqual({
       baseVersion: "0.1.1",
       version: "0.1.1.20260307.42",
-      packageVersion: "0.1.1-20260307.42",
-      tag: "passbook-v0.1.1.20260307.42",
+      packageVersion: "0.1.1-passbook.20260307.42",
+      tag: "v0.1.1-passbook.20260307.42",
       name: "Passbook 0.1.1.20260307.42 (abcdef123456)",
       shortSha: "abcdef123456",
     });
@@ -43,13 +43,19 @@ describe("resolvePassbookReleaseMetadata", () => {
 
 describe("parsePassbookReleaseTag", () => {
   it("parses release tags", () => {
-    expect(parsePassbookReleaseTag("passbook-v0.1.1.20260307.42")).toEqual({
+    expect(parsePassbookReleaseTag("v0.1.1-passbook.20260307.42")).toEqual({
       major: 0,
       minor: 1,
       patch: 1,
       date: 20260307,
       runNumber: 42,
     });
+  });
+
+  it("does not treat another app channel as a Passbook release", () => {
+    expect(parsePassbookReleaseTag("v0.1.1-taxbook.20260307.42")).toBe(
+      undefined,
+    );
   });
 });
 
@@ -58,13 +64,13 @@ describe("resolvePreviousPassbookTag", () => {
     expect(
       resolvePreviousPassbookTag(
         [
-          "passbook-v0.1.1.20260306.10",
-          "passbook-v0.1.1.20260307.41",
-          "passbook-v0.1.1.20260307.42",
+          "v0.1.1-passbook.20260306.10",
+          "v0.1.1-passbook.20260307.41",
+          "v0.1.1-passbook.20260307.42",
         ],
-        "passbook-v0.1.1.20260307.42",
+        "v0.1.1-passbook.20260307.42",
       ),
-    ).toBe("passbook-v0.1.1.20260307.41");
+    ).toBe("v0.1.1-passbook.20260307.41");
   });
 });
 

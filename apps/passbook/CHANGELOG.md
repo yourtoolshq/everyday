@@ -34,6 +34,8 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Fixed
 
+- Desktop update releases now use a Passbook-specific SemVer channel, so the
+  updater can find them in the monorepo's shared GitHub release feed.
 - The desktop sidebar now always shows the installed version, checks GitHub for
   updates as soon as it starts, and provides a retryable manual update check.
 - Desktop backups now default to a sibling backup folder instead of living
