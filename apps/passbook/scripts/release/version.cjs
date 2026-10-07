@@ -4,8 +4,7 @@ const PASSBOOK_RELEASE_TAG_PREFIX = "passbook-v";
 const MINIMUM_RELEASE_GAP_MS = 6 * 60 * 60 * 1000;
 
 function parsePassbookReleaseTag(tag) {
-  const match =
-    /^passbook-v(\d+)\.(\d+)\.(\d+)\.(\d{8})\.(\d+)$/.exec(tag);
+  const match = /^passbook-v(\d+)\.(\d+)\.(\d+)\.(\d{8})\.(\d+)$/.exec(tag);
   if (!match) return undefined;
   const [, major, minor, patch, date, runNumber] = match;
   return {
@@ -66,7 +65,9 @@ function resolvePreviousPassbookTag(tags, currentTag) {
   const candidates = tags
     .map((tag) => ({ tag, parsed: parsePassbookReleaseTag(tag) }))
     .filter((entry) => entry.parsed !== undefined)
-    .filter((entry) => comparePassbookReleaseVersions(entry.parsed, current) < 0)
+    .filter(
+      (entry) => comparePassbookReleaseVersions(entry.parsed, current) < 0,
+    )
     .sort((left, right) =>
       comparePassbookReleaseVersions(right.parsed, left.parsed),
     );

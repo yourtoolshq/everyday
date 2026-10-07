@@ -30,7 +30,8 @@ function main() {
   const githubOutput = args.includes("--github-output")
     ? process.env.GITHUB_OUTPUT
     : undefined;
-  const previousTag = resolvePreviousPassbookTag(listGitTags(), currentTag) ?? "";
+  const previousTag =
+    resolvePreviousPassbookTag(listGitTags(), currentTag) ?? "";
 
   if (githubOutput) {
     fs.appendFileSync(githubOutput, `previous_tag=${previousTag}\n`);

@@ -23,7 +23,12 @@ async function findLatestPassbookRelease({ github, context }) {
     )[0];
 }
 
-async function shouldReleaseOnSchedule({ github, context, core, now = Date.now() }) {
+async function shouldReleaseOnSchedule({
+  github,
+  context,
+  core,
+  now = Date.now(),
+}) {
   const lastRelease = await findLatestPassbookRelease({ github, context });
 
   if (!lastRelease) {
@@ -38,13 +43,12 @@ async function shouldReleaseOnSchedule({ github, context, core, now = Date.now()
     return false;
   }
 
-  const { data: comparison } = await github.rest.repos.compareCommitsWithBasehead(
-    {
+  const { data: comparison } =
+    await github.rest.repos.compareCommitsWithBasehead({
       ...context.repo,
       basehead: `${lastRelease.tag_name}...${context.sha}`,
       per_page: 1,
-    },
-  );
+    });
 
   if (comparison.status !== "ahead") {
     core.info(

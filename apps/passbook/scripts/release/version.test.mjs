@@ -15,7 +15,9 @@ describe("resolveTargetBaseVersion", () => {
   });
 
   it("rejects invalid versions", () => {
-    expect(() => resolveTargetBaseVersion("0.1")).toThrow(/Invalid desktop package version/);
+    expect(() => resolveTargetBaseVersion("0.1")).toThrow(
+      /Invalid desktop package version/,
+    );
   });
 });
 

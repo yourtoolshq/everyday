@@ -14,7 +14,10 @@ function setDesktopVersion(repoRoot, version) {
   );
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
   packageJson.version = version;
-  fs.writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
+  fs.writeFileSync(
+    packageJsonPath,
+    `${JSON.stringify(packageJson, null, 2)}\n`,
+  );
 }
 
 function main() {
