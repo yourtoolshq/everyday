@@ -6,7 +6,7 @@ import type { DesktopPaths } from "./config.js";
 import { resolveDesktopPaths } from "./config.js";
 import { isHostHealthy } from "./host-connectivity.js";
 import { HostProcess } from "./host-process.js";
-import { isAllowedNavigation } from "./navigation.js";
+import { attachNavigationGuard } from "./navigation.js";
 import { getUpdateController, setupAutoUpdater } from "./update-manager.js";
 
 let paths: DesktopPaths | null = null;
@@ -61,6 +61,29 @@ if (!gotSingleInstanceLock) {
   app.quit();
 }
 
+function openPreviewWindow(
+  url: string,
+  parent: BrowserWindow,
+  allowedOrigins: string[],
+) {
+  const previewWindow = new BrowserWindow({
+    width: 960,
+    height: 720,
+    parent,
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+    },
+  });
+
+  attachNavigationGuard(previewWindow.webContents, allowedOrigins, (nestedUrl) => {
+    openPreviewWindow(nestedUrl, previewWindow, allowedOrigins);
+  });
+
+  void previewWindow.loadURL(url);
+}
+
 async function createMainWindow() {
   const resolved = getPaths();
   const useDevClient =
@@ -88,11 +111,9 @@ async function createMainWindow() {
     },
   });
 
-  mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
-  mainWindow.webContents.on("will-navigate", (event, url) => {
-    if (!isAllowedNavigation(url, allowedOrigins)) {
-      event.preventDefault();
-    }
+  attachNavigationGuard(mainWindow.webContents, allowedOrigins, (url) => {
+    if (!mainWindow) return;
+    openPreviewWindow(url, mainWindow, allowedOrigins);
   });
 
   mainWindow.on("close", (event) => {

@@ -77,6 +77,8 @@ are separate follow-up work.
   another host.
 - External navigation is blocked; only the configured client and host origins are
   allowed.
+- Document preview links open in a child window on allowed origins so PDF, EML,
+  and other managed files work despite blocking arbitrary external windows.
 - Host startup failures show a dedicated error window with actionable text.
 - In a package, the host serves the SPA and API from the same loopback origin.
   This keeps document uploads, file links, backup actions, and SPA routes
