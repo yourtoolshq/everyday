@@ -7,6 +7,7 @@ import { resolveDesktopPaths } from "./config.js";
 import { isHostHealthy } from "./host-connectivity.js";
 import { HostProcess } from "./host-process.js";
 import { isAllowedNavigation } from "./navigation.js";
+import { setupAutoUpdater } from "./update-manager.js";
 
 let paths: DesktopPaths | null = null;
 let host: HostProcess | null = null;
@@ -17,6 +18,7 @@ let hostOwnedByDesktop = false;
 
 function configurePackagedEnv() {
   if (!app.isPackaged) return;
+  process.env.APP_VERSION = app.getVersion();
   process.env.PASSBOOK_PACKAGED = "1";
   process.env.PASSBOOK_USER_DATA_DIR = app.getPath("userData");
   process.env.PASSBOOK_ROOT = path.join(process.resourcesPath, "passbook");
@@ -145,6 +147,12 @@ if (gotSingleInstanceLock) {
   void app.whenReady().then(async () => {
     try {
       await ensureHostReady();
+      const resolved = getPaths();
+      await setupAutoUpdater({
+        dataDir: resolved.dataDir,
+        hostUrl: resolved.hostUrl,
+        previousVersion: resolved.appVersion,
+      });
       await createMainWindow();
     } catch (error) {
       const message =
