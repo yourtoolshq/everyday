@@ -236,6 +236,23 @@ export class UpdateController {
     return { accepted: true, completed: true, state: this.getState() };
   }
 
+  async dismissTrialFailure(): Promise<DesktopUpdateActionResult> {
+    const intent = await this.orchestrator.readIntent();
+    if (intent?.stage !== "failed") {
+      return { accepted: false, completed: false, state: this.getState() };
+    }
+
+    await this.orchestrator.dismissFailedIntent();
+    this.state = {
+      ...this.state,
+      trial: null,
+      message: null,
+      errorContext: null,
+    };
+    this.broadcast();
+    return { accepted: true, completed: true, state: this.getState() };
+  }
+
   private bindAutoUpdater() {
     autoUpdater.autoDownload = false;
     autoUpdater.autoInstallOnAppQuit = false;

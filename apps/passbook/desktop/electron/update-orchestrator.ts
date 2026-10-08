@@ -103,6 +103,14 @@ export class UpdateOrchestrator {
     return next;
   }
 
+  async dismissFailedIntent(): Promise<void> {
+    await this.requireIntent("failed");
+    await rm(join(this.options.dataDir, ".update"), {
+      recursive: true,
+      force: true,
+    });
+  }
+
   private async requireIntent(stage: UpdateStage) {
     const intent = await this.readIntent();
     if (intent?.stage !== stage) {

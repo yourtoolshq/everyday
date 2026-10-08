@@ -38,6 +38,8 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Fixed
 
+- Update recovery now lets people continue to Passbook or open Data & backups.
+  It no longer claims a backup exists when backup creation itself failed.
 - The desktop update recovery screen no longer crashes to a blank window after
   an update verification failure.
 - Desktop update releases now use a Passbook-specific SemVer channel, so the

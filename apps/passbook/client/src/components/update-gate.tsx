@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { LoaderCircle, TriangleAlert } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import type { PlatformStatus } from "@yourtoolshq/data";
 import { MaintenanceScreen } from "@yourtoolshq/data-ui/maintenance-screen";
@@ -202,6 +202,41 @@ function FailedUpdateScreen({
   trial: DesktopUpdateTrialState;
   bridge: ReturnType<typeof useDesktopUpdate>["bridge"];
 }) {
+  const navigate = useNavigate();
+  const [dismissing, setDismissing] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const completedBackup = Boolean(trial.backupId);
+
+  const dismissFailure = async (destination?: string) => {
+    if (!bridge) {
+      setActionError(
+        "Passbook could not clear the update recovery notice. Restart the desktop app and try again.",
+      );
+      return;
+    }
+
+    setDismissing(true);
+    setActionError(null);
+    try {
+      const result = await bridge.dismissTrialFailure();
+      if (!result.completed) {
+        setActionError(
+          "Passbook could not clear the update recovery notice. Restart the desktop app and try again.",
+        );
+        return;
+      }
+      if (destination) void navigate(destination);
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : "Passbook could not clear the update recovery notice.",
+      );
+    } finally {
+      setDismissing(false);
+    }
+  };
+
   return (
     <main className="flex min-h-screen items-center justify-center p-8">
       <Card className="w-full max-w-lg shadow-none">
@@ -217,31 +252,35 @@ function FailedUpdateScreen({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground text-sm">
-            Passbook kept your pre-update backup
-            {trial.backupId ? (
+            {completedBackup ? (
               <>
-                {" "}
-                (<code>{trial.backupId}</code>)
+                Passbook kept your pre-update backup (
+                <code>{trial.backupId}</code>). You can review or restore it
+                from Data &amp; backups before continuing.
               </>
-            ) : null}
-            . Restore it from Settings before continuing.
+            ) : (
+              "No update was installed, and your existing Passbook data was left in place."
+            )}
           </p>
+          {actionError ? (
+            <p className="text-destructive text-sm" role="alert">
+              {actionError}
+            </p>
+          ) : null}
           <div className="flex flex-wrap gap-2">
-            <Button asChild>
-              <Link to="/settings/data">Open Data &amp; backups</Link>
+            <Button
+              disabled={dismissing}
+              onClick={() => void dismissFailure("/settings/data")}
+            >
+              Open Data &amp; backups
             </Button>
-            {bridge ? (
-              <Button
-                variant="outline"
-                onClick={() =>
-                  void bridge.markTrialFailed(
-                    trial.failureReason ?? "Update verification failed.",
-                  )
-                }
-              >
-                Dismiss update notice
-              </Button>
-            ) : null}
+            <Button
+              variant="outline"
+              disabled={dismissing}
+              onClick={() => void dismissFailure()}
+            >
+              Continue to Passbook
+            </Button>
           </div>
         </CardContent>
       </Card>
