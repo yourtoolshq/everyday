@@ -50,6 +50,7 @@ export interface PassbookDesktopUpdatesBridge {
   dismissUpdate: () => Promise<DesktopUpdateState>;
   commitTrial: () => Promise<DesktopUpdateActionResult>;
   markTrialFailed: (reason: string) => Promise<DesktopUpdateActionResult>;
+  dismissTrialFailure: () => Promise<DesktopUpdateActionResult>;
 }
 
 export interface PassbookDesktopBridge {

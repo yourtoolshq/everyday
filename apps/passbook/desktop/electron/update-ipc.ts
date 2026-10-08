@@ -27,4 +27,8 @@ export function registerUpdateIpc(controller: UpdateController) {
         : "The updated app could not start cleanly.";
     return controller.markTrialFailed(message);
   });
+
+  ipcMain.handle("passbook:update:dismiss-trial-failure", () =>
+    controller.dismissTrialFailure(),
+  );
 }

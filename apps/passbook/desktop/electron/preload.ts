@@ -41,5 +41,7 @@ contextBridge.exposeInMainWorld("passbookDesktop", {
       ipcRenderer.invoke("passbook:update:commit-trial"),
     markTrialFailed: (reason: string): Promise<DesktopUpdateActionResult> =>
       ipcRenderer.invoke("passbook:update:mark-trial-failed", reason),
+    dismissTrialFailure: (): Promise<DesktopUpdateActionResult> =>
+      ipcRenderer.invoke("passbook:update:dismiss-trial-failure"),
   },
 });

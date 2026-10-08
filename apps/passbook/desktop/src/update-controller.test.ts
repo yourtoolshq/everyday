@@ -165,4 +165,61 @@ describe("UpdateController", () => {
       backupId: "backup-1",
     });
   });
+
+  it("clears a failed backup checkpoint so the app can continue", async () => {
+    const { UpdateOrchestrator } =
+      await import("../electron/update-orchestrator.js");
+    const orchestrator = new UpdateOrchestrator({ dataDir });
+    await orchestrator.beginUpdate("0.1.1", "0.1.0");
+    await orchestrator.markFailed(
+      "Passbook could not create a verified backup before updating.",
+    );
+
+    const { UpdateController } =
+      await import("../electron/update-controller.js");
+    const controller = new UpdateController({
+      dataDir,
+      hostUrl: "http://127.0.0.1:3847",
+      currentVersion: "0.1.0",
+    });
+
+    await controller.start();
+    expect(controller.getState().trial).toMatchObject({
+      status: "failed",
+      backupId: "",
+    });
+
+    await expect(controller.dismissTrialFailure()).resolves.toMatchObject({
+      accepted: true,
+      completed: true,
+      state: { trial: null },
+    });
+    await expect(orchestrator.readIntent()).resolves.toBeNull();
+  });
+
+  it("clears a failed post-update trial without deleting its backup", async () => {
+    const { UpdateOrchestrator } =
+      await import("../electron/update-orchestrator.js");
+    const orchestrator = new UpdateOrchestrator({ dataDir });
+    await orchestrator.beginUpdate("0.1.1", "0.1.0");
+    await orchestrator.markBackupComplete("backup-1");
+    await orchestrator.markFailed("Updated host did not become ready.");
+
+    const { UpdateController } =
+      await import("../electron/update-controller.js");
+    const controller = new UpdateController({
+      dataDir,
+      hostUrl: "http://127.0.0.1:3847",
+      currentVersion: "0.1.1",
+    });
+
+    await controller.start();
+    expect(controller.getState().trial).toMatchObject({
+      status: "failed",
+      backupId: "backup-1",
+    });
+
+    await controller.dismissTrialFailure();
+    await expect(orchestrator.readIntent()).resolves.toBeNull();
+  });
 });
