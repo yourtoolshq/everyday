@@ -95,3 +95,18 @@ export async function listInvestmentSnapshotsByAccount(
 ) {
   return repository.listSnapshotsByAccountId(accountId);
 }
+
+/** Explicit Save validates and publishes a draft without a separate review interaction. */
+export async function publishInvestmentDraft(
+  repository: InvestmentStatementRepository,
+  command: SaveSnapshotCommand,
+  draftRevision: string,
+) {
+  const normalized = normalizeSaveCommand(command);
+  assertReviewReady(
+    normalized.totals,
+    normalized.positions,
+    normalized.valuationDate,
+  );
+  return repository.saveSnapshot(normalized, draftRevision);
+}

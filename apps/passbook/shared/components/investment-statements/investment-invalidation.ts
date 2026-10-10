@@ -7,6 +7,9 @@ export async function invalidateInvestmentCaches(
   options: { documentId: string; accountId: string },
 ) {
   await Promise.all([
+    utils.investmentStatements.entry.invalidate({
+      documentId: options.documentId,
+    }),
     utils.investmentStatements.getByDocument.invalidate({
       documentId: options.documentId,
     }),
@@ -19,8 +22,14 @@ export async function invalidateInvestmentCaches(
   ]);
 }
 
-export function isConflictError(error: {
-  data?: { code?: string } | null;
-}): boolean {
-  return error.data?.code === "CONFLICT";
+export function isConflictError(error: unknown): boolean {
+  return Boolean(
+    error &&
+    typeof error === "object" &&
+    "data" in error &&
+    error.data &&
+    typeof error.data === "object" &&
+    "code" in error.data &&
+    error.data.code === "CONFLICT",
+  );
 }

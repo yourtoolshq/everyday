@@ -16,7 +16,7 @@ export const sectionCoverageLabels: Record<SectionCoverage, string> = {
 
 export const reviewStatusLabels: Record<EnrichmentReviewStatus, string> = {
   draft: "Draft",
-  reviewed: "Reviewed",
+  reviewed: "Saved",
 };
 
 export type InvestmentDetailsStatus =
@@ -31,9 +31,9 @@ export function investmentDetailsStatusLabel(
     case "draft":
       return "Details draft";
     case "reviewed_partial":
-      return "Reviewed (partial coverage)";
+      return "Details saved";
     case "reviewed":
-      return "Details reviewed";
+      return "Details saved";
   }
 }
 

@@ -20,6 +20,8 @@ import {
   documentEnrichments,
   documents,
   INVESTMENT_STATEMENT_SCHEMA_VERSION,
+  investmentEntryDrafts,
+  investmentEntryPreferences,
   investmentStatementPositions,
   investmentStatementSnapshots,
   investmentStatementTotals,
@@ -162,6 +164,88 @@ function mapSnapshotDto(
 
 export function createInvestmentStatementRepository(db: PassbookDatabase) {
   return {
+    async loadEntryDraft(documentId: string) {
+      const [draft] = await db
+        .select()
+        .from(investmentEntryDrafts)
+        .where(eq(investmentEntryDrafts.documentId, documentId));
+      return draft ?? null;
+    },
+    async saveEntryDraft(
+      command: SaveSnapshotCommand,
+      expectedDraftRevision: string | null,
+    ) {
+      return db.transaction(async (tx) => {
+        const repository = createInvestmentStatementRepository(
+          tx as PassbookDatabase,
+        );
+        const context = await repository.findDocumentContext(
+          command.documentId,
+        );
+        if (!context) throw notFound("Document not found.");
+        assertInvestmentEligibleDocumentContext(context);
+        const existing = await repository.loadEntryDraft(command.documentId);
+        if ((existing?.revision ?? null) !== expectedDraftRevision)
+          throw conflict(
+            "This draft was changed in another window. Reload before continuing.",
+          );
+        const snapshot = await repository.loadSnapshotByDocumentId(
+          command.documentId,
+        );
+        if ((snapshot?.revision ?? null) !== command.expectedRevision)
+          throw conflict(
+            "Saved details changed elsewhere. Reload before continuing.",
+          );
+        const values = {
+          documentId: command.documentId,
+          command,
+          revision: crypto.randomUUID(),
+          updatedAt: now(),
+        };
+        await tx
+          .insert(investmentEntryDrafts)
+          .values(values)
+          .onConflictDoUpdate({
+            target: investmentEntryDrafts.documentId,
+            set: values,
+          });
+        return values;
+      });
+    },
+    async discardEntryDraft(documentId: string, expectedRevision: string) {
+      return db.transaction(async (tx) => {
+        const draft = await createInvestmentStatementRepository(
+          tx as PassbookDatabase,
+        ).loadEntryDraft(documentId);
+        if (draft?.revision !== expectedRevision)
+          throw conflict(
+            "This draft changed elsewhere. Reload before discarding.",
+          );
+        await tx
+          .delete(investmentEntryDrafts)
+          .where(eq(investmentEntryDrafts.documentId, documentId));
+      });
+    },
+    async loadEntryPreferences(accountId: string) {
+      const [row] = await db
+        .select()
+        .from(investmentEntryPreferences)
+        .where(eq(investmentEntryPreferences.accountId, accountId));
+      return row?.preferences ?? null;
+    },
+    async saveEntryPreferences(
+      accountId: string,
+      preferences: import("~/modules/investment-statements/domain/entry-preferences").EntryPreferences,
+    ) {
+      await db
+        .insert(investmentEntryPreferences)
+        .values({ accountId, preferences })
+        .onConflictDoUpdate({
+          target: investmentEntryPreferences.accountId,
+          set: { preferences },
+        });
+      return preferences;
+    },
     async findDocumentContext(documentId: string) {
       const [row] = await db
         .select({
@@ -303,13 +387,28 @@ export function createInvestmentStatementRepository(db: PassbookDatabase) {
       });
     },
 
-    async saveSnapshot(command: SaveSnapshotCommand): Promise<SnapshotDto> {
+    async saveSnapshot(
+      command: SaveSnapshotCommand,
+      publishDraftRevision?: string,
+    ): Promise<SnapshotDto> {
       return db.transaction(async (tx) => {
         const context = await createInvestmentStatementRepository(
           tx as PassbookDatabase,
         ).findDocumentContext(command.documentId);
         if (!context) throw notFound("Document not found.");
         assertInvestmentEligibleDocumentContext(context);
+        if (publishDraftRevision !== undefined) {
+          const draft = await createInvestmentStatementRepository(
+            tx as PassbookDatabase,
+          ).loadEntryDraft(command.documentId);
+          if (draft?.revision !== publishDraftRevision)
+            throw conflict(
+              "This draft changed elsewhere. Reload before saving.",
+            );
+          await tx
+            .delete(investmentEntryDrafts)
+            .where(eq(investmentEntryDrafts.documentId, command.documentId));
+        }
 
         const [existing] = await tx
           .select()
@@ -334,9 +433,10 @@ export function createInvestmentStatementRepository(db: PassbookDatabase) {
               kind: "investment_statement",
               schemaVersion: INVESTMENT_STATEMENT_SCHEMA_VERSION,
               entryMethod: "manual",
-              reviewStatus: "draft",
+              reviewStatus:
+                publishDraftRevision !== undefined ? "reviewed" : "draft",
               revision: 1,
-              reviewedAt: null,
+              reviewedAt: publishDraftRevision !== undefined ? now() : null,
             })
             .returning();
           if (!enrichment) throw unexpected("Enrichment creation failed.");
@@ -382,8 +482,9 @@ export function createInvestmentStatementRepository(db: PassbookDatabase) {
         await tx
           .update(documentEnrichments)
           .set({
-            reviewStatus: "draft",
-            reviewedAt: null,
+            reviewStatus:
+              publishDraftRevision !== undefined ? "reviewed" : "draft",
+            reviewedAt: publishDraftRevision !== undefined ? now() : null,
             revision: existing.revision + 1,
             updatedAt: now(),
           })
@@ -510,6 +611,9 @@ export function createInvestmentStatementRepository(db: PassbookDatabase) {
           );
         }
 
+        await tx
+          .delete(investmentEntryDrafts)
+          .where(eq(investmentEntryDrafts.documentId, documentId));
         await tx
           .delete(documentEnrichments)
           .where(eq(documentEnrichments.id, existing.id));

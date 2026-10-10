@@ -151,33 +151,28 @@ async function openInvestmentWorkspace(page: Page, documentId: string) {
   await expect(
     page.getByText("Statement not found or not eligible."),
   ).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Save draft" })).toBeVisible({
+  await expect(page.getByRole("button", { name: "Save details" })).toBeVisible({
     timeout: 15_000,
   });
 }
 
-async function selectCoverage(
-  page: Page,
-  triggerId: string,
-  label: "Partial" | "Complete" | "Not entered",
-) {
-  await page.locator(`#${triggerId}`).click();
-  await page.getByRole("option", { name: label, exact: true }).click();
-}
-
 async function fillManualStatementWorkspace(page: Page) {
-  await page.getByRole("button", { name: "Dates & notes" }).click();
+  await page.getByRole("button", { name: /Dates$/ }).click();
   await page.getByLabel("Valuation date").fill("2026-03-31");
   await page.getByLabel("Coverage start").fill("2026-01-01");
   await page.getByLabel("Coverage end").fill("2026-03-31");
 
-  await page.getByRole("button", { name: "Summary", exact: true }).click();
-  await selectCoverage(page, "summary-coverage", "Partial");
-  await page.getByLabel("Closing value", { exact: true }).fill("12500.50");
-  await page.getByLabel("Summary cash", { exact: true }).fill("250.00");
+  await page.getByRole("button", { name: /Summary$/ }).click();
+  await page
+    .getByLabel("Closing market value", { exact: true })
+    .fill("12500.50");
+  await page.getByRole("button", { name: "Add fields" }).click();
+  await page
+    .getByRole("menuitem", { name: "Cash balance", exact: true })
+    .click();
+  await page.getByLabel("Cash balance", { exact: true }).fill("250.00");
 
-  await page.getByRole("button", { name: /^Holdings \(/ }).click();
-  await selectCoverage(page, "holdings-coverage", "Partial");
+  await page.getByRole("button", { name: /Holdings$/ }).click();
   await page.getByRole("button", { name: "Add line" }).click();
 
   await page.getByLabel("Source label").first().fill("Fictional Equity ETF");
@@ -204,7 +199,7 @@ async function fillManualStatementWorkspace(page: Page) {
 }
 
 test.describe("investment statement enrichment", () => {
-  test("manual entry, instrument catalog, draft/review lifecycle, persistence, comparison, and removal", async ({
+  test("manual entry, instrument catalog, autosaved draft and saved lifecycle, persistence, comparison, and removal", async ({
     page,
     request,
   }) => {
@@ -220,26 +215,41 @@ test.describe("investment statement enrichment", () => {
     ).toHaveCount(1);
     await fillManualStatementWorkspace(page);
 
-    await page.getByRole("button", { name: "Save draft" }).click();
-    await expect(page.getByText("Draft saved.")).toBeVisible();
-    await expect(page.getByText("Draft details")).toBeVisible();
-
-    await page.getByRole("button", { name: "Review" }).click();
-    await expect(page.getByText("Facts marked as reviewed.")).toBeVisible();
-    await expect(page.getByText("Reviewed · partial")).toBeVisible();
-
-    await page.getByRole("button", { name: "Summary", exact: true }).click();
-    await page.getByLabel("Closing value", { exact: true }).fill("12510.00");
-    await page.getByRole("button", { name: "Save draft" }).click();
-    await expect(page.getByText("Draft details")).toBeVisible();
-
-    await page.reload();
-    await page.getByRole("button", { name: "Summary", exact: true }).click();
-    await expect(page.getByLabel("Closing value", { exact: true })).toHaveValue(
-      /12510(\.00)?/,
+    await page.getByLabel("Market value 2", { exact: true }).blur();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Draft saved" }),
+    ).toBeVisible();
+    const entry = await trpcQuery<{
+      snapshot: SnapshotDto | null;
+      draft: { revision: string } | null;
+    }>(request, "investmentStatements.entry", {
+      documentId: fixture.documentId,
+    });
+    expect(entry.snapshot).toBeNull();
+    expect(entry.draft).not.toBeNull();
+    await page.getByRole("button", { name: "Save details" }).click();
+    await expect(page.getByText("Statement details saved.")).toBeVisible();
+    await page.getByRole("button", { name: /Summary$/ }).click();
+    await page
+      .getByLabel("Closing market value", { exact: true })
+      .fill("12510.00");
+    await page.getByLabel("Closing market value", { exact: true }).blur();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Draft saved" }),
+    ).toBeVisible();
+    const unchanged = await trpcQuery<{ snapshot: SnapshotDto }>(
+      request,
+      "investmentStatements.getByDocument",
+      { documentId: fixture.documentId },
     );
-    await page.getByRole("button", { name: "Review" }).click();
-    await expect(page.getByText("Facts marked as reviewed.")).toBeVisible();
+    expect(unchanged.snapshot.totals[0]?.closingValue).toBe("12500.5");
+    await page.reload();
+    await page.getByRole("button", { name: /Summary$/ }).click();
+    await expect(
+      page.getByLabel("Closing market value", { exact: true }),
+    ).toHaveValue(/12,510\.00/);
+    await page.getByRole("button", { name: "Save details" }).click();
+    await expect(page.getByText("Statement details saved.")).toBeVisible();
 
     await page.goto("/holdings");
     await expect(
@@ -340,7 +350,10 @@ test.describe("investment statement enrichment", () => {
     });
 
     await page.goto(`/accounts/${fixture.accountId}`);
-    await expect(page.getByText("Investment statement history")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Balance history" }),
+    ).toBeVisible();
+    await page.getByText(/Statement history & comparisons/).click();
     await expect(
       page.getByRole("heading", { name: "What changed?" }),
     ).toBeVisible();
@@ -386,7 +399,9 @@ test.describe("investment statement enrichment", () => {
         "Investment details removed. The statement file is unchanged.",
       ),
     ).toBeVisible();
-    await expect(page.getByText("No details")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Save details" }),
+    ).toBeVisible();
 
     const sourceLink = page.getByRole("link", { name: "Open source file" });
     const href = await sourceLink.getAttribute("href");
@@ -419,10 +434,12 @@ test.describe("investment statement enrichment", () => {
     await expect(
       page.getByText("Fictional investment statement", { exact: true }),
     ).toHaveCount(1);
-    await expect(
-      page.getByRole("button", { name: "Holdings (0)" }),
-    ).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("button", { name: /Dates$/ })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
     await page.getByLabel("Valuation date", { exact: true }).fill("2026-06-30");
+    await page.getByRole("button", { name: /Holdings$/ }).click();
     await page.getByRole("button", { name: "Add line" }).click();
     await page
       .getByLabel("Source label 1", { exact: true })
@@ -447,12 +464,12 @@ test.describe("investment statement enrichment", () => {
     await page.getByLabel("Unit price 1", { exact: true }).fill("81.025");
     await page.getByRole("button", { name: "Details line 1" }).click();
     await page.getByLabel("Unit price currency", { exact: true }).fill("USD");
-    await page
-      .getByRole("textbox", { name: "Source page", exact: true })
-      .fill("1");
-    await page.getByRole("button", { name: "Save draft" }).click();
-    await expect(page.getByText("Draft saved.")).toBeVisible();
+    await page.getByLabel("Unit price currency", { exact: true }).blur();
+    await expect(
+      page.getByRole("status").filter({ hasText: "Draft saved" }),
+    ).toBeVisible();
     await page.reload();
+    await page.getByRole("button", { name: /Holdings$/ }).click();
     await expect(
       page.getByLabel("Market value 1", { exact: true }),
     ).toHaveValue("810.25");
@@ -560,7 +577,10 @@ test.describe("investment statement enrichment", () => {
     await saveReviewed(partialDoc.id, "2026-06-30", "partial", "55");
 
     await page.goto(`/accounts/${fixture.accountId}`);
-    await expect(page.getByText("Investment statement history")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Balance history" }),
+    ).toBeVisible();
+    await page.getByText(/Statement history & comparisons/).click();
     await page.getByLabel("Earlier observation").click();
     await page
       .getByRole("option", { name: /Mar 31, 2026/ })
@@ -581,4 +601,129 @@ test.describe("investment statement enrichment", () => {
       page.getByText(/not reported on the later statement/),
     ).toHaveCount(0);
   });
+});
+
+test("remembers account fields and holding identities, records retirement without changing history", async ({
+  page,
+  request,
+}) => {
+  const fixture = await createInvestmentFixture(request);
+  const instrument = await trpc<{ id: string }>(
+    request,
+    "investmentInstruments.create",
+    {
+      displayName: "Remembered sample ETF",
+      kind: "etf",
+      series: null,
+      notes: null,
+      identifiers: [
+        { kind: "ticker", value: "RMD", namespace: fixture.accountId },
+      ],
+    },
+  );
+  await openInvestmentWorkspace(page, fixture.documentId);
+  await page.getByRole("button", { name: /Summary$/ }).click();
+  await page.getByRole("button", { name: "Add fields" }).click();
+  await page.getByRole("menuitem", { name: "Fees", exact: true }).click();
+  await page.getByLabel("Fees", { exact: true }).fill("1.50");
+  await page.getByLabel("Closing market value", { exact: true }).fill("100");
+  await page
+    .getByRole("button", { name: "Change label for Closing market value" })
+    .click();
+  await page
+    .getByRole("menuitem", { name: "Closing value", exact: true })
+    .click();
+  await page.getByRole("button", { name: /Holdings$/ }).click();
+  await page.getByRole("button", { name: "Add line" }).click();
+  await page
+    .getByLabel("Source label 1", { exact: true })
+    .fill("Remembered sample ETF");
+  await page.getByRole("button", { name: "Link instrument" }).click();
+  await page
+    .getByLabel("Search", { exact: true })
+    .fill("Remembered sample ETF");
+  await page
+    .getByRole("button", { name: /Remembered sample ETF.*RMD/ })
+    .click();
+  await page.getByLabel("Market value 1", { exact: true }).fill("100");
+  await page.getByLabel("Quantity 1", { exact: true }).fill("5");
+  await page.getByRole("button", { name: "Save details" }).click();
+  await expect(page.getByText("Statement details saved.")).toBeVisible();
+  const second = await uploadStatementPdf(
+    request,
+    fixture.accountId,
+    "2026-Q2",
+    "remembered-q2.pdf",
+  );
+  await openInvestmentWorkspace(page, second.id);
+  await page.getByRole("button", { name: /Summary$/ }).click();
+  await expect(page.getByLabel("Fees", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Closing value", { exact: true })).toBeVisible();
+  await page.getByLabel("Closing value", { exact: true }).fill("0");
+  await page.getByRole("button", { name: /Holdings$/ }).click();
+  await expect(page.getByLabel("Source label 1", { exact: true })).toHaveValue(
+    "Remembered sample ETF",
+  );
+  await expect(page.getByLabel("Market value 1", { exact: true })).toHaveValue(
+    "",
+  );
+  await page.getByRole("button", { name: "Details line 1" }).click();
+  await page.getByRole("button", { name: "No longer held line 1" }).click();
+  await page.getByRole("button", { name: "Save details" }).click();
+  await expect(page.getByText("Statement details saved.")).toBeVisible();
+  const third = await uploadStatementPdf(
+    request,
+    fixture.accountId,
+    "2026-Q3",
+    "remembered-q3.pdf",
+  );
+  await openInvestmentWorkspace(page, third.id);
+  await page.getByRole("button", { name: /Holdings$/ }).click();
+  await expect(page.getByLabel("Source label 1", { exact: true })).toHaveCount(
+    0,
+  );
+  const original = await trpcQuery<{
+    snapshot: { positions: { instrumentId: string; marketValue: string }[] };
+  }>(request, "investmentStatements.getByDocument", {
+    documentId: fixture.documentId,
+  });
+  expect(original.snapshot.positions[0]).toMatchObject({
+    instrumentId: instrument.id,
+    marketValue: "100",
+  });
+});
+
+test("recovers a failed autosave and discards edits without replacing saved facts", async ({
+  page,
+  request,
+}) => {
+  const fixture = await createInvestmentFixture(request);
+  await openInvestmentWorkspace(page, fixture.documentId);
+  await page.getByRole("button", { name: /Summary$/ }).click();
+  await page.getByLabel("Closing market value", { exact: true }).fill("200");
+  await page.getByRole("button", { name: "Save details" }).click();
+  await expect(page.getByText("Statement details saved.")).toBeVisible();
+  await page.route("**/api/trpc/investmentStatements.saveDraft**", (route) =>
+    route.abort(),
+  );
+  await page.getByLabel("Closing market value", { exact: true }).fill("300");
+  await page.getByLabel("Closing market value", { exact: true }).blur();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Draft not saved" }),
+  ).toBeVisible();
+  await page.unroute("**/api/trpc/investmentStatements.saveDraft**");
+  await page.getByRole("button", { name: "Retry draft save" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Draft saved" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Discard draft" }).click();
+  await expect(
+    page.getByLabel("Closing market value", { exact: true }),
+  ).toHaveValue("200.00");
+  const restored = await trpcQuery<{
+    snapshot: { totals: { closingValue: string }[] };
+    draft: unknown;
+  }>(request, "investmentStatements.entry", { documentId: fixture.documentId });
+  expect(restored.snapshot.totals[0]?.closingValue).toBe("200");
+  expect(restored.draft).toBeNull();
 });

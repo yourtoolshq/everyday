@@ -341,8 +341,8 @@ Valuation date          → snapshot (when holdings/values apply)
 Coverage start/end      → optional actual period covered by the statement text
 ```
 
-Valuation date is entered from the statement; it is not inferred from upload
-time or the schedule cell label alone.
+Valuation date is checked against the statement. Entry may suggest dates from the
+selected period, but suggestions are editable and are not extracted facts.
 
 **Frequency does not select the schema.** Monthly, quarterly, annual, and
 (eventually) irregular periods share the same investment payload. The schedule
@@ -351,12 +351,13 @@ coverage and valuation.
 
 **Section coverage** (`not_entered` / `partial` / `complete`) applies separately
 to summary and holdings. **Review status** on the header is independent: reviewed
-with partial section coverage is valid. Unknown amounts are null, not zero.
+with partial section coverage is valid. The manual UI hides these controls and
+saves conservative partial coverage. Unknown amounts are null, not zero.
 
 Summary figures are stored per **currency** and **scope** (`account_total` or
 `currency_component`). Positions store **value currency** on each line; cash
 lines do not require an instrument. Investment lines require a resolved
-instrument before review.
+instrument before saving details.
 
 **Instrument** is a Passbook-local catalog entry (display name, kind, optional
 series, confirmed identifiers). **Position** preserves source labels as printed
@@ -364,7 +365,17 @@ on the statement; catalog corrections do not rewrite historical source text.
 
 **Provenance** is row-level: each summary total and position may store optional
 `sourcePage` and `sourceNote`. There is no separate per-field source metadata in
-the MVP schema.
+the MVP schema. Manual entry hides these source controls but preserves stored metadata.
+
+Incomplete entry is stored separately in a document-owned draft with an opaque
+revision token. Save details validates and atomically publishes the snapshot and
+clears the matching draft; internally it retains the reviewed status. Editing or
+discarding a draft does not change the saved snapshot. Account-owned preferences
+store enabled optional fields, alias choices, and currency defaults, never facts.
+
+New entry remembers earlier saved holding identities without carrying stale amounts.
+Explicit zero quantity/value retires a row from future entry; missing rows in partial
+statements do not imply disposal. Historical snapshots remain independent.
 
 Holding exposure is another derived read model: one latest reviewed snapshot
 per account on or before a chosen date, with native currencies separate and
@@ -397,7 +408,7 @@ Uploaded statements
 
 For investment-related accounts, **file completeness** remains the rule above.
 **Investment details status** is a separate derived view: not entered, draft,
-reviewed (with optional partial-coverage detail on summary or holdings). A
+saved (internally reviewed, with conservative coverage metadata). A
 missing file and missing enrichment are different questions.
 
 Example:

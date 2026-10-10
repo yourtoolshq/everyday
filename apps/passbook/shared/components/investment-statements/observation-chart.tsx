@@ -13,7 +13,6 @@ import type {
   EnrichmentReviewStatus,
   SectionCoverage,
 } from "~/server/db/schema";
-import { reviewStatusLabels } from "~/components/investment-statements/investment-labels";
 import { formatDateLabel } from "~/lib/format-date";
 
 type ChartPoint = {
@@ -101,11 +100,6 @@ export function ObservationChart({
 
   return (
     <figure className="space-y-3">
-      <figcaption className="text-muted-foreground text-xs">
-        Reported closing value ({currencyFilter}). Lines connect statement
-        observations; they do not represent daily prices or investment returns.
-        Drafts use open markers.
-      </figcaption>
       <ChartContainer
         config={{
           value: {
@@ -161,7 +155,7 @@ export function ObservationChart({
                         {point.closingValue} {point.currency}
                       </p>
                       <p className="text-muted-foreground">
-                        {reviewStatusLabels[point.reviewStatus]}
+                        {point.reviewStatus === "reviewed" ? "Saved" : "Draft"}
                         {coverageHint(point.summaryCoverage)}
                       </p>
                       <p>{point.label}</p>
@@ -198,6 +192,9 @@ export function ObservationChart({
           />
         </LineChart>
       </ChartContainer>
+      <p className="text-muted-foreground text-xs">
+        Saved statement balances, not daily prices or investment return.
+      </p>
       <details className="text-sm">
         <summary className="text-muted-foreground cursor-pointer">
           Source observations ({points.length})
@@ -214,7 +211,7 @@ export function ObservationChart({
                 {point.currency}
               </button>{" "}
               <span className="text-muted-foreground">
-                {reviewStatusLabels[point.reviewStatus]}
+                {point.reviewStatus === "reviewed" ? "Saved" : "Draft"}
                 {coverageHint(point.summaryCoverage)}
               </span>
             </li>

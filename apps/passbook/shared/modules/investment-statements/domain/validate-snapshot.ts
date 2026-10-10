@@ -215,27 +215,30 @@ export function assertReviewReady(
 ): void {
   validateIsoDate(valuationDate, "Valuation date");
   if (!snapshotHasAnyFinancialFact(totals, positions)) {
-    throw invalidInput("Enter at least one financial fact before review.");
+    throw invalidInput(
+      "Enter at least one financial fact before saving details.",
+    );
   }
   for (const total of totals) {
     for (const field of monetaryFields) {
-      assertNonNegativeAmount(total[field] as string | null, field);
+      if (field !== "reportedValueChange")
+        assertNonNegativeAmount(total[field] as string | null, field);
     }
   }
   for (const position of positions) {
     if (position.lineKind === "investment" && !position.instrumentId) {
       throw invalidInput(
-        `Resolve an instrument for investment line "${position.sourceLabel}" before review.`,
+        `Resolve an instrument for investment line "${position.sourceLabel}" before saving details.`,
       );
     }
     if (position.unitPrice?.trim() && !position.unitPriceCurrency) {
       throw invalidInput(
-        `Enter a unit price currency for "${position.sourceLabel}" before review.`,
+        `Enter a unit price currency for "${position.sourceLabel}" before saving details.`,
       );
     }
     if (position.bookCost?.trim() && !position.bookCostCurrency) {
       throw invalidInput(
-        `Enter a book cost currency for "${position.sourceLabel}" before review.`,
+        `Enter a book cost currency for "${position.sourceLabel}" before saving details.`,
       );
     }
     assertNonNegativeAmount(position.marketValue, "Market value");
