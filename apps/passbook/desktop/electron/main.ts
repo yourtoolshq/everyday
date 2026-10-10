@@ -8,6 +8,7 @@ import { resolveDesktopPaths } from "./config.js";
 import { isHostHealthy } from "./host-connectivity.js";
 import { HostProcess } from "./host-process.js";
 import { attachNavigationGuard } from "./navigation.js";
+import { isUpdateInstallQuitPending } from "./update-install-quit.js";
 import { getUpdateController, setupAutoUpdater } from "./update-manager.js";
 
 let paths: DesktopPaths | null = null;
@@ -211,6 +212,13 @@ app.on("activate", () => {
 });
 
 app.on("before-quit", (event) => {
+  if (isUpdateInstallQuitPending()) {
+    quitting = true;
+    if (hostOwnedByDesktop && host?.isRunning()) {
+      void host.stop();
+    }
+    return;
+  }
   if (
     !hostOwnedByDesktop ||
     !host?.isRunning() ||

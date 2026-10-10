@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { isUpdateInstallQuitPending } from "../electron/update-install-quit.js";
+
 const autoUpdaterHandlers = new Map<string, (...args: unknown[]) => void>();
 const autoUpdater = {
   autoDownload: true,
@@ -26,6 +28,9 @@ describe("UpdateController", () => {
     dataDir = await mkdtemp(join(tmpdir(), "passbook-update-controller-"));
     autoUpdaterHandlers.clear();
     vi.clearAllMocks();
+    const { clearUpdateInstallQuitPending } =
+      await import("../electron/update-install-quit.js");
+    clearUpdateInstallQuitPending();
     vi.stubGlobal(
       "fetch",
       vi.fn(() =>
@@ -124,7 +129,12 @@ describe("UpdateController", () => {
 
     const result = await controller.installUpdate();
     expect(result.accepted).toBe(true);
-    expect(autoUpdater.quitAndInstall).toHaveBeenCalled();
+    expect(autoUpdater.quitAndInstall).toHaveBeenCalledWith(false, true);
+    expect(isUpdateInstallQuitPending()).toBe(true);
+    expect(controller.getState().trial).toMatchObject({
+      status: "verifying",
+      backupId: "backup-1",
+    });
 
     const raw = await readFile(join(dataDir, ".update/intent.json"), "utf8");
     expect(JSON.parse(raw)).toMatchObject({
