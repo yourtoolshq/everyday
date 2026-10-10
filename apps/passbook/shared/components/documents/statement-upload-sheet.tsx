@@ -2,6 +2,7 @@
 
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@yourtoolshq/ui/button";
@@ -35,6 +36,7 @@ import {
   suggestDefaultPeriodKey,
 } from "~/lib/expected-periods";
 import { FileDropzone, useUpload } from "~/lib/uploads";
+import { isInvestmentEligibleAccountType } from "~/modules/investment-statements/domain/account-eligibility";
 import { api } from "~/trpc/react";
 
 type Account = RouterOutputs["accounts"]["list"][number];
@@ -66,6 +68,7 @@ export function StatementUploadSheet({
   accountId: initialAccountId,
   periodKey: initialPeriodKey,
 }: StatementUploadSheetProps) {
+  const router = useRouter();
   const utils = api.useUtils();
   const createDocument = api.documents.create.useMutation();
   const fileUpload = useUpload("document");
@@ -167,6 +170,9 @@ export function StatementUploadSheet({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const enterDetails =
+      submitter instanceof HTMLButtonElement && submitter.value === "details";
     const uploaded = fileUpload.file;
     if (!accountId) {
       toast.error("Choose an account.");
@@ -187,7 +193,7 @@ export function StatementUploadSheet({
 
     setSaving(true);
     try {
-      await createDocument.mutateAsync({
+      const created = await createDocument.mutateAsync({
         accountId,
         file: uploaded.token,
         type: "statement",
@@ -195,12 +201,14 @@ export function StatementUploadSheet({
         title,
         notes,
       });
+      if (!created) throw new Error("The statement could not be saved.");
       await Promise.all([
         utils.documents.overview.invalidate(),
         utils.documents.statementDocumentsByAccount.invalidate(),
       ]);
       toast.success("Statement uploaded.");
       onOpenChange(false);
+      if (enterDetails) router.push(`/statements/${created.id}/investments`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Upload failed.");
     } finally {
@@ -323,6 +331,13 @@ export function StatementUploadSheet({
             </div>
           </div>
 
+          {selectedAccount &&
+          isInvestmentEligibleAccountType(selectedAccount.accountType) ? (
+            <p className="text-muted-foreground px-4 pb-3 text-sm">
+              After upload, enter totals and holdings alongside the PDF. Reuse a
+              holding by symbol and exchange, or create it inline.
+            </p>
+          ) : null}
           <SheetFooter>
             <Button
               type="button"
@@ -331,8 +346,24 @@ export function StatementUploadSheet({
             >
               Cancel
             </Button>
+            {selectedAccount &&
+            isInvestmentEligibleAccountType(selectedAccount.accountType) ? (
+              <Button
+                type="submit"
+                value="details"
+                disabled={saving || fileUpload.status === "uploading"}
+              >
+                Save and enter details
+              </Button>
+            ) : null}
             <Button
               type="submit"
+              variant={
+                selectedAccount &&
+                isInvestmentEligibleAccountType(selectedAccount.accountType)
+                  ? "outline"
+                  : "default"
+              }
               disabled={
                 saving ||
                 fileUpload.status === "uploading" ||

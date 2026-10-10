@@ -7,7 +7,14 @@ export default defineConfig({
   workers: 1,
   projects: [
     {
+      name: "setup",
+      testMatch: "**/setup.spec.ts",
+      use: { ...devices["Desktop Chrome"] },
+    },
+    {
       name: "desktop-chromium",
+      testIgnore: ["**/setup.spec.ts", "**/foundation.spec.ts"],
+      dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"] },
     },
   ],

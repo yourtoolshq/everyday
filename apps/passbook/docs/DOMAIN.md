@@ -291,6 +291,92 @@ A statement normally satisfies one expected statement period.
 
 Duplicate handling can be treated separately from the core domain.
 
+---
+
+### Document enrichment
+
+A document may have **zero or more enrichments**, each identified by a closed
+**kind** (code-owned registry). The MVP permits only `investment_statement`.
+
+The enrichment **header** stores lifecycle metadata only:
+
+```text
+Kind
+Schema version
+Entry method
+Review status (draft / reviewed)
+Edit revision
+Reviewed at
+```
+
+Financial facts live in **typed payloads** subordinate to the header. Header and
+matching payload are created, updated, and removed **atomically**. A document can
+eventually hold multiple different allowed kinds, each reviewed independently.
+
+Facts follow one ownership path:
+
+```text
+Reported value (total or position)
+  → investment snapshot
+  → enrichment header
+  → document
+  → account
+```
+
+Do not duplicate `accountId`, period key, or document lifecycle fields on the
+investment payload.
+
+---
+
+### Investment statement snapshot
+
+An investment enrichment records **what a specific statement reports**, not live
+market prices or reconstructed trade history.
+
+Important dates:
+
+```text
+Document issue date     → document.documentDate
+Valuation date          → snapshot (when holdings/values apply)
+Coverage start/end      → optional actual period covered by the statement text
+```
+
+Valuation date is entered from the statement; it is not inferred from upload
+time or the schedule cell label alone.
+
+**Frequency does not select the schema.** Monthly, quarterly, annual, and
+(eventually) irregular periods share the same investment payload. The schedule
+derives expected periods; the document maps to a cell; enrichment records actual
+coverage and valuation.
+
+**Section coverage** (`not_entered` / `partial` / `complete`) applies separately
+to summary and holdings. **Review status** on the header is independent: reviewed
+with partial section coverage is valid. Unknown amounts are null, not zero.
+
+Summary figures are stored per **currency** and **scope** (`account_total` or
+`currency_component`). Positions store **value currency** on each line; cash
+lines do not require an instrument. Investment lines require a resolved
+instrument before review.
+
+**Instrument** is a Passbook-local catalog entry (display name, kind, optional
+series, confirmed identifiers). **Position** preserves source labels as printed
+on the statement; catalog corrections do not rewrite historical source text.
+
+**Provenance** is row-level: each summary total and position may store optional
+`sourcePage` and `sourceNote`. There is no separate per-field source metadata in
+the MVP schema.
+
+Holding exposure is another derived read model: one latest reviewed snapshot
+per account on or before a chosen date, with native currencies separate and
+source dates visible. Its denominator is entered holdings and cash; unknown
+values block totals, and partial coverage does not imply complete portfolio
+coverage. Identity includes symbol and exchange/issuer namespace as well as
+fund series. Source labels remain statement-specific.
+
+Comparisons and charts are **derived read models** from saved snapshots. Sum and
+compare only matching currencies. Do not infer investment return from change in
+reported account value.
+
 ## Completeness
 
 Statement completeness is a derived view.
@@ -308,6 +394,11 @@ Expected periods
 +
 Uploaded statements
 ```
+
+For investment-related accounts, **file completeness** remains the rule above.
+**Investment details status** is a separate derived view: not entered, draft,
+reviewed (with optional partial-coverage detail on summary or holdings). A
+missing file and missing enrichment are different questions.
 
 Example:
 
@@ -344,6 +435,11 @@ erDiagram
     ACCOUNT ||--o{ DOCUMENT : contains
     DOCUMENT ||--o| STATEMENT : may_be
     STATEMENT }o--|| EXPECTED_STATEMENT_PERIOD : satisfies
+    DOCUMENT ||--o{ DOCUMENT_ENRICHMENT : optional
+    DOCUMENT_ENRICHMENT ||--|| INVESTMENT_SNAPSHOT : investment_kind
+    INVESTMENT_SNAPSHOT ||--o{ POSITION : has
+    INVESTMENT_SNAPSHOT ||--o{ SUMMARY_TOTAL : has
+    INSTRUMENT o|--o{ POSITION : identifies
 ```
 
 ## Read models

@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
 import { Separator } from "@yourtoolshq/ui/separator";
 import { Skeleton } from "@yourtoolshq/ui/skeleton";
 
+import type { SnapshotDto } from "~/modules/investment-statements/domain/snapshot-dto";
 import type { RouterOutputs } from "~/trpc/react";
 import { AccountActivityPanel } from "~/components/accounts/account-activity-panel";
 import {
@@ -30,6 +31,7 @@ import { AccountTermsPanel } from "~/components/accounts/account-terms-panel";
 import { DeleteAccountDialog } from "~/components/accounts/delete-account-dialog";
 import { StatementUploadSheet } from "~/components/documents/statement-upload-sheet";
 import { InstitutionIcon } from "~/components/institutions/institution-icon";
+import { AccountInvestmentPanel } from "~/components/investment-statements/account-investment-panel";
 import { accountStatusLabels } from "~/lib/account-status";
 import { accountTypeLabels } from "~/lib/account-types";
 import { canDeriveStatementPeriods } from "~/lib/expected-periods";
@@ -40,6 +42,7 @@ import {
 } from "~/lib/statement-completeness";
 import { statementFrequencyLabels } from "~/lib/statement-frequency";
 import { cn } from "~/lib/utils";
+import { isInvestmentEligibleAccountType } from "~/modules/investment-statements/domain/account-eligibility";
 import { api } from "~/trpc/react";
 
 type AccountDocument = RouterOutputs["documents"]["overview"][number];
@@ -52,6 +55,13 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
   const utils = api.useUtils();
   const account = api.accounts.get.useQuery({ id: accountId });
   const accountDocuments = api.documents.overview.useQuery({ accountId });
+  const investmentEligible =
+    account.data != null &&
+    isInvestmentEligibleAccountType(account.data.accountType);
+  const investmentSnapshots = api.investmentStatements.listByAccount.useQuery(
+    { accountId },
+    { enabled: investmentEligible },
+  );
   const periodExceptions = api.statementPeriodExceptions.listByAccount.useQuery(
     { accountId },
   );
@@ -94,6 +104,14 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
     }
     return map;
   }, [accountDocuments.data]);
+
+  const investmentSnapshotsByDocumentId = useMemo(() => {
+    const map: Record<string, SnapshotDto> = {};
+    for (const snapshot of investmentSnapshots.data ?? []) {
+      map[snapshot.documentId] = snapshot as SnapshotDto;
+    }
+    return map;
+  }, [investmentSnapshots.data]);
 
   const statementDocumentsForCompleteness = useMemo(() => {
     const byPeriod: Record<string, string> = {};
@@ -292,6 +310,7 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
             <AccountStatementPeriods
               account={account.data}
               statementDocumentsByPeriod={statementDocumentsByPeriod}
+              investmentSnapshotsByDocumentId={investmentSnapshotsByDocumentId}
               exceptionsByPeriod={exceptionsByPeriod}
               onUploadPeriod={(periodKey) => setUploadTarget({ periodKey })}
               onMarkNotApplicable={(periodKey) =>
@@ -303,6 +322,13 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
             />
           </CardContent>
         </Card>
+      ) : null}
+
+      {investmentEligible ? (
+        <AccountInvestmentPanel
+          accountId={account.data.id}
+          accountType={account.data.accountType}
+        />
       ) : null}
 
       <AccountTermsPanel accountId={account.data.id} />

@@ -8,6 +8,7 @@ import {
   defaultStatementFrequency,
   statementFrequencies,
 } from "~/lib/statement-frequency";
+import { createInvestmentStatementRepository } from "~/modules/investment-statements/infrastructure/investment-statement-repository";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import {
   accountEvents,
@@ -19,6 +20,7 @@ import {
   people,
   statementExpectations,
 } from "~/server/db/schema";
+import { assertAccountUpdateAllowsInvestmentEnrichment } from "~/server/documents/investment-enrichment-guards";
 
 const accountInput = z
   .object({
@@ -226,6 +228,11 @@ export const accountsRouter = createTRPCRouter({
       }
 
       const account = await ctx.db.transaction(async (tx) => {
+        await assertAccountUpdateAllowsInvestmentEnrichment(tx, {
+          accountId: input.id,
+          nextAccountType: input.accountType,
+        });
+
         const [updated] = await tx
           .update(accounts)
           .set({
@@ -319,20 +326,24 @@ export const accountsRouter = createTRPCRouter({
         });
       }
 
-      const [documentRows, eventRows, snapshotRows] = await Promise.all([
-        ctx.db
-          .select({ id: documents.id })
-          .from(documents)
-          .where(eq(documents.accountId, input.id)),
-        ctx.db
-          .select({ id: accountEvents.id })
-          .from(accountEvents)
-          .where(eq(accountEvents.accountId, input.id)),
-        ctx.db
-          .select({ id: accountTermsSnapshots.id })
-          .from(accountTermsSnapshots)
-          .where(eq(accountTermsSnapshots.accountId, input.id)),
-      ]);
+      const [documentRows, eventRows, snapshotRows, investmentDetailCount] =
+        await Promise.all([
+          ctx.db
+            .select({ id: documents.id })
+            .from(documents)
+            .where(eq(documents.accountId, input.id)),
+          ctx.db
+            .select({ id: accountEvents.id })
+            .from(accountEvents)
+            .where(eq(accountEvents.accountId, input.id)),
+          ctx.db
+            .select({ id: accountTermsSnapshots.id })
+            .from(accountTermsSnapshots)
+            .where(eq(accountTermsSnapshots.accountId, input.id)),
+          createInvestmentStatementRepository(
+            ctx.db,
+          ).countEnrichmentsForAccount(input.id),
+        ]);
 
       return {
         displayName: account.displayName,
@@ -340,6 +351,7 @@ export const accountsRouter = createTRPCRouter({
         documentCount: documentRows.length,
         activityCount: eventRows.length,
         termsSnapshotCount: snapshotRows.length,
+        investmentDetailCount,
       };
     }),
 

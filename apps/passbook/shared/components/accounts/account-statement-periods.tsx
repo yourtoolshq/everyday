@@ -13,10 +13,16 @@ import { PeriodCoverage } from "@yourtoolshq/ui/period-coverage";
 import type { ExpectedPeriod } from "~/lib/expected-periods";
 import type { StatementCompletenessStatus } from "~/lib/statement-completeness";
 import type { StatementFrequency } from "~/lib/statement-frequency";
+import type { SnapshotDto } from "~/modules/investment-statements/domain/snapshot-dto";
 import type { RouterOutputs } from "~/trpc/react";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
 import { DocumentEditSheet } from "~/components/documents/document-edit-sheet";
 import { StatementDetailSheet } from "~/components/documents/statement-detail-sheet";
+import { InvestmentDetailsBadge } from "~/components/investment-statements/investment-details-badge";
+import {
+  deriveInvestmentDetailsStatus,
+  investmentDetailsStatusLabel,
+} from "~/components/investment-statements/investment-labels";
 import {
   canDeriveStatementPeriods,
   deriveExpectedPeriodsForYear,
@@ -28,6 +34,7 @@ import {
   deriveStatementCompleteness,
 } from "~/lib/statement-completeness";
 import { statementFrequencyLabels } from "~/lib/statement-frequency";
+import { isInvestmentEligibleAccountType } from "~/modules/investment-statements/domain/account-eligibility";
 
 type Account = RouterOutputs["accounts"]["list"][number];
 type StatementDocument = RouterOutputs["documents"]["overview"][number];
@@ -85,7 +92,7 @@ function formatYearSummary({
 }
 
 const legend: { tone: PeriodTone; label: string }[] = [
-  { tone: "complete", label: "Complete" },
+  { tone: "complete", label: "Statement uploaded" },
   { tone: "missing", label: "Missing" },
   { tone: "exempt", label: "Not applicable" },
   { tone: "waiting", label: "Waiting" },
@@ -100,6 +107,7 @@ export function AccountStatementPeriods({
   onUploadPeriod,
   onMarkNotApplicable,
   onUndoNotApplicable,
+  investmentSnapshotsByDocumentId = {},
 }: {
   account: Account;
   statementDocumentsByPeriod?: Readonly<Record<string, StatementDocument>>;
@@ -107,6 +115,9 @@ export function AccountStatementPeriods({
   onUploadPeriod?: (periodKey: string) => void;
   onMarkNotApplicable?: (periodKey: string) => void;
   onUndoNotApplicable?: (periodKey: string) => void;
+  investmentSnapshotsByDocumentId?: Readonly<
+    Record<string, SnapshotDto | undefined>
+  >;
 }) {
   const { requestDelete, dialog: deleteDialog } = useDeleteDocumentDialog();
   const frequency = account.statementFrequency;
@@ -180,10 +191,20 @@ export function AccountStatementPeriods({
   const canGoBack = yearRange ? year > yearRange.minYear : false;
   const canGoForward = yearRange ? year < yearRange.maxYear : false;
 
+  const investmentEligible = isInvestmentEligibleAccountType(
+    account.accountType,
+  );
+
   const cells: PeriodCoverageCell[] = periods.map((period) =>
     statementCell({
       period,
       document: statementDocumentsByPeriod[period.key],
+      investmentSnapshot: statementDocumentsByPeriod[period.key]
+        ? investmentSnapshotsByDocumentId[
+            statementDocumentsByPeriod[period.key]!.id
+          ]
+        : undefined,
+      investmentEligible,
       hasException: Boolean(exceptionsByPeriod[period.key]),
       onSelect: (document) =>
         setSelectedStatement({ document, periodLabel: period.label }),
@@ -227,6 +248,9 @@ export function AccountStatementPeriods({
           <p className="text-muted-foreground text-xs">
             Red periods are missing. Gray periods are marked not applicable.
             Blue is the current period still waiting for a statement.
+            {investmentEligible
+              ? " Investment details status appears beside uploaded statements in the list view."
+              : null}
           </p>
         }
       />
@@ -243,6 +267,11 @@ export function AccountStatementPeriods({
             setEditingStatement(selectedStatement.document);
             setSelectedStatement(null);
           }}
+          investmentEligible={investmentEligible}
+          investmentSnapshot={
+            investmentSnapshotsByDocumentId[selectedStatement.document.id] ??
+            null
+          }
         />
       ) : null}
 
@@ -265,6 +294,8 @@ export function AccountStatementPeriods({
 function statementCell({
   period,
   document,
+  investmentSnapshot,
+  investmentEligible,
   hasException,
   onSelect,
   onUpload,
@@ -275,6 +306,8 @@ function statementCell({
 }: {
   period: ExpectedPeriod;
   document?: StatementDocument;
+  investmentSnapshot?: SnapshotDto;
+  investmentEligible: boolean;
   hasException: boolean;
   onSelect?: (document: StatementDocument) => void;
   onUpload?: () => void;
@@ -325,6 +358,14 @@ function statementCell({
       <>
         <p className="font-medium">{period.label}</p>
         <p>{completenessStatusLabels[completeness]}</p>
+        {isComplete && investmentEligible ? (
+          <p className="text-background/70">
+            Investment details:{" "}
+            {investmentDetailsStatusLabel(
+              deriveInvestmentDetailsStatus(investmentSnapshot ?? null),
+            )}
+          </p>
+        ) : null}
         {isComplete ? (
           <p className="text-background/70">Click for details</p>
         ) : null}
@@ -343,13 +384,18 @@ function statementCell({
     ),
     listAction:
       isComplete && document ? (
-        <DocumentActionButtons
-          fileId={document.fileId}
-          title={document.title}
-          mimeType={document.mimeType}
-          onEdit={() => onEdit(document)}
-          onDelete={() => onDelete(document)}
-        />
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {investmentEligible ? (
+            <InvestmentDetailsBadge snapshot={investmentSnapshot ?? null} />
+          ) : null}
+          <DocumentActionButtons
+            fileId={document.fileId}
+            title={document.title}
+            mimeType={document.mimeType}
+            onEdit={() => onEdit(document)}
+            onDelete={() => onDelete(document)}
+          />
+        </div>
       ) : canUpload || canMarkNotApplicable || canUndoNotApplicable ? (
         <div className="flex items-center gap-1">
           {canUpload ? (

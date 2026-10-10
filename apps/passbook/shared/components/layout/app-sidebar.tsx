@@ -9,6 +9,7 @@ import {
   History,
   Landmark,
   LayoutDashboard,
+  PieChart,
   Settings2,
   Users,
   Wallet,
@@ -43,6 +44,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     { title: "Institutions", href: "/institutions", icon: Building2 },
     { title: "Members", href: "/members", icon: Users },
     { title: "Documents", href: "/documents", icon: FileText },
+    { title: "Holdings", href: "/holdings", icon: PieChart },
     { title: "Activity", href: "/activity", icon: History },
   ];
 

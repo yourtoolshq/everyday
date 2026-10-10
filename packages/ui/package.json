@@ -30,7 +30,8 @@
     "./textarea": "./src/textarea.tsx",
     "./theme-provider": "./src/theme-provider.tsx",
     "./theme-setting": "./src/theme-setting.tsx",
-    "./tooltip": "./src/tooltip.tsx"
+    "./tooltip": "./src/tooltip.tsx",
+    "./chart": "./src/chart.tsx"
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
@@ -42,7 +43,8 @@
     "cn": "catalog:",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.6.7",
-    "react-day-picker": "^9.11.1"
+    "react-day-picker": "^9.11.1",
+    "recharts": "^3.10.1"
   },
   "peerDependencies": {
     "lucide-react": ">=0.468.0",
