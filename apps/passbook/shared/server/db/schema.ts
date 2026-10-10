@@ -440,3 +440,31 @@ export const investmentStatementPositions = sqliteTable(
     ),
   ],
 );
+
+/** Incomplete entry is retained separately from saved financial facts. */
+export const investmentEntryDrafts = sqliteTable("investment_entry_drafts", {
+  documentId: text("document_id")
+    .primaryKey()
+    .references(() => documents.id, { onDelete: "cascade" }),
+  revision: text("revision").notNull(),
+  command: text("command", { mode: "json" })
+    .$type<
+      import("~/modules/investment-statements/domain/snapshot-dto").SaveSnapshotCommand
+    >()
+    .notNull(),
+  updatedAt: text("updated_at").notNull(),
+});
+
+export const investmentEntryPreferences = sqliteTable(
+  "investment_entry_preferences",
+  {
+    accountId: text("account_id")
+      .primaryKey()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    preferences: text("preferences", { mode: "json" })
+      .$type<
+        import("~/modules/investment-statements/domain/entry-preferences").EntryPreferences
+      >()
+      .notNull(),
+  },
+);

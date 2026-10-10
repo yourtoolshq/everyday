@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useState } from "react";
-import { MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { CircleOff, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@yourtoolshq/ui/button";
 import { Input } from "@yourtoolshq/ui/input";
@@ -17,14 +17,15 @@ import {
 import type { InstrumentRecord } from "~/components/investment-statements/instrument-sheets";
 import type { InvestmentStatementFormState } from "~/components/investment-statements/investment-form-state";
 import type { PositionInput } from "~/modules/investment-statements/domain/snapshot-dto";
-import type { SectionCoverage } from "~/server/db/schema";
 import { InstrumentPickerSheet } from "~/components/investment-statements/instrument-sheets";
 import { emptyPositionRow } from "~/components/investment-statements/investment-form-state";
 import {
   fieldDefinitions,
   positionLineKindLabels,
-  sectionCoverageLabels,
 } from "~/components/investment-statements/investment-labels";
+import { suggestedMarketValue } from "~/modules/investment-statements/domain/entry-helpers";
+import { InvestmentMoneyInput } from "./money-field-group";
+import { ValueChangePill } from "./value-change-pill";
 
 export function InvestmentPositionsPanel({
   form,
@@ -66,32 +67,9 @@ export function InvestmentPositionsPanel({
             Holdings and cash
           </h3>
           <p className="text-muted-foreground text-sm">
-            Enter values as printed. Leave unreported values blank. Use Details
-            for source references and other currencies.
+            Update each holding from this statement. Leave unreported values
+            blank.
           </p>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="holdings-coverage">Holdings coverage</Label>
-          <Select
-            value={form.holdingsCoverage}
-            onValueChange={(value) =>
-              onChange({
-                ...form,
-                holdingsCoverage: value as SectionCoverage,
-              })
-            }
-          >
-            <SelectTrigger id="holdings-coverage" className="w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(sectionCoverageLabels).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
 
@@ -106,7 +84,7 @@ export function InvestmentPositionsPanel({
         className="min-w-0 space-y-4 border-0 p-0"
       >
         <div className="overflow-x-auto rounded-lg border">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[760px] text-sm">
             <caption className="sr-only">
               Enter holdings as printed on the statement. Blank values mean
               unknown.
@@ -115,11 +93,11 @@ export function InvestmentPositionsPanel({
               <tr>
                 {[
                   "Holding / printed label",
-                  "Currency",
                   "Quantity",
                   "Unit price",
                   "Market value",
                   "Book cost",
+                  "Market − book",
                   "Actions",
                 ].map((label) => (
                   <th
@@ -137,7 +115,7 @@ export function InvestmentPositionsPanel({
               {form.positions.map((row, index) => (
                 <Fragment key={index}>
                   <tr className="border-t align-top">
-                    <td className="min-w-44 space-y-1 p-2">
+                    <td className="min-w-32 space-y-1 p-2">
                       <Input
                         id={`source-label-${index}`}
                         aria-label={`Source label ${index + 1}`}
@@ -166,19 +144,6 @@ export function InvestmentPositionsPanel({
                         </span>
                       )}
                     </td>
-                    <td className="w-20 p-2">
-                      <Input
-                        id={`value-currency-${index}`}
-                        aria-label={`Value currency ${index + 1}`}
-                        value={row.valueCurrency}
-                        maxLength={3}
-                        onChange={(event) =>
-                          updateRow(index, {
-                            valueCurrency: event.target.value.toUpperCase(),
-                          })
-                        }
-                      />
-                    </td>
                     <td className="p-2">
                       <Input
                         id={`quantity-${index}`}
@@ -195,59 +160,77 @@ export function InvestmentPositionsPanel({
                       />
                     </td>
                     <td className="p-2">
-                      <Input
-                        id={`unit-price-${index}`}
-                        aria-label={`Unit price ${index + 1}`}
-                        className="min-w-16 text-right tabular-nums"
-                        inputMode="decimal"
+                      <InvestmentMoneyInput
+                        precision={20}
                         disabled={row.lineKind === "cash"}
+                        id={`unit-price-${index}`}
+                        label={`Unit price ${index + 1}`}
+                        currency={row.unitPriceCurrency ?? row.valueCurrency}
                         value={row.unitPrice ?? ""}
-                        onChange={(event) =>
+                        onValueChange={(value) =>
                           updateRow(index, {
-                            unitPrice: event.target.value || null,
+                            unitPrice: value || null,
                             unitPriceCurrency:
-                              row.unitPriceCurrency ||
-                              row.valueCurrency ||
-                              null,
+                              row.unitPriceCurrency || row.valueCurrency,
                           })
                         }
                       />
-                      <span className="text-muted-foreground text-xs">
-                        {row.unitPriceCurrency}
-                      </span>
                     </td>
                     <td className="p-2">
-                      <Input
+                      <InvestmentMoneyInput
                         id={`market-value-${index}`}
-                        aria-label={`Market value ${index + 1}`}
-                        className="min-w-20 text-right tabular-nums"
-                        inputMode="decimal"
+                        label={`Market value ${index + 1}`}
+                        currency={row.valueCurrency}
                         value={row.marketValue ?? ""}
-                        onChange={(event) =>
+                        onValueChange={(value) =>
+                          updateRow(index, { marketValue: value || null })
+                        }
+                      />
+                      {!row.marketValue && suggestedMarketValue(row) ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="h-auto px-0 py-1 text-xs"
+                          onClick={() =>
+                            updateRow(index, {
+                              marketValue: suggestedMarketValue(row),
+                            })
+                          }
+                        >
+                          Use qty × price: {suggestedMarketValue(row)}
+                        </Button>
+                      ) : null}
+                    </td>
+                    <td className="p-2">
+                      <InvestmentMoneyInput
+                        id={`position-book-${index}`}
+                        label={`Book cost ${index + 1}`}
+                        currency={row.bookCostCurrency ?? row.valueCurrency}
+                        value={row.bookCost ?? ""}
+                        onValueChange={(value) =>
                           updateRow(index, {
-                            marketValue: event.target.value || null,
+                            bookCost: value || null,
+                            bookCostCurrency:
+                              row.bookCostCurrency || row.valueCurrency,
                           })
                         }
                       />
                     </td>
-                    <td className="p-2">
-                      <Input
-                        id={`position-book-${index}`}
-                        aria-label={`Book cost ${index + 1}`}
-                        className="min-w-20 text-right tabular-nums"
-                        inputMode="decimal"
-                        value={row.bookCost ?? ""}
-                        onChange={(event) =>
-                          updateRow(index, {
-                            bookCost: event.target.value || null,
-                            bookCostCurrency:
-                              row.bookCostCurrency || row.valueCurrency || null,
-                          })
-                        }
-                      />
-                      <span className="text-muted-foreground text-xs">
-                        {row.bookCostCurrency}
-                      </span>
+                    <td className="p-2 pt-3">
+                      {(row.bookCostCurrency ?? row.valueCurrency) ===
+                      row.valueCurrency ? (
+                        <ValueChangePill
+                          later={row.marketValue}
+                          earlier={row.bookCost}
+                          currency={row.valueCurrency}
+                          label="Difference from book value"
+                        />
+                      ) : (
+                        <span className="text-muted-foreground text-xs">
+                          Different currencies
+                        </span>
+                      )}
                     </td>
                     <td className="p-2">
                       <div className="flex items-center gap-1">
@@ -256,7 +239,7 @@ export function InvestmentPositionsPanel({
                           size="icon"
                           variant="ghost"
                           aria-label={`Details line ${index + 1}`}
-                          title="Line details and source references"
+                          title="Holding details and currencies"
                           aria-expanded={expandedIndex === index}
                           onClick={() =>
                             setExpandedIndex(
@@ -266,27 +249,68 @@ export function InvestmentPositionsPanel({
                         >
                           <MoreHorizontal className="size-4" />
                         </Button>
-                        <Button
-                          type="button"
-                          size="icon"
-                          variant="ghost"
-                          aria-label={`Remove line ${index + 1}`}
-                          onClick={() => {
-                            updatePositions(
-                              form.positions.filter((_, i) => i !== index),
-                            );
-                            setExpandedIndex(null);
-                            setPickerIndex(null);
-                          }}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
                       </div>
                     </td>
                   </tr>
                   {expandedIndex === index ? (
                     <tr className="bg-muted/20">
                       <td colSpan={7} className="p-4">
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <div className="w-24 space-y-1">
+                            <Label htmlFor={`value-currency-${index}`}>
+                              Value currency
+                            </Label>
+                            <Input
+                              id={`value-currency-${index}`}
+                              aria-label={`Value currency ${index + 1}`}
+                              value={row.valueCurrency}
+                              maxLength={3}
+                              onChange={(event) =>
+                                updateRow(index, {
+                                  valueCurrency:
+                                    event.target.value.toUpperCase(),
+                                })
+                              }
+                            />
+                          </div>
+                          <div className="flex gap-1">
+                            {" "}
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              aria-label={`No longer held line ${index + 1}`}
+                              title="No longer held"
+                              onClick={() =>
+                                updateRow(index, {
+                                  quantity:
+                                    row.lineKind === "cash" ? null : "0",
+                                  marketValue: "0",
+                                  bookCost: "0",
+                                  bookCostCurrency: row.valueCurrency,
+                                  unitPrice: null,
+                                })
+                              }
+                            >
+                              <CircleOff className="size-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              aria-label={`Remove line ${index + 1}`}
+                              onClick={() => {
+                                updatePositions(
+                                  form.positions.filter((_, i) => i !== index),
+                                );
+                                setExpandedIndex(null);
+                                setPickerIndex(null);
+                              }}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        </div>
                         <div className="grid gap-3 sm:grid-cols-3">
                           <div className="space-y-1">
                             <Label htmlFor={`line-kind-${index}`}>
@@ -344,7 +368,6 @@ export function InvestmentPositionsPanel({
                                 "Book cost currency",
                                 "book-currency",
                               ],
-                              ["sourceNote", "Source note", "source-note"],
                             ] as const
                           ).map(([key, label, id]) => (
                             <div key={key} className="space-y-1">
@@ -362,23 +385,6 @@ export function InvestmentPositionsPanel({
                               />
                             </div>
                           ))}
-                          <div className="space-y-1">
-                            <Label htmlFor={`source-page-${index}`}>
-                              Source page
-                            </Label>
-                            <Input
-                              id={`source-page-${index}`}
-                              inputMode="numeric"
-                              value={row.sourcePage ?? ""}
-                              onChange={(event) =>
-                                updateRow(index, {
-                                  sourcePage: event.target.value
-                                    ? Number.parseInt(event.target.value, 10)
-                                    : null,
-                                })
-                              }
-                            />
-                          </div>
                         </div>
                       </td>
                     </tr>

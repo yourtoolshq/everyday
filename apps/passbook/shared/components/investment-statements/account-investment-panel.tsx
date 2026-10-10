@@ -1,12 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { ArrowUpRight, CalendarDays, Layers } from "lucide-react";
+import { Cell, Pie, PieChart } from "recharts";
 
-import { Badge } from "@yourtoolshq/ui/badge";
 import { Button } from "@yourtoolshq/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
-import { Label } from "@yourtoolshq/ui/label";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@yourtoolshq/ui/chart";
 import {
   Select,
   SelectContent,
@@ -14,23 +19,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@yourtoolshq/ui/select";
-import { Separator } from "@yourtoolshq/ui/separator";
 import { Skeleton } from "@yourtoolshq/ui/skeleton";
 
 import type { AccountType } from "~/lib/account-types";
-import type { SnapshotDto } from "~/modules/investment-statements/domain/snapshot-dto";
-import { ComparisonPanel } from "~/components/investment-statements/comparison-panel";
-import { InvestmentDetailsBadge } from "~/components/investment-statements/investment-details-badge";
-import { displayAmount } from "~/components/investment-statements/investment-form-state";
-import { sectionCoverageLabels } from "~/components/investment-statements/investment-labels";
-import {
-  accountTotalChartCurrencies,
-  ObservationChart,
-} from "~/components/investment-statements/observation-chart";
 import { formatDateLabel } from "~/lib/format-date";
 import { isInvestmentEligibleAccountType } from "~/modules/investment-statements/domain/account-eligibility";
+import {
+  enteredDistribution,
+  formatInvestmentAmount,
+} from "~/modules/investment-statements/domain/entry-helpers";
 import { api } from "~/trpc/react";
+import { ComparisonPanel } from "./comparison-panel";
+import { ObservationChart } from "./observation-chart";
+import { ValueChangePill } from "./value-change-pill";
 
+const allocationColors = [
+  "var(--primary)",
+  "#2b9a91",
+  "#8c70b5",
+  "#b28336",
+  "#668696",
+];
 export function AccountInvestmentPanel({
   accountId,
   accountType,
@@ -39,236 +48,336 @@ export function AccountInvestmentPanel({
   accountType: AccountType;
 }) {
   const eligible = isInvestmentEligibleAccountType(accountType);
-  const snapshotsQuery = api.investmentStatements.listByAccount.useQuery(
+  const query = api.investmentStatements.listByAccount.useQuery(
     { accountId },
     { enabled: eligible },
   );
-  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
-    null,
-  );
-  const [compareEarlier, setCompareEarlier] = useState<string | null>(null);
-  const [compareLater, setCompareLater] = useState<string | null>(null);
-  const [chartCurrency, setChartCurrency] = useState<string | null>(null);
-
-  const snapshots = useMemo(
-    () => (snapshotsQuery.data ?? []) as SnapshotDto[],
-    [snapshotsQuery.data],
-  );
-  const chartCurrencies = useMemo(
-    () => accountTotalChartCurrencies(snapshots),
-    [snapshots],
-  );
-
-  useEffect(() => {
-    if (chartCurrencies.length === 0) {
-      setChartCurrency(null);
-      return;
-    }
-    if (!chartCurrency || !chartCurrencies.includes(chartCurrency)) {
-      setChartCurrency(chartCurrencies[0]!);
-    }
-  }, [chartCurrencies, chartCurrency]);
-  const selected =
-    snapshots.find((row) => row.documentId === selectedDocumentId) ??
-    snapshots[snapshots.length - 1] ??
-    null;
-
-  const holdingsByCurrency = useMemo(() => {
-    if (!selected) return [];
-    const groups = new Map<string, typeof selected.positions>();
-    for (const position of selected.positions) {
-      const list = groups.get(position.valueCurrency) ?? [];
-      list.push(position);
-      groups.set(position.valueCurrency, list);
-    }
-    return [...groups.entries()];
-  }, [selected]);
-
-  if (!eligible) {
-    return null;
-  }
-
-  if (snapshotsQuery.isLoading) {
-    return <Skeleton className="h-64 w-full rounded-xl" />;
-  }
-
-  if (snapshotsQuery.error) {
+  const [currencyChoice, setCurrencyChoice] = useState<string | null>(null);
+  const [range, setRange] = useState("1Y");
+  const [earlier, setEarlier] = useState<string | null>(null);
+  const [later, setLater] = useState<string | null>(null);
+  if (!eligible) return null;
+  if (query.isLoading) return <Skeleton className="h-96 w-full rounded-xl" />;
+  if (query.error)
     return (
-      <Card className="shadow-none">
-        <CardContent className="text-destructive p-4 text-sm">
-          {snapshotsQuery.error.message}
+      <Card>
+        <CardContent className="p-5">
+          <p role="alert" className="text-destructive text-sm">
+            {query.error.message}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void query.refetch()}
+          >
+            Retry
+          </Button>
         </CardContent>
       </Card>
     );
-  }
-
-  return (
-    <Card className="shadow-none">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">
-          Investment statement history
-        </CardTitle>
-        <p className="text-muted-foreground text-sm">
-          Observations use valuation dates from entered details. Select a
-          statement to inspect holdings at that date.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {chartCurrencies.length > 1 ? (
-          <div className="max-w-xs space-y-2">
-            <Label htmlFor="chart-currency">Chart currency</Label>
-            <Select
-              value={chartCurrency ?? ""}
-              onValueChange={setChartCurrency}
-            >
-              <SelectTrigger id="chart-currency">
-                <SelectValue placeholder="Choose currency" />
-              </SelectTrigger>
-              <SelectContent>
-                {chartCurrencies.map((currency) => (
-                  <SelectItem key={currency} value={currency}>
-                    {currency}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ) : null}
-        {chartCurrency ? (
-          <ObservationChart
-            snapshots={snapshots}
-            selectedDocumentId={selected?.documentId}
-            onSelectDocument={setSelectedDocumentId}
-            currencyFilter={chartCurrency}
-          />
-        ) : (
+  const saved = (query.data ?? []).filter(
+    (row) => row.reviewStatus === "reviewed",
+  );
+  const latestDate = saved.at(-1)?.valuationDate;
+  const latestCandidates = saved.filter(
+    (row) => row.valuationDate === latestDate,
+  );
+  const latest = latestCandidates.length === 1 ? latestCandidates[0] : null;
+  if (!latest)
+    return (
+      <Card className="shadow-none">
+        <CardContent className="space-y-3 p-6">
+          <Layers className="text-muted-foreground size-5" />
+          <h3 className="font-semibold">
+            {latestCandidates.length > 1
+              ? "Choose the statement for this date"
+              : "Your account at a glance"}
+          </h3>
           <p className="text-muted-foreground text-sm">
-            Add closing account totals with valuation dates to see account value
-            observations.
+            {latestCandidates.length > 1
+              ? "Multiple saved statements share the latest valuation date. Resolve them before comparing balances."
+              : "Save details from a statement to see balance history and holdings here."}
           </p>
-        )}
-
-        <Separator />
-
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium">Enriched statements</h3>
-          {snapshots.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              No investment details yet. Open a statement from the period grid
-              to enter summary and holdings beside the PDF.
+          {latestCandidates.map((row) => (
+            <Button key={row.documentId} variant="outline" size="sm" asChild>
+              <Link href={`/statements/${row.documentId}/investments`}>
+                {row.documentTitle}
+              </Link>
+            </Button>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  const currencies = [
+    ...new Set([
+      ...latest.totals.map((row) => row.currency),
+      ...latest.positions.map((row) => row.valueCurrency),
+    ]),
+  ].sort();
+  const currency =
+    currencyChoice && currencies.includes(currencyChoice)
+      ? currencyChoice
+      : (currencies[0] ?? "CAD");
+  const total = latest.totals.find(
+    (row) => row.scope === "account_total" && row.currency === currency,
+  );
+  const previousDate = saved
+    .filter((row) => row.valuationDate < latest.valuationDate)
+    .at(-1)?.valuationDate;
+  const previousCandidates = saved.filter(
+    (row) => row.valuationDate === previousDate,
+  );
+  const previous =
+    previousCandidates.length === 1 ? previousCandidates[0] : null;
+  const previousTotal = previous?.totals.find(
+    (row) => row.scope === "account_total" && row.currency === currency,
+  );
+  const cutoff = new Date(`${latest.valuationDate}T00:00:00Z`);
+  if (range !== "All") {
+    const day = cutoff.getUTCDate();
+    cutoff.setUTCDate(1);
+    cutoff.setUTCMonth(
+      cutoff.getUTCMonth() - ({ "3M": 3, "6M": 6, "1Y": 12 }[range] ?? 12),
+    );
+    const lastDay = new Date(
+      Date.UTC(cutoff.getUTCFullYear(), cutoff.getUTCMonth() + 1, 0),
+    ).getUTCDate();
+    cutoff.setUTCDate(Math.min(day, lastDay));
+  }
+  const chartSnapshots = saved.filter(
+    (row) =>
+      (range === "All" ||
+        row.valuationDate >= cutoff.toISOString().slice(0, 10)) &&
+      saved.filter((other) => other.valuationDate === row.valuationDate)
+        .length === 1,
+  );
+  const { entries: distribution, missingValues } = enteredDistribution(
+    latest,
+    currency,
+  );
+  return (
+    <Card className="overflow-hidden shadow-none">
+      <CardContent className="p-0">
+        <div className="flex flex-wrap items-start justify-between gap-4 px-6 pt-6">
+          <div>
+            <h2 className="text-muted-foreground text-sm font-medium">
+              Closing market value
+            </h2>
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <p className="text-3xl font-semibold tracking-tight tabular-nums">
+                {formatInvestmentAmount(total?.closingValue)}
+                <span className="text-muted-foreground ml-2 text-sm font-normal">
+                  {currency}
+                </span>
+              </p>
+              {total?.closingValue && previousTotal?.closingValue ? (
+                <ValueChangePill
+                  later={total.closingValue}
+                  earlier={previousTotal.closingValue}
+                  currency={currency}
+                  label={`Since previous statement: ${formatDateLabel(previous!.valuationDate)} to ${formatDateLabel(latest.valuationDate)}`}
+                />
+              ) : null}
+            </div>
+            <p className="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
+              <CalendarDays className="size-3.5" />
+              As of {formatDateLabel(latest.valuationDate)}
+              {previousTotal?.closingValue
+                ? " · Change since previous statement"
+                : ""}
             </p>
-          ) : (
-            <ul className="divide-y rounded-xl border text-sm">
-              {snapshots.map((row) => (
+          </div>
+          <div className="flex gap-2">
+            {currencies.length > 1 ? (
+              <Select value={currency} onValueChange={setCurrencyChoice}>
+                <SelectTrigger aria-label="Overview currency" className="w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencies.map((item) => (
+                    <SelectItem key={item} value={item}>
+                      {item}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/statements/${latest.documentId}/investments`}>
+                Latest statement
+                <ArrowUpRight />
+              </Link>
+            </Button>
+          </div>
+        </div>
+        <div className="grid gap-6 p-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,1fr)]">
+          <section className="min-w-0 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-sm font-medium">Balance history</h3>
+              <div
+                className="bg-muted/60 flex gap-0.5 rounded-lg p-1"
+                aria-label="Balance history range"
+              >
+                {["3M", "6M", "1Y", "All"].map((item) => (
+                  <Button
+                    key={item}
+                    variant={range === item ? "secondary" : "ghost"}
+                    size="sm"
+                    className="h-7 px-2.5 text-xs"
+                    aria-pressed={range === item}
+                    onClick={() => setRange(item)}
+                  >
+                    {item}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <ObservationChart
+              snapshots={chartSnapshots}
+              currencyFilter={currency}
+              selectedDocumentId={latest.documentId}
+            />
+          </section>
+          <section className="min-w-0 space-y-4">
+            <div>
+              <h3 className="text-sm font-medium">Holdings distribution</h3>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Latest statement ·{" "}
+                {missingValues ? "Valued entries only" : "Entered holdings"} (
+                {currency})
+              </p>
+            </div>
+            {distribution.length ? (
+              <>
+                <ChartContainer
+                  config={{ value: { label: "Market value" } }}
+                  className="mx-auto h-48 w-full"
+                >
+                  <PieChart accessibilityLayer>
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          nameKey="label"
+                          formatter={(_, __, item) => {
+                            const row = item.payload as {
+                              label: string;
+                              reported: string;
+                            };
+                            return (
+                              <span>
+                                {row.label}:{" "}
+                                {formatInvestmentAmount(row.reported, currency)}
+                              </span>
+                            );
+                          }}
+                        />
+                      }
+                    />
+                    <Pie
+                      data={distribution.map((row) => ({
+                        label: row.label,
+                        reported: row.value,
+                        value: Number(row.value),
+                      }))}
+                      dataKey="value"
+                      nameKey="label"
+                      innerRadius={58}
+                      outerRadius={84}
+                      paddingAngle={3}
+                      stroke="var(--card)"
+                      strokeWidth={3}
+                      isAnimationActive={false}
+                    >
+                      {distribution.map((row, index) => (
+                        <Cell
+                          key={`${row.label}-${index}`}
+                          fill={
+                            allocationColors[index % allocationColors.length]
+                          }
+                        />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ChartContainer>
+                <ul className="space-y-2.5 text-sm">
+                  {distribution.map((row, index) => (
+                    <li
+                      key={`${row.label}-${index}`}
+                      className="flex items-center gap-2"
+                    >
+                      <span
+                        className="size-2.5 shrink-0 rounded-sm"
+                        style={{
+                          background:
+                            allocationColors[index % allocationColors.length],
+                        }}
+                      />
+                      <span
+                        className="min-w-0 flex-1 truncate"
+                        title={row.label}
+                      >
+                        {row.label}
+                      </span>
+                      <span className="tabular-nums">
+                        {formatInvestmentAmount(row.value)}
+                      </span>
+                      <span className="text-muted-foreground w-12 text-right text-xs tabular-nums">
+                        {row.share}%
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-muted-foreground text-xs">
+                  Share of entered values, including cash.{" "}
+                  {missingValues
+                    ? "Some holding values have not been entered."
+                    : ""}
+                </p>
+              </>
+            ) : (
+              <p className="text-muted-foreground py-8 text-sm">
+                Add holding market values to the latest statement to see their
+                distribution.
+              </p>
+            )}
+          </section>
+        </div>
+        <details className="border-t px-6 py-4">
+          <summary className="cursor-pointer text-sm font-medium">
+            Statement history & comparisons ({saved.length})
+          </summary>
+          <div className="mt-4 space-y-5">
+            <ul className="divide-y text-sm">
+              {[...saved].reverse().map((row) => (
                 <li
                   key={row.documentId}
-                  className="flex flex-wrap items-center justify-between gap-2 px-4 py-3"
+                  className="flex items-center justify-between gap-3 py-3"
                 >
-                  <div className="space-y-1">
-                    <p className="font-medium">
-                      {formatDateLabel(row.valuationDate)} · {row.documentTitle}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <InvestmentDetailsBadge snapshot={row} />
-                      <Badge variant="outline">
-                        Summary: {sectionCoverageLabels[row.summaryCoverage]}
-                      </Badge>
-                      <Badge variant="outline">
-                        Holdings: {sectionCoverageLabels[row.holdingsCoverage]}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant={
-                        selected?.documentId === row.documentId
-                          ? "default"
-                          : "outline"
-                      }
-                      onClick={() => setSelectedDocumentId(row.documentId)}
-                    >
-                      Inspect
-                    </Button>
-                    <Button size="sm" variant="ghost" asChild>
-                      <Link href={`/statements/${row.documentId}/investments`}>
-                        Open workspace
-                      </Link>
-                    </Button>
-                  </div>
+                  <span>
+                    {formatDateLabel(row.valuationDate)}
+                    <span className="text-muted-foreground ml-2">
+                      {row.documentTitle}
+                    </span>
+                  </span>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href={`/statements/${row.documentId}/investments`}>
+                      Open statement
+                      <ArrowUpRight />
+                    </Link>
+                  </Button>
                 </li>
               ))}
             </ul>
-          )}
-        </div>
-
-        {selected ? (
-          <>
-            <Separator />
-            <div className="space-y-3">
-              <h3 className="text-sm font-medium">
-                Holdings at {formatDateLabel(selected.valuationDate)}
-              </h3>
-              {selected.holdingsCoverage !== "complete" ? (
-                <p className="text-muted-foreground text-sm">
-                  Holdings list is{" "}
-                  {sectionCoverageLabels[
-                    selected.holdingsCoverage
-                  ].toLowerCase()}
-                  . Totals below include only entered lines, not the whole
-                  portfolio.
-                </p>
-              ) : null}
-              {holdingsByCurrency.length === 0 ? (
-                <p className="text-muted-foreground text-sm">
-                  No position lines saved for this statement.
-                </p>
-              ) : (
-                holdingsByCurrency.map(([currency, positions]) => (
-                  <div key={currency} className="space-y-2">
-                    <p className="text-xs font-medium tracking-wide uppercase">
-                      {currency}
-                    </p>
-                    <ul className="divide-y rounded-lg border text-sm">
-                      {positions.map((position, index) => (
-                        <li
-                          key={index}
-                          className="flex flex-wrap justify-between gap-2 px-3 py-2"
-                        >
-                          <span>
-                            {position.sourceLabel}{" "}
-                            <span className="text-muted-foreground">
-                              ({position.lineKind})
-                            </span>
-                          </span>
-                          <span>
-                            {displayAmount(position.marketValue)} {currency}
-                            {position.quantity
-                              ? ` · qty ${displayAmount(position.quantity)}`
-                              : ""}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))
-              )}
-            </div>
-          </>
-        ) : null}
-
-        <Separator />
-        <div className="space-y-3">
-          <h3 className="text-sm font-medium">What changed?</h3>
-          <ComparisonPanel
-            snapshots={snapshots}
-            earlierDocumentId={compareEarlier}
-            laterDocumentId={compareLater}
-            onEarlierChange={setCompareEarlier}
-            onLaterChange={setCompareLater}
-          />
-        </div>
+            <h3 className="text-sm font-medium">What changed?</h3>
+            <ComparisonPanel
+              snapshots={saved}
+              earlierDocumentId={earlier}
+              laterDocumentId={later}
+              onEarlierChange={setEarlier}
+              onLaterChange={setLater}
+            />
+          </div>
+        </details>
       </CardContent>
     </Card>
   );

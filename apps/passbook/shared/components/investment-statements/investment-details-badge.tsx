@@ -36,8 +36,8 @@ function shortDetailsLabel(status: InvestmentDetailsStatus): string {
     case "draft":
       return "Draft details";
     case "reviewed_partial":
-      return "Reviewed · partial";
+      return "Details saved";
     case "reviewed":
-      return "Details reviewed";
+      return "Details saved";
   }
 }

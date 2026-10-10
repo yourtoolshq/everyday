@@ -155,6 +155,80 @@ const baseSave = () => ({
 });
 
 describe("investment statement repository", () => {
+  it("retains incomplete drafts without replacing saved facts and publishes atomically", async () => {
+    const repository = createInvestmentStatementRepository(db);
+    const saved = await saveInvestmentSnapshot(repository, baseSave());
+    const reviewed = await reviewInvestmentSnapshot(
+      repository,
+      documentId,
+      saved.revision,
+    );
+    const command = {
+      ...baseSave(),
+      expectedRevision: reviewed.revision,
+      valuationDate: "",
+      totals: [{ ...baseSave().totals[0]!, closingValue: "12+" }],
+    };
+    const draft = await repository.saveEntryDraft(command, null);
+    expect(
+      (await repository.loadSnapshotByDocumentId(documentId))?.totals[0]
+        ?.closingValue,
+    ).toBe("1000");
+    expect(
+      (await repository.loadEntryDraft(documentId))?.command.valuationDate,
+    ).toBe("");
+    await expect(
+      repository.saveEntryDraft(command, null),
+    ).rejects.toMatchObject({ code: "conflict" });
+    const complete = {
+      ...baseSave(),
+      expectedRevision: reviewed.revision,
+      totals: [{ ...baseSave().totals[0]!, closingValue: "1200" }],
+    };
+    await expect(
+      repository.saveSnapshot(complete, draft.revision + 1),
+    ).rejects.toMatchObject({ code: "conflict" });
+    expect(await repository.loadEntryDraft(documentId)).not.toBeNull();
+    const published = await repository.saveSnapshot(complete, draft.revision);
+    expect(published.reviewStatus).toBe("reviewed");
+    expect(published.totals[0]?.closingValue).toBe("1200");
+    expect(await repository.loadEntryDraft(documentId)).toBeNull();
+    const laterDraft = await repository.saveEntryDraft(
+      { ...complete, expectedRevision: published.revision },
+      null,
+    );
+    await repository.discardEntryDraft(documentId, laterDraft.revision);
+    const recreated = await repository.saveEntryDraft(
+      { ...complete, expectedRevision: published.revision },
+      null,
+    );
+    expect(recreated.revision).not.toBe(laterDraft.revision);
+    await expect(
+      repository.discardEntryDraft(documentId, laterDraft.revision),
+    ).rejects.toMatchObject({ code: "conflict" });
+    await expect(
+      repository.saveEntryDraft(command, null),
+    ).rejects.toMatchObject({ code: "conflict" });
+  });
+
+  it("keeps account entry preferences separate from historical values", async () => {
+    const repository = createInvestmentStatementRepository(db);
+    const saved = await saveInvestmentSnapshot(repository, baseSave());
+    const preferences = {
+      fields: ["fees" as const],
+      aliases: { bookCost: "Book cost" },
+      currency: "USD",
+    };
+    await repository.saveEntryPreferences(saved.accountId, preferences);
+    expect(await repository.loadEntryPreferences(saved.accountId)).toEqual(
+      preferences,
+    );
+    expect(
+      (await repository.loadSnapshotByDocumentId(documentId))?.totals[0]
+        ?.currency,
+    ).toBe("CAD");
+  });
+
   it("exposure query includes the latest statement even when the holding disappears", async () => {
     const repository = createInvestmentStatementRepository(db);
     const instrument = await createInstrumentRepository(db).create({

@@ -297,6 +297,13 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
         />
       ) : null}
 
+      {investmentEligible ? (
+        <AccountInvestmentPanel
+          accountId={account.data.id}
+          accountType={account.data.accountType}
+        />
+      ) : null}
+
       {hasStatements ? (
         <Card className="shadow-none">
           <CardContent className="space-y-4 p-4">
@@ -322,13 +329,6 @@ export function AccountDetailWorkspace({ accountId }: { accountId: string }) {
             />
           </CardContent>
         </Card>
-      ) : null}
-
-      {investmentEligible ? (
-        <AccountInvestmentPanel
-          accountId={account.data.id}
-          accountType={account.data.accountType}
-        />
       ) : null}
 
       <AccountTermsPanel accountId={account.data.id} />

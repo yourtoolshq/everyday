@@ -101,7 +101,7 @@ The app should infer everything it already knows from the account, such as insti
 For eligible investment-related accounts (investment, TFSA, RRSP, FHSA), Passbook
 supports **optional** post-upload enrichment: enter statement-reported
 opening/closing values, optional period-summary figures, cash, and stock/ETF/mutual-fund
-holdings beside the PDF, then review and save.
+holdings beside the PDF, with autosaved drafts and an explicit Save details action.
 
 That workflow answers historical questions such as what the account held on the
 statement’s valuation date, how entered holdings group by currency on a chosen
@@ -114,7 +114,10 @@ and statement history, with source dates and incomplete coverage visible.
 Uploading can open table entry beside the inline PDF immediately, or save the
 statement for entry later. Statements without enrichment remain valid;
 the period grid distinguishes **statement uploaded** from **investment details**
-status. Manual entry and deterministic explanations complete the workflow; AI may
+status. Field choices and labels are remembered per account, and new entry reuses holding
+identities from earlier statements. The account overview uses the latest saved
+statement; unfinished edits do not replace saved history. Manual entry and
+deterministic explanations complete the workflow; AI may
 reduce entry effort later.
 
 This scope is **statement-reported understanding**, not live valuation, trading,

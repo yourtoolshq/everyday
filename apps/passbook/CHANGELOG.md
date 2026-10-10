@@ -21,6 +21,19 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Changed
 
+- Investment entry now follows Dates → Summary → Holdings beside the PDF, with
+  editable period suggestions, remembered account fields and labels, formatted
+  decimal inputs, explicit quantity × price suggestions, and market-versus-book
+  differences. Manual source references and coverage controls are hidden.
+- Drafts autosave separately from saved statement facts. Save details replaces the
+  Review step; draft edits and discard leave saved account history intact.
+- New statement entry remembers holding identities without old amounts. No longer
+  held records zero for that snapshot and removes future entry clutter while
+  retaining history.
+- Investment account overview leads with the latest saved balance, previous-statement
+  change, selectable history ranges, and holdings distribution. Detailed history
+  and comparisons are secondary.
+
 - Investment statement entry uses a compact holdings table and separate summary,
   dates and checks sections beside a local PDF viewer with page and zoom controls.
   Uploading an investment statement can open entry immediately, with symbols,

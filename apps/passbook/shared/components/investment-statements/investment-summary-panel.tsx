@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Plus, X } from "lucide-react";
 
 import { Button } from "@yourtoolshq/ui/button";
 import { Input } from "@yourtoolshq/ui/input";
@@ -13,238 +13,232 @@ import {
   SelectValue,
 } from "@yourtoolshq/ui/select";
 
-import type { InvestmentStatementFormState } from "~/components/investment-statements/investment-form-state";
+import type { InvestmentStatementFormState } from "./investment-form-state";
+import type {
+  EntryPreferences,
+  SummaryField,
+} from "~/modules/investment-statements/domain/entry-preferences";
 import type { TotalInput } from "~/modules/investment-statements/domain/snapshot-dto";
-import type { SectionCoverage } from "~/server/db/schema";
-import { emptyTotalRow } from "~/components/investment-statements/investment-form-state";
 import {
-  fieldDefinitions,
-  sectionCoverageLabels,
-  totalScopeLabels,
-} from "~/components/investment-statements/investment-labels";
-import { MoneyFieldGroup } from "~/components/investment-statements/money-field-group";
-
-const flowFields: {
-  key: keyof TotalInput;
-  label: string;
-}[] = [
-  { key: "contributions", label: "Contributions" },
-  { key: "withdrawals", label: "Withdrawals" },
-  { key: "transfersIn", label: "Transfers in" },
-  { key: "transfersOut", label: "Transfers out" },
-  { key: "income", label: "Investment income" },
-  { key: "fees", label: "Fees" },
-  { key: "reportedValueChange", label: "Reported value change" },
-];
+  optionalSummaryFields,
+  populatedOptionalFields,
+  summaryAliases,
+  summaryFieldLabels,
+} from "~/modules/investment-statements/domain/entry-preferences";
+import {
+  FieldMenu,
+  FieldMenuContent,
+  FieldMenuItem,
+  FieldMenuTrigger,
+} from "./field-menu";
+import { emptyTotalRow } from "./investment-form-state";
+import { fieldDefinitions } from "./investment-labels";
+import { MoneyFieldGroup } from "./money-field-group";
 
 export function InvestmentSummaryPanel({
   form,
   onChange,
+  preferences,
+  onPreferencesChange,
 }: {
   form: InvestmentStatementFormState;
   onChange: (next: InvestmentStatementFormState) => void;
+  preferences: EntryPreferences;
+  onPreferencesChange: (next: EntryPreferences) => void;
 }) {
-  function updateTotals(nextTotals: TotalInput[]) {
-    onChange({ ...form, totals: nextTotals });
+  const optional = [
+    ...new Set([
+      ...preferences.fields,
+      ...populatedOptionalFields(form.totals),
+    ]),
+  ];
+  const fields: SummaryField[] = [
+    "openingValue",
+    "closingValue",
+    "bookCost",
+    ...optional,
+  ];
+  function update(index: number, patch: Partial<TotalInput>) {
+    onChange({
+      ...form,
+      totals: form.totals.map((row, i) =>
+        i === index ? { ...row, ...patch } : row,
+      ),
+    });
   }
-
-  function updateRow(index: number, patch: Partial<TotalInput>) {
-    const next = [...form.totals];
-    next[index] = { ...next[index]!, ...patch };
-    updateTotals(next);
-  }
-
+  const help: Partial<Record<SummaryField, string>> = {
+    openingValue: fieldDefinitions.openingValue,
+    closingValue: fieldDefinitions.closingValue,
+    bookCost: fieldDefinitions.bookCost,
+    cash: "Cash remaining in the account, separate from total portfolio value.",
+    withdrawals:
+      "Money withdrawn from the account. Purchases within the account are not withdrawals.",
+    reportedValueChange: fieldDefinitions.reportedValueChange,
+  };
   return (
-    <section className="space-y-4" aria-labelledby="summary-heading">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h3 id="summary-heading" className="text-base font-medium">
-            Summary
-          </h3>
-          <p className="text-muted-foreground text-sm">
-            Reported account totals and optional period flows. Leave fields
-            blank when the statement does not report them.
-          </p>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="summary-coverage">Summary coverage</Label>
-          <Select
-            value={form.summaryCoverage}
-            onValueChange={(value) =>
-              onChange({
-                ...form,
-                summaryCoverage: value as SectionCoverage,
-              })
-            }
-          >
-            <SelectTrigger id="summary-coverage" className="w-44">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(sectionCoverageLabels).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <section className="space-y-6" aria-labelledby="summary-heading">
+      <div>
+        <h3 id="summary-heading" className="text-lg font-semibold">
+          Account summary
+        </h3>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Start with the totals. Add other figures your statement reports.
+        </p>
       </div>
-
       {form.totals.map((row, index) => (
-        <div key={index} className="space-y-3 rounded-xl border p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-medium">Total row {index + 1}</p>
-            {form.totals.length > 1 ? (
+        <div key={index} className="space-y-5">
+          <div className="flex items-end gap-3">
+            <div className="w-28 space-y-2">
+              <Label htmlFor={`summary-currency-${index}`}>Currency</Label>
+              <Input
+                id={`summary-currency-${index}`}
+                value={row.currency}
+                maxLength={3}
+                onChange={(e) =>
+                  update(index, { currency: e.target.value.toUpperCase() })
+                }
+                onBlur={() => {
+                  if (index === 0 && /^[A-Z]{3}$/.test(row.currency))
+                    onPreferencesChange({
+                      ...preferences,
+                      currency: row.currency,
+                    });
+                }}
+              />
+            </div>
+            {index > 0 || row.scope !== "account_total" ? (
+              <div className="flex-1 space-y-2">
+                <Label>Scope</Label>
+                <Select
+                  value={row.scope}
+                  onValueChange={(scope) =>
+                    update(index, { scope: scope as TotalInput["scope"] })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="account_total">Account total</SelectItem>
+                    <SelectItem value="currency_component">
+                      Currency component
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+            {index > 0 ? (
               <Button
-                type="button"
-                size="sm"
                 variant="ghost"
-                className="text-destructive"
+                size="icon"
+                aria-label={`Remove total ${index + 1}`}
                 onClick={() =>
-                  updateTotals(form.totals.filter((_, i) => i !== index))
+                  onChange({
+                    ...form,
+                    totals: form.totals.filter((_, i) => i !== index),
+                  })
                 }
               >
-                <Trash2 />
-                Remove row
+                <X className="size-4" />
               </Button>
             ) : null}
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label>Currency</Label>
-              <Input
-                value={row.currency}
-                onChange={(event) =>
-                  updateRow(index, {
-                    currency: event.target.value.toUpperCase(),
-                  })
-                }
-                maxLength={3}
-                placeholder="CAD"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Scope</Label>
-              <Select
-                value={row.scope}
+          <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2">
+            {fields.map((key) => (
+              <MoneyFieldGroup
+                key={key}
+                id={`${key}-${index}`}
+                label={preferences.aliases[key] ?? summaryFieldLabels[key]}
+                help={help[key]}
+                currency={row.currency}
+                value={row[key] ?? ""}
                 onValueChange={(value) =>
-                  updateRow(index, { scope: value as TotalInput["scope"] })
+                  update(index, { [key]: value || null })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(totalScopeLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            <MoneyFieldGroup
-              id={`closing-${index}`}
-              label="Closing value"
-              help={fieldDefinitions.closingValue}
-              value={row.closingValue ?? ""}
-              onValueChange={(value) =>
-                updateRow(index, { closingValue: value || null })
-              }
-            />
-            <MoneyFieldGroup
-              id={`opening-${index}`}
-              label="Opening value"
-              help={fieldDefinitions.openingValue}
-              value={row.openingValue ?? ""}
-              onValueChange={(value) =>
-                updateRow(index, { openingValue: value || null })
-              }
-            />
-            <MoneyFieldGroup
-              id={`cash-${index}`}
-              label="Summary cash"
-              help="Reported cash in the summary section, cross-checked against cash lines."
-              value={row.cash ?? ""}
-              onValueChange={(value) =>
-                updateRow(index, { cash: value || null })
-              }
-            />
-            <MoneyFieldGroup
-              id={`book-${index}`}
-              label="Book cost"
-              help={fieldDefinitions.bookCost}
-              value={row.bookCost ?? ""}
-              onValueChange={(value) =>
-                updateRow(index, { bookCost: value || null })
-              }
-            />
-          </div>
-          <details className="rounded-lg border border-dashed p-3 text-sm">
-            <summary className="cursor-pointer font-medium">
-              Optional period flows
-            </summary>
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              {flowFields.map((field) => (
-                <MoneyFieldGroup
-                  key={field.key}
-                  id={`${String(field.key)}-${index}`}
-                  label={field.label}
-                  help={
-                    field.key === "reportedValueChange"
-                      ? fieldDefinitions.reportedValueChange
-                      : undefined
-                  }
-                  value={(row[field.key] as string | null) ?? ""}
-                  onValueChange={(value) =>
-                    updateRow(index, { [field.key]: value || null })
-                  }
-                />
-              ))}
-            </div>
-          </details>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor={`source-page-total-${index}`}>Source page</Label>
-              <Input
-                id={`source-page-total-${index}`}
-                inputMode="numeric"
-                value={row.sourcePage ?? ""}
-                onChange={(event) =>
-                  updateRow(index, {
-                    sourcePage: event.target.value
-                      ? Number.parseInt(event.target.value, 10)
-                      : null,
-                  })
+                labelAction={
+                  summaryAliases[key] ? (
+                    <FieldMenu>
+                      <FieldMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="text-muted-foreground"
+                          aria-label={`Change label for ${summaryFieldLabels[key]}`}
+                        >
+                          <ChevronDown className="size-3.5" />
+                        </button>
+                      </FieldMenuTrigger>
+                      <FieldMenuContent>
+                        {summaryAliases[key]!.map((alias) => (
+                          <FieldMenuItem
+                            key={alias}
+                            onSelect={() =>
+                              onPreferencesChange({
+                                ...preferences,
+                                aliases: {
+                                  ...preferences.aliases,
+                                  [key]: alias,
+                                },
+                              })
+                            }
+                          >
+                            {alias}
+                          </FieldMenuItem>
+                        ))}
+                      </FieldMenuContent>
+                    </FieldMenu>
+                  ) : undefined
                 }
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor={`source-note-total-${index}`}>Source note</Label>
-              <Input
-                id={`source-note-total-${index}`}
-                value={row.sourceNote ?? ""}
-                onChange={(event) =>
-                  updateRow(index, { sourceNote: event.target.value || null })
-                }
-              />
-            </div>
+            ))}
           </div>
         </div>
       ))}
-
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => updateTotals([...form.totals, emptyTotalRow()])}
-      >
-        <Plus />
-        Add currency or component total
-      </Button>
+      <div className="flex flex-wrap gap-2 border-t pt-4">
+        <FieldMenu>
+          <FieldMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Plus />
+              Add fields
+            </Button>
+          </FieldMenuTrigger>
+          <FieldMenuContent>
+            {optionalSummaryFields
+              .filter((key) => !optional.includes(key))
+              .map((key) => (
+                <FieldMenuItem
+                  key={key}
+                  onSelect={() =>
+                    onPreferencesChange({
+                      ...preferences,
+                      fields: [...preferences.fields, key],
+                    })
+                  }
+                >
+                  {summaryFieldLabels[key]}
+                </FieldMenuItem>
+              ))}
+            {optional.length === optionalSummaryFields.length ? (
+              <FieldMenuItem disabled>All fields are shown</FieldMenuItem>
+            ) : null}
+          </FieldMenuContent>
+        </FieldMenu>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() =>
+            onChange({
+              ...form,
+              totals: [...form.totals, emptyTotalRow(preferences.currency)],
+            })
+          }
+        >
+          Add currency or component
+        </Button>
+      </div>
+      <p className="text-muted-foreground text-xs">
+        Field choices and labels are remembered for this account. Leave
+        unreported values blank.
+      </p>
     </section>
   );
 }

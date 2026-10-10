@@ -240,13 +240,14 @@ without live feeds, transaction reconstruction, or return analytics.
 - Compact holdings table beside an inline PDF with page/zoom controls; direct
   entry after upload, symbol/exchange search and inline instrument creation.
   Valuation date, optional coverage
-  dates, summary totals, cash and investment positions, draft save, review, and
-  remove enrichment.
+  dates, summary totals, cash and investment positions, and remove enrichment.
+  Guided entry starts with dates, remembers account fields/aliases and holding
+  identities, autosaves a separate draft, and publishes through Save details.
 - **Global Holdings** catalog to reuse instruments across accounts (source-linked
   observations; not a live household portfolio total). Individual holding pages
   show reviewed native-currency exposure, portions of entered holdings and history.
 - Account views: enriched statement list, reported value history chart,
-  selected-date holdings by currency, workspace reconciliation hints, and
+  latest-saved-statement balance and distribution, range controls, change pills, and
   two-statement “What changed?” comparison when coverage allows.
 - Period grid distinguishes **statement uploaded** from **investment details**
   status. Monthly, quarterly, and annual periods share one investment schema.

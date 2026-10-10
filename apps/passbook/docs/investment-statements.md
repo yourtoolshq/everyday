@@ -1,289 +1,175 @@
 # Investment statement understanding
 
-Passbook provides an optional workflow for **investment, TFSA, RRSP, and FHSA**
-statements: keep today's fast upload, then enter statement-reported values and
-holdings beside the PDF, review them, and read deterministic explanations and
-comparisons. Amounts trace back to saved facts on a specific statement—not to
-live market data, inferred returns, or AI.
+Passbook provides optional manual detail entry for investment, TFSA, RRSP, and
+FHSA statements. Keep the original document, enter useful statement-reported
+figures beside it, and understand the account through saved historical facts.
+The goal is useful context, not transcription of every printed field.
 
-Authoritative product boundaries live in [PRODUCT.md](./PRODUCT.md) and
-[DOMAIN.md](./DOMAIN.md). Phased delivery is summarized in
-[ROADMAP.md](./ROADMAP.md). Broader wealth-planning ideas remain exploratory in
-[FINANCIAL_DIRECTION.md](./FINANCIAL_DIRECTION.md) and are **not** part of this
-scope.
+[PRODUCT.md](./PRODUCT.md) and [DOMAIN.md](./DOMAIN.md) own product and domain
+boundaries. [ROADMAP.md](./ROADMAP.md) owns sequencing. The follow-up task brief
+and design decisions are in
+[investment-statement-ux-tasks.md](./investment-statement-ux-tasks.md).
 
-## What stays the same
+## Upload and entry
 
-- Uploading a PDF and satisfying the period grid still means the **file is
-  present**. Legacy imports need no rework.
-- Enrichment is **optional** post-upload work with a complete manual path.
-- One statement document still maps to **one account and one period**; combined
-  statements that cover multiple accounts are out of scope until the
-  source-document model changes.
-- Monthly, quarterly, and annual schedules share the **same investment payload
-  schema**; frequency only affects which period cell a document satisfies.
+Upload remains a fast, independent workflow. Save statement keeps the upload-only
+path; Save and enter details opens the workspace. Uploading satisfies a period
+cell whether or not investment details have been entered. Legacy files need no
+rework, and one document still belongs to one account and one period.
 
-## User flow
+The workspace follows Dates → Summary → Holdings, with free section navigation
+and the PDF visible on the left on wide screens. PDF page and zoom controls remain
+available. Narrow screens offer a View PDF toggle above entry; the holdings table
+scrolls independently when needed.
 
-```mermaid
-flowchart LR
-    A[Statement uploaded] --> B[Open investment workspace]
-    B --> C[Enter summary and holdings]
-    C --> D[Save draft or review]
-    D --> E[Workspace explanations]
-    D --> F[Account history and comparisons]
-    C --> G[Reuse instruments in Holdings]
-```
+- Dates are suggested from monthly, quarterly, or annual period keys. Users check
+  and edit them against the statement. Issue date, actual coverage, and valuation
+  date remain distinct. Irregular periods without usable keys are not guessed.
+- Summary starts with currency, opening value, closing market value, and book value.
+  Add fields reveals cash, contributions, withdrawals, transfers, income, fees,
+  and reported value change. Account preferences remember enabled fields, currency,
+  and selected aliases. Populated historical fields always remain visible.
+- Hardcoded aliases change labels, not fact keys or meanings. Opening cash is not
+  opening portfolio value; closing cash is not closing portfolio value; investment
+  purchases are not external withdrawals. Custom aliases/fields remain deferred.
+- Money inputs format on blur and support restricted decimal + − * / expressions.
+  Quantity remains precise, and unit prices preserve up to the domain's supported
+  decimal precision. Currency codes are explicit.
+- Holdings support the reusable catalog, symbol/exchange or fund-code/issuer search,
+  and inline instrument creation. Printed labels remain separate from identities.
+- Quantity × price is an explicit suggestion only when currencies match; users
+  can enter the reported value instead. It never replaces an existing market value.
+- Market − book pills show signed differences and optional percentages, with
+  definitions on hover/focus. They are not investment return or tax gains.
+- Holding details retain identifiers, series, and currency controls. Manual source
+  page/note inputs and routine coverage selectors are hidden. Existing provenance
+  is preserved through edits.
 
-The shipped slice includes reported opening/closing values, optional
-period-summary fields, stock/ETF/mutual-fund positions, cash, a global
-**Holdings** catalog with symbol/exchange search, compact table entry, and
-same-account comparisons driven only from saved facts. Statement activity rows
-(buys/sells), AI draft entry, live portfolio valuation and household net worth
-remain out of scope. Holding pages compare statement-observed exposure across
-accounts, separately for each native currency.
+## Draft and saved facts
 
-## Entry and holding detail views
+Drafts are persisted separately in `investment_entry_drafts`, associated with the
+owning document. Incomplete numeric text, blank dates, and unfinished rows can be
+stored without replacing the saved financial snapshot. Date inputs still commit
+only a valid date or an explicit blank; invalid date text stays in the input until
+corrected.
 
-Upload an eligible investment statement and choose **Save and enter details** to
-open the statement workspace. **Save statement** keeps the upload-only path.
-The workspace keeps the local PDF visible with page and zoom controls. The
-valuation date remains visible above the entry area; holdings, summary, dates /
-notes and checks have separate sections. Holdings use a table with the usual
-numeric fields in each row and source references in **Details**.
+Committed edits autosave after a short debounce, on field blur, and section
+changes. Draft writes are serialized and use an opaque revision token. The
+workspace displays Saving draft, Draft saved, or an error with retry. A local
+recovery copy protects edits pending a host write; successful writes clear it.
+Navigation through the account back link awaits the flush, unmount attempts a
+flush, and closing with unsaved changes triggers the browser's unload protection.
+This does not introduce a new native Electron close protocol.
 
-**Link instrument** searches names, symbols, exchanges, fund codes and series.
-Create a missing instrument in the same workflow. Tickers pair with an exchange
-(the identifier namespace); fund codes pair with an issuer. ISIN and CUSIP are
-also supported. The printed label remains separate from the reusable identity.
-There is no market-data lookup or automatic symbol resolution.
+Save details validates financial inputs and atomically replaces the saved snapshot
+and clears the matching draft. The separate Review interaction is removed.
+Internally saved details retain the existing `reviewed` header status so existing
+holding readers remain compatible. Legacy `save` / `review` procedures remain for
+compatibility; the new workspace uses `saveDraft` / `publish`.
 
-```mermaid
-flowchart LR
-    A[Upload PDF and choose period] --> B{Next step}
-    B -->|Save statement| C[Account statement grid]
-    B -->|Save and enter details| D[PDF beside holdings table]
-    D --> E[Search symbol and exchange]
-    E -->|Existing| F[Link instrument]
-    E -->|Missing| G[Create instrument inline]
-    G --> F
-    F --> H[Save draft and review]
-    H --> I[Holding exposure and history]
-```
+Editing a saved statement leaves its previous saved facts available to history,
+comparisons, and Holdings until Save details succeeds. Discard draft restores the
+saved facts, or a fresh suggested form if no saved facts exist. Conflicts preserve
+local edits and offer Reload latest rather than silently overwriting another
+window. Reload explicitly replaces local work with the host version.
 
-A holding's **exposure** is a derived view. For each account, use one latest
-reviewed statement on or before the selected date. Repeated lines in that
-snapshot aggregate with decimal arithmetic. Shares use entered holdings and
-cash in the same native currency, never an account total expressed in another
-currency. Missing values block the relevant total and percentage; partial
-coverage remains labelled. Absence in a complete holdings snapshot can show
-zero observed exposure, without inventing a sale transaction. Source dates and
-statements remain visible because accounts can have different valuation dates.
-Multiple reviewed statements at the same latest date are labelled as ambiguous
-and block exposure for that account rather than choosing a value arbitrarily.
-Accounts without a reviewed statement on the selected date are excluded and
-labelled; this does not claim complete household coverage.
+New manual saves use conservative partial coverage when facts are present.
+Filling visible fields does not establish whole-portfolio completeness. Existing
+historical coverage metadata remains stored, and omission never implies a sale.
+The document's period-completion rule is unchanged.
 
-The query batches full positions for those latest snapshots and the selected
-holding's history. It does not send every historical portfolio position to the
-client. Charts share the shadcn primitive in `packages/ui`; PDF rendering and
-investment entry remain Passbook-specific. No new fact tables or generic field
-engine are introduced for these views.
+## Remembered holdings
 
-## Enrichment architecture
+New entry reuses holding identities, labels, series, and currencies from earlier
+saved statements for that account. Quantity, price, market value, book value, and
+source references start blank. Repeated rows remain separate.
 
-Each allowed **kind** gets at most one **document enrichment header** per
-document. The header holds lifecycle metadata only; financial facts live in a
-**typed payload** (one payload table per kind today). New document kinds can add
-new payloads under the same header pattern without changing upload or period
-logic.
+Omitted rows in a later partial statement do not erase remembered holdings.
+No longer held explicitly records zero quantity, market value, and book value
+(cash has no quantity), and removes that row from subsequent entry defaults after
+saving. It does not change prior statements. A zero market value with nonzero
+quantity does not retire a holding. Add line can reintroduce a previously held
+instrument.
 
-```mermaid
-flowchart TB
-    subgraph doc["Document (file + account + period)"]
-        D[documentDate · periodKey · file]
-    end
-    subgraph header["Enrichment header (per kind)"]
-        H[kind · schemaVersion · entryMethod · reviewStatus · revision · reviewedAt]
-    end
-    subgraph payload["Typed payload (MVP: investment_statement only)"]
-        P[valuation · coverage · section coverage · notes]
-        P --> T[Summary totals]
-        P --> L[Positions]
-    end
-    subgraph future["Later kinds (same header table)"]
-        X[Other closed kinds…]
-    end
-    subgraph read["Derived read models (not persisted)"]
-        V[History chart · holdings inspect · comparison · reconciliation hints]
-    end
-    D --> H
-    H --> P
-    H -.-> X
-    T --> V
-    L --> V
-```
+Seeding uses only statements before the new valuation date, so a backdated edit
+does not overwrite an account-wide mutable holding list. Ambiguous same-date
+history blocks automatic seeding rather than choosing a source arbitrarily.
 
-| Concern                             | Where it lives                                       |
-| ----------------------------------- | ---------------------------------------------------- |
-| Issue date                          | Document (`documentDate`)                            |
-| Expected period cell                | Document / schedule                                  |
-| Actual coverage and valuation dates | Investment payload                                   |
-| How facts were entered              | Enrichment header (`entryMethod`; MVP is `manual`)   |
-| Review confirmed                    | Enrichment header (`reviewStatus`, `reviewedAt`)     |
-| Section completeness                | Investment payload (`summary` / `holdings` coverage) |
-| Edit concurrency                    | Enrichment header (`revision`)                       |
+## Account overview
 
-**Review is separate from section coverage.** A snapshot can be **reviewed** while
-summary or holdings remain **partial**; unknown is not zero, and an omitted line
-is not evidence that a holding was sold. The period grid shows **statement
-uploaded** separately from **investment details** status (not entered / draft /
-reviewed, with partial coverage called out).
+The overview leads with the latest saved statement's closing market value,
+valuation date, and previous-statement change pill. It appears above the statement
+period grid. Unfinished drafts do not replace it.
 
-```mermaid
-stateDiagram-v2
-    [*] --> DocumentOnly
-    DocumentOnly --> Draft: Save details
-    Draft --> Draft: Save more
-    Draft --> Reviewed: Confirm facts
-    Reviewed --> Draft: Correct facts
-    Draft --> DocumentOnly: Remove enrichment
-    Reviewed --> DocumentOnly: Remove enrichment
-```
+- Balance history has 3M, 6M, 1Y, and All ranges ending at the latest valuation date.
+  Points are statement observations, not live daily prices. Missing periods are
+  not zero balances.
+- Holdings distribution uses the latest saved statement and selected value currency,
+  with separated, bordered donut segments and a numeric legend. Summary cash is
+  included only when there is no cash position in that currency, avoiding duplication.
+- Percentages describe entered valued lines, not verified whole-portfolio coverage.
+  Missing holding values are called out. Different currencies are never summed.
+- Full saved history and detailed two-statement comparison are available in a
+  secondary expandable section. Historical inspection does not replace the default
+  latest-statement distribution.
+- Conflicting latest same-date snapshots show a resolution prompt instead of an
+  arbitrary balance. A missing latest total is shown as missing, not silently
+  replaced with an older figure. Ambiguous historical dates are excluded from the
+  history chart.
 
-`schemaVersion` on the header tracks the financial schema for that kind; it
-changes when migrations evolve payload shape, not on every edit. `revision`
-increments on each successful save or review. Saves are atomic across header,
-payload, totals, and positions; stale revisions are rejected and edits clear
-review.
+The account change pill compares matching currency/account-total scopes. Its detail
+shows both dates and values; zero earlier values suppress the percentage. Change
+in account value includes contributions and withdrawals and is not investment return.
 
-## Data model (investment kind)
+Global Holdings and individual holding exposure continue using saved snapshots,
+with native currencies, source dates, and conservative completeness rules. They
+are not a live household portfolio total.
 
-```mermaid
-erDiagram
-    ACCOUNT ||--o{ DOCUMENT : owns
-    DOCUMENT ||--o{ ENRICHMENT : supports
-    ENRICHMENT ||--|| INVESTMENT_SNAPSHOT : payload
-    INVESTMENT_SNAPSHOT ||--o{ SUMMARY_TOTAL : reports
-    INVESTMENT_SNAPSHOT ||--o{ POSITION : reports
-    INSTRUMENT o|--o{ POSITION : identifies
-    INSTRUMENT ||--o{ IDENTIFIER : has
-```
+## Persistence and ownership
 
-- **Instrument** — reusable catalog entry (stock, ETF, mutual fund, other),
-  including fund series and confirmed identifiers (ticker, fund code, ISIN, CUSIP).
-  Matching on ticker or name alone is not allowed.
-- **Position** — what a given statement reports (investment, cash, or other),
-  preserving source labels as printed; multiple rows per instrument are allowed.
-- **Summary total** — reported figures per currency and scope (`account_total` or
-  `currency_component`); converted totals and native components are never summed
-  together.
+The document enrichment header stores kind, schema version, entry method, legacy
+review status, and saved revision. Financial facts remain in typed snapshot,
+summary-total, and position tables. No generic field engine or per-field fact
+schema is introduced.
 
-Ownership path for facts: position or total → snapshot → enrichment header →
-document → account. The payload does not duplicate account or period keys.
+Ownership: total/position → snapshot → enrichment → document → account. Drafts
+belong to documents; presentation preferences belong to accounts. Both new tables
+cascade with their owners. Existing uploads, saved snapshots, and optional source
+references require no guessed backfill. Migration `0014_wet_mandarin` adds only
+the draft and preference tables.
 
-Monetary values use **explicit currency** on every amount. The app does not
-silently convert currencies, infer investment **return** from change in account
-value, or present book-cost difference as tax or performance.
+Saved edits are atomic and reject stale saved revisions. Draft tokens prevent
+stale draft writes, commits, and discards, including after a draft was discarded
+and recreated. Financial arithmetic uses exact decimals in the domain; conversion
+to JavaScript numbers is limited to chart coordinates.
 
-### Provenance
+Summary totals retain explicit currency and `account_total` / `currency_component`
+scope. Converted totals and native components are never added together. A USD
+unit price can coexist with a CAD reported holding value; automatic FX conversion
+is not performed. Institution-reported book cost is not tax-adjusted cost base.
 
-Source references are stored **per summary-total row and per position row** as
-optional `sourcePage` and `sourceNote`. There is no separate per-field provenance
-metadata in the MVP schema; use row-level page and note when the statement cites
-a location for that line or block.
+### Implementation reference
 
-## Deterministic understanding (no AI required)
+- `shared/modules/investment-statements/`: lifecycle, validation, persistence,
+  comparisons, reconciliation, entry assistance, and exact decimal calculations.
+- `shared/modules/investments/`: instrument catalog and holding exposure readers.
+- `shared/components/investment-statements/`: workspace, account overview, charts,
+  and holding entry.
+- `shared/server/api/routers/investment-statements.ts`: existing get/list/save/review/
+  remove, plus entry, saveDraft, publish, discardDraft, and savePreferences.
+- `/statements/:documentId/investments`: guided entry.
+- `/holdings`: catalog and source-linked observations.
 
-Current read-side behavior includes:
+## Deferred
 
-- Inline definitions for reported market value, quantity, unit price, and book
-  cost in the investment workspace (institution-reported, not tax-adjusted cost
-  base). See `fieldDefinitions` in
-  [`shared/components/investment-statements/investment-labels.ts`](../shared/components/investment-statements/investment-labels.ts).
-- Account **investment statement history**: reported closing value over
-  **valuation dates** (shared shadcn line chart), a list of enriched statements, and **holdings
-  at the selected date** grouped by value currency (entered lines only when
-  holdings coverage is partial).
-- Two-statement **What changed?** comparison for the **same account** with
-  explicit non-adjacent dates; observations only when data is complete enough
-  (see `compareSnapshotHoldings` in
-  [`shared/modules/investment-statements/domain/comparison.ts`](../shared/modules/investment-statements/domain/comparison.ts)).
-- Summary reconciliation hints in the workspace when holdings coverage, summary
-  coverage, and currency align; otherwise labeled not comparable or partial
-  (see
-  [`shared/modules/investment-statements/domain/reconciliation.ts`](../shared/modules/investment-statements/domain/reconciliation.ts)).
-
-Change in reported account value is **not** investment return. Without
-compatible period-flow facts, Passbook does not compute return percentages or
-describe unexplained residuals as earnings.
-
-## Developer reference: enrichment kinds
-
-Enrichment **kind** is a closed, code-owned registry—not a runtime schema
-builder. Each kind defines eligibility, payload schema, validation, review rules,
-and read views. **MVP:** only `investment_statement` is writable. Future kinds
-(for example LOC statement summaries or agreement-term extraction) reuse the
-same header table with new payloads and use cases.
-
-| Responsibility | Notes                                                         |
-| -------------- | ------------------------------------------------------------- |
-| Eligibility    | Allowed document types and account types                      |
-| Payload schema | One typed table (or small set) per kind                       |
-| Validation     | Host-side on save and review                                  |
-| Provenance     | Row-level `sourcePage` / `sourceNote` on totals and positions |
-| Review rules   | Required facts before `reviewed`                              |
-| Read views     | Derived comparisons, charts, reconciliation                   |
-
-Implementation modules:
-
-- [`shared/modules/investment-statements/`](../shared/modules/investment-statements/) —
-  snapshot lifecycle, save/review/remove, comparisons and reconciliation
-  (exact decimal arithmetic in `domain/`).
-- [`shared/modules/investments/`](../shared/modules/investments/) — instrument
-  catalog and global Holdings query.
-- [`shared/components/investment-statements/`](../shared/components/investment-statements/) —
-  workspace, account history, Holdings page, and badges.
-
-### Types and persistence
-
-- DTOs and command shapes:
-  [`shared/modules/investment-statements/domain/snapshot-dto.ts`](../shared/modules/investment-statements/domain/snapshot-dto.ts)
-- Instrument DTOs:
-  [`shared/modules/investments/domain/instrument-dto.ts`](../shared/modules/investments/domain/instrument-dto.ts)
-- Tables and enums (`document_enrichments`, snapshots, totals, positions,
-  instruments):
-  [`shared/server/db/schema.ts`](../shared/server/db/schema.ts)
-
-### Transport (tRPC)
-
-Routers adapt domain services only; shapes match the DTOs above.
-
-| Namespace               | Procedures                                                   | Router                                                                                |
-| ----------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `investmentStatements`  | `getByDocument`, `listByAccount`, `save`, `review`, `remove` | [`investment-statements.ts`](../shared/server/api/routers/investment-statements.ts)   |
-| `investmentInstruments` | `list`, `create`, `update`, `holdings`                       | [`investment-instruments.ts`](../shared/server/api/routers/investment-instruments.ts) |
-
-Client routes:
-
-- `/statements/:documentId/investments` — entry workspace beside the PDF
-- `/holdings` — global instrument catalog and source-linked observations
-
-Entry points also include the statement period grid, statement detail sheet, and
-account investment history panel for eligible accounts.
-
-Frontend presentation must not implement financial arithmetic with `Number`;
-chart coordinates may round for display only.
-
-## Explicit exclusions
-
-- Live prices, FX feeds, bank sync, transaction ledger, tax filing, AI advice.
-- Household net worth, live combined portfolio valuation or totals converted across currencies.
-- Reconstructing holdings from activity rows (a later slice).
-- Generic user-defined fields or a universal facts engine.
+AI extraction/explanations, activity rows, live prices, bank sync, automatic FX,
+return analytics, household net worth, tax filing, custom field/alias management,
+and additional enrichment kinds remain separate work. Agreement changes should
+retain their effective date and source document in their own future slice.
 
 ## Verification
 
-`pnpm check:passbook`, domain tests under `shared/modules/investment-statements/`,
-and investment entry E2E cover this slice. Migrations do not backfill guessed
-investment facts; existing uploads remain **not entered** until enriched.
+Run `pnpm check:passbook` and the investment entry E2E suite. Domain/repository tests
+cover decimal assistance, dates, retirement, historical isolation, saved/draft
+revision guards, discard/recreation, preferences, and migration compatibility.
+Use fictional statements and data only.
