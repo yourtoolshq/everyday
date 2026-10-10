@@ -345,24 +345,92 @@ export const accountEventsRouter = createTRPCRouter({
   update: publicProcedure
     .input(updateAccountEventInputSchema)
     .mutation(async ({ ctx, input }) => {
-      await requireEvent(ctx.db, input.id);
-
-      const [event] = await ctx.db
-        .update(accountEvents)
-        .set({
-          type: input.type,
-          title: input.title,
-          notes: input.notes ?? null,
-          startDate: input.startDate,
-          resolvedDate: input.resolvedDate ?? null,
-          updatedAt: now(),
-        })
-        .where(eq(accountEvents.id, input.id))
-        .returning(publicEventFields);
-
-      if (!event) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Event not found." });
+      const existingEvent = await requireEvent(ctx.db, input.id);
+      const termsChange = input.termsChange;
+      if (
+        termsChange?.recordTermsChange &&
+        !termsChange.effectiveDate?.trim()
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Choose an effective date for the terms change.",
+        });
       }
+
+      const event = await ctx.db.transaction(async (tx) => {
+        let termsSnapshotId = existingEvent.termsSnapshotId;
+
+        if (
+          termsChange?.recordTermsChange &&
+          termsChange.terms &&
+          termsChange.effectiveDate
+        ) {
+          const terms = normalizeAccountTerms(termsChange.terms);
+          await tx
+            .update(accounts)
+            .set({
+              interestRate: terms.interestRate,
+              promotionalInterestRate: terms.promotionalInterestRate,
+              promotionalInterestRateExpires:
+                terms.promotionalInterestRateExpires,
+              creditLimit: terms.creditLimit,
+              annualFee: terms.annualFee,
+              renewalDate: terms.renewalDate,
+              insurance: terms.insurance,
+              updatedAt: now(),
+            })
+            .where(eq(accounts.id, existingEvent.accountId));
+
+          if (termsSnapshotId) {
+            await tx
+              .update(accountTermsSnapshots)
+              .set({
+                ...snapshotValues(
+                  terms,
+                  termsChange.effectiveDate,
+                  termsChange.snapshotNotes ?? null,
+                ),
+                updatedAt: now(),
+              })
+              .where(eq(accountTermsSnapshots.id, termsSnapshotId));
+          } else {
+            const [snapshot] = await tx
+              .insert(accountTermsSnapshots)
+              .values({
+                accountId: existingEvent.accountId,
+                ...snapshotValues(
+                  terms,
+                  termsChange.effectiveDate,
+                  termsChange.snapshotNotes ?? null,
+                ),
+              })
+              .returning({ id: accountTermsSnapshots.id });
+            termsSnapshotId = snapshot?.id ?? null;
+          }
+        }
+
+        const [updated] = await tx
+          .update(accountEvents)
+          .set({
+            type: input.type,
+            title: input.title,
+            notes: input.notes ?? null,
+            startDate: input.startDate,
+            resolvedDate: input.resolvedDate ?? null,
+            termsSnapshotId,
+            updatedAt: now(),
+          })
+          .where(eq(accountEvents.id, input.id))
+          .returning(publicEventFields);
+
+        if (!updated) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Event not found.",
+          });
+        }
+        return updated;
+      });
 
       return event;
     }),

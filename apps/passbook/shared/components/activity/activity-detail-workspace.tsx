@@ -191,9 +191,7 @@ export function ActivityDetailWorkspace({ eventId }: { eventId: string }) {
                 <div className="space-y-1">
                   <h3 className="font-medium">Linked terms change</h3>
                   <p className="text-muted-foreground text-sm">
-                    Recorded when this activity was created. Edit the terms from
-                    a new activity rather than changing this snapshot
-                    separately.
+                    Edit this activity to update the linked terms snapshot.
                   </p>
                 </div>
                 <p className="text-muted-foreground text-sm">

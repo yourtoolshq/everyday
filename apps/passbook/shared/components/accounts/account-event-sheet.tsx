@@ -68,6 +68,10 @@ export function AccountEventSheet({
     { accountId },
     { enabled: open },
   );
+  const snapshots = api.accountTerms.listSnapshots.useQuery(
+    { accountId },
+    { enabled: open && Boolean(event?.termsSnapshotId) },
+  );
 
   const [type, setType] = useState<AccountEventType>(defaultType);
   const [title, setTitle] = useState("");
@@ -83,6 +87,9 @@ export function AccountEventSheet({
   const [saving, setSaving] = useState(false);
 
   const isEditing = Boolean(event);
+  const linkedSnapshot = snapshots.data?.find(
+    (snapshot) => snapshot.id === event?.termsSnapshotId,
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -93,10 +100,12 @@ export function AccountEventSheet({
       setNotes(event.notes ?? "");
       setStartDate(event.startDate);
       setResolvedDate(event.resolvedDate ?? "");
-      setRecordTermsChange(false);
-      setTerms(emptyAccountTerms());
-      setTermsEffectiveDate(todayInputValue());
-      setTermsNotes("");
+      setRecordTermsChange(Boolean(event.termsSnapshotId));
+      setTerms(
+        linkedSnapshot?.terms ?? currentTerms.data ?? emptyAccountTerms(),
+      );
+      setTermsEffectiveDate(linkedSnapshot?.effectiveDate ?? todayInputValue());
+      setTermsNotes(linkedSnapshot?.notes ?? "");
       return;
     }
 
@@ -110,10 +119,10 @@ export function AccountEventSheet({
     setTerms(currentTerms.data ?? emptyAccountTerms());
     setTermsEffectiveDate(todayInputValue());
     setTermsNotes("");
-  }, [currentTerms.data, defaultType, event, open]);
+  }, [currentTerms.data, defaultType, event, linkedSnapshot, open]);
 
   useEffect(() => {
-    if (!open || event || !currentTerms.data) return;
+    if (!open || (event && event.termsSnapshotId) || !currentTerms.data) return;
     setTerms(currentTerms.data);
   }, [currentTerms.data, event, open]);
 
@@ -143,6 +152,14 @@ export function AccountEventSheet({
           notes: notes.trim() || null,
           startDate,
           resolvedDate: resolvedDate.trim() || null,
+          termsChange: recordTermsChange
+            ? {
+                recordTermsChange: true,
+                effectiveDate: termsEffectiveDate,
+                snapshotNotes: termsNotes.trim() || null,
+                terms,
+              }
+            : { recordTermsChange: false },
         });
         toast.success("Activity updated.");
       } else {
@@ -280,56 +297,56 @@ export function AccountEventSheet({
               />
             </div>
 
-            {!isEditing ? (
-              <div className="space-y-3 rounded-lg border p-4">
-                <label className="flex items-start gap-3 text-sm">
-                  <input
-                    type="checkbox"
-                    className="mt-1"
-                    checked={recordTermsChange}
-                    onChange={(inputEvent) =>
-                      setRecordTermsChange(inputEvent.target.checked)
-                    }
-                  />
-                  <span>
-                    <span className="font-medium">Record terms change</span>
-                    <span className="text-muted-foreground mt-1 block">
-                      Save updated account terms and create a snapshot linked to
-                      this activity.
-                    </span>
+            <div className="space-y-3 rounded-lg border p-4">
+              <label className="flex items-start gap-3 text-sm">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={recordTermsChange}
+                  disabled={Boolean(event?.termsSnapshotId)}
+                  onChange={(inputEvent) =>
+                    setRecordTermsChange(inputEvent.target.checked)
+                  }
+                />
+                <span>
+                  <span className="font-medium">Record terms change</span>
+                  <span className="text-muted-foreground mt-1 block">
+                    {event?.termsSnapshotId
+                      ? "Update the terms snapshot linked to this activity."
+                      : "Save updated account terms and create a snapshot linked to this activity."}
                   </span>
-                </label>
+                </span>
+              </label>
 
-                {recordTermsChange ? (
-                  <div className="space-y-4 border-t pt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="event-terms-effective-date">
-                        Terms effective date
-                      </Label>
-                      <DateField
-                        id="event-terms-effective-date"
-                        value={termsEffectiveDate}
-                        onChange={(value) => setTermsEffectiveDate(value)}
-                        required
-                      />
-                    </div>
-                    <AccountTermsFormFields terms={terms} onChange={setTerms} />
-                    <div className="space-y-2">
-                      <Label htmlFor="event-terms-notes">Snapshot notes</Label>
-                      <Textarea
-                        id="event-terms-notes"
-                        value={termsNotes}
-                        onChange={(inputEvent) =>
-                          setTermsNotes(inputEvent.target.value)
-                        }
-                        placeholder="Optional context for the terms snapshot"
-                        rows={2}
-                      />
-                    </div>
+              {recordTermsChange ? (
+                <div className="space-y-4 border-t pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="event-terms-effective-date">
+                      Terms effective date
+                    </Label>
+                    <DateField
+                      id="event-terms-effective-date"
+                      value={termsEffectiveDate}
+                      onChange={(value) => setTermsEffectiveDate(value)}
+                      required
+                    />
                   </div>
-                ) : null}
-              </div>
-            ) : null}
+                  <AccountTermsFormFields terms={terms} onChange={setTerms} />
+                  <div className="space-y-2">
+                    <Label htmlFor="event-terms-notes">Snapshot notes</Label>
+                    <Textarea
+                      id="event-terms-notes"
+                      value={termsNotes}
+                      onChange={(inputEvent) =>
+                        setTermsNotes(inputEvent.target.value)
+                      }
+                      placeholder="Optional context for the terms snapshot"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <SheetFooter>
