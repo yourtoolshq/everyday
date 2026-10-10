@@ -66,6 +66,7 @@ export const createAccountEventInputSchema = accountEventMetadataSchema.extend({
 
 export const updateAccountEventInputSchema = accountEventMetadataSchema.extend({
   id: z.string().uuid(),
+  termsChange: accountEventTermsSchema.optional(),
 });
 
 export const maxEventAttachmentBytes = 25 * 1024 * 1024;
