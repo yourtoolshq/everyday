@@ -7,6 +7,10 @@ import type {
 } from "./update-types.js";
 import { autoUpdater } from "./auto-updater.js";
 import { normalizeDesktopUpdateReleaseNotes } from "./release-notes.js";
+import {
+  clearUpdateInstallQuitPending,
+  markUpdateInstallQuitPending,
+} from "./update-install-quit.js";
 import { UpdateOrchestrator } from "./update-orchestrator.js";
 import {
   createInitialDesktopUpdateState,
@@ -22,6 +26,7 @@ import {
 } from "./update-state.js";
 
 const UPDATE_CHECK_INTERVAL_MS = 4 * 60 * 60 * 1000;
+const UPDATE_INSTALL_QUIT_TIMEOUT_MS = 5_000;
 
 export interface UpdateControllerOptions {
   dataDir: string;
@@ -178,14 +183,29 @@ export class UpdateController {
     try {
       await this.orchestrator.beginUpdate(version, this.options.currentVersion);
       const backupId = await createPreUpdateBackup(this.options.hostUrl);
-      await this.orchestrator.markBackupComplete(backupId);
-      autoUpdater.quitAndInstall();
+      const intent = await this.orchestrator.markBackupComplete(backupId);
+      this.state = {
+        ...this.state,
+        trial: toTrialState(intent, "verifying"),
+      };
+      this.broadcast();
+      markUpdateInstallQuitPending();
+      autoUpdater.quitAndInstall(false, true);
+      this.scheduleInstallQuitRecovery();
       return { accepted: true, completed: false, state: this.getState() };
     } catch (error) {
+      clearUpdateInstallQuitPending();
       const message =
         error instanceof Error ? error.message : "Update install failed.";
-      await this.orchestrator.markFailed(message).catch(() => undefined);
-      this.state = reduceOnInstallFailure(this.state, message);
+      const failedIntent = await this.orchestrator
+        .markFailed(message)
+        .catch(() => null);
+      this.state = {
+        ...reduceOnInstallFailure(this.state, message),
+        ...(failedIntent
+          ? { trial: toTrialState(failedIntent, "failed", message) }
+          : {}),
+      };
       this.broadcast();
       return { accepted: true, completed: false, state: this.getState() };
     } finally {
@@ -251,6 +271,25 @@ export class UpdateController {
     };
     this.broadcast();
     return { accepted: true, completed: true, state: this.getState() };
+  }
+
+  private scheduleInstallQuitRecovery() {
+    setTimeout(() => {
+      void (async () => {
+        clearUpdateInstallQuitPending();
+        const intent = await this.orchestrator.readIntent();
+        if (intent?.stage !== "trial") return;
+
+        const reason =
+          "Passbook could not restart to install the update. Try again, or quit Passbook completely from the menu bar before reopening.";
+        await this.orchestrator.markFailed(reason).catch(() => undefined);
+        this.state = {
+          ...this.state,
+          trial: toTrialState(intent, "failed", reason),
+        };
+        this.broadcast();
+      })();
+    }, UPDATE_INSTALL_QUIT_TIMEOUT_MS);
   }
 
   private bindAutoUpdater() {
