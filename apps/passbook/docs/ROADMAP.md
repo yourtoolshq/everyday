@@ -237,11 +237,14 @@ without live feeds, transaction reconstruction, or return analytics.
 
 - Common **document enrichment** header with `investment_statement` as the first
   allowed kind (`entryMethod` manual in the MVP).
-- Manual entry workspace beside the PDF: valuation date, optional coverage
+- Compact holdings table beside an inline PDF with page/zoom controls; direct
+  entry after upload, symbol/exchange search and inline instrument creation.
+  Valuation date, optional coverage
   dates, summary totals, cash and investment positions, draft save, review, and
   remove enrichment.
 - **Global Holdings** catalog to reuse instruments across accounts (source-linked
-  observations; not a household portfolio total).
+  observations; not a live household portfolio total). Individual holding pages
+  show reviewed native-currency exposure, portions of entered holdings and history.
 - Account views: enriched statement list, reported value history chart,
   selected-date holdings by currency, workspace reconciliation hints, and
   two-statement “What changed?” comparison when coverage allows.

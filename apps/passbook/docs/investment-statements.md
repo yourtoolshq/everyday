@@ -37,10 +37,58 @@ flowchart LR
 
 The shipped slice includes reported opening/closing values, optional
 period-summary fields, stock/ETF/mutual-fund positions, cash, a global
-**Holdings** catalog, inline field definitions in the entry workspace, and
+**Holdings** catalog with symbol/exchange search, compact table entry, and
 same-account comparisons driven only from saved facts. Statement activity rows
-(buys/sells), AI draft entry, and cross-account portfolio totals remain out of
-scope.
+(buys/sells), AI draft entry, live portfolio valuation and household net worth
+remain out of scope. Holding pages compare statement-observed exposure across
+accounts, separately for each native currency.
+
+## Entry and holding detail views
+
+Upload an eligible investment statement and choose **Save and enter details** to
+open the statement workspace. **Save statement** keeps the upload-only path.
+The workspace keeps the local PDF visible with page and zoom controls. The
+valuation date remains visible above the entry area; holdings, summary, dates /
+notes and checks have separate sections. Holdings use a table with the usual
+numeric fields in each row and source references in **Details**.
+
+**Link instrument** searches names, symbols, exchanges, fund codes and series.
+Create a missing instrument in the same workflow. Tickers pair with an exchange
+(the identifier namespace); fund codes pair with an issuer. ISIN and CUSIP are
+also supported. The printed label remains separate from the reusable identity.
+There is no market-data lookup or automatic symbol resolution.
+
+```mermaid
+flowchart LR
+    A[Upload PDF and choose period] --> B{Next step}
+    B -->|Save statement| C[Account statement grid]
+    B -->|Save and enter details| D[PDF beside holdings table]
+    D --> E[Search symbol and exchange]
+    E -->|Existing| F[Link instrument]
+    E -->|Missing| G[Create instrument inline]
+    G --> F
+    F --> H[Save draft and review]
+    H --> I[Holding exposure and history]
+```
+
+A holding's **exposure** is a derived view. For each account, use one latest
+reviewed statement on or before the selected date. Repeated lines in that
+snapshot aggregate with decimal arithmetic. Shares use entered holdings and
+cash in the same native currency, never an account total expressed in another
+currency. Missing values block the relevant total and percentage; partial
+coverage remains labelled. Absence in a complete holdings snapshot can show
+zero observed exposure, without inventing a sale transaction. Source dates and
+statements remain visible because accounts can have different valuation dates.
+Multiple reviewed statements at the same latest date are labelled as ambiguous
+and block exposure for that account rather than choosing a value arbitrarily.
+Accounts without a reviewed statement on the selected date are excluded and
+labelled; this does not claim complete household coverage.
+
+The query batches full positions for those latest snapshots and the selected
+holding's history. It does not send every historical portfolio position to the
+client. Charts share the shadcn primitive in `packages/ui`; PDF rendering and
+investment entry remain Passbook-specific. No new fact tables or generic field
+engine are introduced for these views.
 
 ## Enrichment architecture
 
@@ -154,7 +202,7 @@ Current read-side behavior includes:
   base). See `fieldDefinitions` in
   [`shared/components/investment-statements/investment-labels.ts`](../shared/components/investment-statements/investment-labels.ts).
 - Account **investment statement history**: reported closing value over
-  **valuation dates** (SVG chart), a list of enriched statements, and **holdings
+  **valuation dates** (shared shadcn line chart), a list of enriched statements, and **holdings
   at the selected date** grouped by value currency (entered lines only when
   holdings coverage is partial).
 - Two-statement **What changed?** comparison for the **same account** with
@@ -230,7 +278,7 @@ chart coordinates may round for display only.
 ## Explicit exclusions
 
 - Live prices, FX feeds, bank sync, transaction ledger, tax filing, AI advice.
-- Household net worth or cross-account portfolio totals from this slice.
+- Household net worth, live combined portfolio valuation or totals converted across currencies.
 - Reconstructing holdings from activity rows (a later slice).
 - Generic user-defined fields or a universal facts engine.
 

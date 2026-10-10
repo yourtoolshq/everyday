@@ -21,6 +21,15 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Changed
 
+- Investment statement entry uses a compact holdings table and separate summary,
+  dates and checks sections beside a local PDF viewer with page and zoom controls.
+  Uploading an investment statement can open entry immediately, with symbols,
+  exchange/issuer identifiers and inline instrument creation.
+- Holding detail pages show native-currency exposure across accounts, portions of
+  entered holdings and reviewed statement history. Charts use the shared shadcn
+  chart component; partial coverage, unknown values and different source dates
+  remain visible.
+
 - Passbook is desktop-only: Docker and the Next.js app are removed. Shared code lives under `shared/`; development uses the host and client (or the desktop shell).
 
 ### Added

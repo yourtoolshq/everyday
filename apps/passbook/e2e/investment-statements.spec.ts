@@ -1,7 +1,30 @@
 import type { APIRequestContext, Page } from "@playwright/test";
 import { expect, test } from "@playwright/test";
 
-const pdf = Buffer.from("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n");
+function fictionalPdf() {
+  const stream =
+    "BT /F1 18 Tf 48 720 Td (Fictional investment statement) Tj ET";
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`,
+  ];
+  let output = "%PDF-1.4\n";
+  const offsets = [0];
+  objects.forEach((object, index) => {
+    offsets.push(Buffer.byteLength(output));
+    output += `${index + 1} 0 obj\n${object}\nendobj\n`;
+  });
+  const xref = Buffer.byteLength(output);
+  output += `xref\n0 6\n0000000000 65535 f \n${offsets
+    .slice(1)
+    .map((offset) => `${String(offset).padStart(10, "0")} 00000 n \n`)
+    .join("")}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(output);
+}
+const pdf = fictionalPdf();
 
 type SnapshotDto = {
   documentId: string;
@@ -143,14 +166,17 @@ async function selectCoverage(
 }
 
 async function fillManualStatementWorkspace(page: Page) {
+  await page.getByRole("button", { name: "Dates & notes" }).click();
   await page.getByLabel("Valuation date").fill("2026-03-31");
   await page.getByLabel("Coverage start").fill("2026-01-01");
   await page.getByLabel("Coverage end").fill("2026-03-31");
 
+  await page.getByRole("button", { name: "Summary", exact: true }).click();
   await selectCoverage(page, "summary-coverage", "Partial");
   await page.getByLabel("Closing value", { exact: true }).fill("12500.50");
   await page.getByLabel("Summary cash", { exact: true }).fill("250.00");
 
+  await page.getByRole("button", { name: /^Holdings \(/ }).click();
   await selectCoverage(page, "holdings-coverage", "Partial");
   await page.getByRole("button", { name: "Add line" }).click();
 
@@ -158,24 +184,23 @@ async function fillManualStatementWorkspace(page: Page) {
   await page.getByRole("button", { name: "Link instrument" }).click();
   await page.getByRole("button", { name: "New instrument" }).click();
   await page.locator("#instrument-name").fill("Fictional Equity ETF");
-  await page.getByPlaceholder("Value").first().fill("FETF");
+  await page.getByLabel("Ticker value 1").fill("FETF");
+  await page.getByLabel("Exchange 1", { exact: true }).fill("DEMO");
   await page.getByRole("button", { name: "Save instrument" }).click();
   await expect(page.getByText("Instrument added to catalog.")).toBeVisible();
 
   await page
-    .getByLabel("Market value", { exact: true })
+    .getByLabel("Market value 1", { exact: true })
     .first()
     .fill("12250.50");
-  await page.getByLabel("Quantity", { exact: true }).first().fill("100");
+  await page.getByLabel("Quantity 1", { exact: true }).first().fill("100");
 
   await page.getByRole("button", { name: "Add line" }).click();
-  const cashLineCard = page
-    .locator(".rounded-xl.border")
-    .filter({ hasText: "Line 2" });
-  await cashLineCard.getByRole("combobox").first().click();
+  await page.getByRole("button", { name: "Details line 2" }).click();
+  await page.locator("#line-kind-1").click();
   await page.getByRole("option", { name: "Cash", exact: true }).click();
-  await cashLineCard.getByLabel("Source label").fill("Cash balance");
-  await cashLineCard.getByLabel("Market value", { exact: true }).fill("250.00");
+  await page.getByLabel("Source label 2", { exact: true }).fill("Cash balance");
+  await page.getByLabel("Market value 2", { exact: true }).fill("250.00");
 }
 
 test.describe("investment statement enrichment", () => {
@@ -189,6 +214,10 @@ test.describe("investment statement enrichment", () => {
     await trpcQuery(request, "investmentInstruments.list", {});
     await openInvestmentWorkspace(page, fixture.documentId);
 
+    await expect(page.getByRole("img", { name: /page 1/ })).toBeVisible();
+    await expect(
+      page.getByText("Fictional investment statement", { exact: true }),
+    ).toHaveCount(1);
     await fillManualStatementWorkspace(page);
 
     await page.getByRole("button", { name: "Save draft" }).click();
@@ -199,11 +228,13 @@ test.describe("investment statement enrichment", () => {
     await expect(page.getByText("Facts marked as reviewed.")).toBeVisible();
     await expect(page.getByText("Reviewed · partial")).toBeVisible();
 
+    await page.getByRole("button", { name: "Summary", exact: true }).click();
     await page.getByLabel("Closing value", { exact: true }).fill("12510.00");
     await page.getByRole("button", { name: "Save draft" }).click();
     await expect(page.getByText("Draft details")).toBeVisible();
 
     await page.reload();
+    await page.getByRole("button", { name: "Summary", exact: true }).click();
     await expect(page.getByLabel("Closing value", { exact: true })).toHaveValue(
       /12510(\.00)?/,
     );
@@ -215,7 +246,22 @@ test.describe("investment statement enrichment", () => {
       page.getByRole("heading", { name: "Holdings", level: 1 }),
     ).toBeVisible();
     await expect(page.getByText("Fictional Equity ETF")).toBeVisible();
-    await expect(page.getByText("E2E TFSA").first()).toBeVisible();
+    await expect(page.getByText("FETF / DEMO")).toBeVisible();
+    await page
+      .getByRole("link", { name: "Fictional Equity ETF", exact: true })
+      .click();
+    await expect(
+      page.getByRole("heading", { name: "Where this holding is held" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Portion of entered holdings" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText("98.00%", { exact: true }).first(),
+    ).toBeVisible();
+    await expect(
+      page.getByText("E2E TFSA", { exact: true }).last(),
+    ).toBeVisible();
 
     const secondDocument = await uploadStatementPdf(
       request,
@@ -348,6 +394,75 @@ test.describe("investment statement enrichment", () => {
     const served = await request.get(href!);
     expect(served.status()).toBe(200);
     expect(await served.body()).toEqual(pdf);
+  });
+
+  test("investment upload opens the PDF and table entry directly", async ({
+    page,
+    request,
+  }) => {
+    const fixture = await createInvestmentFixture(request);
+    await page.goto(`/accounts/${fixture.accountId}`);
+    await page
+      .getByRole("button", { name: "Upload statement", exact: true })
+      .click();
+    const sheet = page.getByRole("dialog", { name: "Upload statement" });
+    await sheet.getByLabel("File").setInputFiles({
+      name: "fictional-q2-entry.pdf",
+      mimeType: "application/pdf",
+      buffer: pdf,
+    });
+    await sheet.getByRole("combobox").nth(1).click();
+    await page.getByRole("option", { name: /Q2 2026/ }).click();
+    await sheet.getByRole("button", { name: "Save and enter details" }).click();
+    await expect(page).toHaveURL(/\/statements\/[0-9a-f-]+\/investments$/);
+    await expect(page.getByRole("img", { name: /page 1/ })).toBeVisible();
+    await expect(
+      page.getByText("Fictional investment statement", { exact: true }),
+    ).toHaveCount(1);
+    await expect(
+      page.getByRole("button", { name: "Holdings (0)" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await page.getByLabel("Valuation date", { exact: true }).fill("2026-06-30");
+    await page.getByRole("button", { name: "Add line" }).click();
+    await page
+      .getByLabel("Source label 1", { exact: true })
+      .fill("Inline Demo Equity");
+    await page.getByRole("button", { name: "Link instrument" }).click();
+    await page.getByLabel("Search", { exact: true }).fill("FETF DEMO");
+    await expect(
+      page.getByRole("button", { name: /Fictional Equity ETF.*FETF.*DEMO/ }),
+    ).toBeVisible();
+    await page.getByLabel("Search", { exact: true }).fill("Inline Demo Equity");
+    await page.getByRole("button", { name: "New instrument" }).click();
+    await expect(page.getByLabel("Display name")).toHaveValue(
+      "Inline Demo Equity",
+    );
+    await page.getByLabel("Ticker value 1").fill("IDEQ");
+    await page.getByLabel("Exchange 1", { exact: true }).fill("DEMO");
+    await page.getByRole("button", { name: "Save instrument" }).click();
+    await expect(
+      page.getByRole("button", { name: "IDEQ / DEMO", exact: true }),
+    ).toBeVisible();
+    await page.getByLabel("Market value 1", { exact: true }).fill("810.25");
+    await page.getByLabel("Unit price 1", { exact: true }).fill("81.025");
+    await page.getByRole("button", { name: "Details line 1" }).click();
+    await page.getByLabel("Unit price currency", { exact: true }).fill("USD");
+    await page
+      .getByRole("textbox", { name: "Source page", exact: true })
+      .fill("1");
+    await page.getByRole("button", { name: "Save draft" }).click();
+    await expect(page.getByText("Draft saved.")).toBeVisible();
+    await page.reload();
+    await expect(
+      page.getByLabel("Market value 1", { exact: true }),
+    ).toHaveValue("810.25");
+    await page.getByRole("button", { name: "Details line 1" }).click();
+    await expect(
+      page.getByLabel("Unit price currency", { exact: true }),
+    ).toHaveValue("USD");
+    await expect(
+      page.getByRole("button", { name: "IDEQ / DEMO", exact: true }),
+    ).toBeVisible();
   });
 
   test("partial holdings avoid sold-holding claims in comparisons", async ({

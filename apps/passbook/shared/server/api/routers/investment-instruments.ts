@@ -1,9 +1,15 @@
 import { z } from "zod";
 
+import { notFound } from "@yourtoolshq/server/errors";
+
 import { mapAppErrors } from "~/core/infrastructure/trpc-errors";
-import { listGlobalHoldingsObservations } from "~/modules/investment-statements/infrastructure/holdings-query";
+import {
+  listExposureStatements,
+  listGlobalHoldingsObservations,
+} from "~/modules/investment-statements/infrastructure/holdings-query";
 import {
   createInstrument,
+  getInstrument,
   listInstruments,
   updateInstrument,
 } from "~/modules/investments/application/instrument-service";
@@ -42,6 +48,26 @@ export const investmentInstrumentsRouter = createTRPCRouter({
     .input(z.object({ id: z.string().uuid() }).and(instrumentInput))
     .mutation(({ ctx, input }) =>
       mapAppErrors(() => updateInstrument(ctx.db, input)),
+    ),
+
+  detail: publicProcedure
+    .input(z.object({ id: z.string().uuid(), asOf: z.string().date() }))
+    .query(({ ctx, input }) =>
+      mapAppErrors(async () => {
+        const instrument = await getInstrument(
+          createInstrumentRepository(ctx.db),
+          input.id,
+        );
+        if (!instrument) throw notFound("Holding not found.");
+        return {
+          instrument,
+          statements: await listExposureStatements(
+            ctx.db,
+            input.id,
+            input.asOf,
+          ),
+        };
+      }),
     ),
 
   holdings: publicProcedure.query(({ ctx }) =>

@@ -1,136 +1,142 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
-import { Badge } from "@yourtoolshq/ui/badge";
+import { Input } from "@yourtoolshq/ui/input";
+import { Label } from "@yourtoolshq/ui/label";
 
-import type { InstrumentRecord } from "~/components/investment-statements/instrument-sheets";
-import { displayAmount } from "~/components/investment-statements/investment-form-state";
-import {
-  instrumentKindLabels,
-  reviewStatusLabels,
-  sectionCoverageLabels,
-} from "~/components/investment-statements/investment-labels";
-import { formatDateLabel } from "~/lib/format-date";
+import { instrumentKindLabels } from "~/components/investment-statements/investment-labels";
 import { api } from "~/trpc/react";
 
 export function HoldingsWorkspace() {
   const holdings = api.investmentInstruments.holdings.useQuery();
-
-  if (holdings.isLoading) {
-    return <p className="text-muted-foreground text-sm">Loading holdings…</p>;
-  }
-
-  if (holdings.error) {
-    return <p className="text-destructive text-sm">{holdings.error.message}</p>;
-  }
-
-  const instruments = (holdings.data?.instruments ?? []) as InstrumentRecord[];
+  const [query, setQuery] = useState("");
+  if (holdings.isLoading)
+    return (
+      <p role="status" className="text-muted-foreground text-sm">
+        Loading holdings…
+      </p>
+    );
+  if (holdings.error)
+    return (
+      <p role="alert" className="text-destructive text-sm">
+        {holdings.error.message}
+      </p>
+    );
+  const instruments = (holdings.data?.instruments ?? []).filter((instrument) =>
+    [
+      instrument.displayName,
+      instrument.series,
+      ...instrument.identifiers.map(
+        (id) => `${id.value} ${id.namespace ?? ""}`,
+      ),
+    ]
+      .join(" ")
+      .toLowerCase()
+      .includes(query.toLowerCase().trim()),
+  );
   const positions = holdings.data?.positions ?? [];
-
-  const positionsByInstrument = new Map<string, typeof positions>();
-  for (const row of positions) {
-    const list = positionsByInstrument.get(row.instrumentId) ?? [];
-    list.push(row);
-    positionsByInstrument.set(row.instrumentId, list);
-  }
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">Holdings</h1>
-        <p className="text-muted-foreground mt-2 max-w-3xl text-sm">
-          Catalog of instruments reused across statements. Each row links to its
-          source account and valuation date. This view does not sum snapshots
-          into a household total.
+        <h1 className="text-2xl font-semibold tracking-tight">Holdings</h1>
+        <p className="text-muted-foreground mt-2 text-sm">
+          Reusable holdings across your accounts. Open a holding to see
+          exposure, history and source statements.
         </p>
       </div>
-
-      {instruments.length === 0 ? (
-        <p className="text-muted-foreground rounded-xl border border-dashed p-6 text-sm">
-          No instruments yet. Link holdings while entering investment statement
-          details.
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {instruments.map((instrument) => {
-            const rows = positionsByInstrument.get(instrument.id) ?? [];
-            return (
-              <section
-                key={instrument.id}
-                className="rounded-xl border p-4 shadow-none"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div>
-                    <h2 className="text-lg font-medium">
-                      {instrument.displayName}
-                    </h2>
-                    <p className="text-muted-foreground text-sm">
+      <div className="max-w-md space-y-2">
+        <Label htmlFor="holdings-search">Find a holding</Label>
+        <Input
+          id="holdings-search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Name, symbol, exchange or fund code"
+        />
+      </div>
+      {instruments.length ? (
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full min-w-[660px] text-sm">
+            <thead className="bg-muted/40 text-muted-foreground text-left">
+              <tr>
+                {[
+                  "Holding",
+                  "Symbol / exchange or fund code",
+                  "Type",
+                  "Accounts",
+                  "Latest observation",
+                ].map((label) => (
+                  <th key={label} className="p-3 font-medium">
+                    {label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {instruments.map((instrument) => {
+                const rows = positions.filter(
+                  (row) => row.instrumentId === instrument.id,
+                );
+                const latest = rows
+                  .map((row) => row.valuationDate)
+                  .sort()
+                  .at(-1);
+                return (
+                  <tr
+                    key={instrument.id}
+                    className="hover:bg-muted/20 border-t"
+                  >
+                    <td className="p-3">
+                      <Link
+                        className="text-primary font-medium hover:underline"
+                        href={`/holdings/${instrument.id}`}
+                      >
+                        {instrument.displayName}
+                      </Link>
+                      {instrument.series ? (
+                        <p className="text-muted-foreground text-xs">
+                          Series {instrument.series}
+                        </p>
+                      ) : null}
+                    </td>
+                    <td className="p-3">
+                      {instrument.identifiers.length ? (
+                        instrument.identifiers.map((identifier) => (
+                          <p
+                            key={`${identifier.kind}:${identifier.value}:${identifier.namespace}`}
+                          >
+                            {identifier.value}
+                            {identifier.namespace
+                              ? ` / ${identifier.namespace}`
+                              : ""}
+                          </p>
+                        ))
+                      ) : (
+                        <span className="text-muted-foreground">
+                          No identifier
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3">
                       {instrumentKindLabels[instrument.kind]}
-                      {instrument.series
-                        ? ` · Series ${instrument.series}`
-                        : ""}
-                    </p>
-                  </div>
-                  <Badge variant="secondary">
-                    {rows.length} observation{rows.length === 1 ? "" : "s"}
-                  </Badge>
-                </div>
-                {rows.length === 0 ? (
-                  <p className="text-muted-foreground mt-3 text-sm">
-                    No saved positions reference this instrument yet.
-                  </p>
-                ) : (
-                  <div className="mt-4 overflow-x-auto">
-                    <table className="w-full min-w-[720px] text-sm">
-                      <thead>
-                        <tr className="text-muted-foreground border-b text-left">
-                          <th className="px-2 py-2 font-medium">Account</th>
-                          <th className="px-2 py-2 font-medium">Valuation</th>
-                          <th className="px-2 py-2 font-medium">Details</th>
-                          <th className="px-2 py-2 font-medium">Quantity</th>
-                          <th className="px-2 py-2 font-medium">Value</th>
-                          <th className="px-2 py-2 font-medium">Source</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.map((row, index) => (
-                          <tr key={index} className="border-b last:border-b-0">
-                            <td className="px-2 py-2">{row.accountName}</td>
-                            <td className="px-2 py-2">
-                              {formatDateLabel(row.valuationDate)}
-                            </td>
-                            <td className="px-2 py-2">
-                              <span className="text-muted-foreground">
-                                {reviewStatusLabels[row.reviewStatus]} ·{" "}
-                                {sectionCoverageLabels[row.holdingsCoverage]}
-                              </span>
-                            </td>
-                            <td className="px-2 py-2">
-                              {displayAmount(row.quantity)}
-                            </td>
-                            <td className="px-2 py-2">
-                              {displayAmount(row.marketValue)}{" "}
-                              {row.valueCurrency}
-                            </td>
-                            <td className="px-2 py-2">
-                              <Link
-                                href={`/statements/${row.documentId}/investments`}
-                                className="text-primary hover:underline"
-                              >
-                                {row.documentTitle}
-                              </Link>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
-            );
-          })}
+                    </td>
+                    <td className="p-3 tabular-nums">
+                      {new Set(rows.map((row) => row.accountId)).size}
+                    </td>
+                    <td className="p-3">{latest ?? "No statements yet"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
+      ) : (
+        <p className="text-muted-foreground rounded-lg border border-dashed p-6 text-sm">
+          {query
+            ? "No holdings match this search."
+            : "Link or create a holding while entering investment statement details."}
+        </p>
       )}
     </div>
   );

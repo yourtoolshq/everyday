@@ -1,14 +1,19 @@
 "use client";
 
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@yourtoolshq/ui/chart";
+
 import type { SnapshotDto } from "~/modules/investment-statements/domain/snapshot-dto";
 import type {
   EnrichmentReviewStatus,
   SectionCoverage,
 } from "~/server/db/schema";
-import {
-  reviewStatusLabels,
-  sectionCoverageLabels,
-} from "~/components/investment-statements/investment-labels";
+import { reviewStatusLabels } from "~/components/investment-statements/investment-labels";
 import { formatDateLabel } from "~/lib/format-date";
 
 type ChartPoint = {
@@ -94,165 +99,128 @@ export function ObservationChart({
     );
   }
 
-  const width = 640;
-  const height = 220;
-  const padding = { top: 16, right: 16, bottom: 36, left: 72 };
-  const innerW = width - padding.left - padding.right;
-  const innerH = height - padding.top - padding.bottom;
-
-  const numericValues = points.map((point) =>
-    Number.parseFloat(point.closingValue),
-  );
-  const minY = Math.min(...numericValues);
-  const maxY = Math.max(...numericValues);
-  const spanY = maxY - minY || 1;
-
-  const minDate = points[0]!.valuationDate;
-  const maxDate = points[points.length - 1]!.valuationDate;
-  const dateSpan =
-    minDate === maxDate
-      ? 1
-      : new Date(maxDate).getTime() - new Date(minDate).getTime();
-
-  function xFor(date: string) {
-    if (minDate === maxDate) return padding.left + innerW / 2;
-    const t =
-      (new Date(date).getTime() - new Date(minDate).getTime()) / dateSpan;
-    return padding.left + t * innerW;
-  }
-
-  function yFor(value: string) {
-    const n = Number.parseFloat(value);
-    const t = (n - minY) / spanY;
-    return padding.top + innerH - t * innerH;
-  }
-
-  const yTicks = [minY, minY + spanY / 2, maxY].filter(
-    (value, index, list) => list.indexOf(value) === index,
-  );
-
-  const currency = currencyFilter;
-
   return (
-    <figure className="space-y-2">
+    <figure className="space-y-3">
       <figcaption className="text-muted-foreground text-xs">
-        Reported closing account value ({currency}) at valuation dates. Filled
-        markers are reviewed; open markers are drafts. Chart coordinates use
-        rounded numbers for layout only.
+        Reported closing value ({currencyFilter}). Lines connect statement
+        observations; they do not represent daily prices or investment returns.
+        Drafts use open markers.
       </figcaption>
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-auto w-full max-w-full"
-        role="img"
-        aria-label={`Account value observations in ${currency}`}
+      <ChartContainer
+        config={{
+          value: {
+            label: `Closing value (${currencyFilter})`,
+            color: "var(--primary)",
+          },
+        }}
+        className="h-64 w-full"
       >
-        {yTicks.map((tick) => {
-          const y = yFor(String(tick));
-          return (
-            <g key={tick}>
-              <line
-                x1={padding.left}
-                y1={y}
-                x2={padding.left + innerW}
-                y2={y}
-                className="stroke-border/60"
-                strokeWidth={1}
-                strokeDasharray="4 4"
-              />
-              <text
-                x={padding.left - 6}
-                y={y + 4}
-                textAnchor="end"
-                className="fill-muted-foreground text-[10px]"
-              >
-                {formatAxisAmount(tick)}
-              </text>
-            </g>
-          );
-        })}
-        <line
-          x1={padding.left}
-          y1={padding.top + innerH}
-          x2={padding.left + innerW}
-          y2={padding.top + innerH}
-          className="stroke-border"
-          strokeWidth={1}
-        />
-        {points.map((point, index) => {
-          const cx = xFor(point.valuationDate);
-          const cy = yFor(point.closingValue);
-          const selected = point.documentId === selectedDocumentId;
-          const isDraft = point.reviewStatus === "draft";
-          const statusLabel = reviewStatusLabels[point.reviewStatus];
-          const partial =
-            point.summaryCoverage === "partial"
-              ? `, ${sectionCoverageLabels.partial} summary`
-              : "";
-          return (
-            <g key={point.documentId}>
-              <circle
-                cx={cx}
-                cy={cy}
-                r={selected ? 6 : 4}
-                className={
-                  selected
-                    ? "fill-primary stroke-primary"
-                    : isDraft
-                      ? "fill-background stroke-muted-foreground"
-                      : "fill-muted-foreground stroke-muted-foreground"
+        <LineChart
+          accessibilityLayer
+          data={points.map((point) => ({
+            ...point,
+            value: Number(point.closingValue),
+            date: new Date(`${point.valuationDate}T00:00:00Z`).getTime(),
+          }))}
+          margin={{ left: 8, right: 20, top: 12 }}
+        >
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey="date"
+            type="number"
+            domain={["dataMin", "dataMax"]}
+            tickFormatter={(value) =>
+              formatDateLabel(
+                new Date(Number(value)).toISOString().slice(0, 10),
+              ) ?? ""
+            }
+            tickLine={false}
+            axisLine={false}
+            minTickGap={32}
+          />
+          <YAxis
+            tickFormatter={formatAxisAmount}
+            tickLine={false}
+            axisLine={false}
+            width={72}
+            domain={["auto", "auto"]}
+          />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                labelFormatter={(_, items) =>
+                  items[0]?.payload
+                    ? (items[0].payload as ChartPoint).valuationDate
+                    : ""
                 }
-                strokeWidth={isDraft ? 2 : 0}
-                tabIndex={onSelectDocument ? 0 : undefined}
-                role={onSelectDocument ? "button" : undefined}
-                aria-label={`${formatDateLabel(point.valuationDate)}: ${point.closingValue} ${point.currency}, ${statusLabel}${partial}`}
-                onClick={() => onSelectDocument?.(point.documentId)}
-                onKeyDown={(event) => {
-                  if (!onSelectDocument) return;
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onSelectDocument(point.documentId);
-                  }
+                formatter={(_, __, item) => {
+                  const point = item.payload as ChartPoint;
+                  return (
+                    <div className="space-y-1">
+                      <p>
+                        {point.closingValue} {point.currency}
+                      </p>
+                      <p className="text-muted-foreground">
+                        {reviewStatusLabels[point.reviewStatus]}
+                        {coverageHint(point.summaryCoverage)}
+                      </p>
+                      <p>{point.label}</p>
+                    </div>
+                  );
                 }}
               />
-              <text
-                x={cx}
-                y={padding.top + innerH + 20}
-                textAnchor={
-                  index === 0
-                    ? "start"
-                    : index === points.length - 1
-                      ? "end"
-                      : "middle"
-                }
-                className="fill-muted-foreground text-[10px]"
+            }
+          />
+          <Line
+            dataKey="value"
+            type="linear"
+            stroke="var(--color-value)"
+            strokeWidth={2}
+            isAnimationActive={false}
+            dot={(props) => {
+              const point = props.payload as ChartPoint;
+              return (
+                <circle
+                  key={point.documentId}
+                  cx={props.cx}
+                  cy={props.cy}
+                  r={point.documentId === selectedDocumentId ? 6 : 4}
+                  fill={
+                    point.reviewStatus === "draft"
+                      ? "var(--background)"
+                      : "var(--primary)"
+                  }
+                  stroke="var(--primary)"
+                  strokeWidth={2}
+                />
+              );
+            }}
+          />
+        </LineChart>
+      </ChartContainer>
+      <details className="text-sm">
+        <summary className="text-muted-foreground cursor-pointer">
+          Source observations ({points.length})
+        </summary>
+        <ul className="mt-2 space-y-1">
+          {points.map((point) => (
+            <li key={point.documentId}>
+              <button
+                type="button"
+                className="text-primary hover:underline"
+                onClick={() => onSelectDocument?.(point.documentId)}
               >
-                {formatDateLabel(point.valuationDate)}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-      <ul className="text-muted-foreground space-y-1 text-xs">
-        {points.map((point) => (
-          <li key={point.documentId}>
-            <button
-              type="button"
-              className="text-primary hover:underline"
-              onClick={() => onSelectDocument?.(point.documentId)}
-            >
-              {formatDateLabel(point.valuationDate)}
-            </button>
-            {" · "}
-            {point.closingValue} {point.currency}
-            {" · "}
-            <span className={point.reviewStatus === "draft" ? "italic" : ""}>
-              {reviewStatusLabels[point.reviewStatus]}
-              {coverageHint(point.summaryCoverage)}
-            </span>
-            {point.label ? ` · ${point.label}` : null}
-          </li>
-        ))}
-      </ul>
+                {formatDateLabel(point.valuationDate)}: {point.closingValue}{" "}
+                {point.currency}
+              </button>{" "}
+              <span className="text-muted-foreground">
+                {reviewStatusLabels[point.reviewStatus]}
+                {coverageHint(point.summaryCoverage)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </details>
     </figure>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,10 +9,9 @@ import { toast } from "sonner";
 import { filePreviewUrl } from "@yourtoolshq/data-ui";
 import { Badge } from "@yourtoolshq/ui/badge";
 import { Button } from "@yourtoolshq/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@yourtoolshq/ui/card";
+import { Card, CardContent } from "@yourtoolshq/ui/card";
 import { DateField } from "@yourtoolshq/ui/date-field";
 import { Label } from "@yourtoolshq/ui/label";
-import { Separator } from "@yourtoolshq/ui/separator";
 import { Skeleton } from "@yourtoolshq/ui/skeleton";
 import { Textarea } from "@yourtoolshq/ui/textarea";
 
@@ -34,6 +34,7 @@ import { InvestmentPositionsPanel } from "~/components/investment-statements/inv
 import { InvestmentSummaryPanel } from "~/components/investment-statements/investment-summary-panel";
 import { ReconciliationAlerts } from "~/components/investment-statements/reconciliation-alerts";
 import { RemoveEnrichmentDialog } from "~/components/investment-statements/remove-enrichment-dialog";
+import { StatementPdfPreview } from "~/components/investment-statements/statement-pdf-preview";
 import { accountTypeLabels } from "~/lib/account-types";
 import { formatDateLabel } from "~/lib/format-date";
 import { api } from "~/trpc/react";
@@ -51,6 +52,7 @@ export function InvestmentStatementWorkspace({
 
   const [form, setForm] = useState<InvestmentStatementFormState | null>(null);
   const [conflictMessage, setConflictMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("holdings");
   const [removeOpen, setRemoveOpen] = useState(false);
 
   const document = payload.data?.document;
@@ -94,7 +96,17 @@ export function InvestmentStatementWorkspace({
   const instrumentNames = useMemo(() => {
     const map = new Map<string, string>();
     for (const item of instruments.data ?? []) {
-      map.set(item.id, item.displayName);
+      map.set(
+        item.id,
+        item.identifiers.length
+          ? item.identifiers
+              .map(
+                (id) =>
+                  `${id.value}${id.namespace ? ` / ${id.namespace}` : ""}`,
+              )
+              .join(", ")
+          : item.displayName,
+      );
     }
     return map;
   }, [instruments.data]);
@@ -173,9 +185,10 @@ export function InvestmentStatementWorkspace({
 
   const preferredCurrency = form.totals[0]?.currency ?? "CAD";
   const pending = save.isPending || review.isPending;
+  const canSave = !pending && Boolean(form.valuationDate);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/accounts/${document.accountId}`}>
@@ -259,127 +272,163 @@ export function InvestmentStatementWorkspace({
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-        <Card className="shadow-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Source</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground mb-3 text-sm">
-              {document.originalFilename}
-            </p>
-            <div className="bg-muted/30 aspect-[3/4] w-full overflow-hidden rounded-lg border">
-              <iframe
-                title={`Statement preview: ${document.title}`}
+      <div className="grid gap-4 lg:h-[calc(100dvh-320px)] lg:min-h-[520px] lg:grid-cols-[minmax(280px,.7fr)_minmax(0,1.3fr)]">
+        <div className="h-[500px] min-w-0 lg:h-full">
+          {document.mimeType === "application/pdf" ? (
+            <StatementPdfPreview
+              url={filePreviewUrl({
+                id: document.fileId,
+                mimeType: document.mimeType,
+              })}
+              title={document.title}
+            />
+          ) : (
+            <div className="bg-muted/20 h-full overflow-auto rounded-lg border p-3">
+              <Image
                 src={filePreviewUrl({
                   id: document.fileId,
                   mimeType: document.mimeType,
                 })}
-                className="h-full min-h-[420px] w-full"
+                alt={document.title}
+                width={1000}
+                height={1400}
+                className="h-auto w-full"
               />
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
+          )}
+        </div>
+        <div className="flex min-h-0 min-w-0 flex-col rounded-lg border">
+          <div className="flex items-center justify-between gap-3 border-b px-3 py-2">
+            <Label htmlFor="valuation-date">Valuation date</Label>
+            <div className="w-48">
+              <DateField
+                id="valuation-date"
+                value={form.valuationDate}
+                onChange={(value) => setForm({ ...form, valuationDate: value })}
+                disabled={pending}
+              />
+            </div>
+          </div>
+          <div
+            className="flex flex-wrap items-center gap-1 border-b p-2"
+            aria-label="Statement sections"
+          >
+            {[
+              ["holdings", `Holdings (${form.positions.length})`],
+              ["summary", "Summary"],
+              ["metadata", "Dates & notes"],
+              ["checks", "Checks"],
+            ].map(([value, label]) => (
+              <Button
+                key={value}
+                type="button"
+                size="sm"
+                variant={activeTab === value ? "secondary" : "ghost"}
+                aria-pressed={activeTab === value}
+                onClick={() => setActiveTab(value!)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
           <fieldset
-            className="m-0 min-w-0 space-y-6 border-0 p-0"
+            className="m-0 min-h-0 min-w-0 flex-1 space-y-4 overflow-auto border-0 p-4"
             disabled={pending}
           >
-            <Card className="shadow-none">
-              <CardContent className="space-y-4 p-4">
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="space-y-2">
-                    <Label htmlFor="valuation-date">Valuation date</Label>
-                    <DateField
-                      id="valuation-date"
-                      value={form.valuationDate}
-                      onChange={(value) =>
-                        setForm({ ...form, valuationDate: value })
-                      }
-                    />
-                    <p className="text-muted-foreground text-xs">
-                      {fieldDefinitions.valuationDate}
-                    </p>
+            <div hidden={activeTab !== "metadata"}>
+              <Card className="shadow-none">
+                <CardContent className="space-y-4 p-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="coverage-start">Coverage start</Label>
+                      <DateField
+                        id="coverage-start"
+                        value={form.coverageStart}
+                        onChange={(value) =>
+                          setForm({ ...form, coverageStart: value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="coverage-end">Coverage end</Label>
+                      <DateField
+                        id="coverage-end"
+                        value={form.coverageEnd}
+                        onChange={(value) =>
+                          setForm({ ...form, coverageEnd: value })
+                        }
+                      />
+                    </div>
                   </div>
+                  <p className="text-muted-foreground text-xs">
+                    {fieldDefinitions.coverageDates}
+                  </p>
                   <div className="space-y-2">
-                    <Label htmlFor="coverage-start">Coverage start</Label>
-                    <DateField
-                      id="coverage-start"
-                      value={form.coverageStart}
-                      onChange={(value) =>
-                        setForm({ ...form, coverageStart: value })
+                    <Label htmlFor="statement-notes">Workspace notes</Label>
+                    <Textarea
+                      id="statement-notes"
+                      value={form.notes}
+                      onChange={(event) =>
+                        setForm({ ...form, notes: event.target.value })
                       }
+                      rows={2}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="coverage-end">Coverage end</Label>
-                    <DateField
-                      id="coverage-end"
-                      value={form.coverageEnd}
-                      onChange={(value) =>
-                        setForm({ ...form, coverageEnd: value })
-                      }
-                    />
-                  </div>
-                </div>
-                <p className="text-muted-foreground text-xs">
-                  {fieldDefinitions.coverageDates}
-                </p>
-                <div className="space-y-2">
-                  <Label htmlFor="statement-notes">Workspace notes</Label>
-                  <Textarea
-                    id="statement-notes"
-                    value={form.notes}
-                    onChange={(event) =>
-                      setForm({ ...form, notes: event.target.value })
-                    }
-                    rows={2}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <InvestmentSummaryPanel form={form} onChange={setForm} />
-            <Separator />
-            <InvestmentPositionsPanel
-              form={form}
-              onChange={setForm}
-              accountId={document.accountId}
-              documentId={document.id}
-              instrumentNames={Object.fromEntries(instrumentNames)}
-            />
-            <ReconciliationAlerts
-              form={form}
-              preferredCurrency={preferredCurrency}
-            />
+                </CardContent>
+              </Card>
+            </div>
+            <div hidden={activeTab !== "summary"}>
+              <InvestmentSummaryPanel form={form} onChange={setForm} />
+            </div>
+            <div hidden={activeTab !== "holdings"}>
+              <InvestmentPositionsPanel
+                form={form}
+                onChange={setForm}
+                accountId={document.accountId}
+                documentId={document.id}
+                instrumentNames={Object.fromEntries(instrumentNames)}
+              />
+            </div>
+            <div hidden={activeTab !== "checks"}>
+              <ReconciliationAlerts
+                form={form}
+                preferredCurrency={preferredCurrency}
+              />
+            </div>
           </fieldset>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              disabled={pending}
-              onClick={() => save.mutate(toSaveCommand(documentId, form))}
-            >
-              {save.isPending ? <Loader2 className="animate-spin" /> : null}
-              Save draft
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={pending}
-              onClick={() => {
-                save.mutate(toSaveCommand(documentId, form), {
-                  onSuccess: (saved) =>
-                    review.mutate({
-                      documentId,
-                      expectedRevision: saved.revision,
-                    }),
-                });
-              }}
-            >
-              {review.isPending ? <Loader2 className="animate-spin" /> : null}
-              Review
-            </Button>
+          <div className="bg-background flex flex-wrap items-center justify-between gap-2 border-t p-3">
+            <span className="text-muted-foreground text-xs">
+              {!form.valuationDate
+                ? "Enter the valuation date printed on the statement."
+                : "Blank means unreported. Review against the PDF."}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                disabled={!canSave}
+                onClick={() => save.mutate(toSaveCommand(documentId, form))}
+              >
+                {save.isPending ? <Loader2 className="animate-spin" /> : null}
+                Save draft
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={!canSave}
+                onClick={() => {
+                  save.mutate(toSaveCommand(documentId, form), {
+                    onSuccess: (saved) =>
+                      review.mutate({
+                        documentId,
+                        expectedRevision: saved.revision,
+                      }),
+                  });
+                }}
+              >
+                {review.isPending ? <Loader2 className="animate-spin" /> : null}
+                Review
+              </Button>
+            </div>
           </div>
         </div>
       </div>

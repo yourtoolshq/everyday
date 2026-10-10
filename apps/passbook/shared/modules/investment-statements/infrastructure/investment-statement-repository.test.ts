@@ -14,6 +14,7 @@ import {
   saveInvestmentSnapshot,
 } from "~/modules/investment-statements/application/investment-snapshot-service";
 import { createInvestmentStatementRepository } from "~/modules/investment-statements/infrastructure/investment-statement-repository";
+import { createInstrumentRepository } from "~/modules/investments/infrastructure/instrument-repository";
 import * as schema from "~/server/db/schema";
 import {
   accounts,
@@ -25,6 +26,8 @@ import {
   people,
 } from "~/server/db/schema";
 import { invalidateInvestmentReviewAfterDocumentMetadataChange } from "~/server/documents/investment-enrichment-guards";
+import { holdingExposure } from "../domain/holding-exposure";
+import { listExposureStatements } from "./holdings-query";
 
 const migrationsFolder = join(process.cwd(), "drizzle");
 
@@ -152,6 +155,88 @@ const baseSave = () => ({
 });
 
 describe("investment statement repository", () => {
+  it("exposure query includes the latest statement even when the holding disappears", async () => {
+    const repository = createInvestmentStatementRepository(db);
+    const instrument = await createInstrumentRepository(db).create({
+      displayName: "Fictional Equity",
+      kind: "etf",
+      series: null,
+      notes: null,
+      identifiers: [{ kind: "ticker", value: "FEQ", namespace: "DEMO" }],
+    });
+    const first = await saveInvestmentSnapshot(repository, {
+      ...baseSave(),
+      holdingsCoverage: "complete",
+      positions: [
+        { ...baseSave().positions[0]!, marketValue: "100" },
+        {
+          ...baseSave().positions[0]!,
+          lineKind: "investment",
+          instrumentId: instrument.id,
+          sourceLabel: "Fictional Equity",
+          marketValue: "900",
+        },
+      ],
+    });
+    await reviewInvestmentSnapshot(repository, documentId, first.revision);
+    const original = (
+      await db.select().from(documents).where(eq(documents.id, documentId))
+    )[0]!;
+    const laterId = crypto.randomUUID();
+    const laterFileId = crypto.randomUUID();
+    const originalFile = (
+      await db
+        .select()
+        .from(filesTable)
+        .where(eq(filesTable.id, original.fileId))
+    )[0]!;
+    await db.insert(filesTable).values({
+      ...originalFile,
+      id: laterFileId,
+      storageKey: "later-statement.pdf",
+    });
+    await db.insert(documents).values({
+      ...original,
+      id: laterId,
+      fileId: laterFileId,
+      periodKey: "2025-02",
+      title: "February statement",
+    });
+    const later = await saveInvestmentSnapshot(repository, {
+      ...baseSave(),
+      documentId: laterId,
+      valuationDate: "2025-02-28",
+      holdingsCoverage: "complete",
+    });
+    await reviewInvestmentSnapshot(repository, laterId, later.revision);
+    const january = await listExposureStatements(
+      db,
+      instrument.id,
+      "2025-01-31",
+    );
+    expect(
+      holdingExposure(january, instrument.id, "CAD", "2025-01-31").share,
+    ).toBe("90.00");
+    const february = await listExposureStatements(
+      db,
+      instrument.id,
+      "2025-02-28",
+    );
+    const exposure = holdingExposure(
+      february,
+      instrument.id,
+      "CAD",
+      "2025-02-28",
+    );
+    expect(exposure.value).toBe("0");
+    expect(exposure.total).toBe("1000");
+    expect(exposure.accounts[0]?.documentId).toBe(laterId);
+    expect(
+      february.find((statement) => statement.documentId === documentId)
+        ?.positions,
+    ).toHaveLength(1);
+  });
+
   it("rejects stale revisions and invalid review payloads", async () => {
     const repository = createInvestmentStatementRepository(db);
     const saved = await saveInvestmentSnapshot(repository, baseSave());

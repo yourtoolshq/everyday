@@ -14,6 +14,7 @@ export async function invalidateInvestmentCaches(
       accountId: options.accountId,
     }),
     utils.investmentInstruments.holdings.invalidate(),
+    utils.investmentInstruments.detail.invalidate(),
     utils.investmentInstruments.list.invalidate(),
   ]);
 }

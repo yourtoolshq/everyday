@@ -107,9 +107,12 @@ That workflow answers historical questions such as what the account held on the
 statement’s valuation date, how entered holdings group by currency on a chosen
 date, and what changed between two saved statements for the **same account**. A
 global **Holdings** view reuses instruments across accounts without claiming a
-combined household portfolio total.
+live combined household portfolio total. Individual holding pages show observed
+native-currency exposure by account, that holding's portion of entered holdings
+and statement history, with source dates and incomplete coverage visible.
 
-Upload-first behavior is unchanged. Statements without enrichment remain valid;
+Uploading can open table entry beside the inline PDF immediately, or save the
+statement for entry later. Statements without enrichment remain valid;
 the period grid distinguishes **statement uploaded** from **investment details**
 status. Manual entry and deterministic explanations complete the workflow; AI may
 reduce entry effort later.

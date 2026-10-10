@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -9,7 +10,6 @@ import {
 import { ThemeProvider } from "@yourtoolshq/ui/theme-provider";
 import { TooltipProvider } from "@yourtoolshq/ui/tooltip";
 
-import { AccountDetailWorkspace } from "~/components/accounts/account-detail-workspace";
 import { AccountsWorkspace } from "~/components/accounts/accounts-workspace";
 import { InstitutionsWorkspace } from "~/components/institutions/institutions-workspace";
 import { AppShell } from "~/components/layout/app-shell";
@@ -24,7 +24,6 @@ import { DocumentsRoute } from "./routes/documents";
 import { FileViewerRoute } from "./routes/file-viewer";
 import { HoldingsRoute } from "./routes/holdings";
 import { InstitutionDetailRoute } from "./routes/institution-detail";
-import { InvestmentStatementRoute } from "./routes/investment-statement";
 import { MembersRoute } from "./routes/members";
 import { OverviewRoute } from "./routes/overview";
 import { PairRoute } from "./routes/pair";
@@ -33,34 +32,75 @@ import { SettingsDataRoute } from "./routes/settings-data";
 import { SetupRoute } from "./routes/setup";
 import { TRPCReactProvider } from "./trpc/react";
 
+const AccountDetailWorkspace = lazy(async () => ({
+  default: (await import("~/components/accounts/account-detail-workspace"))
+    .AccountDetailWorkspace,
+}));
+const HoldingDetailWorkspace = lazy(async () => ({
+  default: (
+    await import("~/components/investment-statements/holding-detail-workspace")
+  ).HoldingDetailWorkspace,
+}));
+const InvestmentStatementRoute = lazy(async () => ({
+  default: (await import("./routes/investment-statement"))
+    .InvestmentStatementRoute,
+}));
+
 function AppLayout() {
   return (
     <RequireHousehold>
       <AppShell>
-        <Routes>
-          <Route path="/" element={<OverviewRoute />} />
-          <Route path="/accounts" element={<AccountsPage />} />
-          <Route path="/accounts/:accountId" element={<AccountDetailPage />} />
-          <Route path="/institutions" element={<InstitutionsPage />} />
-          <Route
-            path="/institutions/:institutionId"
-            element={<InstitutionDetailRoute />}
-          />
-          <Route path="/members" element={<MembersRoute />} />
-          <Route path="/documents" element={<DocumentsRoute />} />
-          <Route path="/holdings" element={<HoldingsRoute />} />
-          <Route
-            path="/statements/:documentId/investments"
-            element={<InvestmentStatementRoute />}
-          />
-          <Route path="/activity" element={<ActivityRoute />} />
-          <Route path="/activity/:eventId" element={<ActivityDetailRoute />} />
-          <Route path="/settings" element={<SettingsRoute />} />
-          <Route path="/settings/data" element={<SettingsDataRoute />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense
+          fallback={
+            <p role="status" className="text-muted-foreground p-6 text-sm">
+              Loading workspace…
+            </p>
+          }
+        >
+          <Routes>
+            <Route path="/" element={<OverviewRoute />} />
+            <Route path="/accounts" element={<AccountsPage />} />
+            <Route
+              path="/accounts/:accountId"
+              element={<AccountDetailPage />}
+            />
+            <Route path="/institutions" element={<InstitutionsPage />} />
+            <Route
+              path="/institutions/:institutionId"
+              element={<InstitutionDetailRoute />}
+            />
+            <Route path="/members" element={<MembersRoute />} />
+            <Route path="/documents" element={<DocumentsRoute />} />
+            <Route
+              path="/holdings/:instrumentId"
+              element={<HoldingDetailPage />}
+            />
+            <Route path="/holdings" element={<HoldingsRoute />} />
+            <Route
+              path="/statements/:documentId/investments"
+              element={<InvestmentStatementRoute />}
+            />
+            <Route path="/activity" element={<ActivityRoute />} />
+            <Route
+              path="/activity/:eventId"
+              element={<ActivityDetailRoute />}
+            />
+            <Route path="/settings" element={<SettingsRoute />} />
+            <Route path="/settings/data" element={<SettingsDataRoute />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </AppShell>
     </RequireHousehold>
+  );
+}
+
+function HoldingDetailPage() {
+  const { instrumentId = "" } = useParams();
+  return (
+    <main className="mx-auto w-full max-w-6xl flex-1 p-4 md:p-6">
+      <HoldingDetailWorkspace key={instrumentId} instrumentId={instrumentId} />
+    </main>
   );
 }
 

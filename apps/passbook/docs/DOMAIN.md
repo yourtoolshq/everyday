@@ -366,6 +366,13 @@ on the statement; catalog corrections do not rewrite historical source text.
 `sourcePage` and `sourceNote`. There is no separate per-field source metadata in
 the MVP schema.
 
+Holding exposure is another derived read model: one latest reviewed snapshot
+per account on or before a chosen date, with native currencies separate and
+source dates visible. Its denominator is entered holdings and cash; unknown
+values block totals, and partial coverage does not imply complete portfolio
+coverage. Identity includes symbol and exchange/issuer namespace as well as
+fund series. Source labels remain statement-specific.
+
 Comparisons and charts are **derived read models** from saved snapshots. Sum and
 compare only matching currencies. Do not infer investment return from change in
 reported account value.

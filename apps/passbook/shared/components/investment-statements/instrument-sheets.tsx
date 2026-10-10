@@ -52,6 +52,7 @@ type InstrumentPickerSheetProps = {
   onSelect: (instrument: InstrumentRecord) => void;
   accountId: string;
   documentId: string;
+  initialName?: string;
 };
 
 export function InstrumentPickerSheet({
@@ -60,6 +61,7 @@ export function InstrumentPickerSheet({
   onSelect,
   accountId,
   documentId,
+  initialName = "",
 }: InstrumentPickerSheetProps) {
   const instruments = api.investmentInstruments.list.useQuery(undefined, {
     enabled: open,
@@ -75,7 +77,9 @@ export function InstrumentPickerSheet({
       const haystack = [
         item.displayName,
         item.series,
-        ...item.identifiers.map((id) => `${id.kind}:${id.value}`),
+        ...item.identifiers.map(
+          (id) => `${id.kind}:${id.value} ${id.namespace ?? ""}`,
+        ),
       ]
         .filter(Boolean)
         .join(" ")
@@ -86,7 +90,7 @@ export function InstrumentPickerSheet({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
+      <Sheet open={open && !createOpen} onOpenChange={onOpenChange}>
         <SheetContent className="flex w-full flex-col sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>Reuse instrument</SheetTitle>
@@ -101,7 +105,7 @@ export function InstrumentPickerSheet({
               id="instrument-search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Name, series, or identifier"
+              placeholder="Name, symbol, exchange, fund code, or series"
             />
             <div className="max-h-80 space-y-2 overflow-y-auto">
               {instruments.isLoading ? (
@@ -131,7 +135,7 @@ export function InstrumentPickerSheet({
                         {item.identifiers
                           .map(
                             (id) =>
-                              `${identifierKindLabels[id.kind]} ${id.value}`,
+                              `${identifierKindLabels[id.kind]} ${id.value}${id.namespace ? ` (${id.namespace})` : ""}`,
                           )
                           .join(" · ")}
                       </p>
@@ -166,6 +170,7 @@ export function InstrumentPickerSheet({
           onOpenChange={setCreateOpen}
           accountId={accountId}
           documentId={documentId}
+          initialName={query || initialName}
           onCreated={(instrument) => {
             onSelect(instrument);
             onOpenChange(false);
@@ -183,15 +188,17 @@ export function InstrumentCreateSheet({
   accountId,
   documentId,
   onCreated,
+  initialName = "",
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   accountId: string;
   documentId: string;
   onCreated: (instrument: InstrumentRecord) => void;
+  initialName?: string;
 }) {
   const utils = api.useUtils();
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState(initialName);
   const [kind, setKind] = useState<InstrumentRecord["kind"]>("etf");
   const [series, setSeries] = useState("");
   const [notes, setNotes] = useState("");
@@ -211,7 +218,7 @@ export function InstrumentCreateSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="sm:max-w-lg">
+      <SheetContent className="overflow-y-auto sm:max-w-lg">
         <SheetHeader>
           <SheetTitle>Create instrument</SheetTitle>
           <SheetDescription>
@@ -228,14 +235,14 @@ export function InstrumentCreateSheet({
             />
           </div>
           <div className="space-y-2">
-            <Label>Kind</Label>
+            <Label htmlFor="instrument-kind">Kind</Label>
             <Select
               value={kind}
               onValueChange={(value) =>
                 setKind(value as InstrumentRecord["kind"])
               }
             >
-              <SelectTrigger>
+              <SelectTrigger id="instrument-kind">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -257,54 +264,92 @@ export function InstrumentCreateSheet({
             />
           </div>
           <div className="space-y-2">
-            <Label>Identifiers</Label>
+            <Label>Symbols and identifiers</Label>
+            <p className="text-muted-foreground text-xs">
+              A ticker is identified together with its exchange. Fund codes use
+              the issuer; mutual funds also need a series.
+            </p>
             {identifiers.map((identifier, index) => (
               <div key={index} className="grid gap-2 sm:grid-cols-3">
-                <Select
-                  value={identifier.kind}
-                  onValueChange={(value) => {
-                    const next = [...identifiers];
-                    next[index] = {
-                      ...identifier,
-                      kind: value as InstrumentIdentifier["kind"],
-                    };
-                    setIdentifiers(next);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(identifierKindLabels).map(
-                      ([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ),
-                    )}
-                  </SelectContent>
-                </Select>
-                <Input
-                  value={identifier.value}
-                  onChange={(event) => {
-                    const next = [...identifiers];
-                    next[index] = { ...identifier, value: event.target.value };
-                    setIdentifiers(next);
-                  }}
-                  placeholder="Value"
-                />
-                <Input
-                  value={identifier.namespace ?? ""}
-                  onChange={(event) => {
-                    const next = [...identifiers];
-                    next[index] = {
-                      ...identifier,
-                      namespace: event.target.value || null,
-                    };
-                    setIdentifiers(next);
-                  }}
-                  placeholder="Namespace (optional)"
-                />
+                <div className="space-y-1">
+                  <Label htmlFor={`identifier-kind-${index}`}>
+                    Identifier type
+                  </Label>
+                  <Select
+                    value={identifier.kind}
+                    onValueChange={(value) => {
+                      const next = [...identifiers];
+                      next[index] = {
+                        ...identifier,
+                        kind: value as InstrumentIdentifier["kind"],
+                      };
+                      setIdentifiers(next);
+                    }}
+                  >
+                    <SelectTrigger id={`identifier-kind-${index}`}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(identifierKindLabels).map(
+                        ([value, label]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ),
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor={`identifier-value-${index}`}>
+                    {identifier.kind === "ticker"
+                      ? "Symbol"
+                      : identifierKindLabels[identifier.kind]}
+                  </Label>
+                  <Input
+                    id={`identifier-value-${index}`}
+                    value={identifier.value}
+                    onChange={(event) => {
+                      const next = [...identifiers];
+                      next[index] = {
+                        ...identifier,
+                        value: event.target.value,
+                      };
+                      setIdentifiers(next);
+                    }}
+                    aria-label={`${identifierKindLabels[identifier.kind]} value ${index + 1}`}
+                    placeholder={
+                      identifier.kind === "ticker"
+                        ? "Symbol (e.g. EXEQ)"
+                        : "Identifier value"
+                    }
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor={`identifier-namespace-${index}`}>
+                    {identifier.kind === "ticker"
+                      ? "Exchange"
+                      : "Issuer / namespace"}
+                  </Label>
+                  <Input
+                    id={`identifier-namespace-${index}`}
+                    value={identifier.namespace ?? ""}
+                    onChange={(event) => {
+                      const next = [...identifiers];
+                      next[index] = {
+                        ...identifier,
+                        namespace: event.target.value || null,
+                      };
+                      setIdentifiers(next);
+                    }}
+                    aria-label={`${identifier.kind === "ticker" ? "Exchange" : "Issuer / namespace"} ${index + 1}`}
+                    placeholder={
+                      identifier.kind === "ticker"
+                        ? "Exchange (e.g. TSX)"
+                        : "Issuer / namespace"
+                    }
+                  />
+                </div>
               </div>
             ))}
             <Button

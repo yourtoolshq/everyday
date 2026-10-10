@@ -14,6 +14,13 @@ export async function listInstruments(repository: InstrumentRepository) {
   return repository.list();
 }
 
+export async function getInstrument(
+  repository: InstrumentRepository,
+  id: string,
+) {
+  return repository.get(id);
+}
+
 export async function createInstrument(
   repository: InstrumentRepository,
   command: CreateInstrumentCommand,
