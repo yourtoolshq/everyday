@@ -4,6 +4,11 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ## Unreleased
 
+### Fixed
+
+- Desktop PDF previews now serve the bundled module worker with the JavaScript
+  content type required by Chromium.
+
 ### Added
 
 - **Investment statement details:** For investment, TFSA, RRSP, and FHSA accounts,
