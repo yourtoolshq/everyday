@@ -20,6 +20,11 @@ The first version is centered on:
 - missing statement detection;
 - other important account-level documents.
 
+**Optional investment statement enrichment** is available for eligible accounts:
+enter reported values and holdings beside the PDF, review facts, and compare
+statements deterministically—without live prices or return analytics. See
+[`docs/investment-statements.md`](docs/investment-statements.md).
+
 For example, Passbook should be able to show that an account has monthly statements and that March and July are missing without requiring a manually maintained spreadsheet.
 
 ## Boundaries
@@ -47,4 +52,5 @@ Passbook runs as a **desktop app** (Electron + loopback host + Vite client). See
 - `docs/PRODUCT.md` — product goals and scope
 - `docs/DOMAIN.md` — domain model and boundaries
 - `docs/ROADMAP.md` — phased implementation plan
+- `docs/investment-statements.md` — investment enrichment scope and developer contract
 - `AGENTS.md` — guidance for coding agents

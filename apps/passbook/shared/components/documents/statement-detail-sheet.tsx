@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 
 import { FilePreview } from "@yourtoolshq/data-ui";
@@ -13,8 +14,10 @@ import {
   DialogTitle,
 } from "@yourtoolshq/ui/dialog";
 
+import type { SnapshotDto } from "~/modules/investment-statements/domain/snapshot-dto";
 import type { RouterOutputs } from "~/trpc/react";
 import { useDeleteDocumentDialog } from "~/components/documents/delete-document-dialog";
+import { InvestmentDetailsBadge } from "~/components/investment-statements/investment-details-badge";
 import { formatFileSize } from "~/lib/documents";
 import { formatDateLabel } from "~/lib/format-date";
 
@@ -26,6 +29,8 @@ type StatementDetailSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEdit: () => void;
+  investmentEligible?: boolean;
+  investmentSnapshot?: SnapshotDto | null;
 };
 
 export function StatementDetailSheet({
@@ -34,6 +39,8 @@ export function StatementDetailSheet({
   open,
   onOpenChange,
   onEdit,
+  investmentEligible = false,
+  investmentSnapshot = null,
 }: StatementDetailSheetProps) {
   const { requestDelete, dialog } = useDeleteDocumentDialog(() =>
     onOpenChange(false),
@@ -69,7 +76,29 @@ export function StatementDetailSheet({
                 <dd>{document.notes}</dd>
               </div>
             ) : null}
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted-foreground">Statement uploaded</dt>
+              <dd>Yes</dd>
+            </div>
+            {investmentEligible ? (
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-muted-foreground">Investment details</dt>
+                <dd>
+                  <InvestmentDetailsBadge snapshot={investmentSnapshot} />
+                </dd>
+              </div>
+            ) : null}
           </dl>
+
+          {investmentEligible ? (
+            <Button className="w-full" asChild>
+              <Link href={`/statements/${document.id}/investments`}>
+                {investmentSnapshot
+                  ? "Open investment workspace"
+                  : "Add investment details"}
+              </Link>
+            </Button>
+          ) : null}
 
           <DialogFooter className="gap-2 sm:justify-between">
             <Button

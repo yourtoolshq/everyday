@@ -96,6 +96,29 @@ Save
 
 The app should infer everything it already knows from the account, such as institution and ownership.
 
+### Understand investment statements (optional enrichment)
+
+For eligible investment-related accounts (investment, TFSA, RRSP, FHSA), Passbook
+supports **optional** post-upload enrichment: enter statement-reported
+opening/closing values, optional period-summary figures, cash, and stock/ETF/mutual-fund
+holdings beside the PDF, then review and save.
+
+That workflow answers historical questions such as what the account held on the
+statement’s valuation date, how entered holdings group by currency on a chosen
+date, and what changed between two saved statements for the **same account**. A
+global **Holdings** view reuses instruments across accounts without claiming a
+combined household portfolio total.
+
+Upload-first behavior is unchanged. Statements without enrichment remain valid;
+the period grid distinguishes **statement uploaded** from **investment details**
+status. Manual entry and deterministic explanations complete the workflow; AI may
+reduce entry effort later.
+
+This scope is **statement-reported understanding**, not live valuation, trading,
+or performance analytics. Passbook will not infer investment return from change
+in account value, silently convert currencies, or present institution book cost
+as tax gain or performance. See [investment-statements.md](./investment-statements.md).
+
 ### Find missing records
 
 Passbook should clearly surface incomplete account histories.
@@ -258,7 +281,7 @@ Do not prioritize:
 - bank synchronization;
 - Open Banking integrations;
 - automatic transaction imports;
-- investment analytics;
+- investment analytics and performance reporting (live prices, return percentages, portfolio optimization);
 - stock-price tracking;
 - tax filing;
 - generic receipt storage;
@@ -268,6 +291,10 @@ Do not prioritize:
 - AI financial advice.
 
 Some of these may become relevant later, but they are outside the current product goal.
+
+Optional **investment statement enrichment** (entered facts, deterministic
+comparisons, global instrument reuse) is in scope as a narrow complement to
+statement completeness—not a replacement for the exclusions above.
 
 ## Product principles
 

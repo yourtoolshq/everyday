@@ -4,6 +4,21 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ## Unreleased
 
+### Added
+
+- **Investment statement details:** For investment, TFSA, RRSP, and FHSA accounts,
+  optionally record statement-reported opening and closing values, cash, and
+  stock/ETF/mutual-fund holdings beside the PDF, save drafts, and mark facts as
+  reviewed. The statement grid shows whether investment details are not entered,
+  in draft, or reviewed separately from whether the PDF is uploaded.
+- **Holdings catalog:** Reuse instruments across accounts and open source-linked
+  positions from a global Holdings view, without combined household portfolio
+  totals.
+- **Statement comparisons:** See reported account value over time, holdings on a
+  chosen date, and deterministic “What changed?” observations between two
+  statements for the same account when currencies and coverage allow. Passbook
+  does not show investment return percentages or live market prices.
+
 ### Changed
 
 - Passbook is desktop-only: Docker and the Next.js app are removed. Shared code lives under `shared/`; development uses the host and client (or the desktop shell).

@@ -15,6 +15,11 @@ import {
   institutions,
   statementExpectations,
 } from "~/server/db/schema";
+import {
+  assertDocumentUpdateAllowsInvestmentEnrichment,
+  invalidateInvestmentReviewAfterDocumentMetadataChange,
+} from "~/server/documents/investment-enrichment-guards";
+import { resolveUpdatedDocumentDate } from "~/server/documents/resolve-document-date";
 import { validateStatementPeriod } from "~/server/documents/statement-upload";
 
 const idInput = z.object({ id: z.string().uuid() });
@@ -353,6 +358,7 @@ export const documentsRouter = createTRPCRouter({
           accountId: documents.accountId,
           type: documents.type,
           periodKey: documents.periodKey,
+          documentDate: documents.documentDate,
         })
         .from(documents)
         .where(eq(documents.id, input.id));
@@ -361,6 +367,17 @@ export const documentsRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Document not found.",
         });
+
+      const storedDocumentDate = resolveUpdatedDocumentDate(
+        existing.documentDate,
+        input.documentDate,
+      );
+
+      await assertDocumentUpdateAllowsInvestmentEnrichment(ctx.db, {
+        documentId: existing.id,
+        nextType: input.type,
+        previousType: existing.type,
+      });
 
       if (input.type === "statement" && input.periodKey) {
         const [account] = await ctx.db
@@ -418,34 +435,60 @@ export const documentsRouter = createTRPCRouter({
           });
         }
 
-        const [document] = await ctx.db
+        const nextPeriodKey = validation.period.key;
+
+        return ctx.db.transaction(async (tx) => {
+          const [document] = await tx
+            .update(documents)
+            .set({
+              title: input.title,
+              type: "statement",
+              periodKey: nextPeriodKey,
+              documentDate: storedDocumentDate,
+              notes: input.notes ?? null,
+              updatedAt: now(),
+            })
+            .where(eq(documents.id, input.id))
+            .returning(publicDocumentFields);
+
+          await invalidateInvestmentReviewAfterDocumentMetadataChange(tx, {
+            documentId: existing.id,
+            previousPeriodKey: existing.periodKey,
+            nextPeriodKey,
+            previousDocumentDate: existing.documentDate,
+            nextStoredDocumentDate: storedDocumentDate,
+          });
+
+          return document;
+        });
+      }
+
+      const nextPeriodKey = null;
+
+      return ctx.db.transaction(async (tx) => {
+        const [document] = await tx
           .update(documents)
           .set({
             title: input.title,
-            type: "statement",
-            periodKey: validation.period.key,
-            documentDate: input.documentDate ?? null,
+            type: input.type,
+            periodKey: nextPeriodKey,
+            documentDate: storedDocumentDate,
             notes: input.notes ?? null,
             updatedAt: now(),
           })
           .where(eq(documents.id, input.id))
           .returning(publicDocumentFields);
-        return document;
-      }
 
-      const [document] = await ctx.db
-        .update(documents)
-        .set({
-          title: input.title,
-          type: input.type,
-          periodKey: null,
-          documentDate: input.documentDate ?? null,
-          notes: input.notes ?? null,
-          updatedAt: now(),
-        })
-        .where(eq(documents.id, input.id))
-        .returning(publicDocumentFields);
-      return document;
+        await invalidateInvestmentReviewAfterDocumentMetadataChange(tx, {
+          documentId: existing.id,
+          previousPeriodKey: existing.periodKey,
+          nextPeriodKey,
+          previousDocumentDate: existing.documentDate,
+          nextStoredDocumentDate: storedDocumentDate,
+        });
+
+        return document;
+      });
     }),
 
   delete: publicProcedure.input(idInput).mutation(({ ctx, input }) =>

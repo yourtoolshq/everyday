@@ -22,7 +22,9 @@ import { ActivityRoute } from "./routes/activity";
 import { ActivityDetailRoute } from "./routes/activity-detail";
 import { DocumentsRoute } from "./routes/documents";
 import { FileViewerRoute } from "./routes/file-viewer";
+import { HoldingsRoute } from "./routes/holdings";
 import { InstitutionDetailRoute } from "./routes/institution-detail";
+import { InvestmentStatementRoute } from "./routes/investment-statement";
 import { MembersRoute } from "./routes/members";
 import { OverviewRoute } from "./routes/overview";
 import { PairRoute } from "./routes/pair";
@@ -46,6 +48,11 @@ function AppLayout() {
           />
           <Route path="/members" element={<MembersRoute />} />
           <Route path="/documents" element={<DocumentsRoute />} />
+          <Route path="/holdings" element={<HoldingsRoute />} />
+          <Route
+            path="/statements/:documentId/investments"
+            element={<InvestmentStatementRoute />}
+          />
           <Route path="/activity" element={<ActivityRoute />} />
           <Route path="/activity/:eventId" element={<ActivityDetailRoute />} />
           <Route path="/settings" element={<SettingsRoute />} />

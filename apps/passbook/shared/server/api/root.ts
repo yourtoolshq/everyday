@@ -3,6 +3,8 @@ import { accountTermsRouter } from "~/server/api/routers/account-terms";
 import { accountsRouter } from "~/server/api/routers/accounts";
 import { documentsRouter } from "~/server/api/routers/documents";
 import { institutionsRouter } from "~/server/api/routers/institutions";
+import { investmentInstrumentsRouter } from "~/server/api/routers/investment-instruments";
+import { investmentStatementsRouter } from "~/server/api/routers/investment-statements";
 import { overviewRouter } from "~/server/api/routers/overview";
 import { peopleRouter } from "~/server/api/routers/people";
 import { setupRouter } from "~/server/api/routers/setup";
@@ -15,6 +17,8 @@ export const appRouter = createTRPCRouter({
   accounts: accountsRouter,
   documents: documentsRouter,
   institutions: institutionsRouter,
+  investmentStatements: investmentStatementsRouter,
+  investmentInstruments: investmentInstrumentsRouter,
   overview: overviewRouter,
   people: peopleRouter,
   setup: setupRouter,

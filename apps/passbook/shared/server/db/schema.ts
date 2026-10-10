@@ -14,8 +14,49 @@ import type { AccountStatus } from "~/lib/account-status";
 import type { AccountType } from "~/lib/account-types";
 import type { DocumentType } from "~/lib/documents";
 import type { StatementFrequency } from "~/lib/statement-frequency";
+import type {
+  EnrichmentKind,
+  EnrichmentReviewStatus,
+  PositionLineKind,
+  SectionCoverage,
+  TotalScope,
+} from "~/modules/investment-statements/domain/enums";
+import type {
+  IdentifierKind,
+  InstrumentKind,
+} from "~/modules/investments/domain/enums";
+import {
+  enrichmentKinds,
+  enrichmentReviewStatuses,
+  positionLineKinds,
+  sectionCoverages,
+  totalScopes,
+} from "~/modules/investment-statements/domain/enums";
+import {
+  identifierKinds,
+  instrumentKinds,
+} from "~/modules/investments/domain/enums";
 
 export { filesTable, platformMetaTable };
+
+export {
+  enrichmentKinds,
+  enrichmentReviewStatuses,
+  identifierKinds,
+  instrumentKinds,
+  positionLineKinds,
+  sectionCoverages,
+  totalScopes,
+};
+export type {
+  EnrichmentKind,
+  EnrichmentReviewStatus,
+  IdentifierKind,
+  InstrumentKind,
+  PositionLineKind,
+  SectionCoverage,
+  TotalScope,
+};
 
 const id = () =>
   text("id")
@@ -184,6 +225,8 @@ export const accountEvents = sqliteTable(
   (table) => [index("account_events_account_idx").on(table.accountId)],
 );
 
+export const INVESTMENT_STATEMENT_SCHEMA_VERSION = 1;
+
 export const documents = sqliteTable(
   "documents",
   {
@@ -222,6 +265,178 @@ export const documents = sqliteTable(
     uniqueIndex("documents_account_period_unique").on(
       table.accountId,
       table.periodKey,
+    ),
+  ],
+);
+
+export const documentEnrichments = sqliteTable(
+  "document_enrichments",
+  {
+    id: id(),
+    documentId: text("document_id")
+      .notNull()
+      .references(() => documents.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<EnrichmentKind>().notNull(),
+    schemaVersion: integer("schema_version")
+      .notNull()
+      .default(INVESTMENT_STATEMENT_SCHEMA_VERSION),
+    entryMethod: text("entry_method").notNull().default("manual"),
+    reviewStatus: text("review_status")
+      .$type<EnrichmentReviewStatus>()
+      .notNull()
+      .default("draft"),
+    revision: integer("revision").notNull().default(0),
+    reviewedAt: text("reviewed_at"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("document_enrichments_document_kind_unique").on(
+      table.documentId,
+      table.kind,
+    ),
+    index("document_enrichments_document_idx").on(table.documentId),
+  ],
+);
+
+export const investmentStatementSnapshots = sqliteTable(
+  "investment_statement_snapshots",
+  {
+    id: id(),
+    enrichmentId: text("enrichment_id")
+      .notNull()
+      .references(() => documentEnrichments.id, { onDelete: "cascade" }),
+    valuationDate: text("valuation_date").notNull(),
+    coverageStart: text("coverage_start"),
+    coverageEnd: text("coverage_end"),
+    summaryCoverage: text("summary_coverage")
+      .$type<SectionCoverage>()
+      .notNull()
+      .default("not_entered"),
+    holdingsCoverage: text("holdings_coverage")
+      .$type<SectionCoverage>()
+      .notNull()
+      .default("not_entered"),
+    notes: text("notes"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("investment_statement_snapshots_enrichment_unique").on(
+      table.enrichmentId,
+    ),
+    index("investment_statement_snapshots_valuation_idx").on(
+      table.valuationDate,
+    ),
+  ],
+);
+
+export const investmentStatementTotals = sqliteTable(
+  "investment_statement_totals",
+  {
+    id: id(),
+    snapshotId: text("snapshot_id")
+      .notNull()
+      .references(() => investmentStatementSnapshots.id, {
+        onDelete: "cascade",
+      }),
+    currency: text("currency").notNull(),
+    scope: text("scope").$type<TotalScope>().notNull(),
+    closingValue: text("closing_value"),
+    openingValue: text("opening_value"),
+    cash: text("cash"),
+    bookCost: text("book_cost"),
+    contributions: text("contributions"),
+    withdrawals: text("withdrawals"),
+    transfersIn: text("transfers_in"),
+    transfersOut: text("transfers_out"),
+    income: text("income"),
+    fees: text("fees"),
+    reportedValueChange: text("reported_value_change"),
+    sourcePage: integer("source_page"),
+    sourceNote: text("source_note"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("investment_statement_totals_snapshot_currency_scope").on(
+      table.snapshotId,
+      table.currency,
+      table.scope,
+    ),
+    index("investment_statement_totals_snapshot_idx").on(table.snapshotId),
+  ],
+);
+
+export const investmentInstruments = sqliteTable("investment_instruments", {
+  id: id(),
+  kind: text("kind").$type<InstrumentKind>().notNull(),
+  displayName: text("display_name").notNull(),
+  series: text("series"),
+  notes: text("notes"),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const investmentInstrumentIdentifiers = sqliteTable(
+  "investment_instrument_identifiers",
+  {
+    id: id(),
+    instrumentId: text("instrument_id")
+      .notNull()
+      .references(() => investmentInstruments.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<IdentifierKind>().notNull(),
+    value: text("value").notNull(),
+    namespace: text("namespace"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    uniqueIndex("investment_instrument_identifiers_unique").on(
+      table.kind,
+      table.value,
+      table.namespace,
+    ),
+    index("investment_instrument_identifiers_instrument_idx").on(
+      table.instrumentId,
+    ),
+  ],
+);
+
+export const investmentStatementPositions = sqliteTable(
+  "investment_statement_positions",
+  {
+    id: id(),
+    snapshotId: text("snapshot_id")
+      .notNull()
+      .references(() => investmentStatementSnapshots.id, {
+        onDelete: "cascade",
+      }),
+    instrumentId: text("instrument_id").references(
+      () => investmentInstruments.id,
+      { onDelete: "restrict" },
+    ),
+    lineKind: text("line_kind").$type<PositionLineKind>().notNull(),
+    sourceLabel: text("source_label").notNull(),
+    sourceIdentifier: text("source_identifier"),
+    sourceSeries: text("source_series"),
+    valueCurrency: text("value_currency").notNull(),
+    marketValue: text("market_value"),
+    quantity: text("quantity"),
+    unitPrice: text("unit_price"),
+    unitPriceCurrency: text("unit_price_currency"),
+    bookCost: text("book_cost"),
+    bookCostCurrency: text("book_cost_currency"),
+    sourcePage: integer("source_page"),
+    sourceNote: text("source_note"),
+    sortOrder: integer("sort_order").notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("investment_statement_positions_snapshot_idx").on(table.snapshotId),
+    index("investment_statement_positions_instrument_idx").on(
+      table.instrumentId,
     ),
   ],
 );

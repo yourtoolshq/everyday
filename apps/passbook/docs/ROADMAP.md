@@ -225,6 +225,53 @@ Passbook can answer:
 
 ---
 
+## Phase 9 — Investment statement understanding
+
+### Goal
+
+Turn uploaded investment statements into **reviewed, source-linked facts** so
+you can see what an account held on a date and what changed between statements—
+without live feeds, transaction reconstruction, or return analytics.
+
+### Shipped (MVP slice)
+
+- Common **document enrichment** header with `investment_statement` as the first
+  allowed kind (`entryMethod` manual in the MVP).
+- Manual entry workspace beside the PDF: valuation date, optional coverage
+  dates, summary totals, cash and investment positions, draft save, review, and
+  remove enrichment.
+- **Global Holdings** catalog to reuse instruments across accounts (source-linked
+  observations; not a household portfolio total).
+- Account views: enriched statement list, reported value history chart,
+  selected-date holdings by currency, workspace reconciliation hints, and
+  two-statement “What changed?” comparison when coverage allows.
+- Period grid distinguishes **statement uploaded** from **investment details**
+  status. Monthly, quarterly, and annual periods share one investment schema.
+
+Detail: [investment-statements.md](./investment-statements.md).
+
+### Outcome (today)
+
+Passbook can answer for eligible accounts:
+
+> What did this statement report, and how did holdings and reported value change
+> between two dates I chose?
+
+### Deferred (still Phase 9 direction, not in the shipped slice)
+
+- Statement activity / transaction rows and richer activity-driven comparisons.
+- AI-assisted draft entry.
+- Additional enrichment kinds (LOC statements, agreement terms)—same header
+  pattern, separate slices.
+
+### Out of scope for Phase 9
+
+- Live prices, FX feeds, bank sync.
+- Cross-account net worth or return percentages.
+- Combined PDFs covering multiple accounts (blocked on today’s one-document-one-account model).
+
+---
+
 ## Later — Cross-app references
 
 Passbook may eventually connect with other Your Tools apps.
@@ -298,7 +345,7 @@ Do not prioritize:
 - budgeting;
 - transaction categorization;
 - generic receipt storage;
-- investment analytics;
+- investment analytics and performance reporting (distinct from optional statement enrichment in Phase 9);
 - stock prices;
 - tax filing;
 - property management;
