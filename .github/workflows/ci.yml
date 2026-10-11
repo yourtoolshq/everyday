@@ -50,6 +50,8 @@ jobs:
               - apps/passbook/**
             tenure:
               - apps/tenure/**
+            roof:
+              - apps/roof/**
 
       - id: scope
         shell: bash
@@ -66,19 +68,20 @@ jobs:
           echo 'run_heavy=true' >> "$GITHUB_OUTPUT"
 
           if [ "${{ steps.filter.outputs.platform }}" = "true" ]; then
-            echo 'e2e_apps=["taxbook","firstaid","passbook","tenure"]' >> "$GITHUB_OUTPUT"
-            echo 'docker_apps=["taxbook","firstaid","tenure"]' >> "$GITHUB_OUTPUT"
+            echo 'e2e_apps=["taxbook","firstaid","passbook","tenure","roof"]' >> "$GITHUB_OUTPUT"
+            echo 'docker_apps=["taxbook","firstaid","tenure","roof"]' >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           apps=()
           docker_apps=()
-          for app in taxbook firstaid passbook tenure; do
+          for app in taxbook firstaid passbook tenure roof; do
             case "$app" in
               taxbook) changed="${{ steps.filter.outputs.taxbook }}" ;;
               firstaid) changed="${{ steps.filter.outputs.firstaid }}" ;;
               passbook) changed="${{ steps.filter.outputs.passbook }}" ;;
               tenure) changed="${{ steps.filter.outputs.tenure }}" ;;
+              roof) changed="${{ steps.filter.outputs.roof }}" ;;
             esac
             if [ "$changed" = "true" ]; then
               apps+=("\"$app\"")

@@ -2,7 +2,7 @@
 
 Your Tools is a collection of open-source, self-hosted applications for everyday personal and household problems.
 
-This repository is the development source of truth for consolidating four existing applications into a shared Turborepo platform. The original application repositories remain the production environments until Phase 4 cutover is complete.
+This repository is the development source of truth for the shared Turborepo platform, including four consolidated applications and the new Roof web app. The original application repositories remain the production environments until Phase 4 cutover is complete.
 
 ## Applications
 
@@ -11,6 +11,7 @@ This repository is the development source of truth for consolidating four existi
 | **Taxbook**   | `taxbook`  | 3000     | Personal taxes, receipts, returns, and tax planning    |
 | **First Aid** | `firstaid` | 3001     | Healthcare records, benefits, appointments, and claims |
 | **Passbook**  | `passbook` | 3002     | Financial institutions, accounts, and statements       |
+| **Roof**      | `roof`     | 3004     | Home purchase, rentals, visits, and property records   |
 | **Tenure**    | `tenure`   | 3003     | Employment history, compensation, and pay stubs        |
 
 ## Getting started
@@ -19,7 +20,7 @@ Requires Node.js 22+ and pnpm 10.28.2 (enforced via `packageManager`).
 
 ```bash
 pnpm install
-pnpm dev                    # all apps (ports 3000–3003)
+pnpm dev                    # all app dev servers
 pnpm dev:taxbook            # single app
 pnpm check                  # format + lint + typecheck + test + build (all apps)
 pnpm check:taxbook          # scoped quality gates for one app
@@ -49,7 +50,7 @@ cd apps/taxbook && docker compose up --build -d
 ## Repository layout
 
 ```
-apps/        Taxbook, Passbook, Tenure, First Aid
+apps/        Taxbook, Passbook, Tenure, First Aid, Roof
 packages/    Shared libraries (@yourtoolshq/data, data-ui, ui, …)
 tooling/     @yourtoolshq/tsconfig, eslint-config, prettier-config
 turbo/       Package generator (`pnpm gen`)

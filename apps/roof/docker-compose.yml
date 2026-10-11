@@ -1,0 +1,36 @@
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: apps/roof/Dockerfile
+      args:
+        APP_VERSION: ${APP_VERSION:-}
+    environment:
+      DATA_DIR: /data
+      BACKUP_DIR: /backups
+      NODE_ENV: production
+    restart: unless-stopped
+    volumes:
+      - roof-data:/data
+      - ${ROOF_BACKUP_DIR:-roof-backups}:/backups
+    networks:
+      - web
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=web
+      - traefik.http.routers.roof.rule=Host(`roof.tools.local`)
+      - traefik.http.routers.roof.entrypoints=web
+      - traefik.http.routers.roof-secure.rule=Host(`roof.tools.local`)
+      - traefik.http.routers.roof-secure.entrypoints=websecure
+      - traefik.http.routers.roof-secure.tls=true
+      - traefik.http.services.roof.loadbalancer.server.port=3000
+
+networks:
+  web:
+    external: true
+
+volumes:
+  roof-data:
+    name: roof-data
+  roof-backups:
+    name: roof-backups

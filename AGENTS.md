@@ -22,6 +22,7 @@ Before editing an app, read its `AGENTS.md`:
 | First Aid | [apps/firstaid/AGENTS.md](./apps/firstaid/AGENTS.md) |
 | Passbook  | [apps/passbook/AGENTS.md](./apps/passbook/AGENTS.md) |
 | Tenure    | [apps/tenure/AGENTS.md](./apps/tenure/AGENTS.md)     |
+| Roof      | [apps/roof/AGENTS.md](./apps/roof/AGENTS.md)         |
 
 Follow links from each app's `AGENTS.md` to product, domain, and roadmap docs. Do not duplicate that content here.
 

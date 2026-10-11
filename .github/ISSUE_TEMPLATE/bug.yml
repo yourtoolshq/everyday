@@ -12,6 +12,7 @@ body:
         - firstaid
         - passbook
         - tenure
+        - roof
         - platform
     validations:
       required: true

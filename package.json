@@ -21,12 +21,14 @@
     "package:passbook:linux": "pnpm --filter @passbook/desktop package:linux",
     "package:passbook:mac": "pnpm --filter @passbook/desktop package:mac",
     "check:tenure": "turbo run lint typecheck test build migrations:check -F tenure...",
+    "check:roof": "turbo run lint typecheck test build migrations:check -F roof...",
     "clean": "git clean -xdf node_modules",
     "dev": "turbo watch dev --continue",
     "dev:taxbook": "turbo watch dev -F taxbook",
     "dev:firstaid": "turbo watch dev -F firstaid",
     "dev:passbook": "turbo watch dev -F @passbook/host -F @passbook/client",
     "dev:tenure": "turbo watch dev -F tenure",
+    "dev:roof": "turbo watch dev -F roof",
     "format": "prettier --check \"**/*.{ts,tsx,js,mjs,cjs,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",
     "format:fix": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,json,md}\" --ignore-path .gitignore --ignore-path .prettierignore",
     "gen": "turbo gen init",
@@ -36,7 +38,8 @@
     "typecheck": "turbo run typecheck",
     "docker:build:taxbook": "docker build -f apps/taxbook/Dockerfile -t taxbook .",
     "docker:build:firstaid": "docker build -f apps/firstaid/Dockerfile -t firstaid .",
-    "docker:build:tenure": "docker build -f apps/tenure/Dockerfile -t tenure ."
+    "docker:build:tenure": "docker build -f apps/tenure/Dockerfile -t tenure .",
+    "docker:build:roof": "docker build -f apps/roof/Dockerfile -t roof ."
   },
   "devDependencies": {
     "@turbo/gen": "^2.5.8",

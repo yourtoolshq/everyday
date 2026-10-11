@@ -12,6 +12,7 @@ body:
         - app:firstaid
         - app:passbook
         - app:tenure
+        - app:roof
         - area:platform
     validations:
       required: true

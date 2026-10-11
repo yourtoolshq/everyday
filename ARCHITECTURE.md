@@ -13,7 +13,7 @@ everyday/
 └── docs/           Platform-phase documentation
 ```
 
-**Workspace:** root, 4 apps, 4 shared packages, 3 tooling packages. Managed with
+**Workspace:** root, 5 apps, 4 shared packages, 3 tooling packages. Managed with
 `pnpm@10.28.2` and Turborepo.
 
 ## Application isolation
@@ -24,7 +24,7 @@ Each product under `apps/<name>/` is isolated:
 - Its own SQLite database and document storage (local `.data/` in development)
 - Its own tests and Playwright E2E suite where applicable
 
-Taxbook, First Aid, and Tenure remain **Next.js + Docker** deployables. **Passbook**
+Taxbook, First Aid, Tenure, and Roof remain **Next.js + Docker** deployables. **Passbook**
 is a **desktop product**: `host/`, `client/`, `desktop/`, and Passbook-only code in
 `shared/` (see `apps/passbook/AGENTS.md`). Passbook does not ship a Docker image
 from this repository.
@@ -39,6 +39,7 @@ Apps do not import from each other. Cross-app integration (e.g. Taxbook ↔ Tenu
 | First Aid   | 3001                                                                      |
 | Passbook    | Vite client `5173`, host `3847` (see `apps/passbook/docs/DEVELOPMENT.md`) |
 | Tenure      | 3003                                                                      |
+| Roof        | 3004                                                                      |
 
 E2E tests use port **3100** with isolated `.data/e2e.db` per app run.
 
@@ -74,7 +75,7 @@ host-manager handoff live in
 
 ## Shared tooling
 
-`tooling/` provides TypeScript, ESLint, and Prettier configuration. All four
+`tooling/` provides TypeScript, ESLint, and Prettier configuration. Web
 apps extend `@yourtoolshq/tsconfig/nextjs.json` and
 `createNextAppConfig(import.meta.dirname)` from `@yourtoolshq/eslint-config/next-app`.
 Path aliases (`~/`) and Next-specific options stay in each app. The type-checked

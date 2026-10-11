@@ -1,6 +1,6 @@
 # Your Tools design language
 
-Use this as the short decision guide for the four apps. The [Phase 5 implementation plan](./docs/phase-5/ui-plan.md) holds code locations, migration order, and proof; this page holds only choices an implementer must repeat.
+Use this as the short decision guide for the apps. The [Phase 5 implementation plan](./docs/phase-5/ui-plan.md) holds code locations, migration order, and proof; this page holds only choices an implementer must repeat.
 
 ## Character
 

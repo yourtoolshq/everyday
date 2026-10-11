@@ -11,6 +11,7 @@ Practical workflow for the monorepo maintainer and contributors. Platform purpos
 | `pnpm check:firstaid` | Quality gates for First Aid only                          |
 | `pnpm check:passbook` | Quality gates for Passbook only                           |
 | `pnpm check:tenure`   | Quality gates for Tenure only                             |
+| `pnpm check:roof`     | Quality gates for Roof only                               |
 
 When E2E or Docker verification is warranted:
 
