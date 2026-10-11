@@ -28,15 +28,15 @@ Healthy state: `pnpm db:generate` reports no changes when `schema.ts` is up to d
 
 Routes live in **`client/src/routes/`**. They compose `shared/components/*-workspace` and `*-panel` sections.
 
-| Suffix        | Use for                                  |
-| ------------- | ---------------------------------------- |
-| `*-workspace` | Page-level data + state                  |
-| `*-panel`     | Section inside a workspace               |
-| `*-sheet`     | Create, edit, upload                     |
-| `*-dialog`    | Delete confirmation or read-only preview |
+| Suffix        | Use for                              |
+| ------------- | ------------------------------------ |
+| `*-workspace` | Page-level data + state              |
+| `*-panel`     | Section inside a workspace           |
+| `*-sheet`     | Simple create, edit, upload          |
+| `*-dialog`    | Guided creation, decisions, previews |
 
 - **Forms:** `useState` + `validate*()` + `toast`. Zod validation lives in tRPC routers.
-- **Sheets** for forms/uploads. **AlertDialog** for deletes. Mount sheets with `key={entityId}` to reset state.
+- **Sheets** for simple, bounded forms/uploads. Major record creation and complex intake follow the platform [guided creation pattern](../../../DESIGN_LANGUAGE.md#guided-creation): a large centered shadcn dialog with relevant grouped steps, retained input, appropriate preview, and explicit save. Account creation and investment-statement intake are deferred candidates in [#125](https://github.com/yourtoolshq/everyday/issues/125); preserve optional enrichment and existing draft/save boundaries. **AlertDialog** for deletes. Mount sheets with `key={entityId}` to reset state.
 - **tRPC:** `client/src/trpc/react.tsx` in client routes; invalidate only affected queries after mutations.
 - **Uploads:** REST via `lib/upload-*.ts`, then invalidate tRPC caches.
 - **Styling:** shadcn primitives from `~/components/ui/*`, `shadow-none` on cards, `~/` imports.

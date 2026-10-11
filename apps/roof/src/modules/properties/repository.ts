@@ -6,15 +6,24 @@ import { invalidInput, notFound } from "@yourtoolshq/server/errors";
 import type { db } from "~/server/db";
 import { documentMetadataSchema } from "~/lib/documents";
 import { eventFieldsSchema } from "~/lib/events";
+import { insuranceFieldsSchema } from "~/lib/insurance";
 import { propertyFieldsSchema } from "~/lib/properties";
-import { documents, properties, propertyEvents } from "~/server/db/schema";
+import {
+  documents,
+  insuranceRecords,
+  properties,
+  propertyEvents,
+} from "~/server/db/schema";
 
 type Database = Pick<typeof db, "select" | "insert" | "update" | "delete">;
 // Explicit read DTOs keep future internal columns out of transport responses.
 const propertyProjection = {
   id: properties.id,
   name: properties.name,
-  kind: properties.kind,
+  relationship: properties.relationship,
+  stage: properties.stage,
+  possessionDate: properties.possessionDate,
+  photoFileId: properties.photoFileId,
   addressLine1: properties.addressLine1,
   addressLine2: properties.addressLine2,
   city: properties.city,
@@ -28,9 +37,6 @@ const propertyProjection = {
   landlordName: properties.landlordName,
   landlordEmail: properties.landlordEmail,
   landlordPhone: properties.landlordPhone,
-  renterInsuranceProvider: properties.renterInsuranceProvider,
-  renterInsurancePolicyNumber: properties.renterInsurancePolicyNumber,
-  renterInsuranceExpiresOn: properties.renterInsuranceExpiresOn,
   targetPossessionDate: properties.targetPossessionDate,
   notes: properties.notes,
   createdAt: properties.createdAt,
@@ -52,6 +58,7 @@ const documentProjection = {
   id: documents.id,
   propertyId: documents.propertyId,
   eventId: documents.eventId,
+  insuranceId: documents.insuranceId,
   type: documents.type,
   title: documents.title,
   documentDate: documents.documentDate,
@@ -76,7 +83,7 @@ export function listProperties(database: Database) {
   return database
     .select(propertyProjection)
     .from(properties)
-    .orderBy(asc(properties.kind), desc(properties.updatedAt));
+    .orderBy(asc(properties.relationship), desc(properties.updatedAt));
 }
 export async function saveProperty(
   database: Database,
@@ -84,6 +91,13 @@ export async function saveProperty(
   id?: string,
 ) {
   input = propertyFieldsSchema.parse(input);
+  if (id) {
+    const existing = await requireProperty(database, id);
+    if (input.relationship !== existing.relationship)
+      throw invalidInput(
+        "A property’s relationship cannot be changed. Update its stage instead.",
+      );
+  }
   const [property] = id
     ? await database
         .update(properties)
@@ -92,7 +106,17 @@ export async function saveProperty(
         .returning(propertyProjection)
     : await database
         .insert(properties)
-        .values(input)
+        .values({
+          ...input,
+          kind:
+            input.relationship === "rental"
+              ? input.stage === "past"
+                ? "past_rental"
+                : "current_rental"
+              : input.stage === "owned"
+                ? "owned"
+                : "under_construction",
+        })
         .returning(propertyProjection);
   if (!property) throw notFound("Property not found.");
   return property;
@@ -180,6 +204,7 @@ export async function updateDocument(
   input = documentMetadataSchema.parse(input);
   const existing = await requireDocument(database, id);
   await requireEvent(database, existing.propertyId, input.eventId);
+  await requireInsurance(database, existing.propertyId, input.insuranceId);
   const [document] = await database
     .update(documents)
     .set({ ...input, updatedAt: new Date().toISOString() })
@@ -189,4 +214,77 @@ export async function updateDocument(
 }
 export async function deleteDocument(database: Database, id: string) {
   await database.delete(documents).where(eq(documents.id, id));
+}
+
+const insuranceProjection = {
+  id: insuranceRecords.id,
+  propertyId: insuranceRecords.propertyId,
+  type: insuranceRecords.type,
+  provider: insuranceRecords.provider,
+  policyNumber: insuranceRecords.policyNumber,
+  startsOn: insuranceRecords.startsOn,
+  endsOn: insuranceRecords.endsOn,
+  notes: insuranceRecords.notes,
+};
+export function listInsurance(database: Database, propertyId: string) {
+  return database
+    .select(insuranceProjection)
+    .from(insuranceRecords)
+    .where(eq(insuranceRecords.propertyId, propertyId))
+    .orderBy(desc(insuranceRecords.startsOn), desc(insuranceRecords.createdAt));
+}
+export async function requireInsurance(
+  database: Database,
+  propertyId: string,
+  id?: string | null,
+) {
+  if (!id) return;
+  const [record] = await database
+    .select(insuranceProjection)
+    .from(insuranceRecords)
+    .where(eq(insuranceRecords.id, id));
+  if (!record || record.propertyId !== propertyId)
+    throw invalidInput("Choose an insurance record from this property.");
+  return record;
+}
+export async function saveInsurance(
+  database: Database,
+  input: z.infer<typeof insuranceFieldsSchema>,
+  id?: string,
+) {
+  input = insuranceFieldsSchema.parse(input);
+  const property = await requireProperty(database, input.propertyId);
+  if (input.type !== (property.relationship === "rental" ? "tenant" : "home"))
+    throw invalidInput("Choose the insurance type for this property.");
+  if (id) await requireInsurance(database, input.propertyId, id);
+  const [record] = id
+    ? await database
+        .update(insuranceRecords)
+        .set({ ...input, updatedAt: new Date().toISOString() })
+        .where(eq(insuranceRecords.id, id))
+        .returning(insuranceProjection)
+    : await database
+        .insert(insuranceRecords)
+        .values(input)
+        .returning(insuranceProjection);
+  return record!;
+}
+export async function deleteInsurance(database: Database, id: string) {
+  const [record] = await database
+    .delete(insuranceRecords)
+    .where(eq(insuranceRecords.id, id))
+    .returning(insuranceProjection);
+  if (!record) throw notFound("Insurance record not found.");
+  return record;
+}
+export async function setPropertyPhoto(
+  database: Database,
+  id: string,
+  fileId: string | null,
+) {
+  await database
+    .update(properties)
+    .set({ photoFileId: fileId })
+    .where(eq(properties.id, id));
+  return requireProperty(database, id);
 }

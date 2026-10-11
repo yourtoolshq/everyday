@@ -11,7 +11,7 @@ import { filesTable, platformMetaTable } from "@yourtoolshq/data/schema";
 
 import type { DocumentType } from "~/lib/documents";
 import type { EventCategory } from "~/lib/events";
-import type { PropertyKind } from "~/lib/properties";
+import type { PropertyRelationship, PropertyStage } from "~/lib/properties";
 
 export { filesTable, platformMetaTable };
 
@@ -35,7 +35,18 @@ export const properties = sqliteTable(
   {
     id: id(),
     name: text("name").notNull(),
-    kind: text("kind").$type<PropertyKind>().notNull(),
+    // Legacy columns remain for a lossless migration; application reads use relationship/stage.
+    kind: text("kind").notNull(),
+    relationship: text("relationship")
+      .$type<PropertyRelationship>()
+      .notNull()
+      .default("purchase"),
+    stage: text("stage")
+      .$type<PropertyStage>()
+      .notNull()
+      .default("under_construction"),
+    possessionDate: text("possession_date"),
+    photoFileId: text("photo_file_id").references(() => filesTable.id),
     addressLine1: text("address_line1"),
     addressLine2: text("address_line2"),
     city: text("city"),
@@ -92,6 +103,9 @@ export const documents = sqliteTable(
     propertyId: text("property_id")
       .notNull()
       .references(() => properties.id, { onDelete: "cascade" }),
+    insuranceId: text("insurance_id").references(() => insuranceRecords.id, {
+      onDelete: "set null",
+    }),
     eventId: text("event_id").references(() => propertyEvents.id, {
       onDelete: "set null",
     }),
@@ -113,4 +127,23 @@ export const documents = sqliteTable(
     index("documents_property_id_idx").on(table.propertyId),
     index("documents_event_id_idx").on(table.eventId),
   ],
+);
+
+export const insuranceRecords = sqliteTable(
+  "insurance_records",
+  {
+    id: id(),
+    propertyId: text("property_id")
+      .notNull()
+      .references(() => properties.id, { onDelete: "cascade" }),
+    type: text("type").$type<"tenant" | "home">().notNull(),
+    provider: text("provider"),
+    policyNumber: text("policy_number"),
+    startsOn: text("starts_on"),
+    endsOn: text("ends_on"),
+    notes: text("notes"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("insurance_property_idx").on(table.propertyId)],
 );

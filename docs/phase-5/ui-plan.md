@@ -44,3 +44,7 @@ Sheet, dialog, and alert-dialog choices are already in the design language. The 
 Use fictional or empty data. Check Taxbook tax document or paycheque form and settings theme; First Aid visit/document flow; Passbook account statement periods and upload/delete; Tenure employment pay periods and stub upload/delete. Compare desktop and narrow viewport, keyboard focus, accessible names, light/dark, pending/error/empty, and file preview where applicable.
 
 Phase 5 is complete when every app follows the documented interaction choices, the shared primitives and two proven cross-app presentation patterns are available and adopted where relevant, and the design language tells an agent what to choose without importing app business logic into shared packages. Full visual uniformity and migration of every local component are not required.
+
+## Guided creation follow-up
+
+For major domain records and complex intake, follow [Guided creation](../../DESIGN_LANGUAGE.md#guided-creation). Roof is the first reference; Passbook accounts and investment-statement intake are deferred consumers. Evidence, scope, and promotion gates live in the [candidate register](../phase-3/architecture-audit.md#guided-creation-follow-up) and [#125](https://github.com/yourtoolshq/everyday/issues/125). No shared extraction is included in this follow-up.
