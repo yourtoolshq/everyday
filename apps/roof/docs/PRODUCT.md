@@ -9,7 +9,8 @@ Information about rentals, a home purchase, and past tenancies is scattered acro
 - Properties under construction, owned homes, current rentals, and past rentals
 - Schedule property visits (including structure visits) with a date, local time, purpose, and planned/completed/cancelled status; add notes, photos, and supporting files afterward
 - Dated **events** with notes and supporting documents (lease changes, notices, purchase milestones, issues)
-- Property-level documents (leases, agreements, insurance metadata for renters)
+- Guided property creation with relationship-specific fields and an optional property photo
+- Property-level documents (leases and agreements) and insurance records with metadata and supporting files
 - Local-first storage with backups through the shared data platform
 
 ## Out of scope (for now)
@@ -18,7 +19,7 @@ Information about rentals, a home purchase, and past tenancies is scattered acro
 - **Parties** as a reusable directory
 - **Projects**, quotations, and vendor comparison
 - **Maintenance** schedules and proactive tasks
-- Full **insurance** lifecycle (separate coverage domain later)
+- Full **insurance** lifecycle (claims, coverage analysis, and reminders)
 
 ## Principles
 

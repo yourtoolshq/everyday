@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -38,11 +39,13 @@ import { eventCategoryLabels, eventStatusLabels } from "~/lib/events";
 import {
   formatDateLabel,
   formatPropertyAddress,
-  propertyKindLabels,
-  propertyKinds,
+  propertyRelationships,
+  relationshipLabels,
+  stageLabels,
 } from "~/lib/properties";
 import { api } from "~/trpc/react";
 import { DocumentEditor, HistoryEditor, PropertyEditor } from "./forms";
+import { InsuranceSection } from "./insurance";
 
 function Loading() {
   return (
@@ -107,14 +110,16 @@ export function PropertiesWorkspace() {
         </div>
       ) : (
         <div className="space-y-7">
-          {propertyKinds.map((kind) => {
+          {propertyRelationships.map((relationship) => {
             const properties =
-              query.data?.filter((property) => property.kind === kind) ?? [];
+              query.data?.filter(
+                (property) => property.relationship === relationship,
+              ) ?? [];
             if (!properties.length) return null;
             return (
-              <section key={kind} className="space-y-3">
+              <section key={relationship} className="space-y-3">
                 <h3 className="flex items-center gap-2 text-base font-medium">
-                  {propertyKindLabels[kind]}
+                  {relationshipLabels[relationship]}
                   <span className="text-muted-foreground text-sm">
                     {properties.length}
                   </span>
@@ -129,7 +134,18 @@ export function PropertiesWorkspace() {
                       <Card className="hover:border-primary/50 h-full shadow-none transition-colors">
                         <CardContent className="flex gap-4 p-5">
                           <div className="bg-secondary text-primary flex size-11 shrink-0 items-center justify-center rounded-lg">
-                            <Home aria-hidden className="size-5" />
+                            {property.photoFileId ? (
+                              <Image
+                                unoptimized
+                                width={600}
+                                height={450}
+                                src={`/api/data/files/${property.photoFileId}`}
+                                alt=""
+                                className="size-11 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <Home aria-hidden className="size-5" />
+                            )}
                           </div>
                           <div className="min-w-0 flex-1">
                             <h4 className="flex items-center justify-between gap-2 text-lg font-semibold">
@@ -144,13 +160,7 @@ export function PropertiesWorkspace() {
                                 "Address not added"}
                             </p>
                             <p className="text-primary mt-4 text-xs font-medium">
-                              {kind === "under_construction"
-                                ? `Expected possession: ${formatDateLabel(property.targetPossessionDate) ?? "Not set"}`
-                                : kind === "past_rental"
-                                  ? `Moved out: ${formatDateLabel(property.moveOutDate) ?? "Not set"}`
-                                  : kind === "owned"
-                                    ? `Moved in: ${formatDateLabel(property.moveInDate) ?? "Not set"}`
-                                    : `Lease ends: ${formatDateLabel(property.leaseEndDate) ?? "Not set"}`}
+                              {stageLabels[property.stage]}
                             </p>
                           </div>
                         </CardContent>
@@ -197,50 +207,50 @@ function PropertyDetails({ property }: { property: Property }) {
       </CardHeader>
       <CardContent>
         <dl className="space-y-4">
-          <DetailLine
-            label="Expected possession"
-            value={formatDateLabel(property.targetPossessionDate)}
-          />
+          {property.relationship === "purchase" && (
+            <>
+              <DetailLine
+                label="Possession"
+                value={formatDateLabel(property.possessionDate)}
+              />
+              <DetailLine
+                label="Expected possession"
+                value={formatDateLabel(property.targetPossessionDate)}
+              />
+            </>
+          )}
           <DetailLine
             label="Move-in"
             value={formatDateLabel(property.moveInDate)}
           />
-          <DetailLine
-            label="Move-out"
-            value={formatDateLabel(property.moveOutDate)}
-          />
-          <DetailLine
-            label="Lease starts"
-            value={formatDateLabel(property.leaseStartDate)}
-          />
-          <DetailLine
-            label="Lease ends"
-            value={formatDateLabel(property.leaseEndDate)}
-          />
-          <DetailLine label="Lease notes" value={property.leaseNotes} />
-          <DetailLine
-            label="Landlord or property manager"
-            value={property.landlordName}
-          />
-          <DetailLine label="Email" value={property.landlordEmail} />
-          <DetailLine label="Phone" value={property.landlordPhone} />
-          <DetailLine
-            label="Tenant insurance"
-            value={property.renterInsuranceProvider}
-          />
-          <DetailLine
-            label="Policy number"
-            value={property.renterInsurancePolicyNumber}
-          />
-          <DetailLine
-            label="Insurance renewal or expiry"
-            value={formatDateLabel(property.renterInsuranceExpiresOn)}
-          />
+          {property.relationship === "rental" && (
+            <>
+              <DetailLine
+                label="Move-out"
+                value={formatDateLabel(property.moveOutDate)}
+              />
+              <DetailLine
+                label="Lease starts"
+                value={formatDateLabel(property.leaseStartDate)}
+              />
+              <DetailLine
+                label="Lease ends"
+                value={formatDateLabel(property.leaseEndDate)}
+              />
+              <DetailLine label="Lease notes" value={property.leaseNotes} />
+              <DetailLine
+                label="Landlord or property manager"
+                value={property.landlordName}
+              />
+              <DetailLine label="Email" value={property.landlordEmail} />
+              <DetailLine label="Phone" value={property.landlordPhone} />
+            </>
+          )}
           <DetailLine label="Notes" value={property.notes} />
         </dl>
         <p className="text-muted-foreground mt-5 text-xs">
-          Update the relationship after possession or moving out. Your history
-          and files stay here.
+          Update the stage after possession or moving out. Your history and
+          files stay here.
         </p>
       </CardContent>
     </Card>
@@ -256,6 +266,7 @@ export function PropertyWorkspace({ id }: { id: string }) {
   const [document, setDocument] = useState<{
     document?: Document;
     eventId?: string;
+    insuranceId?: string;
   } | null>(null);
   const [deleting, setDeleting] = useState<{
     type: "event" | "document";
@@ -317,7 +328,10 @@ export function PropertyWorkspace({ id }: { id: string }) {
       </Button>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-3">
-          <Badge variant="secondary">{propertyKindLabels[property.kind]}</Badge>
+          <Badge variant="secondary">
+            {relationshipLabels[property.relationship]} ·{" "}
+            {stageLabels[property.stage]}
+          </Badge>
           <h2 className="text-3xl font-semibold tracking-tight">
             {property.name}
           </h2>
@@ -473,6 +487,22 @@ export function PropertyWorkspace({ id }: { id: string }) {
               </p>
             )}
           </section>
+          <InsuranceSection
+            property={property}
+            records={query.data.insurance}
+            documents={documents}
+            refresh={refresh}
+            onAttach={(insuranceId) => setDocument({ insuranceId })}
+            onEditDocument={(document) => setDocument({ document })}
+            onDeleteDocument={(document) => {
+              setDeleteError(null);
+              setDeleting({
+                type: "document",
+                id: document.id,
+                title: document.title,
+              });
+            }}
+          />
           <section className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -490,10 +520,11 @@ export function PropertyWorkspace({ id }: { id: string }) {
                 Add document
               </Button>
             </div>
-            {documents.filter((doc) => !doc.eventId).length ? (
+            {documents.filter((doc) => !doc.eventId && !doc.insuranceId)
+              .length ? (
               <div className="space-y-2">
                 {documents
-                  .filter((doc) => !doc.eventId)
+                  .filter((doc) => !doc.eventId && !doc.insuranceId)
                   .map((doc) => (
                     <DocumentRow
                       key={doc.id}
@@ -518,7 +549,19 @@ export function PropertyWorkspace({ id }: { id: string }) {
             )}
           </section>
         </div>
-        <PropertyDetails property={property} />
+        <div className="space-y-6">
+          {property.photoFileId && (
+            <Image
+              unoptimized
+              width={600}
+              height={450}
+              src={`/api/data/files/${property.photoFileId}`}
+              alt={`Photo of ${property.name}`}
+              className="aspect-[4/3] w-full rounded-xl object-cover"
+            />
+          )}
+          <PropertyDetails property={property} />
+        </div>
       </div>
       {editProperty && (
         <PropertyEditor
@@ -539,6 +582,7 @@ export function PropertyWorkspace({ id }: { id: string }) {
         <DocumentEditor
           propertyId={id}
           events={events}
+          insurance={query.data.insurance}
           {...document}
           onClose={() => setDocument(null)}
           onSaved={refresh}
@@ -585,7 +629,7 @@ export function PropertyWorkspace({ id }: { id: string }) {
     </main>
   );
 }
-function DocumentRow({
+export function DocumentRow({
   document,
   onEdit,
   onDelete,

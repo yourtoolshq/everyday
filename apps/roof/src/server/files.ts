@@ -1,6 +1,7 @@
 import { createFileRouter, file } from "@yourtoolshq/data/files";
 
 export const fileRouter = createFileRouter({
+  propertyPhoto: file({ types: ["image"], maxBytes: "10MB" }),
   document: file({ types: ["pdf", "image", "eml"], maxBytes: "25MB" }),
 });
 

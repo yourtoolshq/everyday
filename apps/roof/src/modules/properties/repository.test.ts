@@ -17,7 +17,8 @@ test("validates real dates and ordered tenancy dates", () => {
   expect(
     propertyFieldsSchema.safeParse({
       name: "Rental",
-      kind: "current_rental",
+      relationship: "rental",
+      stage: "current",
       leaseStartDate: "2026-10-01",
       leaseEndDate: "2026-09-30",
     }).success,
@@ -31,11 +32,14 @@ test("keeps visit files across lifecycle changes and history deletion, rejects c
     await migrate(db, { migrationsFolder: "drizzle" });
     const property = await repository.saveProperty(db, {
       name: "Cedar House",
-      kind: "under_construction",
+      relationship: "purchase",
+      stage: "under_construction",
+      targetPossessionDate: "2027-06-01",
     });
     const other = await repository.saveProperty(db, {
       name: "Old apartment",
-      kind: "past_rental",
+      relationship: "rental",
+      stage: "past",
     });
     const visit = await repository.saveEvent(db, {
       propertyId: property.id,
@@ -69,9 +73,18 @@ test("keeps visit files across lifecycle changes and history deletion, rejects c
       mimeType: "image/png",
       sizeBytes: 10,
     });
+    const policy = await repository.saveInsurance(db, {
+      propertyId: property.id,
+      type: "home",
+      provider: "Example insurer",
+      policyNumber: "DEMO-100",
+    });
+    await expect(
+      repository.requireInsurance(db, other.id, policy.id),
+    ).rejects.toThrow("this property");
     await repository.saveProperty(
       db,
-      { name: property.name, kind: "owned" },
+      { name: property.name, relationship: "purchase", stage: "owned" },
       property.id,
     );
     await repository.saveEvent(
@@ -82,15 +95,45 @@ test("keeps visit files across lifecycle changes and history deletion, rejects c
     expect((await repository.listEvents(db, property.id))[0]?.notes).toBe(
       "Checked framing.",
     );
+    expect(
+      (await repository.requireProperty(db, property.id)).targetPossessionDate,
+    ).toBe("2027-06-01");
+    expect(await repository.listInsurance(db, property.id)).toHaveLength(1);
     await repository.deleteEvent(db, visit.id);
     const documents = await repository.listDocuments(db, property.id);
     expect(documents).toHaveLength(1);
     expect(documents[0]?.eventId).toBeNull();
-    expect((await repository.requireProperty(db, property.id)).kind).toBe(
+    expect((await repository.requireProperty(db, property.id)).stage).toBe(
       "owned",
     );
   } finally {
     client.close();
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("validates relationship stages and excludes unrelated details", () => {
+  expect(
+    propertyFieldsSchema.safeParse({
+      name: "Rental",
+      relationship: "rental",
+      stage: "owned",
+    }).success,
+  ).toBe(false);
+  expect(
+    propertyFieldsSchema.safeParse({
+      name: "Rental",
+      relationship: "rental",
+      stage: "current",
+      targetPossessionDate: "2027-06-01",
+    }).success,
+  ).toBe(false);
+  expect(
+    propertyFieldsSchema.safeParse({
+      name: "Home",
+      relationship: "purchase",
+      stage: "owned",
+      landlordName: "Example",
+    }).success,
+  ).toBe(false);
 });

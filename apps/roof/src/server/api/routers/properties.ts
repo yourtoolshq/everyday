@@ -5,14 +5,19 @@ import { fileToken } from "@yourtoolshq/data/files";
 import { mapAppErrors } from "~/core/infrastructure/trpc-errors";
 import { documentMetadataSchema } from "~/lib/documents";
 import { eventFieldsSchema } from "~/lib/events";
+import { insuranceFieldsSchema } from "~/lib/insurance";
 import { propertyFieldsSchema } from "~/lib/properties";
 import {
   attachDocument,
   removeDocument,
+  saveProperty,
 } from "~/modules/properties/operations";
 import * as repository from "~/modules/properties/repository";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
+const photoInput = z.object({
+  photo: fileToken("propertyPhoto").nullable().optional(),
+});
 const idInput = z.object({ id: z.string().uuid() });
 const propertyInput = z.object({ propertyId: z.string().uuid() });
 export const propertiesRouter = createTRPCRouter({
@@ -22,22 +27,33 @@ export const propertiesRouter = createTRPCRouter({
   detail: publicProcedure.input(idInput).query(({ ctx, input }) =>
     mapAppErrors(async () => {
       const property = await repository.requireProperty(ctx.db, input.id);
-      const [events, documents] = await Promise.all([
+      const [events, documents, insurance] = await Promise.all([
         repository.listEvents(ctx.db, input.id),
         repository.listDocuments(ctx.db, input.id),
+        repository.listInsurance(ctx.db, input.id),
       ]);
-      return { property, events, documents };
+      return { property, events, documents, insurance };
     }),
   ),
   create: publicProcedure
-    .input(propertyFieldsSchema)
-    .mutation(({ ctx, input }) =>
-      mapAppErrors(() => repository.saveProperty(ctx.db, input)),
-    ),
+    .input(propertyFieldsSchema.and(photoInput))
+    .mutation(({ ctx, input }) => mapAppErrors(() => saveProperty(ctx, input))),
   update: publicProcedure
-    .input(propertyFieldsSchema.and(idInput))
+    .input(propertyFieldsSchema.and(idInput).and(photoInput))
     .mutation(({ ctx, input }) =>
-      mapAppErrors(() => repository.saveProperty(ctx.db, input, input.id)),
+      mapAppErrors(() => saveProperty(ctx, input, input.id)),
+    ),
+  saveInsurance: publicProcedure
+    .input(
+      insuranceFieldsSchema.and(z.object({ id: z.string().uuid().optional() })),
+    )
+    .mutation(({ ctx, input }) =>
+      mapAppErrors(() => repository.saveInsurance(ctx.db, input, input.id)),
+    ),
+  deleteInsurance: publicProcedure
+    .input(idInput)
+    .mutation(({ ctx, input }) =>
+      mapAppErrors(() => repository.deleteInsurance(ctx.db, input.id)),
     ),
   saveEvent: publicProcedure
     .input(eventFieldsSchema.extend({ id: z.string().uuid().optional() }))

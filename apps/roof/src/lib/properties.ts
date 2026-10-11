@@ -2,29 +2,39 @@ import { z } from "zod";
 
 import { calendarDateSchema } from "~/lib/dates";
 
-export const propertyKinds = [
+export const propertyRelationships = ["rental", "purchase"] as const;
+export type PropertyRelationship = (typeof propertyRelationships)[number];
+export const relationshipLabels = {
+  rental: "Rental",
+  purchase: "Purchased home",
+};
+export const propertyStages = [
+  "current",
+  "past",
+  "purchase_in_progress",
   "under_construction",
+  "awaiting_possession",
   "owned",
-  "current_rental",
-  "past_rental",
 ] as const;
-
-export type PropertyKind = (typeof propertyKinds)[number];
-
-export const propertyKindLabels = {
+export type PropertyStage = (typeof propertyStages)[number];
+export const stageLabels = {
+  current: "Current rental",
+  past: "Past rental",
+  purchase_in_progress: "Purchase in progress",
   under_construction: "Under construction",
-  owned: "Owned home",
-  current_rental: "Current rental",
-  past_rental: "Past rental",
-} satisfies Record<PropertyKind, string>;
-
-export const propertyKindDescriptions = {
-  under_construction:
-    "A home you are purchasing or building before you take possession.",
-  owned: "A home you have taken possession of.",
-  current_rental: "Where you live now under a lease.",
-  past_rental: "A previous rental you may need to reference later.",
-} satisfies Record<PropertyKind, string>;
+  awaiting_possession: "Awaiting possession",
+  owned: "Owned",
+} satisfies Record<PropertyStage, string>;
+export function stagesFor(relationship: PropertyRelationship) {
+  return relationship === "rental"
+    ? (["current", "past"] as const)
+    : ([
+        "purchase_in_progress",
+        "under_construction",
+        "awaiting_possession",
+        "owned",
+      ] as const);
+}
 
 const optionalDate = calendarDateSchema.nullable().optional();
 
@@ -34,7 +44,9 @@ const optionalText = (max: number) =>
 export const propertyFieldsSchema = z
   .object({
     name: z.string().trim().min(1).max(120),
-    kind: z.enum(propertyKinds),
+    relationship: z.enum(propertyRelationships),
+    stage: z.enum(propertyStages),
+    possessionDate: optionalDate,
     addressLine1: optionalText(160),
     addressLine2: optionalText(160),
     city: optionalText(80),
@@ -48,13 +60,41 @@ export const propertyFieldsSchema = z
     landlordName: optionalText(120),
     landlordEmail: z.string().trim().email().max(160).nullable().optional(),
     landlordPhone: optionalText(40),
-    renterInsuranceProvider: optionalText(120),
-    renterInsurancePolicyNumber: optionalText(80),
-    renterInsuranceExpiresOn: optionalDate,
     targetPossessionDate: optionalDate,
     notes: optionalText(4000),
   })
   .superRefine((value, ctx) => {
+    if (!stagesFor(value.relationship).some((stage) => stage === value.stage))
+      ctx.addIssue({
+        code: "custom",
+        path: ["stage"],
+        message: "Choose a stage for this relationship.",
+      });
+    if (
+      value.relationship === "rental" &&
+      (value.targetPossessionDate || value.possessionDate)
+    )
+      ctx.addIssue({
+        code: "custom",
+        path: ["targetPossessionDate"],
+        message: "Possession dates belong to purchased homes.",
+      });
+    if (
+      value.relationship === "purchase" &&
+      [
+        value.leaseStartDate,
+        value.leaseEndDate,
+        value.leaseNotes,
+        value.landlordName,
+        value.landlordEmail,
+        value.landlordPhone,
+      ].some(Boolean)
+    )
+      ctx.addIssue({
+        code: "custom",
+        path: ["leaseStartDate"],
+        message: "Lease and landlord details belong to rentals.",
+      });
     for (const [start, end] of [
       ["moveInDate", "moveOutDate"],
       ["leaseStartDate", "leaseEndDate"],

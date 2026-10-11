@@ -314,6 +314,20 @@ into a small number of detailed implementation issues that link back here.
 | Docker/deployment template              | Four root-context Dockerfiles; Passbook/Tenure compose                             | Migration, tools, assets, and routing drift       | All apps                           | App name, port, data paths                    | 7     | Build, health, empty and upgraded volume tests                                                                        | One opaque parameterized Dockerfile                  |
 | Unauthenticated deployment safety       | Loopback compose bindings                                                          | Traefik/private-network assumptions are implicit  | All apps                           | Future auth needs                             | 7     | Confirm default install is unreachable publicly                                                                       | Premature auth platform                              |
 
+### Guided creation follow-up
+
+Added October 2026 after Roof's user visual approval. Track later work in
+[shared candidate #125](https://github.com/yourtoolshq/everyday/issues/125).
+The contract is [Guided creation](../../DESIGN_LANGUAGE.md#guided-creation).
+
+- **Current locations:** Roof `apps/roof/src/components/properties/property-editor.tsx`; Passbook `apps/passbook/shared/components/accounts/account-form-sheet.tsx`, `apps/passbook/shared/components/documents/account-document-upload-sheet.tsx`, and `apps/passbook/shared/components/investment-statements/investment-statement-workspace.tsx`.
+- **Strongest reference:** Roof's centered almost full-screen shadcn dialog groups applicable fields into steps, retains drafts, previews the property photo beside fields, and ends with review and explicit save. It still contains property-specific assumptions and has only one real consumer.
+- **Need and consumers:** ask for a few relevant details at a time when creating large domain records or combining upload with substantial metadata. Passbook accounts and investment-statement intake with optional details are proposed next consumers. Routine uploads and focused edits can remain compact.
+- **Possible sharing:** validate a second app-local flow first, then assess a small presentation shell in `packages/ui`; file-specific presentation may use `packages/data-ui`. Fields, branching, validation, terminology, queries, mutations, uploads, and persistence stay app-owned.
+- **Validation:** Roof app checks and eight desktop/mobile E2E runs passed, with user visual approval. Second-consumer behavior and sustained use remain unproven. Verify keyboard/focus, mobile, light/dark, retained input, errors/pending saves, previews, discard, and draft/file lifecycle in both apps before promotion. Preserve Passbook's optional enrichment, valid file-only statements, autosaved drafts, and explicit Save details boundary.
+- **Target phase:** deferred UI-commonality follow-up in the Phase 5 lineage, no active milestone or immediate extraction. Issue #125 records explicitly requested later work without reopening the completed phase wholesale.
+- **Non-goals:** immediate Passbook implementation, universal form/schema engine, shared domain validation or persistence, forcing all forms/edits into wizards, or extracting Roof's component unchanged.
+
 ## Phase 4 acceptance contract
 
 Before Phase 4 implementation is considered complete:

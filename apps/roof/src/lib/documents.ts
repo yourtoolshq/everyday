@@ -33,6 +33,7 @@ export const documentMetadataSchema = z.object({
   type: z.enum(documentTypes),
   documentDate: calendarDateSchema.nullable().optional(),
   notes: z.string().trim().max(2000).nullable().optional(),
+  insuranceId: z.string().uuid().nullable().optional(),
   eventId: z.string().uuid().nullable().optional(),
 });
 

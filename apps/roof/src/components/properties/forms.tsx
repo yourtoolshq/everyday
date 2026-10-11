@@ -28,11 +28,6 @@ import {
   eventFieldsSchema,
   eventStatusLabels,
 } from "~/lib/events";
-import {
-  propertyFieldsSchema,
-  propertyKindLabels,
-  propertyKinds,
-} from "~/lib/properties";
 import { FileDropzone, useUpload } from "~/lib/uploads";
 import { api } from "~/trpc/react";
 
@@ -79,7 +74,7 @@ export function SelectField({
     </div>
   );
 }
-function Field({
+export function Field({
   name,
   label,
   value,
@@ -130,7 +125,7 @@ function Field({
     </div>
   );
 }
-function formValues(form: HTMLFormElement) {
+export function formValues(form: HTMLFormElement) {
   return Object.fromEntries(
     [...new FormData(form).entries()].map(([key, value]) => [
       key,
@@ -138,7 +133,7 @@ function formValues(form: HTMLFormElement) {
     ]),
   );
 }
-function Editor({
+export function Editor({
   title,
   description,
   onClose,
@@ -166,7 +161,7 @@ function Editor({
     </Sheet>
   );
 }
-function FormEnd({
+export function FormEnd({
   pending,
   error,
   onClose,
@@ -198,203 +193,7 @@ function FormEnd({
     </>
   );
 }
-export function PropertyEditor({
-  property,
-  onClose,
-  onSaved,
-}: {
-  property?: Property;
-  onClose: () => void;
-  onSaved: (id: string) => void;
-}) {
-  const [kind, setKind] = useState(property?.kind ?? "under_construction");
-  const [error, setError] = useState<string | null>(null);
-  const create = api.properties.create.useMutation();
-  const update = api.properties.update.useMutation();
-  async function save(form: HTMLFormElement) {
-    setError(null);
-    const parsed = propertyFieldsSchema.safeParse(formValues(form));
-    if (!parsed.success) {
-      setError(
-        parsed.error.issues
-          .map((issue) => `${issue.path.join(" ")}: ${issue.message}`)
-          .join(" "),
-      );
-      return;
-    }
-    try {
-      const result = property
-        ? await update.mutateAsync({ ...parsed.data, id: property.id })
-        : await create.mutateAsync(parsed.data);
-      toast.success(property ? "Property updated" : "Property added");
-      onSaved(result.id);
-      onClose();
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Could not save the property. Try again.",
-      );
-    }
-  }
-  return (
-    <Editor
-      title={property ? "Edit property" : "Add property"}
-      description="Only a name and relationship are required. Add the details you know now."
-      onClose={onClose}
-    >
-      <form
-        className="space-y-5"
-        onSubmit={(e) => {
-          e.preventDefault();
-          void save(e.currentTarget);
-        }}
-      >
-        <Field
-          name="name"
-          label="Property name"
-          value={property?.name}
-          required
-        />
-        <SelectField
-          name="kind"
-          label="Relationship"
-          value={kind}
-          onChange={(value) => setKind(value as typeof kind)}
-          options={Object.fromEntries(
-            propertyKinds.map((key) => [key, propertyKindLabels[key]]),
-          )}
-        />
-        <fieldset className="space-y-4">
-          <legend className="mb-3 font-medium">Address (optional)</legend>
-          <Field
-            name="addressLine1"
-            label="Street address"
-            value={property?.addressLine1}
-          />
-          <Field
-            name="addressLine2"
-            label="Unit or address line 2"
-            value={property?.addressLine2}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <Field name="city" label="City" value={property?.city} />
-            <Field
-              name="region"
-              label="Province or region"
-              value={property?.region}
-            />
-            <Field
-              name="postalCode"
-              label="Postal code"
-              value={property?.postalCode}
-            />
-          </div>
-        </fieldset>
-        <fieldset className="space-y-4">
-          <legend className="mb-3 font-medium">
-            Important dates (optional)
-          </legend>
-          <Field
-            name="targetPossessionDate"
-            label="Expected possession"
-            date
-            value={property?.targetPossessionDate}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <Field
-              name="moveInDate"
-              label="Move-in date"
-              date
-              value={property?.moveInDate}
-            />
-            <Field
-              name="moveOutDate"
-              label="Move-out date"
-              date
-              value={property?.moveOutDate}
-            />
-          </div>
-        </fieldset>
-        <fieldset className="space-y-4">
-          <legend className="mb-3 font-medium">
-            Lease & contact (optional)
-          </legend>
-          <div className="grid grid-cols-2 gap-4">
-            <Field
-              name="leaseStartDate"
-              label="Lease starts"
-              date
-              value={property?.leaseStartDate}
-            />
-            <Field
-              name="leaseEndDate"
-              label="Lease ends"
-              date
-              value={property?.leaseEndDate}
-            />
-          </div>
-          <Field
-            name="leaseNotes"
-            label="Lease notes"
-            area
-            value={property?.leaseNotes}
-          />
-          <Field
-            name="landlordName"
-            label="Landlord or property manager"
-            value={property?.landlordName}
-          />
-          <Field
-            name="landlordEmail"
-            label="Contact email"
-            type="email"
-            value={property?.landlordEmail}
-          />
-          <Field
-            name="landlordPhone"
-            label="Contact phone"
-            type="tel"
-            value={property?.landlordPhone}
-          />
-        </fieldset>
-        <fieldset className="space-y-4">
-          <legend className="mb-3 font-medium">
-            Tenant insurance (optional)
-          </legend>
-          <Field
-            name="renterInsuranceProvider"
-            label="Insurance provider"
-            value={property?.renterInsuranceProvider}
-          />
-          <Field
-            name="renterInsurancePolicyNumber"
-            label="Policy number"
-            value={property?.renterInsurancePolicyNumber}
-          />
-          <Field
-            name="renterInsuranceExpiresOn"
-            label="Insurance renewal or expiry"
-            date
-            value={property?.renterInsuranceExpiresOn}
-          />
-        </fieldset>
-        <Field
-          name="notes"
-          label="Property notes (optional)"
-          area
-          value={property?.notes}
-        />
-        <FormEnd
-          pending={create.isPending || update.isPending}
-          error={error}
-          onClose={onClose}
-          label={property ? "Save changes" : "Add property"}
-        />
-      </form>
-    </Editor>
-  );
-}
+export { PropertyEditor } from "./property-editor";
 export function HistoryEditor({
   propertyId,
   entry,
@@ -517,6 +316,8 @@ export function DocumentEditor({
   events,
   document,
   eventId,
+  insuranceId,
+  insurance,
   onClose,
   onSaved,
 }: {
@@ -524,6 +325,8 @@ export function DocumentEditor({
   events: HistoryEntry[];
   document?: Document;
   eventId?: string;
+  insuranceId?: string;
+  insurance: Detail["insurance"];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -615,6 +418,20 @@ export function DocumentEditor({
             ),
           }}
           value={document?.eventId ?? eventId ?? ""}
+        />
+        <SelectField
+          name="insuranceId"
+          label="Insurance record (optional)"
+          options={{
+            "": "No insurance record",
+            ...Object.fromEntries(
+              insurance.map((record) => [
+                record.id,
+                `${record.provider ?? "Insurance"} ${record.policyNumber ?? ""}`,
+              ]),
+            ),
+          }}
+          value={document?.insuranceId ?? insuranceId ?? ""}
         />
         <Field
           name="notes"

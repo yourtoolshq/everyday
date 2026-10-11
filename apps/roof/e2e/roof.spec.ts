@@ -8,8 +8,19 @@ test("property purchase, visit evidence, lifecycle, and rental history", async (
   const name = `Cedar House ${suffix}`;
   await page.goto("/");
   await page.getByRole("button", { name: "Add property", exact: true }).click();
+  await page.getByRole("button", { name: /Purchased home/ }).click();
+  await page.getByLabel("Current stage").click();
+  await page
+    .getByRole("option", { name: "Under construction", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByLabel("Property name").fill(name);
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(
+    page.getByLabel("Lease starts", { exact: true }),
+  ).not.toBeVisible();
   await page.getByLabel("Expected possession").fill("June 01, 2027");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page
     .getByRole("button", { name: "Add property", exact: true })
     .last()
@@ -67,9 +78,12 @@ test("property purchase, visit evidence, lifecycle, and rental history", async (
   await page
     .getByRole("button", { name: "Edit property", exact: true })
     .click();
-  await page.getByLabel("Relationship").selectOption("owned");
+  await page.getByLabel("Current stage").click();
+  await page.getByRole("option", { name: "Owned", exact: true }).click();
   await page.getByRole("button", { name: "Save changes" }).click();
-  await expect(page.getByText("Owned home", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Purchased home · Owned", { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText("Framing photo", { exact: true })).toBeVisible();
   await page
     .getByRole("button", { name: "Delete Structure visit", exact: true })
@@ -88,21 +102,61 @@ test("property purchase, visit evidence, lifecycle, and rental history", async (
   ).not.toBeVisible();
   await page.getByRole("link", { name: "All properties" }).click();
   await page.getByRole("button", { name: "Add property", exact: true }).click();
+  await page.getByRole("button", { name: /^Rental/ }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByLabel("Property name").fill(`Maple rental ${suffix}`);
-  await page.getByLabel("Relationship").selectOption("current_rental");
+  await page.locator('input[aria-label="Property photo"]').setInputFiles({
+    name: "rental.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aG9sAAAAASUVORK5CYII=",
+      "base64",
+    ),
+  });
+  await expect(page.getByText("Photo ready to save")).toBeVisible();
+  await expect(page.getByAltText("Property photo preview")).toBeVisible();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(
+    page.getByLabel("Expected possession", { exact: true }),
+  ).not.toBeVisible();
+  await expect(
+    page.getByLabel("Insurance provider", { exact: true }),
+  ).toHaveCount(0);
   await page
     .getByLabel("Lease starts", { exact: true })
     .fill("October 01, 2026");
   await page
     .getByLabel("Lease ends", { exact: true })
     .fill("September 30, 2027");
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await expect(page.getByLabel("Property name")).toHaveValue(
+    `Maple rental ${suffix}`,
+  );
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByLabel("Lease starts", { exact: true })).toHaveValue(
+    "October 01, 2026",
+  );
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Add property", exact: true })
+    .last()
+    .click();
+  await expect(
+    page.getByAltText(`Photo of Maple rental ${suffix}`),
+  ).toBeVisible();
+  await page.reload();
+  await expect(
+    page.getByAltText(`Photo of Maple rental ${suffix}`),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Add insurance", exact: true })
+    .click();
   await page
     .getByLabel("Insurance provider", { exact: true })
     .fill("Fictional Insurance");
   await page.getByLabel("Policy number", { exact: true }).fill("DEMO-100");
   await page
-    .getByRole("button", { name: "Add property", exact: true })
-    .last()
+    .getByRole("button", { name: "Save insurance", exact: true })
     .click();
   await expect(
     page.getByText("Fictional Insurance", { exact: true }),
@@ -110,15 +164,22 @@ test("property purchase, visit evidence, lifecycle, and rental history", async (
   await page
     .getByRole("button", { name: "Edit property", exact: true })
     .click();
-  await page.getByLabel("Relationship").selectOption("past_rental");
+  await page.getByLabel("Rental status").click();
+  await page.getByRole("option", { name: "Past rental", exact: true }).click();
   await page
     .getByLabel("Move-out date", { exact: true })
     .fill("September 30, 2027");
   await page.getByRole("button", { name: "Save changes" }).click();
-  await expect(page.getByText("Past rental", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Rental · Past rental", { exact: true }),
+  ).toBeVisible();
   await page.reload();
-  await expect(page.getByText("Past rental", { exact: true })).toBeVisible();
-  await expect(page.getByText("DEMO-100", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText("Rental · Past rental", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Tenant insurance · DEMO-100", { exact: true }),
+  ).toBeVisible();
   await expect(page.locator("body")).toHaveJSProperty(
     "scrollWidth",
     await page.evaluate(() => window.innerWidth),
@@ -136,4 +197,65 @@ test("loads settings and reports a missing property", async ({ page }) => {
   ).toContainText("Property not found", {
     timeout: 15_000,
   });
+});
+
+test("keeps an unfinished property when cancelling close", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add property", exact: true }).click();
+  await page.getByRole("button", { name: /^Rental/ }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByLabel("Property name").fill("Draft rental");
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await page.getByRole("button", { name: "Keep editing", exact: true }).click();
+  await expect(page.getByLabel("Property name")).toHaveValue("Draft rental");
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Discard changes", exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("preserves relationship-specific drafts and stages when switching choices", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Add property", exact: true }).click();
+  await page.getByRole("button", { name: /Purchased home/ }).click();
+  await page.getByLabel("Current stage").click();
+  await page
+    .getByRole("option", { name: "Under construction", exact: true })
+    .click();
+  await page.getByRole("button", { name: /^Rental/ }).click();
+  await expect(page.getByLabel("Rental status")).toContainText(
+    "Current rental",
+  );
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByLabel("Property name").fill("Switching draft");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page
+    .getByLabel("Lease starts", { exact: true })
+    .fill("October 01, 2026");
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByRole("button", { name: "Back", exact: true }).click();
+  await page.getByRole("button", { name: /Purchased home/ }).click();
+  await expect(page.getByLabel("Current stage")).toContainText(
+    "Under construction",
+  );
+  await page.getByRole("button", { name: /^Rental/ }).click();
+  await expect(page.getByLabel("Rental status")).toContainText(
+    "Current rental",
+  );
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByLabel("Property name")).toHaveValue("Switching draft");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(page.getByLabel("Lease starts", { exact: true })).toHaveValue(
+    "October 01, 2026",
+  );
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Ready to add your property?" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Rental · Current rental", { exact: true }),
+  ).toBeVisible();
 });
