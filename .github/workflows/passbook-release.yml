@@ -64,7 +64,8 @@ jobs:
       release_name: ${{ steps.release_meta.outputs.name }}
       previous_tag: ${{ steps.previous_tag.outputs.previous_tag }}
     steps:
-      - uses: actions/checkout@v4
+      - id: checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -96,6 +97,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.preflight.outputs.ref }}
 
       - uses: ./.github/actions/setup
 
@@ -109,16 +112,30 @@ jobs:
         run: pnpm release:gate
 
       - name: Run Passbook release script tests
-        run: pnpm --filter passbook test -- scripts/release/version.test.mjs
+        run: pnpm --filter passbook test -- scripts/release/
 
   package_mac:
     name: Package macOS desktop
     needs: [preflight, quality]
     runs-on: macos-14
+    env:
+      PASSBOOK_REQUIRE_SIGNED_RELEASE: "1"
+      MAC_CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+      MAC_CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+      APPLE_ID: ${{ secrets.APPLE_ID }}
+      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.preflight.outputs.ref }}
 
       - uses: ./.github/actions/setup
+
+      - name: Require macOS signing and notarization secrets
+        run: node apps/passbook/scripts/release/check-mac-signing-secrets.cjs
 
       - name: Align desktop package version
         run: |
@@ -126,10 +143,26 @@ jobs:
             "${{ needs.preflight.outputs.package_version }}" \
             "$GITHUB_WORKSPACE"
 
-      - name: Build Passbook macOS release artifacts
-        run: pnpm package:passbook:mac
+      - name: Build signed Passbook macOS release artifacts
+        run: pnpm --filter @passbook/desktop package:mac:ci
         env:
           APP_VERSION: ${{ needs.preflight.outputs.version }}
+
+      - name: Stamp channel metadata file sizes
+        run: |
+          node apps/passbook/scripts/release/sync-release-channel-metadata.cjs \
+            --dir apps/passbook/desktop/release
+
+      - name: Verify Developer ID signing and notarization
+        run: |
+          node apps/passbook/scripts/release/verify-mac-release-signing.cjs \
+            --dir apps/passbook/desktop/release
+
+      - name: Validate release artifact contract
+        run: |
+          node apps/passbook/scripts/release/validate-release-artifacts.cjs \
+            --dir apps/passbook/desktop/release \
+            --package-version "${{ needs.preflight.outputs.package_version }}"
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v4
@@ -138,7 +171,7 @@ jobs:
           path: |
             apps/passbook/desktop/release/*.dmg
             apps/passbook/desktop/release/*.zip
-            apps/passbook/desktop/release/latest-mac.yml
+            apps/passbook/desktop/release/passbook-mac.yml
             apps/passbook/desktop/release/*.blockmap
           if-no-files-found: error
 
@@ -147,12 +180,25 @@ jobs:
     needs: [preflight, package_mac]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.preflight.outputs.ref }}
+
+      - uses: ./.github/actions/setup
+
       - uses: actions/download-artifact@v4
         with:
           name: passbook-mac-release
           path: release-assets
 
-      - name: Publish release
+      - name: Validate downloaded release artifacts
+        run: |
+          node apps/passbook/scripts/release/validate-release-artifacts.cjs \
+            --dir release-assets \
+            --package-version "${{ needs.preflight.outputs.package_version }}"
+
+      - name: Publish draft release
+        id: draft_release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.preflight.outputs.tag }}
@@ -160,11 +206,18 @@ jobs:
           name: ${{ needs.preflight.outputs.release_name }}
           generate_release_notes: true
           previous_tag: ${{ needs.preflight.outputs.previous_tag }}
+          draft: true
           prerelease: false
-          make_latest: true
+          make_latest: false
           files: |
             release-assets/*.dmg
             release-assets/*.zip
-            release-assets/latest-mac.yml
+            release-assets/passbook-mac.yml
             release-assets/*.blockmap
-          fail_on_unmatching_files: true
+          fail_on_unmatched_files: true
+
+      - name: Finalize release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release edit "${{ needs.preflight.outputs.tag }}" --draft=false --latest

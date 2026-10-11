@@ -61,9 +61,10 @@ bundled host using Electron's embedded Node runtime and loads the client from
 the loopback host; it does not require a system Node, pnpm, Vite, Docker, or a
 source checkout.
 
-The local package is unsigned. macOS may require an explicit Gatekeeper override
-to open it. Signing, notarization, nightly publication, and automatic updates
-are separate follow-up work.
+The local package can be unsigned. macOS may require an explicit Gatekeeper
+override to open it. Public update releases require Developer ID signing and
+notarization. See [release workflow and signing setup](../docs/release-workflow.md)
+for the CI requirements, first signed installation, and test coverage.
 
 ## Behavior
 

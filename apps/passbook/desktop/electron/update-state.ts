@@ -141,6 +141,17 @@ export function reduceOnDownloadFailure(
   };
 }
 
+export function reduceOnInstallStart(
+  state: DesktopUpdateState,
+): DesktopUpdateState {
+  return {
+    ...state,
+    status: "installing",
+    message: null,
+    errorContext: null,
+  };
+}
+
 export function reduceOnInstallFailure(
   state: DesktopUpdateState,
   message: string,

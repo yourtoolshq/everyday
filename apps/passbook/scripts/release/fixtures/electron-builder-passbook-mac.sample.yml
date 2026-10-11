@@ -1,0 +1,12 @@
+# Shape captured from app-builder-lib 25.1.8 updateInfoBuilder (zip sorted first, merged files).
+version: 0.2.0-passbook.20260101.1
+files:
+  - url: Passbook-0.2.0-passbook.20260101.1-arm64.zip
+    sha512: PLACEHOLDER_ZIP_SHA512
+    size: 4
+  - url: Passbook-0.2.0-passbook.20260101.1-arm64.dmg
+    sha512: PLACEHOLDER_DMG_SHA512
+    size: 4
+path: Passbook-0.2.0-passbook.20260101.1-arm64.zip
+sha512: PLACEHOLDER_ZIP_SHA512
+releaseDate: "2026-01-01T00:00:00.000Z"

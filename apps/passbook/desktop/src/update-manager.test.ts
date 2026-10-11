@@ -4,6 +4,9 @@ const autoUpdaterHandlers = new Map<string, (...args: unknown[]) => void>();
 const autoUpdater = {
   autoDownload: true,
   autoInstallOnAppQuit: true,
+  channel: null as string | null,
+  allowPrerelease: false,
+  allowDowngrade: false,
   on: vi.fn((event: string, listener: (...args: unknown[]) => void) => {
     autoUpdaterHandlers.set(event, listener);
   }),
@@ -13,7 +16,11 @@ const autoUpdater = {
 };
 
 vi.mock("electron", () => ({
-  app: { isPackaged: true },
+  app: {
+    isPackaged: true,
+    on: vi.fn(),
+    removeListener: vi.fn(),
+  },
   ipcMain: {
     handle: vi.fn(),
   },
@@ -21,6 +28,16 @@ vi.mock("electron", () => ({
 
 vi.mock("../electron/auto-updater.js", () => ({
   autoUpdater,
+  stageDownloadedUpdate: vi.fn(() => Promise.resolve()),
+  applyPassbookAutoUpdaterChannel: (
+    target: typeof autoUpdater = autoUpdater,
+  ) => {
+    target.channel = "passbook";
+    target.allowPrerelease = true;
+    target.allowDowngrade = false;
+  },
+  resetNativeStageCache: vi.fn(),
+  PASSBOOK_UPDATE_CHANNEL: "passbook",
 }));
 
 describe("setupAutoUpdater", () => {
@@ -40,6 +57,9 @@ describe("setupAutoUpdater", () => {
 
     expect(controller).not.toBeNull();
     expect(autoUpdater.autoDownload).toBe(false);
+    expect(autoUpdater.channel).toBe("passbook");
+    expect(autoUpdater.allowPrerelease).toBe(true);
+    expect(autoUpdater.allowDowngrade).toBe(false);
     expect(autoUpdater.on).toHaveBeenCalledWith(
       "update-available",
       expect.any(Function),
