@@ -2,6 +2,7 @@ packages:
   - apps/*
   - apps/*/*
   - apps/*/*/*
+  - "!**/.next/**"
   - packages/*
   - tooling/*
 

@@ -4,16 +4,17 @@ Your Tools is a collection of open-source, self-hosted applications for everyday
 
 ## Purpose
 
-Provide a shared development platform where four real applications can evolve independently while benefiting from consistent practices, tooling, and eventual shared infrastructure.
+Provide a shared development platform where independent applications can evolve independently while benefiting from consistent practices, tooling, and eventual shared infrastructure.
 
 ## Applications
 
-| Application   | Problem space                                          |
-| ------------- | ------------------------------------------------------ |
-| **Taxbook**   | Personal taxes, receipts, returns, and tax planning    |
-| **First Aid** | Healthcare records, benefits, appointments, and claims |
-| **Passbook**  | Financial institutions, accounts, and statements       |
-| **Tenure**    | Employment history, compensation, and pay stubs        |
+| Application   | Problem space                                            |
+| ------------- | -------------------------------------------------------- |
+| **Taxbook**   | Personal taxes, receipts, returns, and tax planning      |
+| **First Aid** | Healthcare records, benefits, appointments, and claims   |
+| **Passbook**  | Financial institutions, accounts, and statements         |
+| **Roof**      | Property purchase, rental history, visits, and documents |
+| **Tenure**    | Employment history, compensation, and pay stubs          |
 
 Each application has its own product documentation under `apps/<app>/docs/` (or equivalent paths). Read those for product scope, domain rules, and app-specific roadmaps.
 
@@ -21,7 +22,7 @@ Each application has its own product documentation under `apps/<app>/docs/` (or 
 
 **In scope for this repository:**
 
-- The four applications listed above
+- The applications listed above
 - Monorepo tooling (`tooling/`), future shared packages (`packages/`), and platform workflow
 - Experimental development and verification against isolated data
 
@@ -29,7 +30,7 @@ Each application has its own product documentation under `apps/<app>/docs/` (or 
 
 - Production deployment from this repository until Phase 4 cutover (legacy repos remain production)
 - Shared-package extraction before a pattern is validated in real use
-- Hypothetical future applications (Roof, Garage, etc.) — they may benefit later but are not part of consolidation
+- Hypothetical future applications (Garage, Pantry, etc.) — they may benefit later but are not part of consolidation
 
 ## Philosophy
 

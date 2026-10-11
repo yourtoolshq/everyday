@@ -1,0 +1,41 @@
+import type { z } from "zod";
+
+import type { documentMetadataSchema } from "~/lib/documents";
+import type { dataPlatform } from "~/server/data";
+import type { db } from "~/server/db";
+import * as repository from "./repository";
+
+type Context = { db: typeof db; files: typeof dataPlatform.files };
+export function attachDocument(
+  ctx: Context,
+  input: z.infer<typeof documentMetadataSchema> & {
+    propertyId: string;
+    file: string;
+  },
+) {
+  return ctx.files.withFiles(ctx.db, async (tx, files) => {
+    await repository.requireProperty(tx, input.propertyId);
+    await repository.requireEvent(tx, input.propertyId, input.eventId);
+    const file = await files.claim(input.file);
+    return repository.insertDocument(tx, {
+      propertyId: input.propertyId,
+      eventId: input.eventId ?? null,
+      title: input.title,
+      type: input.type,
+      documentDate: input.documentDate ?? null,
+      notes: input.notes ?? null,
+      fileId: file.id,
+      originalFilename: file.originalFilename,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+    });
+  });
+}
+export function removeDocument(ctx: Context, id: string) {
+  return ctx.files.withFiles(ctx.db, async (tx, files) => {
+    const document = await repository.requireDocument(tx, id);
+    await repository.deleteDocument(tx, id);
+    await files.remove(document.fileId);
+    return document;
+  });
+}

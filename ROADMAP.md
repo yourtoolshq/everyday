@@ -45,7 +45,9 @@ Improvements should be developed in one application, validated through real use,
 | **Passbook**  | Financial institutions, accounts, statements, and receipts | Existing |
 | **First Aid** | Healthcare records, appointments, benefits, and claims     | Existing |
 
-Future applications (Roof, Garage, Pantry, Envelop, etc.) should be able to benefit from the platform, but migrating or developing them is **not** part of the initial consolidation.
+Future applications (Garage, Pantry, Envelop, etc.) should be able to benefit from the platform, but migrating or developing them is **not** part of the initial consolidation.
+
+Roof is now an additional web app built on the consolidated platform. Its bounded initial scope and later features live in [its own roadmap](apps/roof/docs/ROADMAP.md); it does not expand the historical consolidation phases.
 
 During Phase 1, the **original individual repositories remain the production environments**. This monorepo is an experimental development workspace until proven stable.
 
