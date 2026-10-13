@@ -318,6 +318,8 @@ export function DocumentEditor({
   eventId,
   insuranceId,
   insurance,
+  leaseId,
+  leases,
   onClose,
   onSaved,
 }: {
@@ -327,6 +329,8 @@ export function DocumentEditor({
   eventId?: string;
   insuranceId?: string;
   insurance: Detail["insurance"];
+  leaseId?: string;
+  leases: Detail["leases"];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -368,7 +372,7 @@ export function DocumentEditor({
   return (
     <Editor
       title={document ? "Edit document" : "Add document"}
-      description="Preserve the original file with its property and optional history entry."
+      description="Preserve the original file with its property, lease, insurance, or history entry."
       onClose={onClose}
     >
       <form
@@ -419,6 +423,19 @@ export function DocumentEditor({
           }}
           value={document?.eventId ?? eventId ?? ""}
         />
+        {leases.length > 0 && (
+          <SelectField
+            name="leaseId"
+            label="Lease (optional)"
+            options={{
+              "": "No lease",
+              ...Object.fromEntries(
+                leases.map((record) => [record.id, record.title]),
+              ),
+            }}
+            value={document?.leaseId ?? leaseId ?? ""}
+          />
+        )}
         <SelectField
           name="insuranceId"
           label="Insurance record (optional)"

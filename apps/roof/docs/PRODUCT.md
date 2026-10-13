@@ -10,7 +10,7 @@ Information about rentals, a home purchase, and past tenancies is scattered acro
 - Schedule property visits (including structure visits) with a date, local time, purpose, and planned/completed/cancelled status; add notes, photos, and supporting files afterward
 - Dated **events** with notes and supporting documents (lease changes, notices, purchase milestones, issues)
 - Guided property creation with relationship-specific fields and an optional property photo
-- Property-level documents (leases and agreements) and insurance records with metadata and supporting files
+- Rental-owned lease history with date-derived status, and property-level documents and insurance records with metadata and supporting files
 - Local-first storage with backups through the shared data platform
 
 ## Out of scope (for now)

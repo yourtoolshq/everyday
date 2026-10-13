@@ -11,6 +11,7 @@ import { filesTable, platformMetaTable } from "@yourtoolshq/data/schema";
 
 import type { DocumentType } from "~/lib/documents";
 import type { EventCategory } from "~/lib/events";
+import type { LeaseTerm } from "~/lib/leases";
 import type { PropertyRelationship, PropertyStage } from "~/lib/properties";
 
 export { filesTable, platformMetaTable };
@@ -103,6 +104,9 @@ export const documents = sqliteTable(
     propertyId: text("property_id")
       .notNull()
       .references(() => properties.id, { onDelete: "cascade" }),
+    leaseId: text("lease_id").references(() => leaseRecords.id, {
+      onDelete: "set null",
+    }),
     insuranceId: text("insurance_id").references(() => insuranceRecords.id, {
       onDelete: "set null",
     }),
@@ -126,6 +130,7 @@ export const documents = sqliteTable(
     uniqueIndex("documents_file_unique").on(table.fileId),
     index("documents_property_id_idx").on(table.propertyId),
     index("documents_event_id_idx").on(table.eventId),
+    index("documents_lease_id_idx").on(table.leaseId),
   ],
 );
 
@@ -146,4 +151,22 @@ export const insuranceRecords = sqliteTable(
     updatedAt: updatedAt(),
   },
   (table) => [index("insurance_property_idx").on(table.propertyId)],
+);
+
+export const leaseRecords = sqliteTable(
+  "lease_records",
+  {
+    id: id(),
+    propertyId: text("property_id")
+      .notNull()
+      .references(() => properties.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    termType: text("term_type").$type<LeaseTerm>().notNull(),
+    startsOn: text("starts_on"),
+    endsOn: text("ends_on"),
+    notes: text("notes"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [index("lease_property_idx").on(table.propertyId)],
 );

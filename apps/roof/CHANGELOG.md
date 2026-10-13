@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Preserve rental lease history and renewals with their own documents, date-derived status, month-to-month terms, overlap warnings, and migrated legacy details.
+
 - Guide property creation in a centered, nearly full-screen modal with relationship-specific details, review, and an optional property photo preview.
 - Separate rental/purchase relationships from lifecycle stages; preserve the same home through construction, possession, and ownership.
 - Keep insurance policies and their supporting documents as property-owned records, including prior policies and migrated metadata.

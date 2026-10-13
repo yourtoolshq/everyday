@@ -6,6 +6,7 @@ import { mapAppErrors } from "~/core/infrastructure/trpc-errors";
 import { documentMetadataSchema } from "~/lib/documents";
 import { eventFieldsSchema } from "~/lib/events";
 import { insuranceFieldsSchema } from "~/lib/insurance";
+import { leaseFieldsSchema } from "~/lib/leases";
 import { propertyFieldsSchema } from "~/lib/properties";
 import {
   attachDocument,
@@ -27,12 +28,13 @@ export const propertiesRouter = createTRPCRouter({
   detail: publicProcedure.input(idInput).query(({ ctx, input }) =>
     mapAppErrors(async () => {
       const property = await repository.requireProperty(ctx.db, input.id);
-      const [events, documents, insurance] = await Promise.all([
+      const [events, documents, insurance, leases] = await Promise.all([
         repository.listEvents(ctx.db, input.id),
         repository.listDocuments(ctx.db, input.id),
         repository.listInsurance(ctx.db, input.id),
+        repository.listLeases(ctx.db, input.id),
       ]);
-      return { property, events, documents, insurance };
+      return { property, events, documents, insurance, leases };
     }),
   ),
   create: publicProcedure
@@ -42,6 +44,18 @@ export const propertiesRouter = createTRPCRouter({
     .input(propertyFieldsSchema.and(idInput).and(photoInput))
     .mutation(({ ctx, input }) =>
       mapAppErrors(() => saveProperty(ctx, input, input.id)),
+    ),
+  saveLease: publicProcedure
+    .input(
+      leaseFieldsSchema.and(z.object({ id: z.string().uuid().optional() })),
+    )
+    .mutation(({ ctx, input }) =>
+      mapAppErrors(() => repository.saveLease(ctx.db, input, input.id)),
+    ),
+  deleteLease: publicProcedure
+    .input(idInput)
+    .mutation(({ ctx, input }) =>
+      mapAppErrors(() => repository.deleteLease(ctx.db, input.id)),
     ),
   saveInsurance: publicProcedure
     .input(

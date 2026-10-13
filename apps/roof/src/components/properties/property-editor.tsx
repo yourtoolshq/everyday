@@ -49,9 +49,6 @@ import { Field, formValues } from "./forms";
 const detailLabels: Record<string, string> = {
   moveInDate: "Move-in",
   moveOutDate: "Move-out",
-  leaseStartDate: "Lease starts",
-  leaseEndDate: "Lease ends",
-  leaseNotes: "Lease notes",
   landlordName: "Landlord or property manager",
   landlordEmail: "Contact email",
   landlordPhone: "Contact phone",
@@ -70,7 +67,7 @@ const stepDescriptions = [
   "Choose your relationship. You can update its stage as things change.",
   "An address and photo make it easier to recognize. Both are optional.",
   "Just the details that belong to this property. Everything here is optional.",
-  "Check the essentials. You can add insurance, documents, and visits after saving.",
+  "Check the essentials. You can add leases, insurance, documents, and visits after saving.",
 ];
 
 export function PropertyEditor({
@@ -133,9 +130,6 @@ export function PropertyEditor({
     const data = formValues(form.current!);
     const rentalKeys = [
       "moveOutDate",
-      "leaseStartDate",
-      "leaseEndDate",
-      "leaseNotes",
       "landlordName",
       "landlordEmail",
       "landlordPhone",
@@ -532,18 +526,6 @@ export function PropertyEditor({
                           value={property?.moveOutDate}
                         />
                       </div>
-                      <Field
-                        name="leaseStartDate"
-                        label="Lease starts"
-                        date
-                        value={property?.leaseStartDate}
-                      />
-                      <Field
-                        name="leaseEndDate"
-                        label="Lease ends"
-                        date
-                        value={property?.leaseEndDate}
-                      />
                     </div>
                     <div className="space-y-5 border-t pt-6">
                       <h3 className="font-medium">
@@ -568,12 +550,6 @@ export function PropertyEditor({
                           value={property?.landlordPhone}
                         />
                       </div>
-                      <Field
-                        name="leaseNotes"
-                        label="Lease notes"
-                        area
-                        value={property?.leaseNotes}
-                      />
                     </div>
                   </fieldset>
                   <fieldset

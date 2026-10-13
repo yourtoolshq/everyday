@@ -7,10 +7,12 @@ import type { db } from "~/server/db";
 import { documentMetadataSchema } from "~/lib/documents";
 import { eventFieldsSchema } from "~/lib/events";
 import { insuranceFieldsSchema } from "~/lib/insurance";
+import { leaseFieldsSchema } from "~/lib/leases";
 import { propertyFieldsSchema } from "~/lib/properties";
 import {
   documents,
   insuranceRecords,
+  leaseRecords,
   properties,
   propertyEvents,
 } from "~/server/db/schema";
@@ -31,9 +33,6 @@ const propertyProjection = {
   postalCode: properties.postalCode,
   moveInDate: properties.moveInDate,
   moveOutDate: properties.moveOutDate,
-  leaseStartDate: properties.leaseStartDate,
-  leaseEndDate: properties.leaseEndDate,
-  leaseNotes: properties.leaseNotes,
   landlordName: properties.landlordName,
   landlordEmail: properties.landlordEmail,
   landlordPhone: properties.landlordPhone,
@@ -59,6 +58,7 @@ const documentProjection = {
   propertyId: documents.propertyId,
   eventId: documents.eventId,
   insuranceId: documents.insuranceId,
+  leaseId: documents.leaseId,
   type: documents.type,
   title: documents.title,
   documentDate: documents.documentDate,
@@ -205,6 +205,7 @@ export async function updateDocument(
   const existing = await requireDocument(database, id);
   await requireEvent(database, existing.propertyId, input.eventId);
   await requireInsurance(database, existing.propertyId, input.insuranceId);
+  await requireLease(database, existing.propertyId, input.leaseId);
   const [document] = await database
     .update(documents)
     .set({ ...input, updatedAt: new Date().toISOString() })
@@ -287,4 +288,66 @@ export async function setPropertyPhoto(
     .set({ photoFileId: fileId })
     .where(eq(properties.id, id));
   return requireProperty(database, id);
+}
+
+const leaseProjection = {
+  id: leaseRecords.id,
+  propertyId: leaseRecords.propertyId,
+  title: leaseRecords.title,
+  termType: leaseRecords.termType,
+  startsOn: leaseRecords.startsOn,
+  endsOn: leaseRecords.endsOn,
+  notes: leaseRecords.notes,
+};
+export function listLeases(database: Database, propertyId: string) {
+  return database
+    .select(leaseProjection)
+    .from(leaseRecords)
+    .where(eq(leaseRecords.propertyId, propertyId))
+    .orderBy(desc(leaseRecords.startsOn), desc(leaseRecords.createdAt));
+}
+export async function requireLease(
+  database: Database,
+  propertyId: string,
+  id?: string | null,
+) {
+  if (!id) return;
+  const [record] = await database
+    .select(leaseProjection)
+    .from(leaseRecords)
+    .where(eq(leaseRecords.id, id));
+  if (!record || record.propertyId !== propertyId)
+    throw invalidInput("Choose a lease from this property.");
+  return record;
+}
+export async function saveLease(
+  database: Database,
+  input: z.infer<typeof leaseFieldsSchema>,
+  id?: string,
+) {
+  input = leaseFieldsSchema.parse(input);
+  const property = await requireProperty(database, input.propertyId);
+  if (property.relationship !== "rental")
+    throw invalidInput("Leases belong to rentals.");
+  if (id) await requireLease(database, input.propertyId, id);
+  const [record] = id
+    ? await database
+        .update(leaseRecords)
+        .set({ ...input, updatedAt: new Date().toISOString() })
+        .where(eq(leaseRecords.id, id))
+        .returning(leaseProjection)
+    : await database
+        .insert(leaseRecords)
+        .values(input)
+        .returning(leaseProjection);
+  if (!record) throw notFound("Lease not found.");
+  return record;
+}
+export async function deleteLease(database: Database, id: string) {
+  const [record] = await database
+    .delete(leaseRecords)
+    .where(eq(leaseRecords.id, id))
+    .returning(leaseProjection);
+  if (!record) throw notFound("Lease not found.");
+  return record;
 }

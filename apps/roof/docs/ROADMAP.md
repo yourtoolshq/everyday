@@ -18,6 +18,7 @@ Usable workflows for:
 - Past rentals (archive + events)
 - Planned property visits, local appointment time, notes, and supporting images/documents
 - Purchase-to-owned stages on one continuous property record
+- Rental-owned leases and renewals with supporting files, explicit month-to-month terms, and date-derived status
 - Guided property creation, optional photo preview, and property-owned insurance records
 
 Acceptance: create and edit records, empty states, upload/open/delete documents owned by a property or event.
