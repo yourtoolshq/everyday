@@ -54,9 +54,6 @@ export const propertyFieldsSchema = z
     postalCode: optionalText(20),
     moveInDate: optionalDate,
     moveOutDate: optionalDate,
-    leaseStartDate: optionalDate,
-    leaseEndDate: optionalDate,
-    leaseNotes: optionalText(4000),
     landlordName: optionalText(120),
     landlordEmail: z.string().trim().email().max(160).nullable().optional(),
     landlordPhone: optionalText(40),
@@ -81,24 +78,16 @@ export const propertyFieldsSchema = z
       });
     if (
       value.relationship === "purchase" &&
-      [
-        value.leaseStartDate,
-        value.leaseEndDate,
-        value.leaseNotes,
-        value.landlordName,
-        value.landlordEmail,
-        value.landlordPhone,
-      ].some(Boolean)
+      [value.landlordName, value.landlordEmail, value.landlordPhone].some(
+        Boolean,
+      )
     )
       ctx.addIssue({
         code: "custom",
-        path: ["leaseStartDate"],
-        message: "Lease and landlord details belong to rentals.",
+        path: ["landlordName"],
+        message: "Landlord details belong to rentals.",
       });
-    for (const [start, end] of [
-      ["moveInDate", "moveOutDate"],
-      ["leaseStartDate", "leaseEndDate"],
-    ] as const) {
+    for (const [start, end] of [["moveInDate", "moveOutDate"]] as const) {
       if (value[start] && value[end] && value[start]! > value[end]!)
         ctx.addIssue({
           code: "custom",

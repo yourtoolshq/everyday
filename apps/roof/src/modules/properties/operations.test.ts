@@ -105,3 +105,113 @@ test("claims, replaces, and removes property photos transactionally; keeps polic
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("lease files retain originals after deletion and reject cross-property links on attach and edit", async () => {
+  const root = await mkdtemp(join(tmpdir(), "roof-leases-"));
+  const platform = defineDataPlatform({
+    app: "roof",
+    dataDir: root,
+    db: { schema, migrationsFolder: "drizzle" },
+  });
+  try {
+    await platform.settled();
+    const ctx = { db: platform.db, files: platform.files };
+    const rental = await saveProperty(ctx, {
+      name: "Maple rental",
+      relationship: "rental",
+      stage: "current",
+    });
+    const other = await saveProperty(ctx, {
+      name: "Cedar rental",
+      relationship: "rental",
+      stage: "past",
+    });
+    const home = await saveProperty(ctx, {
+      name: "Example home",
+      relationship: "purchase",
+      stage: "owned",
+    });
+    const input = {
+      propertyId: rental.id,
+      title: "Original lease",
+      termType: "fixed_term" as const,
+      startsOn: "2026-10-01",
+      endsOn: "2027-09-30",
+    };
+    const lease = await repository.saveLease(ctx.db, input);
+    await repository.saveLease(ctx.db, {
+      ...input,
+      title: "Renewal",
+      startsOn: "2027-10-01",
+      endsOn: "2028-09-30",
+    });
+    expect(await repository.listLeases(ctx.db, rental.id)).toHaveLength(2);
+    await expect(
+      repository.saveLease(ctx.db, { ...input, propertyId: home.id }),
+    ).rejects.toThrow("rentals");
+    await expect(
+      repository.saveLease(
+        ctx.db,
+        { ...input, propertyId: other.id },
+        lease.id,
+      ),
+    ).rejects.toThrow("this property");
+    const bytes = new TextEncoder().encode(
+      "From: example@example.invalid\nSubject: Lease confirmation\n\nFictional confirmation",
+    );
+    const file = await platform.files.stage({
+      endpoint: "document",
+      originalFilename: "confirmation.eml",
+      bytes,
+      type: { group: "eml", mimeType: "message/rfc822", extension: "eml" },
+    });
+    await expect(
+      attachDocument(ctx, {
+        propertyId: other.id,
+        leaseId: lease.id,
+        title: "Confirmation",
+        type: "correspondence",
+        file: file.token,
+      }),
+    ).rejects.toThrow("this property");
+    const doc = await attachDocument(ctx, {
+      propertyId: rental.id,
+      leaseId: lease.id,
+      title: "Confirmation",
+      type: "correspondence",
+      file: file.token,
+    });
+    const otherLease = await repository.saveLease(ctx.db, {
+      ...input,
+      propertyId: other.id,
+    });
+    await expect(
+      repository.updateDocument(ctx.db, doc.id, {
+        title: doc.title,
+        type: doc.type,
+        leaseId: otherLease.id,
+      }),
+    ).rejects.toThrow("this property");
+    await repository.updateDocument(ctx.db, doc.id, {
+      title: doc.title,
+      type: doc.type,
+      leaseId: null,
+    });
+    expect(
+      (await repository.listDocuments(ctx.db, rental.id))[0]?.leaseId,
+    ).toBeNull();
+    await repository.updateDocument(ctx.db, doc.id, {
+      title: doc.title,
+      type: doc.type,
+      leaseId: lease.id,
+    });
+    await repository.deleteLease(ctx.db, lease.id);
+    expect(
+      (await repository.listDocuments(ctx.db, rental.id))[0]?.leaseId,
+    ).toBeNull();
+    expect(await platform.files.get(doc.fileId)).toBeTruthy();
+  } finally {
+    platform.close();
+    await rm(root, { recursive: true, force: true });
+  }
+});

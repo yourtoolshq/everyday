@@ -60,7 +60,46 @@ describe("roof migrations", () => {
       await client.execute(
         "INSERT INTO documents (id, property_id, event_id, type, title, file_id, original_filename, mime_type, size_bytes) VALUES ('doc', 'under_construction', 'event', 'photo', 'Fictional photo', 'file', 'example.png', 'image/png', 10)",
       );
+      await client.execute(
+        "UPDATE properties SET lease_start_date = '2026-10-01', lease_end_date = '2027-09-30', lease_notes = 'Fictional legacy notes' WHERE id = 'current_rental'",
+      );
+      await client.execute(
+        "UPDATE properties SET lease_notes = 'Only notes known' WHERE id = 'past_rental'",
+      );
       await migrate(drizzle(client), { migrationsFolder });
+      const leases = await client.execute(
+        "SELECT property_id, starts_on, ends_on, notes FROM lease_records ORDER BY property_id",
+      );
+      expect(leases.rows).toEqual([
+        expect.objectContaining({
+          property_id: "current_rental",
+          starts_on: "2026-10-01",
+          ends_on: "2027-09-30",
+          notes: "Fictional legacy notes",
+        }),
+        expect.objectContaining({
+          property_id: "past_rental",
+          starts_on: null,
+          ends_on: null,
+          notes: "Only notes known",
+        }),
+      ]);
+      expect(
+        (
+          await client.execute(
+            "SELECT lease_start_date FROM properties WHERE id = 'current_rental'",
+          )
+        ).rows[0]?.lease_start_date,
+      ).toBe("2026-10-01");
+      expect(
+        (await client.execute("SELECT lease_id FROM documents")).rows[0]
+          ?.lease_id,
+      ).toBeNull();
+      await migrate(drizzle(client), { migrationsFolder });
+      expect(
+        (await client.execute("SELECT id FROM lease_records")).rows,
+      ).toHaveLength(2);
+
       const properties = await client.execute(
         "SELECT id, relationship, stage, target_possession_date FROM properties ORDER BY id",
       );
@@ -118,6 +157,7 @@ describe("roof migrations", () => {
       expect.arrayContaining([
         "documents",
         "insurance_records",
+        "lease_records",
         "properties",
         "property_events",
         "yt_files",

@@ -20,11 +20,13 @@ export function attachDocument(
     await repository.requireProperty(tx, input.propertyId);
     await repository.requireEvent(tx, input.propertyId, input.eventId);
     await repository.requireInsurance(tx, input.propertyId, input.insuranceId);
+    await repository.requireLease(tx, input.propertyId, input.leaseId);
     const file = await files.claim(input.file);
     return repository.insertDocument(tx, {
       propertyId: input.propertyId,
       eventId: input.eventId ?? null,
       insuranceId: input.insuranceId ?? null,
+      leaseId: input.leaseId ?? null,
       title: input.title,
       type: input.type,
       documentDate: input.documentDate ?? null,

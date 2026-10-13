@@ -19,8 +19,8 @@ test("validates real dates and ordered tenancy dates", () => {
       name: "Rental",
       relationship: "rental",
       stage: "current",
-      leaseStartDate: "2026-10-01",
-      leaseEndDate: "2026-09-30",
+      moveInDate: "2026-10-01",
+      moveOutDate: "2026-09-30",
     }).success,
   ).toBe(false);
 });

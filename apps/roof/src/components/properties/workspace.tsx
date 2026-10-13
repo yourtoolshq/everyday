@@ -46,6 +46,7 @@ import {
 import { api } from "~/trpc/react";
 import { DocumentEditor, HistoryEditor, PropertyEditor } from "./forms";
 import { InsuranceSection } from "./insurance";
+import { LeaseSection } from "./leases";
 
 function Loading() {
   return (
@@ -230,15 +231,6 @@ function PropertyDetails({ property }: { property: Property }) {
                 value={formatDateLabel(property.moveOutDate)}
               />
               <DetailLine
-                label="Lease starts"
-                value={formatDateLabel(property.leaseStartDate)}
-              />
-              <DetailLine
-                label="Lease ends"
-                value={formatDateLabel(property.leaseEndDate)}
-              />
-              <DetailLine label="Lease notes" value={property.leaseNotes} />
-              <DetailLine
                 label="Landlord or property manager"
                 value={property.landlordName}
               />
@@ -267,6 +259,7 @@ export function PropertyWorkspace({ id }: { id: string }) {
     document?: Document;
     eventId?: string;
     insuranceId?: string;
+    leaseId?: string;
   } | null>(null);
   const [deleting, setDeleting] = useState<{
     type: "event" | "document";
@@ -487,6 +480,24 @@ export function PropertyWorkspace({ id }: { id: string }) {
               </p>
             )}
           </section>
+          {property.relationship === "rental" && (
+            <LeaseSection
+              property={property}
+              records={query.data.leases}
+              documents={documents}
+              refresh={refresh}
+              onAttach={(leaseId) => setDocument({ leaseId })}
+              onEditDocument={(document) => setDocument({ document })}
+              onDeleteDocument={(document) => {
+                setDeleteError(null);
+                setDeleting({
+                  type: "document",
+                  id: document.id,
+                  title: document.title,
+                });
+              }}
+            />
+          )}
           <InsuranceSection
             property={property}
             records={query.data.insurance}
@@ -520,11 +531,14 @@ export function PropertyWorkspace({ id }: { id: string }) {
                 Add document
               </Button>
             </div>
-            {documents.filter((doc) => !doc.eventId && !doc.insuranceId)
-              .length ? (
+            {documents.filter(
+              (doc) => !doc.eventId && !doc.insuranceId && !doc.leaseId,
+            ).length ? (
               <div className="space-y-2">
                 {documents
-                  .filter((doc) => !doc.eventId && !doc.insuranceId)
+                  .filter(
+                    (doc) => !doc.eventId && !doc.insuranceId && !doc.leaseId,
+                  )
                   .map((doc) => (
                     <DocumentRow
                       key={doc.id}
@@ -583,6 +597,7 @@ export function PropertyWorkspace({ id }: { id: string }) {
           propertyId={id}
           events={events}
           insurance={query.data.insurance}
+          leases={query.data.leases}
           {...document}
           onClose={() => setDocument(null)}
           onSaved={refresh}

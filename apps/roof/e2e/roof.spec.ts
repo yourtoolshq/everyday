@@ -123,17 +123,14 @@ test("property purchase, visit evidence, lifecycle, and rental history", async (
     page.getByLabel("Insurance provider", { exact: true }),
   ).toHaveCount(0);
   await page
-    .getByLabel("Lease starts", { exact: true })
+    .getByLabel("Move-in date", { exact: true })
     .fill("October 01, 2026");
-  await page
-    .getByLabel("Lease ends", { exact: true })
-    .fill("September 30, 2027");
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await expect(page.getByLabel("Property name")).toHaveValue(
     `Maple rental ${suffix}`,
   );
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page.getByLabel("Lease starts", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Move-in date", { exact: true })).toHaveValue(
     "October 01, 2026",
   );
   await page.getByRole("button", { name: "Continue", exact: true }).click();
@@ -233,7 +230,7 @@ test("preserves relationship-specific drafts and stages when switching choices",
   await page.getByLabel("Property name").fill("Switching draft");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page
-    .getByLabel("Lease starts", { exact: true })
+    .getByLabel("Move-in date", { exact: true })
     .fill("October 01, 2026");
   await page.getByRole("button", { name: "Back", exact: true }).click();
   await page.getByRole("button", { name: "Back", exact: true }).click();
@@ -248,7 +245,7 @@ test("preserves relationship-specific drafts and stages when switching choices",
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByLabel("Property name")).toHaveValue("Switching draft");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await expect(page.getByLabel("Lease starts", { exact: true })).toHaveValue(
+  await expect(page.getByLabel("Move-in date", { exact: true })).toHaveValue(
     "October 01, 2026",
   );
   await page.getByRole("button", { name: "Continue", exact: true }).click();
