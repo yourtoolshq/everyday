@@ -218,6 +218,11 @@ function FailedUpdateScreen({
     setDismissing(true);
     setActionError(null);
     try {
+      // Verification can fail in the renderer before the controller commits.
+      // Persist that failure so recovery actions can dismiss the trial intent.
+      await bridge.markTrialFailed(
+        trial.failureReason ?? "The updated app could not be verified.",
+      );
       const result = await bridge.dismissTrialFailure();
       if (!result.completed) {
         setActionError(

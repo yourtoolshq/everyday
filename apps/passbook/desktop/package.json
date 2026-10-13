@@ -14,7 +14,8 @@
       {
         "provider": "github",
         "owner": "yourtoolshq",
-        "repo": "everyday"
+        "repo": "everyday",
+        "channel": "passbook"
       }
     ],
     "directories": {
@@ -71,7 +72,9 @@
         }
       ],
       "category": "public.app-category.productivity",
-      "artifactName": "Passbook-${version}-${arch}.${ext}"
+      "artifactName": "Passbook-${version}-${arch}.${ext}",
+      "hardenedRuntime": true,
+      "notarize": true
     }
   },
   "scripts": {
@@ -83,6 +86,7 @@
     "lint": "eslint .",
     "package:linux": "pnpm build:client && pnpm build:host && pnpm build && electron-builder --linux --publish never",
     "package:mac": "pnpm build:client && pnpm build:host && pnpm build && electron-builder --mac --arm64 --publish never",
+    "package:mac:ci": "pnpm build:client && pnpm build:host && pnpm build && electron-builder --mac --arm64 --publish never --config.forceCodeSigning=true",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

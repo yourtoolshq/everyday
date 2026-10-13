@@ -130,7 +130,7 @@ async function createMainWindow() {
   });
 
   mainWindow.on("close", (event) => {
-    if (!quitting) {
+    if (!quitting && !isUpdateInstallQuitPending()) {
       event.preventDefault();
       mainWindow?.hide();
     }
@@ -188,6 +188,20 @@ if (gotSingleInstanceLock) {
         dataDir: resolved.dataDir,
         hostUrl: resolved.hostUrl,
         previousVersion: resolved.appVersion,
+        isHostExternal: () => !hostOwnedByDesktop,
+        preInstallPrepare: async () => {
+          if (!hostOwnedByDesktop) {
+            throw new Error(
+              "Passbook is connected to an external data host. Quit Passbook and any external host, then open Passbook from the application folder to install updates.",
+            );
+          }
+          if (host?.isRunning()) {
+            await host.stop();
+          }
+        },
+        onInstallFailureRecover: async () => {
+          await ensureHostReady();
+        },
       });
       await createMainWindow();
     } catch (error) {
@@ -214,9 +228,6 @@ app.on("activate", () => {
 app.on("before-quit", (event) => {
   if (isUpdateInstallQuitPending()) {
     quitting = true;
-    if (hostOwnedByDesktop && host?.isRunning()) {
-      void host.stop();
-    }
     return;
   }
   if (

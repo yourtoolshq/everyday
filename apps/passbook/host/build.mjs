@@ -5,6 +5,8 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
+import { resolveLibsqlNativeRuntime } from "./native-runtime.mjs";
+
 const hostRoot = dirname(fileURLToPath(import.meta.url));
 const passbookRoot = resolve(hostRoot, "..");
 const distRoot = resolve(hostRoot, "dist");
@@ -27,11 +29,8 @@ await build({
 });
 
 if (bundleNativeRuntime) {
-  const nativePackage = `@libsql/${process.platform}-${process.arch}`;
-  const clientEntry = require.resolve("@libsql/client");
-  const nativeEntry = require.resolve(nativePackage, {
-    paths: [dirname(clientEntry)],
-  });
+  const { packageName: nativePackage, entry: nativeEntry } =
+    resolveLibsqlNativeRuntime(require.resolve("@libsql/client"));
   const nativeTarget = resolve(distRoot, "node_modules", nativePackage);
   await mkdir(resolve(nativeTarget, ".."), { recursive: true });
   await cp(dirname(nativeEntry), nativeTarget, { recursive: true });

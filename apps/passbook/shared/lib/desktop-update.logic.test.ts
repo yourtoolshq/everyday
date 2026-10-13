@@ -2,9 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { DesktopUpdateState } from "./desktop-update.types";
 import {
+  getDesktopUpdateActionError,
   getDesktopUpdateButtonLabel,
+  getDesktopUpdateButtonTooltip,
   getDesktopUpdateInstallConfirmationMessage,
   getDesktopUpdateReleaseUrl,
+  isDesktopUpdateButtonDisabled,
   resolveDesktopUpdateButtonAction,
   shouldShowDesktopUpdateButton,
 } from "./desktop-update.logic";
@@ -58,6 +61,34 @@ describe("desktop update logic", () => {
   it("uses the same action button to check for updates", () => {
     expect(resolveDesktopUpdateButtonAction(baseState())).toBe("check");
     expect(getDesktopUpdateButtonLabel(baseState())).toBe("Check for updates");
+  });
+
+  it("blocks repeated install actions while native staging is pending", () => {
+    const state = baseState({
+      status: "installing",
+      downloadedVersion: "0.1.1",
+    });
+    expect(resolveDesktopUpdateButtonAction(state)).toBe("none");
+    expect(isDesktopUpdateButtonDisabled(state)).toBe(true);
+    expect(getDesktopUpdateButtonLabel(state)).toBe(
+      "Preparing update and restart",
+    );
+    expect(getDesktopUpdateButtonTooltip(state)).toContain(
+      "restart when it is ready",
+    );
+  });
+
+  it("explains an install rejected because the desktop does not own the host", () => {
+    const state = baseState({
+      status: "downloaded",
+      downloadedVersion: "0.1.1",
+      errorContext: "install",
+      message: "Passbook is connected to an external data host.",
+    });
+    expect(
+      getDesktopUpdateActionError({ accepted: false, completed: false, state }),
+    ).toBe(state.message);
+    expect(getDesktopUpdateButtonTooltip(state)).toBe(state.message);
   });
 
   it("hides the pill while a post-update trial is active", () => {

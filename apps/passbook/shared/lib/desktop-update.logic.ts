@@ -37,7 +37,8 @@ export function getDesktopUpdateReleaseUrl(
 export function resolveDesktopUpdateButtonAction(
   state: DesktopUpdateState,
 ): DesktopUpdateButtonAction {
-  if (!state.enabled || state.trial) return "none";
+  if (!state.enabled || state.trial || state.status === "installing")
+    return "none";
   if (state.downloadedVersion) return "install";
   if (state.status === "available") return "download";
   if (state.status === "error" && state.errorContext === "download") {
@@ -58,10 +59,11 @@ export function shouldShowDesktopUpdateButton(
 export function isDesktopUpdateButtonDisabled(
   state: DesktopUpdateState | null,
 ): boolean {
-  return state?.status === "downloading";
+  return state?.status === "downloading" || state?.status === "installing";
 }
 
 export function getDesktopUpdateButtonLabel(state: DesktopUpdateState): string {
+  if (state.status === "installing") return "Preparing update and restart";
   const action = resolveDesktopUpdateButtonAction(state);
   if (action === "check") return "Check for updates";
   if (action === "install") return "Restart to update";
@@ -78,7 +80,10 @@ export function getDesktopUpdateButtonLabel(state: DesktopUpdateState): string {
 export function getDesktopUpdateButtonTooltip(
   state: DesktopUpdateState,
 ): string {
+  if (state.errorContext === "install" && state.message) return state.message;
   if (state.status === "checking") return "Checking for updates";
+  if (state.status === "installing")
+    return "Preparing update. Passbook will restart when it is ready.";
   if (state.status === "available") {
     return `Update ${state.availableVersion ?? "available"} ready to download`;
   }
@@ -116,7 +121,8 @@ export function getDesktopUpdateInstallConfirmationMessage(
 export function getDesktopUpdateActionError(
   result: DesktopUpdateActionResult,
 ): string | null {
-  if (!result.accepted || result.completed) return null;
+  if (result.completed) return null;
+  if (!result.accepted && result.state.errorContext !== "install") return null;
   const message = result.state.message?.trim();
   return message ? message : null;
 }
