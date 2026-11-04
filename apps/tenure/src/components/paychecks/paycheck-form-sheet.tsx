@@ -282,10 +282,7 @@ export function PaycheckFormSheet({
         ] as const
       ).map((field) => [
         field,
-        entryToCents(
-          amounts[field],
-          field === "deductionCorrectionCents",
-        ),
+        entryToCents(amounts[field], field === "deductionCorrectionCents"),
       ]),
     ) as Record<AmountField, number | null>;
 
