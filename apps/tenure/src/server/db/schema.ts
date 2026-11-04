@@ -182,6 +182,9 @@ export const paychecks = sqliteTable(
     travelMedicalCents: integer("travel_medical_cents").notNull().default(0),
     unionDuesCents: integer("union_dues_cents").notNull().default(0),
     otherDeductionsCents: integer("other_deductions_cents").notNull(),
+    deductionCorrectionCents: integer("deduction_correction_cents")
+      .notNull()
+      .default(0),
     netPayCents: integer("net_pay_cents").notNull(),
     documentId: text("document_id").references(() => documents.id, {
       onDelete: "set null",

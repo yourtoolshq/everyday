@@ -51,6 +51,7 @@ const fieldLabels: Record<(typeof paycheckImportFields)[number], string> = {
   travelMedicalCents: "Travel medical (cents)",
   unionDuesCents: "Union dues (cents)",
   otherDeductionsCents: "Other deductions (cents)",
+  deductionCorrectionCents: "Deduction correction (cents; signed)",
 };
 
 type PaycheckImportSheetProps = {

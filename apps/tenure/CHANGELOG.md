@@ -6,6 +6,7 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Added
 
+- Add an optional signed deduction correction line to faithfully record deduction credits and reversals on pay stubs.
 - Employers can have optional PNG or WebP icons, contact details, and structured addresses in different countries. Employer icons appear beside names throughout Tenure, and the employment list shows a flag when the employer has a country.
 
 ### Changed

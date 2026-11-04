@@ -82,6 +82,7 @@ describe("paycheck repository slice", () => {
       travelMedicalCents: 0,
       unionDuesCents: 0,
       otherDeductionsCents: 0,
+      deductionCorrectionCents: -500,
     });
 
     const items = await listPaychecksByEmployment(repository, employmentId);
@@ -90,7 +91,7 @@ describe("paycheck repository slice", () => {
       employmentId,
       payDate: "2024-01-15",
       grossPayCents: 100_000,
-      netPayCents: 83_500,
+      netPayCents: 84_000,
       documentId: null,
       documentTitle: null,
     });
@@ -118,6 +119,7 @@ describe("paycheck repository slice", () => {
         travelMedicalCents: 0,
         unionDuesCents: 0,
         otherDeductionsCents: 0,
+        deductionCorrectionCents: 0,
       }),
     ).rejects.toSatisfy(
       (error: unknown) => isAppError(error) && error.code === "not_found",

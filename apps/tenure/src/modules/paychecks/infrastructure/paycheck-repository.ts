@@ -29,6 +29,7 @@ export type PaycheckListItem = {
   travelMedicalCents: number;
   unionDuesCents: number;
   otherDeductionsCents: number;
+  deductionCorrectionCents: number;
   netPayCents: number;
   documentId: string | null;
   documentTitle: string | null;
@@ -58,6 +59,7 @@ export type PaycheckRecord = {
   travelMedicalCents: number;
   unionDuesCents: number;
   otherDeductionsCents: number;
+  deductionCorrectionCents: number;
   netPayCents: number;
   documentId: string | null;
   createdAt: string;
@@ -83,6 +85,7 @@ const paycheckListColumns = {
   travelMedicalCents: paychecks.travelMedicalCents,
   unionDuesCents: paychecks.unionDuesCents,
   otherDeductionsCents: paychecks.otherDeductionsCents,
+  deductionCorrectionCents: paychecks.deductionCorrectionCents,
   netPayCents: paychecks.netPayCents,
   documentId: paychecks.documentId,
   documentTitle: documents.title,
@@ -112,6 +115,7 @@ const paycheckRecordColumns = {
   travelMedicalCents: paychecks.travelMedicalCents,
   unionDuesCents: paychecks.unionDuesCents,
   otherDeductionsCents: paychecks.otherDeductionsCents,
+  deductionCorrectionCents: paychecks.deductionCorrectionCents,
   netPayCents: paychecks.netPayCents,
   documentId: paychecks.documentId,
   createdAt: paychecks.createdAt,

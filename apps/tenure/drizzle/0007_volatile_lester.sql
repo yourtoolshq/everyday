@@ -1,0 +1,1 @@
+ALTER TABLE `paychecks` ADD `deduction_correction_cents` integer DEFAULT 0 NOT NULL;
