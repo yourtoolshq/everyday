@@ -18,8 +18,9 @@ describe("paycheck deductions", () => {
       travelMedicalCents: 0,
       unionDuesCents: 0,
       otherDeductionsCents: 500,
+      deductionCorrectionCents: -250,
     });
 
-    expect(net).toBe(75_500);
+    expect(net).toBe(75_750);
   });
 });

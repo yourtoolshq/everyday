@@ -77,4 +77,23 @@ describe("paycheck csv import", () => {
     expect(input.payDate).toBe("2025-01-20");
     expect(input.grossPayCents).toBe(250000);
   });
+
+  it("imports a signed deduction correction", () => {
+    const correctionCsv = `pay_date,gross_pay_cents,deduction_correction_cents
+2025-01-20,250000,-1250`;
+    const mapping = detectPaycheckColumnMapping(
+      correctionCsv.split("\n")[0]!.split(","),
+    );
+    const preview = buildPaycheckImportPreview({
+      csvText: correctionCsv,
+      mapping,
+      lifecycle,
+      payFrequency: "irregular",
+      biweeklyAnchorDate: null,
+      existingPaychecks: [],
+    });
+
+    expect(preview.validCount).toBe(1);
+    expect(preview.rows[0]?.deductionCorrectionCents).toBe(-1250);
+  });
 });

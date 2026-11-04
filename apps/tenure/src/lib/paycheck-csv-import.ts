@@ -23,6 +23,7 @@ export const paycheckImportFields = [
   "travelMedicalCents",
   "unionDuesCents",
   "otherDeductionsCents",
+  "deductionCorrectionCents",
 ] as const;
 
 export type PaycheckImportField = (typeof paycheckImportFields)[number];
@@ -53,6 +54,7 @@ export type PaycheckImportPreviewRow = {
   travelMedicalCents: number;
   unionDuesCents: number;
   otherDeductionsCents: number;
+  deductionCorrectionCents: number;
   isDuplicate: boolean;
   errors: string[];
   warnings: string[];
@@ -83,6 +85,7 @@ const taxbookPresetMapping: PaycheckColumnMapping = {
   travelMedicalCents: "travel_medical_cents",
   unionDuesCents: "union_dues_cents",
   otherDeductionsCents: "other_deductions_cents",
+  deductionCorrectionCents: "deduction_correction_cents",
   periodStartDate: "period_start_date",
   periodEndDate: "period_end_date",
 };
@@ -163,11 +166,14 @@ function parseInteger(
   value: string | undefined,
   fieldLabel: string,
   errors: string[],
+  options: { allowNegative?: boolean } = {},
 ): number {
   if (!value || value.trim().length === 0) return 0;
   const parsed = Number(value.trim());
-  if (!Number.isInteger(parsed) || parsed < 0) {
-    errors.push(`${fieldLabel} must be a non-negative whole number.`);
+  if (!Number.isInteger(parsed) || (!options.allowNegative && parsed < 0)) {
+    errors.push(
+      `${fieldLabel} must be ${options.allowNegative ? "a whole number" : "a non-negative whole number"}.`,
+    );
     return 0;
   }
   return parsed;
@@ -335,6 +341,12 @@ export function buildPaycheckImportPreview(input: {
         "Other deductions",
         errors,
       ),
+      deductionCorrectionCents: parseInteger(
+        read("deductionCorrectionCents"),
+        "Deduction correction",
+        errors,
+        { allowNegative: true },
+      ),
     };
 
     if (!payDate) {
@@ -429,6 +441,7 @@ export function paycheckImportRowToInput(
     travelMedicalCents: row.travelMedicalCents,
     unionDuesCents: row.unionDuesCents,
     otherDeductionsCents: row.otherDeductionsCents,
+    deductionCorrectionCents: row.deductionCorrectionCents,
   });
 }
 

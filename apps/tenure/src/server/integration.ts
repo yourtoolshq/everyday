@@ -56,6 +56,7 @@ export async function listIntegrationPaychecks(input: {
       travelMedicalCents: paychecks.travelMedicalCents,
       unionDuesCents: paychecks.unionDuesCents,
       otherDeductionsCents: paychecks.otherDeductionsCents,
+      deductionCorrectionCents: paychecks.deductionCorrectionCents,
       netPayCents: paychecks.netPayCents,
       hasStub: paychecks.documentId,
       createdAt: paychecks.createdAt,

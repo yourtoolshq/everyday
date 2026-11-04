@@ -45,7 +45,7 @@ An employer may have an optional icon, website, general contact email and phone,
 
 A **compensation change** records the agreed rate and when it took effect. It is not calculated from a pay stub. A **paycheck** records what was actually paid, including gross earnings, income tax, CPP, EI, and other line items. **Net pay is derived** from those line items, not entered independently; if the calculated net does not match the pay stub, a line item was entered incorrectly. A bonus, overtime, partial period, or deduction can change a paycheck without changing the agreed rate.
 
-Paycheck line items use a **fixed catalog** of earnings and deduction types. Each employment configures which catalog lines appear and in what order, since employer pay-stub formats differ. Amounts and the original file should remain traceable to that paycheck.
+Paycheck line items use a **fixed catalog** of earnings and deduction types. Each employment configures which catalog lines appear and in what order, since employer pay-stub formats differ. A **deduction correction** is the one signed deduction line: a negative value reverses part of a deduction and increases net pay. Amounts and the original file should remain traceable to that paycheck.
 
 ## Relationships and rules
 

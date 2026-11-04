@@ -367,6 +367,7 @@ export function PaycheckFormSheet({
       travelMedicalCents: parsedAmounts.travelMedicalCents!,
       unionDuesCents: parsedAmounts.unionDuesCents!,
       otherDeductionsCents: parsedAmounts.otherDeductionsCents!,
+      deductionCorrectionCents: parsedAmounts.deductionCorrectionCents!,
     };
 
     setSubmitting(true);
@@ -536,6 +537,11 @@ export function PaycheckFormSheet({
                     {computedIncomeTax ? (
                       <p className="text-muted-foreground text-xs">
                         Sum of federal and Manitoba tax withheld.
+                      </p>
+                    ) : field.amountField === "deductionCorrectionCents" ? (
+                      <p className="text-muted-foreground text-xs">
+                        Enter a negative amount for a deduction credit; it
+                        increases calculated net pay.
                       </p>
                     ) : null}
                   </div>

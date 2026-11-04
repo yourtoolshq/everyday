@@ -24,6 +24,7 @@ export type PaycheckWriteValues = {
   travelMedicalCents: number;
   unionDuesCents: number;
   otherDeductionsCents: number;
+  deductionCorrectionCents: number;
   netPayCents: number;
   payDate: string;
   periodStartDate: string;
@@ -51,6 +52,7 @@ export function buildPaycheckWriteValues(
       travelMedicalCents: input.travelMedicalCents,
       unionDuesCents: input.unionDuesCents,
       otherDeductionsCents: input.otherDeductionsCents,
+      deductionCorrectionCents: input.deductionCorrectionCents,
     },
     split,
   );

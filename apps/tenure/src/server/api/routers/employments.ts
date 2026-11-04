@@ -32,6 +32,7 @@ const deductionSettingsInput = z.object({
   travelMedicalEnabled: z.boolean(),
   unionDuesEnabled: z.boolean(),
   otherDeductionsEnabled: z.boolean(),
+  deductionCorrectionEnabled: z.boolean(),
   deductionFieldOrder: z.array(z.string()).nullable(),
 });
 

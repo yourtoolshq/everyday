@@ -85,6 +85,13 @@ export const deductionFields = [
     defaultEnabled: true,
     countsTowardNet: true,
   },
+  {
+    amountField: "deductionCorrectionCents",
+    enabledField: "deductionCorrectionEnabled",
+    label: "Deduction correction",
+    defaultEnabled: false,
+    countsTowardNet: true,
+  },
 ] as const;
 
 export type DeductionField = (typeof deductionFields)[number];
@@ -104,6 +111,7 @@ export type DeductionSettings = {
   travelMedicalEnabled: boolean;
   unionDuesEnabled: boolean;
   otherDeductionsEnabled: boolean;
+  deductionCorrectionEnabled: boolean;
   deductionFieldOrder: DeductionAmountField[] | null;
 };
 
@@ -274,6 +282,7 @@ export const paycheckAmountInput = z.object({
   travelMedicalCents: z.number().int().nonnegative().default(0),
   unionDuesCents: z.number().int().nonnegative().default(0),
   otherDeductionsCents: z.number().int().nonnegative(),
+  deductionCorrectionCents: z.number().int().default(0),
 });
 
 export const paycheckInput = paycheckAmountInput
