@@ -2,13 +2,16 @@ import { normalizeDecimalEntry } from "@yourtoolshq/ui/decimal-entry";
 
 export function dollarsToCents(
   value: string | null | undefined,
+  options: { allowNegative?: boolean } = {},
 ): number | null {
   if (value === null || value === undefined) return null;
   const result = normalizeDecimalEntry(value);
   if (!result.ok || result.value === "") return null;
 
   const amount = Number(result.value);
-  if (!Number.isFinite(amount) || amount < 0) return null;
+  if (!Number.isFinite(amount) || (!options.allowNegative && amount < 0)) {
+    return null;
+  }
   return Math.round(amount * 100);
 }
 

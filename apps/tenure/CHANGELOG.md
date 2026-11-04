@@ -21,4 +21,5 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Fixed
 
+- Deduction corrections now accept negative amounts, allowing deduction credits to increase calculated net pay.
 - Saving pay frequency updates the paycheck periods on the employment page without a manual reload.

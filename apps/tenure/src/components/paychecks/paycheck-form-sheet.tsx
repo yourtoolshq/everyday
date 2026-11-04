@@ -59,10 +59,10 @@ import { api } from "~/trpc/react";
 type Paycheck = RouterOutputs["paychecks"]["listByEmployment"][number];
 type AmountField = "grossPayCents" | DeductionAmountField;
 
-function entryToCents(value: string) {
+function entryToCents(value: string, allowNegative = false) {
   const result = normalizeDecimalEntry(value);
   if (!result.ok) return null;
-  return dollarsToCents(result.value);
+  return dollarsToCents(result.value, { allowNegative });
 }
 
 type PaycheckFormSheetProps = {
@@ -264,7 +264,10 @@ export function PaycheckFormSheet({
         }
         return (
           deductionSettings[field.enabledField] ||
-          (entryToCents(amounts[field.amountField]) ?? 0) > 0
+          (entryToCents(
+            amounts[field.amountField],
+            field.amountField === "deductionCorrectionCents",
+          ) ?? 0) !== 0
         );
       },
     );
@@ -277,7 +280,10 @@ export function PaycheckFormSheet({
           "grossPayCents",
           ...deductionFields.map((field) => field.amountField),
         ] as const
-      ).map((field) => [field, entryToCents(amounts[field])]),
+      ).map((field) => [
+        field,
+        entryToCents(amounts[field], field === "deductionCorrectionCents"),
+      ]),
     ) as Record<AmountField, number | null>;
 
     if (
@@ -341,7 +347,11 @@ export function PaycheckFormSheet({
     ).find(([field]) => parsedAmounts[field] === null);
 
     if (invalid) {
-      toast.error(`${invalid[1]} must be zero or a positive dollar value.`);
+      toast.error(
+        invalid[0] === "deductionCorrectionCents"
+          ? "Deduction correction must be a valid dollar value."
+          : `${invalid[1]} must be zero or a positive dollar value.`,
+      );
       return;
     }
     if (netPayCents === null || netPayCents < 0) {
