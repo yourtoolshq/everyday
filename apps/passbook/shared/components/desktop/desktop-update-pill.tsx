@@ -193,7 +193,10 @@ export function DesktopUpdatePill() {
                   <RefreshCwIcon
                     aria-hidden="true"
                     className={`size-4 ${
-                      state.status === "checking" ? "animate-spin" : ""
+                      state.status === "checking" ||
+                      state.status === "installing"
+                        ? "animate-spin"
+                        : ""
                     }`}
                   />
                 )}

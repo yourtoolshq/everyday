@@ -30,13 +30,17 @@ Extends [contracts.md](./contracts.md) and [ADR-0003](../adr/0003-managed-releas
 - Release artifacts embed the same version in the DMG, ZIP, and desktop metadata.
 - Candidate publication requires a complete artifact set; partial uploads do not
   advance the feed.
+- The app, release tag, and channel metadata use the same semver identity
+  (`0.1.1-passbook.YYYYMMDD.RUN`). The release title also displays a calendar
+  version. [Passbook's release workflow](../../apps/passbook/docs/release-workflow.md)
+  owns the current publication, signing setup, and rehearsal instructions.
 
 ## Data layout
 
 | Path                                    | Owner   | Survives reinstall |
 | --------------------------------------- | ------- | ------------------ |
 | `{userData}/data/`                      | User    | Yes                |
-| `{userData}/data/backups/`              | User    | Yes                |
+| `{userData}/backups/`                   | User    | Yes                |
 | Installed resources (`extraResources/`) | Package | Replaced on update |
 | Electron application bundle             | Package | Replaced on update |
 
@@ -48,8 +52,10 @@ deleted automatically.
 Desktop updates follow durable stages recorded in `{dataDir}/.update/intent.json`:
 
 1. **backup** — create and verify a pre-update backup (`yt-data backup`).
-2. **trial** — start the new host build against existing data; readiness must reach
-   `ready` before commit.
+2. **trial** — stage the cached ZIP through native Squirrel signature validation
+   while the old host remains usable, await owned host shutdown, then replace
+   and restart the app. Both the shell and ready host must report the target
+   version before commit. The old renderer does not display a verifying trial.
 3. **commit** — clear update intent after successful trial.
 4. **failed** — retain intent and failure reason; operator restores from the
    recorded backup id.
@@ -71,18 +77,23 @@ Development dependencies, source TypeScript, and user data are excluded.
 
 ## Verification
 
-| Command                       | Proves                                                          |
-| ----------------------------- | --------------------------------------------------------------- |
-| `pnpm check:passbook-host`    | Host bundle builds and tests pass                               |
-| `pnpm check:passbook-desktop` | Update orchestrator and desktop tests pass                      |
-| `pnpm release:gate`           | Bundled host, backup checkpoint, recovery                       |
-| `pnpm package:passbook:mac`   | Produces unsigned arm64 DMG and ZIP artifacts for local testing |
+| Command                            | Proves                                                                                                                |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `pnpm check:passbook-host`         | Host bundle builds and tests pass                                                                                     |
+| `pnpm check:passbook-desktop`      | Update orchestrator and desktop tests pass                                                                            |
+| `pnpm release:gate`                | Bundled host, backup checkpoint, recovery                                                                             |
+| Desktop lifecycle integration test | Production controller and real host API, backup, restart, persistence, and failure recovery; simulated native updater |
+| `pnpm package:passbook:mac`        | Produces unsigned arm64 DMG and ZIP artifacts for local testing                                                       |
 
 ## Limitations (this wave)
 
 - Linux, Windows, Intel macOS, and the Mac App Store are out of scope.
-- Signed nightly publication requires Apple credentials not present in CI.
-- Auto-update UI is not wired; orchestration records intent for a later controller.
+- Signed publication is configured but requires Developer ID and notarization
+  secrets before CI can produce public update releases. CI fails on missing
+  secrets, invalid signing, incomplete assets, or mismatched metadata.
+- Auto-update UI and install orchestration are wired. Native signed bundle
+  replacement still requires an old-to-new rehearsal on Apple Silicon; mocked
+  native staging and host restarts do not prove that operation.
 - The local arm64 package must be built and exercised on an Apple Silicon Mac.
   An Intel build machine cannot validate or produce the target-native libSQL
   runtime for the supported artifact.

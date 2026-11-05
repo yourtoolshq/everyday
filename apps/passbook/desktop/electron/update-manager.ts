@@ -14,6 +14,9 @@ export async function setupAutoUpdater(options: {
   dataDir: string;
   hostUrl: string;
   previousVersion: string;
+  preInstallPrepare?: () => Promise<void>;
+  isHostExternal?: () => boolean;
+  onInstallFailureRecover?: () => Promise<void>;
 }) {
   if (!app.isPackaged) return null;
 
@@ -21,6 +24,10 @@ export async function setupAutoUpdater(options: {
     dataDir: options.dataDir,
     hostUrl: options.hostUrl,
     currentVersion: options.previousVersion,
+    preInstallPrepare: options.preInstallPrepare,
+    isHostExternal: options.isHostExternal,
+    onInstallFailureRecover: options.onInstallFailureRecover,
+    electronApp: app,
   });
   registerUpdateIpc(controller);
   await controller.start();

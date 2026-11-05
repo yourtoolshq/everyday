@@ -10,12 +10,20 @@ export interface HostProcessOptions {
 
 export class HostProcess {
   private child: ChildProcess | null = null;
+  private stopping: Promise<void> | null = null;
   private stderr = "";
 
   constructor(private readonly options: HostProcessOptions) {}
 
   start() {
-    if (this.child) return;
+    if (
+      this.stopping ||
+      (this.child?.exitCode === null && this.child.signalCode === null)
+    ) {
+      return;
+    }
+    this.child = null;
+    this.stderr = "";
     this.child = spawn(this.options.command, this.options.args, {
       cwd: this.options.cwd,
       env: { ...process.env, ...this.options.env },
@@ -32,7 +40,10 @@ export class HostProcess {
   async waitForHealth(baseUrl: string, timeoutMs = 30_000) {
     const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
-      if (this.child && this.child.exitCode !== null) {
+      if (
+        this.child &&
+        (this.child.exitCode !== null || this.child.signalCode !== null)
+      ) {
         throw new Error(
           `Passbook host exited during startup (${this.child.exitCode}).\n${this.stderr}`,
         );
@@ -57,25 +68,54 @@ export class HostProcess {
   }
 
   async stop(timeoutMs = 10_000) {
-    if (!this.child || this.child.killed) return;
+    if (this.stopping) return this.stopping;
     const child = this.child;
-    this.child = null;
-    child.kill("SIGTERM");
-    await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => {
-        child.kill("SIGKILL");
-        resolve();
+    if (!child) return;
+
+    if (child.exitCode !== null || child.signalCode != null) {
+      this.child = null;
+      return;
+    }
+
+    this.stopping = new Promise<void>((resolve, reject) => {
+      let settled = false;
+      const finish = (error?: Error) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(killTimer);
+        child.removeListener("exit", onExit);
+        child.removeListener("error", onError);
+        if (this.child === child) this.child = null;
+        if (error) reject(error);
+        else resolve();
+      };
+
+      const onExit = () => finish();
+      const onError = (error: Error) => finish(error);
+      child.once("exit", onExit);
+      child.once("error", onError);
+
+      const killTimer = setTimeout(() => {
+        if (child.exitCode === null) {
+          child.kill("SIGKILL");
+        }
       }, timeoutMs);
-      child.once("exit", () => {
-        clearTimeout(timer);
-        resolve();
-      });
-      child.once("error", reject);
+
+      child.kill("SIGTERM");
     });
+    try {
+      await this.stopping;
+    } finally {
+      this.stopping = null;
+    }
   }
 
   isRunning() {
-    return this.child !== null && this.child.exitCode === null;
+    return (
+      this.child !== null &&
+      this.child.exitCode === null &&
+      this.child.signalCode === null
+    );
   }
 
   getRecentStderr() {

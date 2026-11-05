@@ -6,6 +6,10 @@ User-visible changes only. See [DEVELOPMENT.md](../../DEVELOPMENT.md) for change
 
 ### Fixed
 
+- Desktop updates wait for macOS to stage the downloaded app before stopping the
+  host and restarting. Failed staging keeps the current app usable and reports
+  the native error; successful updates require the target app and host versions
+  before clearing the verified backup checkpoint.
 - Desktop PDF previews now serve the bundled module worker with the JavaScript
   content type required by Chromium.
 
